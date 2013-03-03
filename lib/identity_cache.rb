@@ -7,9 +7,6 @@ require File.dirname(__FILE__) + '/belongs_to_caching'
 module IdentityCache
   CACHED_NIL = :idc_cached_nil
 
-  class AlreadyIncludedError < Exception
-  end
-
   class << self
 
     attr_accessor :logger, :readonly
@@ -183,6 +180,7 @@ module IdentityCache
     def cache_has_many(association, options = {})
       options[:embed] ||= false
       options[:inverse_name] ||= self.name.underscore.to_sym
+      raise InverseAssociationError unless self.reflect_on_association(association)
       self.cached_has_manys ||= {}
       self.cached_has_manys[association] = options
 
@@ -196,6 +194,7 @@ module IdentityCache
     def cache_has_one(association, options = {})
       options[:embed] ||= true
       options[:inverse_name] ||= self.name.underscore.to_sym
+      raise InverseAssociationError unless self.reflect_on_association(association)
       self.cached_has_ones ||= {}
       self.cached_has_ones[association] = options
 
@@ -374,7 +373,9 @@ module IdentityCache
     end
 
     def add_parent_expiry_hook(child_class, options = {})
-      foreign_key = child_class.reflect_on_association(options[:inverse_name]).association_foreign_key
+      child_association = child_class.reflect_on_association(options[:inverse_name])
+      raise InverseAssociationError unless child_association
+      foreign_key = child_association.association_foreign_key
       parent_class ||= self.name
       new_parent = options[:inverse_name]
 
@@ -551,5 +552,12 @@ module IdentityCache
 
   def was_new_record?
     !destroyed? && transaction_changed_attributes.has_key?('id') && transaction_changed_attributes['id'].nil?
+  end
+
+  class AlreadyIncludedError < Exception; end
+  class InverseAssociationError < StandardError
+    def initialize
+      super "Inverse name for association could not be determined. Please use the :inverse_name option to specify the inverse association name for this cache."
+    end
   end
 end
