@@ -131,7 +131,8 @@ module IdentityCache
 
   module ClassMethods
 
-    def cache_index(fields, options={})
+    def cache_index(*fields)
+      options = fields.extract_options!
       self.cache_indexes ||= []
       self.cache_indexes.push fields
 

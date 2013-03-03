@@ -3,8 +3,8 @@ require "test_helper"
 class FetchTest < IdentityCache::TestCase
   def setup
     super
-    Record.cache_index [:title], :unique => true
-    Record.cache_index [:id, :title], :unique => true
+    Record.cache_index :title, :unique => true
+    Record.cache_index :id, :title, :unique => true
 
     @record = Record.new
     @record.id = 1

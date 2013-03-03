@@ -4,7 +4,7 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
   def setup
     super
     Record.cache_has_one :associated, :record
-    Record.cache_index [:title], :unique => true
+    Record.cache_index :title, :unique => true
     @record = Record.new(:title => 'foo')
     @record.associated = AssociatedRecord.new(:name => 'bar')
     @record.save
