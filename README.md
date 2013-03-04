@@ -186,7 +186,6 @@ Example:
 
 A word of warning. Some versions of rails will silently rescue all exceptions in `after_commit` hooks. If an `after_commit` fails before the cache expiry `after_commit` the cache will not be expired and you will be left with stale data.
 
-At the moment IdentityCache will cache fetches for a request, but it is a good idea to make sure this cache is flushed for each request. This can be done by adding an around filter in your `ApplicationController`.
 
 ``` ruby
 class ApplicationController < ActionController::Base
