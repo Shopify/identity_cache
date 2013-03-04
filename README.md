@@ -32,13 +32,11 @@ class Product < ActiveRecord::Base
 
   has_many :images
 
-  cache_index :shop_id, :id
   cache_has_many :images, :embed => true
 end
 
-# Fetch the product from the cache by the index.
-# If the object isn't in the cache it is pulled from the db and stored in the cache.
-@product = Product.fetch_by_shop_id_and_id(shop_id, id)
+# Fetch the product by it's id, the primary index.
+@product = Product.fetch(id)
 
 # Fetch the images for the Product. Images are embedded so the product fetch would have already loaded them.
 @images = @product.fetch_images
@@ -48,18 +46,20 @@ Note: You must include the IdentityCache model into the classes where you want t
 
 ### Secondary Indexes
 
-IdentifyCache lets you store your objects in multiple indexes, depending on how you need to access it. The most common way to index is by `id` but it is also very common to load objects by any other combination of fields. This can be accomplished by adding additional indexes:
+IdentifyCache lets you lookup records by fields other than `id`. You can have multiple of these indexes with any other combination of fields:
 
 ``` ruby
 class Product < ActiveRecord::Base
   include IdentityCache
-  cache_index :shop_id, :id
-  cache_index :handle
+  cache_index :handle, :unique => true
+  cache_index :vendor, :product_type
 end
 
-Product.fetch_by_shop_id_and_id(shop_id, id)
+# Fetch the product from the cache by the index.
+# If the object isn't in the cache it is pulled from the db and stored in the cache.
+product = Product.fetch_by_handle(handle)
 
-Product.fetch_by_handle(handle)
+products = Product.fetch_by_vendor_and_product_type(handle)
 ```
 
 This gives you a lot of freedom to use your objects the way you want to, and doesn't get in your way. This does keep an independant cache copy in Memcached so you might want to watch the number of different caches that are being added.
@@ -99,13 +99,12 @@ IdentityCache can easily embed objects into the parents' cache entry. This means
 ``` ruby
 class Product < ActiveRecord::Base
   include IdentityCache
-  cache_index :id
 
   has_many :images
   cache_has_many :images, :embed => true
 end
 
-@product = Product.fetch_by_id(id)
+@product = Product.fetch(id)
 @product.fetch_images
 ```
 
@@ -149,35 +148,35 @@ This will read the attribute from the cache or query the database for the attrib
 
 #### cache_index
 
-Options:  
+Options:
 _[:unique]_ Allows you to say that an index is unique (only one object stored at the index) or not unique, which allows there to be multiple objects matching the index key. The default value is false.
 
-Example:  
-`cache_index :shop_id, :id`
+Example:
+`cache_index :handle`
 
 #### cache_has_many
 
-Options:  
+Options:
 _[:embed]_ Specifies that the association should be included with the parent when caching. This means the associated objects will be loaded already when the parent is loaded from the cache and will not need to be fetched on their own.
 
 _[:inverse_name]_ Specifies the name of parent object used by the association. This is useful for polymorphic associations when the association is often named something different between the parent and child objects.
 
-Example:  
+Example:
 `cache_has_many :metafields, :inverse_name => :owner, :embed => true`
 
 #### cache_has_one
 
-Options:  
+Options:
 _[:embed]_ Specifies that the association should be included with the parent when caching. This means the associated objects will be loaded already when the parent is loaded from the cache and will not need to be fetched on their own.
 
 _[:inverse_name]_ Specifies the name of parent object used by the association. This is useful for polymorphic associations when the association is often named something different between the parent and child objects.
 
-Example:  
+Example:
 `cache_has_one :configuration, :embed => true`
 
 ### `cache_attrbute`
 
-Options:  
+Options:
 _[:by]_ Specifies what key(s) you want the attribute cached by. Defaults to :id.
 
 Example:
