@@ -3,8 +3,8 @@ require "test_helper"
 class SaveTest < IdentityCache::TestCase
   def setup
     super
-    Record.cache_index [:title], :unique => true
-    Record.cache_index [:id, :title], :unique => true
+    Record.cache_index :title, :unique => true
+    Record.cache_index :id, :title, :unique => true
 
     @record = Record.create(:title => 'bob')
     @blob_key = "IDC:blob:Record:#{cache_hash("created_at:datetime,id:integer,title:string,updated_at:datetime")}:1"

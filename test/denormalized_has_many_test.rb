@@ -3,7 +3,7 @@ require "test_helper"
 class DenormalizedHasManyTest < IdentityCache::TestCase
   def setup
     super
-    Record.cache_has_many :associated_records, :record, :embed => true
+    Record.cache_has_many :associated_records, :embed => true
 
     @record = Record.new(:title => 'foo')
     @record.associated_records << AssociatedRecord.new(:name => 'bar')
@@ -66,5 +66,17 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     ar = AssociatedRecord.new
     ar.save
     assert_nothing_raised { ar.expire_parent_cache }
+  end
+
+  def test_cache_without_guessable_inverse_name_raises
+    assert_raises IdentityCache::InverseAssociationError do
+      Record.cache_has_many :polymorphic_records, :embed => true
+    end
+  end
+
+  def test_cache_without_guessable_inverse_name_does_not_raise_when_inverse_name_specified
+    assert_nothing_raised do
+      Record.cache_has_many :polymorphic_records, :inverse_name => :owner, :embed => true
+    end
   end
 end
