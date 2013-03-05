@@ -148,25 +148,25 @@ This will read the attribute from the cache or query the database for the attrib
 
 #### cache_index
 
-Options:
+Options:  
 _[:unique]_ Allows you to say that an index is unique (only one object stored at the index) or not unique, which allows there to be multiple objects matching the index key. The default value is false.
 
-Example:
+Example:  
 `cache_index :handle`
 
 #### cache_has_many
 
-Options:
+Options:  
 _[:embed]_ Specifies that the association should be included with the parent when caching. This means the associated objects will be loaded already when the parent is loaded from the cache and will not need to be fetched on their own.
 
 _[:inverse_name]_ Specifies the name of parent object used by the association. This is useful for polymorphic associations when the association is often named something different between the parent and child objects.
 
-Example:
+Example:  
 `cache_has_many :metafields, :inverse_name => :owner, :embed => true`
 
 #### cache_has_one
 
-Options:
+Options:  
 _[:embed]_ Specifies that the association should be included with the parent when caching. This means the associated objects will be loaded already when the parent is loaded from the cache and will not need to be fetched on their own.
 
 _[:inverse_name]_ Specifies the name of parent object used by the association. This is useful for polymorphic associations when the association is often named something different between the parent and child objects.
@@ -174,12 +174,12 @@ _[:inverse_name]_ Specifies the name of parent object used by the association. T
 Example:
 `cache_has_one :configuration, :embed => true`
 
-### `cache_attrbute`
+#### cache_attrbute
 
-Options:
+Options:  
 _[:by]_ Specifies what key(s) you want the attribute cached by. Defaults to :id.
 
-Example:
+Example:  
 `cache_attribute :target, :by => [:shop_id, :path]`
 
 ## Memoized Cache Proxy
@@ -210,6 +210,8 @@ Types of contributions we are looking for:
 - Performance improvments
 - Documentation and/or clearer interfaces
 
+### How To Contribute
+
 1. Fork it
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Added some feature'`)
@@ -218,9 +220,9 @@ Types of contributions we are looking for:
 
 ## Contributors
 
-Camilo Lopez (@camilo)
-Tom Burns (@boourns)
-Harry Brundage (@hornairs)
-Dylan Smith (@dylanahsmith)
-Tobias Lütke (@tobi)
+Camilo Lopez (@camilo)  
+Tom Burns (@boourns)  
+Harry Brundage (@hornairs)  
+Dylan Smith (@dylanahsmith)  
+Tobias Lütke (@tobi)  
 John Duff (@jduff)
