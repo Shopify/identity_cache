@@ -7,9 +7,6 @@ require File.dirname(__FILE__) + '/belongs_to_caching'
 module IdentityCache
   CACHED_NIL = :idc_cached_nil
 
-  class AlreadyIncludedError < Exception
-  end
-
   class << self
 
     attr_accessor :logger, :readonly
@@ -131,7 +128,8 @@ module IdentityCache
 
   module ClassMethods
 
-    def cache_index(fields, options={})
+    def cache_index(*fields)
+      options = fields.extract_options!
       self.cache_indexes ||= []
       self.cache_indexes.push fields
 
@@ -179,9 +177,10 @@ module IdentityCache
       ids.empty? ? [] : fetch_multi(*ids)
     end
 
-    def cache_has_many(association, name_in_child, options = {})
+    def cache_has_many(association, options = {})
       options[:embed] ||= false
-      options[:name_in_child] = name_in_child
+      options[:inverse_name] ||= self.name.underscore.to_sym
+      raise InverseAssociationError unless self.reflect_on_association(association)
       self.cached_has_manys ||= {}
       self.cached_has_manys[association] = options
 
@@ -192,9 +191,10 @@ module IdentityCache
       end
     end
 
-    def cache_has_one(association, name_in_child, options = {})
+    def cache_has_one(association, options = {})
       options[:embed] ||= true
-      options[:name_in_child] = name_in_child
+      options[:inverse_name] ||= self.name.underscore.to_sym
+      raise InverseAssociationError unless self.reflect_on_association(association)
       self.cached_has_ones ||= {}
       self.cached_has_ones[association] = options
 
@@ -373,9 +373,11 @@ module IdentityCache
     end
 
     def add_parent_expiry_hook(child_class, options = {})
-      foreign_key = child_class.reflect_on_association(options[:name_in_child]).association_foreign_key
+      child_association = child_class.reflect_on_association(options[:inverse_name])
+      raise InverseAssociationError unless child_association
+      foreign_key = child_association.association_foreign_key
       parent_class ||= self.name
-      new_parent = options[:name_in_child]
+      new_parent = options[:inverse_name]
 
       child_class.send(:include, ArTransactionChanges) unless child_class.include?(ArTransactionChanges)
       child_class.send(:include, ParentModelExpiration) unless child_class.include?(ParentModelExpiration)
@@ -384,7 +386,7 @@ module IdentityCache
         after_commit :expire_parent_cache
 
         def expire_parent_cache
-          expire_parent_cache_on_changes(:#{options[:name_in_child]}, '#{foreign_key}', #{parent_class}, #{options.inspect})
+          expire_parent_cache_on_changes(:#{options[:inverse_name]}, '#{foreign_key}', #{parent_class}, #{options.inspect})
         end
       CODE
     end
@@ -550,5 +552,12 @@ module IdentityCache
 
   def was_new_record?
     !destroyed? && transaction_changed_attributes.has_key?('id') && transaction_changed_attributes['id'].nil?
+  end
+
+  class AlreadyIncludedError < StandardError; end
+  class InverseAssociationError < StandardError
+    def initialize
+      super "Inverse name for association could not be determined. Please use the :inverse_name option to specify the inverse association name for this cache."
+    end
   end
 end

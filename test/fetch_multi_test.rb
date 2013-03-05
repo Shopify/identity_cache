@@ -105,8 +105,8 @@ class FetchMultiTest < IdentityCache::TestCase
   end
 
   def test_fetch_multi_includes_cached_associations
-    Record.send(:cache_has_many, :associated_records, :record, :embed => true)
-    Record.send(:cache_has_one, :associated, :record)
+    Record.send(:cache_has_many, :associated_records, :embed => true)
+    Record.send(:cache_has_one, :associated)
 
     cache_response = {}
     cache_response[@bob_blob_key] = nil
