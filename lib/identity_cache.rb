@@ -554,7 +554,7 @@ module IdentityCache
     !destroyed? && transaction_changed_attributes.has_key?('id') && transaction_changed_attributes['id'].nil?
   end
 
-  class AlreadyIncludedError < Exception; end
+  class AlreadyIncludedError < StandardError; end
   class InverseAssociationError < StandardError
     def initialize
       super "Inverse name for association could not be determined. Please use the :inverse_name option to specify the inverse association name for this cache."
