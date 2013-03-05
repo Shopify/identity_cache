@@ -182,10 +182,9 @@ _[:by]_ Specifies what key(s) you want the attribute cached by. Defaults to :id.
 Example:
 `cache_attribute :target, :by => [:shop_id, :path]`
 
-## Cavets
+## Memoized Cache Proxy
 
-A word of warning. Some versions of rails will silently rescue all exceptions in `after_commit` hooks. If an `after_commit` fails before the cache expiry `after_commit` the cache will not be expired and you will be left with stale data.
-
+Cache reads and writes can be memoized for a block of code to serve duplicate identity cache requests from memory. This can be done for an http request by adding this around filter in your `ApplicationController`.
 
 ``` ruby
 class ApplicationController < ActionController::Base
@@ -196,6 +195,10 @@ class ApplicationController < ActionController::Base
   end
 end
 ```
+
+## Cavets
+
+A word of warning. Some versions of rails will silently rescue all exceptions in `after_commit` hooks. If an `after_commit` fails before the cache expiry `after_commit` the cache will not be expired and you will be left with stale data.
 
 ## Contributing
 
