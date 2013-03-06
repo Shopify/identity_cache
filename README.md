@@ -200,6 +200,8 @@ end
 
 A word of warning. Some versions of rails will silently rescue all exceptions in `after_commit` hooks. If an `after_commit` fails before the cache expiry `after_commit` the cache will not be expired and you will be left with stale data.
 
+Since everything is being marshalled and unmarshalled from Memcached changing Ruby or Rails versions could mean your objects cannot be unmarshalled from Memcached. There are a number of ways to get around this such as namespacing keys when you upgrade or rescuing marshal load errors and treating it as a cache miss. Just something to be aware of if you are using IdentityCache and upgrade Ruby or Rails.
+
 ## Contributing
 
 Caching is hard. Chances are that if some feature was left out, it was left out on purpose because it didn't make sense to cache in that way. This is used in production at Shopify so we are very opinionated about the types of features we're going to add. Please start the discussion early, before even adding code, so that we can talk about the feature you are proposing and decide if it makes sense in IdentityCache.
