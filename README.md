@@ -8,15 +8,11 @@ IdentityCache keeps track of the objects that have cached indexes and uses an `a
 
 Add this line to your application's Gemfile:
 
-    gem 'identity_cache'
+    gem 'identity_cache', :git => 'git://github.com/Shopify/identity_cache.git'
 
 And then execute:
 
     $ bundle
-
-Or install it yourself as:
-
-    $ gem install identity_cache
 
 Add the following to your environment/production.rb:
 
