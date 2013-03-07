@@ -72,7 +72,7 @@ class Shop < ActiveRecord::Base
 end
 ```
 
-Association caches follow suite and add `fetch_*` methods based on the indexes added for those associations.
+Association caches follow suit and add `fetch_*` methods based on the indexes added for those associations.
 
 ``` ruby
 class Product < ActiveRecord::Base
