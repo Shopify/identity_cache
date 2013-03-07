@@ -38,7 +38,7 @@ end
 @images = @product.fetch_images
 ```
 
-Note: You must include the IdentityCache model into the classes where you want to use it.
+Note: You must include the IdentityCache module into the classes where you want to use it.
 
 ### Secondary Indexes
 
