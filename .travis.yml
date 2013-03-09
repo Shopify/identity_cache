@@ -1,0 +1,10 @@
+language: ruby
+rvm:
+  - 1.9.3
+
+services:
+  - memcache
+  - mysql
+
+before_script:
+  - mysql -e 'create database identity_cache_test'
