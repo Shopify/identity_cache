@@ -170,7 +170,7 @@ _[:inverse_name]_ Specifies the name of parent object used by the association. T
 Example:
 `cache_has_one :configuration, :embed => true`
 
-#### cache_attrbute
+#### cache_attribute
 
 Options:  
 _[:by]_ Specifies what key(s) you want the attribute cached by. Defaults to :id.
