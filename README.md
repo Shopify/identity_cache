@@ -8,7 +8,9 @@ IdentityCache keeps track of the objects that have cached indexes and uses an `a
 
 Add this line to your application's Gemfile:
 
-    gem 'identity_cache', :git => 'git://github.com/Shopify/identity_cache.git'
+```ruby
+gem 'identity_cache', :git => 'git://github.com/Shopify/identity_cache.git'
+```
 
 And then execute:
 
@@ -16,7 +18,9 @@ And then execute:
 
 Add the following to your environment/production.rb:
 
-    config.identity_cache_store = :mem_cache_store, Memcached::Rails.new(:servers => ["mem1.server.com"])
+```ruby
+config.identity_cache_store = :mem_cache_store, Memcached::Rails.new(:servers => ["mem1.server.com"])
+```
 
 ## Usage
 
