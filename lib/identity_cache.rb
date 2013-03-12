@@ -107,6 +107,7 @@ module IdentityCache
       base.send(:include, ArTransactionChanges) unless base.include?(ArTransactionChanges)
       base.send(:include, IdentityCache::BelongsToCaching)
       base.after_commit :expire_cache
+      base.after_touch  :expire_cache
       base.class_attribute :cache_indexes
       base.class_attribute :cache_attributes
       base.class_attribute :cached_has_manys
@@ -384,6 +385,7 @@ module IdentityCache
 
       child_class.class_eval(ruby = <<-CODE, __FILE__, __LINE__)
         after_commit :expire_parent_cache
+        after_touch  :expire_parent_cache
 
         def expire_parent_cache
           expire_parent_cache_on_changes(:#{options[:inverse_name]}, '#{foreign_key}', #{parent_class}, #{options.inspect})
