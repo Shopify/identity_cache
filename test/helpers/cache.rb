@@ -46,7 +46,11 @@ module Rails
   class Logger
     def info(string)
     end
+
     def debug(string)
+    end
+
+    def error(string)
     end
   end
 
