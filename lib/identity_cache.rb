@@ -107,6 +107,7 @@ module IdentityCache
       base.send(:include, ArTransactionChanges) unless base.include?(ArTransactionChanges)
       base.send(:include, IdentityCache::BelongsToCaching)
       base.after_commit :expire_cache
+      base.after_touch  :expire_cache
       base.class_attribute :cache_indexes
       base.class_attribute :cache_attributes
       base.class_attribute :cached_has_manys

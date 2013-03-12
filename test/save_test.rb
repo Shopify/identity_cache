@@ -52,4 +52,13 @@ class SaveTest < IdentityCache::TestCase
     @record.title = 'fred'
     @record.destroy
   end
+
+  def test_touch
+    # Regular flow: delete data blob, delete index id, delete index id/tile
+    IdentityCache.cache.expects(:delete).with("IDC:index:Record:id/title:#{cache_hash('1/bob')}")
+    IdentityCache.cache.expects(:delete).with("IDC:index:Record:title:#{cache_hash('bob')}")
+    IdentityCache.cache.expects(:delete).with(@blob_key)
+
+    @record.touch
+  end
 end
