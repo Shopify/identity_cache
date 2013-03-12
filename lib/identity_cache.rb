@@ -385,6 +385,7 @@ module IdentityCache
 
       child_class.class_eval(ruby = <<-CODE, __FILE__, __LINE__)
         after_commit :expire_parent_cache
+        after_touch  :expire_parent_cache
 
         def expire_parent_cache
           expire_parent_cache_on_changes(:#{options[:inverse_name]}, '#{foreign_key}', #{parent_class}, #{options.inspect})

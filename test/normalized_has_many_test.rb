@@ -105,4 +105,9 @@ class NormalizedHasManyTest < IdentityCache::TestCase
     @baz.destroy
     assert_equal [@bar], @record.reload.fetch_associated_records
   end
+
+  def test_touching_a_child_record_should_expire_only_itself
+    IdentityCache.cache.expects(:delete).with(@baz.primary_cache_index_key).once
+    @baz.touch
+  end
 end

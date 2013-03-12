@@ -79,4 +79,11 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
       Record.cache_has_many :polymorphic_records, :inverse_name => :owner, :embed => true
     end
   end
+
+  def test_touching_associated_records_should_expire_itself_and_the_parents_cache
+    child = @record.associated_records.first
+    IdentityCache.cache.expects(:delete).with(child.primary_cache_index_key).once
+    IdentityCache.cache.expects(:delete).with(@record.primary_cache_index_key)
+    child.touch
+  end
 end
