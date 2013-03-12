@@ -420,7 +420,7 @@ module IdentityCache
       records = where('id IN (?)', ids).includes(cache_fetch_includes).all
       records_by_id = records.index_by(&:id)
       records = ids.map{ |id| records_by_id[id] }
-      mismatching_ids = (records.compact.map(&:id).to_set - ids.to_set )
+      mismatching_ids = records.compact.map(&:id) - ids
       IdentityCache.logger.error "[IDC id mismatch] fetch_batch requested #{ids.inspect} got #{mismatchig_ids.inspect} mismatching ids "  unless mismatching_ids.empty?
       records.compact
     end
