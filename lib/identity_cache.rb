@@ -285,6 +285,7 @@ module IdentityCache
         require_if_necessary do
           object = IdentityCache.fetch(rails_cache_key(id)){ resolve_cache_miss(id) }
           object.clear_association_cache if object.respond_to?(:clear_association_cache)
+          IdentityCache.logger.error "[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{object.id} for #{object.inspect[(0..100)]} " if object && object.id != id
           object
         end
 
@@ -421,6 +422,8 @@ module IdentityCache
       records = where('id IN (?)', ids).includes(cache_fetch_includes).all
       records_by_id = records.index_by(&:id)
       records = ids.map{ |id| records_by_id[id] }
+      mismatching_ids = records.compact.map(&:id) - ids
+      IdentityCache.logger.error "[IDC id mismatch] fetch_batch_requested=#{ids.inspect} fetch_batch_got=#{mismatchig_ids.inspect} mismatching ids "  unless mismatching_ids.empty?
       records.compact
     end
 
