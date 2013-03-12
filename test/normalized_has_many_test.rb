@@ -6,11 +6,13 @@ class NormalizedHasManyTest < IdentityCache::TestCase
     Record.cache_has_many :associated_records, :embed => false
 
     @record = Record.new(:title => 'foo')
+    @record.not_cached_records << NotCachedRecord.new(:name => 'NoCache')
     @record.associated_records << AssociatedRecord.new(:name => 'bar')
     @record.associated_records << AssociatedRecord.new(:name => 'baz')
     @record.save
     @record.reload
-    @baz, @bar = @record.associated_records[0], @record.associated_records[1]
+    @baz, @bar  = @record.associated_records[0], @record.associated_records[1]
+    @not_cached = @record.not_cached_records.first
   end
 
   def test_a_records_list_of_associated_ids_on_the_parent_record_retains_association_sort_order
@@ -109,5 +111,15 @@ class NormalizedHasManyTest < IdentityCache::TestCase
   def test_touching_a_child_record_should_expire_only_itself
     IdentityCache.cache.expects(:delete).with(@baz.primary_cache_index_key).once
     @baz.touch
+  end
+
+  def test_touching_child_with_touch_true_on_parent_expires_parent
+    IdentityCache.cache.expects(:delete).with(@record.primary_cache_index_key).once
+    @not_cached.touch
+  end
+
+  def test_saving_child_with_touch_true_on_parent_expires_parent
+    IdentityCache.cache.expects(:delete).with(@record.primary_cache_index_key).once
+    @not_cached.save
   end
 end
