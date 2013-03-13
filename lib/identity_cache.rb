@@ -307,7 +307,9 @@ module IdentityCache
 
           objects_by_key = IdentityCache.fetch_multi(*key_to_id_map.keys) do |unresolved_keys|
             ids = unresolved_keys.map {|key| key_to_id_map[key] }
-            records = find_batch(ids).each{ |r| r.try(:populate_association_caches) }
+            records = find_batch(ids)
+            records.compact.each(&:populate_association_caches)
+            records
           end
 
           objects_in_order = cache_keys.map {|key| objects_by_key[key] }
