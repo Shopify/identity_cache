@@ -48,8 +48,8 @@ class FetchMultiTest < IdentityCache::TestCase
     cache_response[@bob_blob_key] = nil
     cache_response[@joe_blob_key] = nil
     cache_response[@fred_blob_key] = @fred
-    IdentityCache.cache.expects(:read_multi).with(@bob_blob_key, @joe_blob_key, @fred_blob_key).returns(cache_response)
-    assert_equal [@bob, @joe, @fred], Record.fetch_multi(@bob.id, @joe.id, @fred.id)
+    IdentityCache.cache.expects(:read_multi).with(@bob_blob_key, @fred_blob_key, @joe_blob_key).returns(cache_response)
+    assert_equal [@bob, @fred, @joe], Record.fetch_multi(@bob.id, @fred.id, @joe.id)
   end
 
   def test_fetch_multi_with_mixed_hits_and_misses_and_non_existant_keys
@@ -58,9 +58,9 @@ class FetchMultiTest < IdentityCache::TestCase
     cache_response[@joe_blob_key] = nil
     cache_response[@tenth_blob_key] = nil
     cache_response[@fred_blob_key] = @fred
-    IdentityCache.cache.expects(:read_multi).with(@bob_blob_key, @joe_blob_key, @tenth_blob_key, @fred_blob_key).returns(cache_response)
+    IdentityCache.cache.expects(:read_multi).with(@tenth_blob_key, @bob_blob_key, @joe_blob_key, @fred_blob_key).returns(cache_response)
     assert_nothing_raised do
-      assert_equal [@bob, @joe, @fred], Record.fetch_multi(@bob.id, @joe.id, 10, @fred.id)
+      assert_equal [@bob, @joe, @fred], Record.fetch_multi(10, @bob.id, @joe.id, @fred.id)
     end
   end
 
