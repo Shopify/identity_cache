@@ -10,7 +10,7 @@ IdentityCache keeps track of the objects that have cached indexes and uses an `a
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'identity_cache', :github => 'Shopify/identity_cache'
+gem 'identity_cache'
 ```
 
 And then execute:
