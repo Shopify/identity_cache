@@ -340,7 +340,7 @@ module IdentityCache
     end
 
 
-    # Will cache an single attribute on its own blob, it will add a
+    # Will cache a single attribute on its own blob, it will add a
     # fetch_attribute_by_id (or the value of the by option).
     #
     # == Example:
@@ -385,7 +385,7 @@ module IdentityCache
       !!fetch_by_id(id)
     end
 
-    # Default fetched added to the model on inclusion, if behaves like
+    # Default fetched added to the model on inclusion, it behaves like
     # ActiveRecord::Base.find_by_id
     def fetch_by_id(id)
       if IdentityCache.should_cache?
@@ -402,7 +402,7 @@ module IdentityCache
       end
     end
 
-    # Default fetched added to the model on inclusion, if behaves like
+    # Default fetched added to the model on inclusion, it behaves like
     # ActiveRecord::Base.find, will raise ActiveRecord::RecordNotFound exception
     # if id is not in the cache or the db.
     def fetch(id)
