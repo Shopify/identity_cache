@@ -12,8 +12,14 @@ module IdentityCache
     attr_accessor :logger, :readonly
     attr_reader :cache
 
-    def cache_backend=(memcache)
-      cache.memcache = memcache
+    # Sets the cache adaptor IdentityCache will be using
+    #
+    # == Parameters
+    #
+    # +cache_adaptor+ - A ActiveSupport::Cache::Store
+    #
+    def cache_backend=(cache_adaptor)
+      cache.memcache = cache_adaptor
     end
 
     def cache
@@ -28,6 +34,13 @@ module IdentityCache
       !readonly && ActiveRecord::Base.connection.open_transactions == 0
     end
 
+    # Cache retrieval and miss resolver primitive, given a key it will try to
+    # retrieve the associated value from the cache otherwise it will return the
+    # value of the execution of the block.
+    #
+    # == Parameters
+    # +key+ A cache key string
+    #
     def fetch(key, &block)
       result = cache.read(key) if should_cache?
 
@@ -58,6 +71,11 @@ module IdentityCache
       value == IdentityCache::CACHED_NIL ? nil : value
     end
 
+    # Same as +fetch+, except that it will try a collection of keys, using the
+    # multiget operation of the cache adaptor
+    #
+    # == Parameters
+    # +keys+ A collection of key strings
     def fetch_multi(*keys, &block)
       return {} if keys.size == 0
       result = {}
@@ -93,7 +111,7 @@ module IdentityCache
       result
     end
 
-    def included(base)
+    def included(base) #:nodoc:
       raise AlreadyIncludedError if base.respond_to? :cache_indexes
 
       unless ActiveRecord::Base.connection.respond_to?(:with_master)
@@ -122,13 +140,35 @@ module IdentityCache
       CODE
     end
 
-    def memcache_hash(key)
+    def memcache_hash(key) #:nodoc:
       CityHash.hash64(key)
     end
   end
 
   module ClassMethods
 
+    # Declares a new index in the cache for the class where IdentityCache was
+    # included, this will have two important consequences.
+    # 
+    # * IdentityCache will add a fetch_by_field1_and_field2_and_...fieldn where
+    # * Those methods will expect index keys in the cache, and create them on
+    #    reads to the cache values
+    # == Example:
+    #  
+    #  class Product
+    #    include IdentityCache
+    #    cache_index :name, :vendor
+    #  end
+    #
+    # Will add Product.fetch_by_name_and_vendor
+    #
+    # == Parameters
+    #
+    # +fields+ Array of symbols or strings representing the fields in the index
+    #
+    # == Options
+    # * Unique: if the index would only have unique values
+    #  
     def cache_index(*fields)
       options = fields.extract_options!
       self.cache_indexes ||= []
@@ -160,7 +200,7 @@ module IdentityCache
       end
     end
 
-    def identity_cache_single_value_dynamic_fetcher(fields, values, sql_on_miss)
+    def identity_cache_single_value_dynamic_fetcher(fields, values, sql_on_miss) # :nodoc:
       cache_key = rails_cache_index_key_for_fields_and_values(fields, values)
       id = IdentityCache.fetch(cache_key) { connection.select_value(sql_on_miss) }
       unless id.nil?
@@ -171,13 +211,38 @@ module IdentityCache
       record
     end
 
-    def identity_cache_multiple_value_dynamic_fetcher(fields, values, sql_on_miss)
+    def identity_cache_multiple_value_dynamic_fetcher(fields, values, sql_on_miss) # :nodoc:
       cache_key = rails_cache_index_key_for_fields_and_values(fields, values)
       ids = IdentityCache.fetch(cache_key) { connection.select_values(sql_on_miss) }
 
       ids.empty? ? [] : fetch_multi(*ids)
     end
 
+
+    # Will cache an association to the class including IdentityCache,
+    # the embed option if set will make IdentityCache keep the association
+    # values in the same cache entry as the parent.
+    #
+    # Embedded associations are more effective in offloading database work,
+    # however they will increase the size of the cache entries and make the
+    # whole entry expire with the change of any of the embedded members
+    #
+    # == Example:
+    #   class Product
+    #    cached_has_many :options, :embed => false
+    #    cached_has_many :orders
+    #    cached_has_many :buyers, :inverse_name => 'line_item'
+    #   end
+    #
+    # == Parameters
+    # +association+ Symbol with the name of the association being cached
+    #
+    # == Options
+    #
+    # * embed: If set will cause IdentityCache to keep the values for this
+    #   association in the same cache entry as the parent, instead of its own.
+    # * inverse_name: The name of the parent in the association if the name is
+    #   not the lowercase pluralization of the parent object's class
     def cache_has_many(association, options = {})
       options[:embed] ||= false
       options[:inverse_name] ||= self.name.underscore.to_sym
@@ -192,6 +257,29 @@ module IdentityCache
       end
     end
 
+    # Will cache an association to the class including IdentityCache,
+    # the embed option if set will make IdentityCache keep the association
+    # values in the same cache entry as the parent.
+    #
+    # Embedded associations are more effective in offloading database work,
+    # however they will increase the size of the cache entries and make the
+    # whole entry expire with the change of any of the embedded members
+    #
+    # == Example:
+    #   class Product
+    #    cached_has_one :store, :embed => false
+    #    cached_has_one :vendor
+    #   end
+    #
+    # == Parameters
+    # +association+ Symbol with the name of the association being cached
+    #
+    # == Options
+    #
+    # * embed: If set will cause IdentityCache to keep the values for this
+    #   association in the same cache entry as the parent, instead of its own.
+    # * inverse_name: The name of the parent in the association if the name is
+    #   not the lowercase pluralization of the parent object's class
     def cache_has_one(association, options = {})
       options[:embed] ||= true
       options[:inverse_name] ||= self.name.underscore.to_sym
@@ -202,7 +290,7 @@ module IdentityCache
       build_denormalized_association_cache(association, options)
     end
 
-    def build_denormalized_association_cache(association, options)
+    def build_denormalized_association_cache(association, options) #:nodoc:
       options[:cached_accessor_name] ||= "fetch_#{association}"
       options[:cache_variable_name]  ||= "cached_#{association}"
       options[:population_method_name]  ||= "populate_#{association}_cache"
@@ -223,7 +311,7 @@ module IdentityCache
       end
     end
 
-    def build_normalized_has_many_cache(association, options)
+    def build_normalized_has_many_cache(association, options) #:nodoc:
       singular_association = association.to_s.singularize
       association_class    = reflect_on_association(association).klass
       options[:cached_accessor_name]    ||= "fetch_#{association}"
@@ -251,6 +339,22 @@ module IdentityCache
       add_parent_expiry_hook(association_class, options.merge(:only_on_foreign_key_change => true))
     end
 
+
+    # Will cache an single attribute on its own blob, it will add a
+    # fetch_attribute_by_id (or the value of the by option).
+    #
+    # == Example:
+    #   class Product
+    #    cache_attribute :quantity, :by => :name
+    #    cache_attribute :quantity  :by => [:name, :vendor]
+    #   end
+    #
+    # == Parameters
+    # +attribute+ Symbol with the name of the attribute being cached
+    #
+    # == Options
+    #
+    # * by: Other attribute or attributes in the model to keep values indexed, default is :id
     def cache_attribute(attribute, options = {})
       options[:by] ||= :id
       fields = Array(options[:by])
@@ -270,15 +374,19 @@ module IdentityCache
       CODE
     end
 
-    def attribute_dynamic_fetcher(attribute, fields, values, sql_on_miss)
+    def attribute_dynamic_fetcher(attribute, fields, values, sql_on_miss) #:nodoc:
       cache_key = rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, values)
       IdentityCache.fetch(cache_key) { connection.select_value(sql_on_miss) }
     end
 
+    # Similar to ActiveRecord::Base#exists? will return true if the id can be
+    # found in the cache.
     def exists_with_identity_cache?(id)
       !!fetch_by_id(id)
     end
 
+    # Default fetched added to the model on inclusion, if behaves like
+    # ActiveRecord::Base.find_by_id
     def fetch_by_id(id)
       if IdentityCache.should_cache?
 
@@ -294,10 +402,16 @@ module IdentityCache
       end
     end
 
+    # Default fetched added to the model on inclusion, if behaves like
+    # ActiveRecord::Base.find, will raise ActiveRecord::RecordNotFound exception
+    # if id is not in the cache or the db.
     def fetch(id)
       fetch_by_id(id) or raise(ActiveRecord::RecordNotFound, "Couldn't find #{self.class.name} with ID=#{id}")
     end
 
+
+    # Default fetched added to the model on inclusion, if behaves like
+    # ActiveRecord::Base.find_all_by_id
     def fetch_multi(*ids)
       if IdentityCache.should_cache?
 
@@ -325,7 +439,7 @@ module IdentityCache
       end
     end
 
-    def require_if_necessary
+    def require_if_necessary #:nodoc:
       # mem_cache_store returns raw value if unmarshal fails
       rval = yield
       case rval
@@ -343,7 +457,7 @@ module IdentityCache
       raise
     end
 
-    module ParentModelExpiration
+    module ParentModelExpiration # :nodoc:
       def expire_parent_cache_on_changes(parent_name, foreign_key, parent_class, options = {})
         new_parent = send(parent_name)
 
