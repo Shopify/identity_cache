@@ -50,6 +50,7 @@ module IdentityCache
             result = yield
           end
           result = map_cached_nil_for(result)
+          
           if should_cache?
             cache.write(key, result)
           end
@@ -393,7 +394,6 @@ module IdentityCache
 
         require_if_necessary do
           object = IdentityCache.fetch(rails_cache_key(id)){ resolve_cache_miss(id) }
-          object.clear_association_cache if object.respond_to?(:clear_association_cache)
           IdentityCache.logger.error "[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{object.id} for #{object.inspect[(0..100)]} " if object && object.id != id.to_i
           object
         end
@@ -427,12 +427,7 @@ module IdentityCache
             records
           end
 
-          objects_in_order = cache_keys.map {|key| objects_by_key[key] }
-          objects_in_order.each do |object|
-            object.clear_association_cache if object.respond_to?(:clear_association_cache)
-          end
-
-          objects_in_order.compact
+          cache_keys.map {|key| objects_by_key[key] }.compact
         end
 
       else
@@ -576,6 +571,7 @@ module IdentityCache
         child_objects = Array.wrap(send(options[:cached_accessor_name]))
         child_objects.each(&:populate_association_caches)
       end
+      self.clear_association_cache if self.respond_to?(:clear_association_cache)
     end
   end
 
