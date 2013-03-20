@@ -34,7 +34,7 @@ module IdentityCache
       !readonly && ActiveRecord::Base.connection.open_transactions == 0
     end
 
-    # Cache retrieval and miss resolver primitive, given a key it will try to
+    # Cache retrieval and miss resolver primitive; given a key it will try to
     # retrieve the associated value from the cache otherwise it will return the
     # value of the execution of the block.
     #
@@ -148,13 +148,13 @@ module IdentityCache
   module ClassMethods
 
     # Declares a new index in the cache for the class where IdentityCache was
-    # included, this will have two important consequences.
-    # 
-    # * IdentityCache will add a fetch_by_field1_and_field2_and_...fieldn where
-    # * Those methods will expect index keys in the cache, and create them on
-    #    reads to the cache values
+    # included.
+    #
+    # IdentityCache will add a fetch_by_field1_and_field2_and_...field for every
+    # index.
+    #
     # == Example:
-    #  
+    #
     #  class Product
     #    include IdentityCache
     #    cache_index :name, :vendor
@@ -167,8 +167,8 @@ module IdentityCache
     # +fields+ Array of symbols or strings representing the fields in the index
     #
     # == Options
-    # * Unique: if the index would only have unique values
-    #  
+    # * unique: if the index would only have unique values
+    #
     def cache_index(*fields)
       options = fields.extract_options!
       self.cache_indexes ||= []
@@ -219,13 +219,13 @@ module IdentityCache
     end
 
 
-    # Will cache an association to the class including IdentityCache,
-    # the embed option if set will make IdentityCache keep the association
+    # Will cache an association to the class including IdentityCache.
+    # The embed option, if set, will make IdentityCache keep the association
     # values in the same cache entry as the parent.
     #
     # Embedded associations are more effective in offloading database work,
     # however they will increase the size of the cache entries and make the
-    # whole entry expire with the change of any of the embedded members
+    # whole entry expire when any of the embedded members change.
     #
     # == Example:
     #   class Product
@@ -235,7 +235,7 @@ module IdentityCache
     #   end
     #
     # == Parameters
-    # +association+ Symbol with the name of the association being cached
+    # +association+ Name of the association being cached as a symbol
     #
     # == Options
     #
@@ -257,8 +257,8 @@ module IdentityCache
       end
     end
 
-    # Will cache an association to the class including IdentityCache,
-    # the embed option if set will make IdentityCache keep the association
+    # Will cache an association to the class including IdentityCache.
+    # The embed option if set will make IdentityCache keep the association
     # values in the same cache entry as the parent.
     #
     # Embedded associations are more effective in offloading database work,
@@ -278,8 +278,9 @@ module IdentityCache
     #
     # * embed: If set will cause IdentityCache to keep the values for this
     #   association in the same cache entry as the parent, instead of its own.
-    # * inverse_name: The name of the parent in the association if the name is
-    #   not the lowercase pluralization of the parent object's class
+    # * inverse_name: The name of the parent in the association ( only
+    #   necessary if the name is not the lowercase pluralization of the 
+    #   parent object's class)
     def cache_has_one(association, options = {})
       options[:embed] ||= true
       options[:inverse_name] ||= self.name.underscore.to_sym
@@ -354,7 +355,7 @@ module IdentityCache
     #
     # == Options
     #
-    # * by: Other attribute or attributes in the model to keep values indexed, default is :id
+    # * by: Other attribute or attributes in the model to keep values indexed. Default is :id
     def cache_attribute(attribute, options = {})
       options[:by] ||= :id
       fields = Array(options[:by])
@@ -385,7 +386,7 @@ module IdentityCache
       !!fetch_by_id(id)
     end
 
-    # Default fetched added to the model on inclusion, it behaves like
+    # Default fetcher added to the model on inclusion, it behaves like
     # ActiveRecord::Base.find_by_id
     def fetch_by_id(id)
       if IdentityCache.should_cache?
@@ -402,7 +403,7 @@ module IdentityCache
       end
     end
 
-    # Default fetched added to the model on inclusion, it behaves like
+    # Default fetcher added to the model on inclusion, it behaves like
     # ActiveRecord::Base.find, will raise ActiveRecord::RecordNotFound exception
     # if id is not in the cache or the db.
     def fetch(id)
@@ -410,7 +411,7 @@ module IdentityCache
     end
 
 
-    # Default fetched added to the model on inclusion, if behaves like
+    # Default fetcher added to the model on inclusion, if behaves like
     # ActiveRecord::Base.find_all_by_id
     def fetch_multi(*ids)
       if IdentityCache.should_cache?
@@ -567,7 +568,7 @@ module IdentityCache
     end
   end
 
-  def populate_association_caches
+  def populate_association_caches # :nodoc:
     self.class.all_cached_associations.each do |cached_association, options|
       send(options[:population_method_name])
       reflection = options[:embed] && self.class.reflect_on_association(cached_association)
@@ -578,7 +579,7 @@ module IdentityCache
     end
   end
 
-  def fetch_denormalized_cached_association(ivar_name, association_name)
+  def fetch_denormalized_cached_association(ivar_name, association_name) # :nodoc:
     ivar_full_name = :"@#{ivar_name}"
     if IdentityCache.should_cache?
       populate_denormalized_cached_association(ivar_name, association_name)
@@ -588,7 +589,7 @@ module IdentityCache
     end
   end
 
-  def populate_denormalized_cached_association(ivar_name, association_name)
+  def populate_denormalized_cached_association(ivar_name, association_name) # :nodoc:
     ivar_full_name = :"@#{ivar_name}"
 
     value = instance_variable_get(ivar_full_name)
@@ -601,23 +602,23 @@ module IdentityCache
     instance_variable_set(ivar_full_name, IdentityCache.map_cached_nil_for(loaded_association))
   end
 
-  def primary_cache_index_key
+  def primary_cache_index_key # :nodoc:
     self.class.rails_cache_key(id)
   end
 
-  def secondary_cache_index_key_for_current_values(fields)
+  def secondary_cache_index_key_for_current_values(fields) # :nodoc:
     self.class.rails_cache_index_key_for_fields_and_values(fields, fields.collect {|field| self.send(field)})
   end
 
-  def secondary_cache_index_key_for_previous_values(fields)
+  def secondary_cache_index_key_for_previous_values(fields) # :nodoc:
     self.class.rails_cache_index_key_for_fields_and_values(fields, old_values_for_fields(fields))
   end
 
-  def attribute_cache_key_for_attribute_and_previous_values(attribute, fields)
+  def attribute_cache_key_for_attribute_and_previous_values(attribute, fields) # :nodoc:
     self.class.rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, old_values_for_fields(fields))
   end
 
-  def old_values_for_fields(fields)
+  def old_values_for_fields(fields) # :nodoc:
     fields.map do |field|
       field_string = field.to_s
       if destroyed? && transaction_changed_attributes.has_key?(field_string)
@@ -630,7 +631,7 @@ module IdentityCache
     end
   end
 
-  def expire_primary_index
+  def expire_primary_index # :nodoc:
     extra_keys = if respond_to? :updated_at
       old_updated_at = old_values_for_fields([:updated_at]).first
       "expiring_last_updated_at=#{old_updated_at}"
@@ -642,7 +643,7 @@ module IdentityCache
     IdentityCache.cache.delete(primary_cache_index_key)
   end
 
-  def expire_secondary_indexes
+  def expire_secondary_indexes # :nodoc:
     cache_indexes.try(:each) do |fields|
       if self.destroyed?
         IdentityCache.cache.delete(secondary_cache_index_key_for_previous_values(fields))
@@ -658,20 +659,20 @@ module IdentityCache
     end
   end
 
-  def expire_attribute_indexes
+  def expire_attribute_indexes # :nodoc:
     cache_attributes.try(:each) do |(attribute, fields)|
       IdentityCache.cache.delete(attribute_cache_key_for_attribute_and_previous_values(attribute, fields)) unless was_new_record?
     end
   end
 
-  def expire_cache
+  def expire_cache # :nodoc:
     expire_primary_index
     expire_secondary_indexes
     expire_attribute_indexes
     true
   end
 
-  def was_new_record?
+  def was_new_record? # :nodoc:
     !destroyed? && transaction_changed_attributes.has_key?('id') && transaction_changed_attributes['id'].nil?
   end
 
