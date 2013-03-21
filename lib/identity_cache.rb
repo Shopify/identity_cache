@@ -301,7 +301,6 @@ module IdentityCache
       options[:cache_variable_name]  ||= "cached_#{association}"
       options[:population_method_name]  ||= "populate_#{association}_cache"
 
-      association_class = reflect_on_association(association).klass
 
       unless instance_methods.include?(options[:cached_accessor_name].to_sym)
         self.class_eval(ruby = <<-CODE, __FILE__, __LINE__)
@@ -314,6 +313,7 @@ module IdentityCache
           end
         CODE
 
+        association_class = reflect_on_association(association).klass
         add_parent_expiry_hook(association_class, options.merge(:only_on_foreign_key_change => false))
       end
     end
