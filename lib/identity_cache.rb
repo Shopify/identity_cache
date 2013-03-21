@@ -30,7 +30,7 @@ module IdentityCache
       @logger || Rails.logger
     end
 
-    def should_cache?
+    def should_cache? # :nodoc:
       !readonly && ActiveRecord::Base.connection.open_transactions == 0
     end
 
@@ -50,7 +50,7 @@ module IdentityCache
             result = yield
           end
           result = map_cached_nil_for(result)
-          
+
           if should_cache?
             cache.write(key, result)
           end
@@ -605,16 +605,26 @@ module IdentityCache
   end
 
   def populate_denormalized_cached_association(ivar_name, association_name) # :nodoc:
-    ivar_full_name = :"@#{ivar_name}"
-
-    value = instance_variable_get(ivar_full_name)
-    return value unless value.nil?
-
     reflection = association(association_name)
-    reflection.load_target unless reflection.loaded?
+    current_schema_hash = IdentityCache.memcache_hash(self.class.colums_to_string(reflection.klass.columns))
+
+    ivar_full_name = :"@#{ivar_name}"
+    schema_hash_ivar = :"@#{ivar_name}_schema_hash"
+
+
+    saved_schema_hash = instance_variable_get(schema_hash_ivar)
+    schema_changed = saved_schema_hash && saved_schema_hash != current_schema_hash
+
+    if !schema_changed
+      value = instance_variable_get(ivar_full_name)
+      return value unless value.nil?
+    end
+
+    reflection.load_target unless reflection.loaded? 
 
     loaded_association = send(association_name)
     instance_variable_set(ivar_full_name, IdentityCache.map_cached_nil_for(loaded_association))
+    instance_variable_set(schema_hash_ivar, current_schema_hash)
   end
 
   def primary_cache_index_key # :nodoc:
