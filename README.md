@@ -1,5 +1,5 @@
 # IdentityCache
-[![Build Status](https://api.travis-ci.org/Shopify/identity_cache.png)](http://travis-ci.org/Shopify/identity_cache)
+[![Build Status](https://api.travis-ci.org/Shopify/identity_cache.png?branch=master)](http://travis-ci.org/Shopify/identity_cache)
 
 Opt in read through ActiveRecord caching used in production and extracted from Shopify. IdentityCache lets you specify how you want to cache your model objects, at the model level, and adds a number of convenience methods for accessing those objects through the cache. Memcached is used as the backend cache store, and the database is only hit when a copy of the object cannot be found in Memcached.
 
