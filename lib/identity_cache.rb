@@ -397,9 +397,6 @@ module IdentityCache
       if IdentityCache.should_cache?
 
         require_if_necessary do
-
-          require 'debugger'
-          debugger
           object = IdentityCache.fetch(rails_cache_key(id)){ resolve_cache_miss(id) }
           IdentityCache.logger.error "[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{object.id} for #{object.inspect[(0..100)]} " if object && object.id != id.to_i
           object
