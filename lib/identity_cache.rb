@@ -297,6 +297,11 @@ module IdentityCache
       options[:cache_variable_name]  ||= "cached_#{association}"
       options[:population_method_name]  ||= "populate_#{association}_cache"
 
+
+      association_class = reflect_on_association(association).klass
+      @embedded_associations_columns ||= {}
+      @embedded_associations_columns[name] = columns
+
       unless instance_methods.include?(options[:cached_accessor_name].to_sym)
         self.class_eval(ruby = <<-CODE, __FILE__, __LINE__)
           def #{options[:cached_accessor_name]}
@@ -308,7 +313,6 @@ module IdentityCache
           end
         CODE
 
-        association_class = reflect_on_association(association).klass
         add_parent_expiry_hook(association_class, options.merge(:only_on_foreign_key_change => false))
       end
     end
@@ -393,6 +397,9 @@ module IdentityCache
       if IdentityCache.should_cache?
 
         require_if_necessary do
+
+          require 'debugger'
+          debugger
           object = IdentityCache.fetch(rails_cache_key(id)){ resolve_cache_miss(id) }
           IdentityCache.logger.error "[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{object.id} for #{object.inspect[(0..100)]} " if object && object.id != id.to_i
           object
@@ -543,9 +550,24 @@ module IdentityCache
       rails_cache_key_prefix + id.to_s
     end
 
+    def colums_to_string(columns)
+      columns.sort_by(&:name).map {|c| "#{c.name}:#{c.type}"} * ","
+    end
+
+    def column_list
+
+      parent_list = colums_to_string(columns)
+
+      if !@embedded_associations_columns || @embedded_associations_columns.empty?
+        parent_list
+      else
+        sorted_embedded_association_columns = @embedded_associations_columns.sort.map(&:second)
+        ([parent_list] + sorted_embedded_association_columns.map{ |cols| colums_to_string(cols) }).join(':')
+      end
+    end
+
     def rails_cache_key_prefix
       @rails_cache_key_prefix ||= begin
-        column_list = columns.sort_by(&:name).map {|c| "#{c.name}:#{c.type}"} * ","
         "IDC:blob:#{base_class.name}:#{IdentityCache.memcache_hash(column_list)}:"
       end
     end

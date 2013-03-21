@@ -23,7 +23,7 @@ class SchemaChangeTest < IdentityCache::TestCase
     @record.reload
   end
 
-  def test_foo
+  def test_schema_changes_on_embedded_association_when_the_cached_object_is_already_loaded_in_memmory_should_not_use_the_embedded_cache
     Record.fetch(1)
     AddCoulmnToChild.new.up
     AssociatedRecord.reset_column_information
