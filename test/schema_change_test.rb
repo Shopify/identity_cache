@@ -9,10 +9,6 @@ class SchemaChangeTest < IdentityCache::TestCase
     def down
       remove_column :associated_records, :shiny
     end
-
-    def logger
-      Logger.new('/dev/null')
-    end
   end
 
 
@@ -32,7 +28,8 @@ class SchemaChangeTest < IdentityCache::TestCase
     Record.fetch(1)
     AddCoulmnToChild.new.up
     AssociatedRecord.reset_column_information
-    Record.fetch(1).fetch_associated.shiny
+
+    assert_nothing_raised { Record.fetch(1).fetch_associated.shiny }
   end
 
   def teardown
