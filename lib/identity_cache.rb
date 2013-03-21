@@ -112,6 +112,10 @@ module IdentityCache
       result
     end
 
+    def colums_to_string(columns)
+      columns.sort_by(&:name).map {|c| "#{c.name}:#{c.type}"} * ","
+    end
+
     def included(base) #:nodoc:
       raise AlreadyIncludedError if base.respond_to? :cache_indexes
 
@@ -297,10 +301,7 @@ module IdentityCache
       options[:cache_variable_name]  ||= "cached_#{association}"
       options[:population_method_name]  ||= "populate_#{association}_cache"
 
-
       association_class = reflect_on_association(association).klass
-      @embedded_associations_columns ||= {}
-      @embedded_associations_columns[name] = columns
 
       unless instance_methods.include?(options[:cached_accessor_name].to_sym)
         self.class_eval(ruby = <<-CODE, __FILE__, __LINE__)
@@ -547,25 +548,10 @@ module IdentityCache
       rails_cache_key_prefix + id.to_s
     end
 
-    def colums_to_string(columns)
-      columns.sort_by(&:name).map {|c| "#{c.name}:#{c.type}"} * ","
-    end
-
-    def column_list
-
-      parent_list = colums_to_string(columns)
-
-      if !@embedded_associations_columns || @embedded_associations_columns.empty?
-        parent_list
-      else
-        sorted_embedded_association_columns = @embedded_associations_columns.sort.map(&:second)
-        ([parent_list] + sorted_embedded_association_columns.map{ |cols| colums_to_string(cols) }).join(':')
-      end
-    end
 
     def rails_cache_key_prefix
       @rails_cache_key_prefix ||= begin
-        "IDC:blob:#{base_class.name}:#{IdentityCache.memcache_hash(column_list)}:"
+        "IDC:blob:#{base_class.name}:#{IdentityCache.memcache_hash(IdentityCache.colums_to_string(columns))}:"
       end
     end
 
@@ -606,7 +592,7 @@ module IdentityCache
 
   def populate_denormalized_cached_association(ivar_name, association_name) # :nodoc:
     reflection = association(association_name)
-    current_schema_hash = IdentityCache.memcache_hash(self.class.colums_to_string(reflection.klass.columns))
+    current_schema_hash = IdentityCache.memcache_hash(IdentityCache.colums_to_string(reflection.klass.columns))
 
     ivar_full_name = :"@#{ivar_name}"
     schema_hash_ivar = :"@#{ivar_name}_schema_hash"

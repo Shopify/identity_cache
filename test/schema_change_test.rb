@@ -9,11 +9,16 @@ class SchemaChangeTest < IdentityCache::TestCase
     def down
       remove_column :associated_records, :shiny
     end
+
+    def logger
+      Logger.new('/dev/null')
+    end
   end
 
 
   def setup
     super
+    ActiveRecord::Migration.verbose = false
     Record.cache_has_one :associated
     Record.cache_index :title, :unique => true
     @record = Record.new(:title => 'foo')
@@ -32,5 +37,6 @@ class SchemaChangeTest < IdentityCache::TestCase
 
   def teardown
     AddCoulmnToChild.new.down
+    ActiveRecord::Migration.verbose = true
   end
 end
