@@ -11,29 +11,71 @@ class SchemaChangeTest < IdentityCache::TestCase
     end
   end
 
+  class AddCoulmnToDeepChild < ActiveRecord::Migration
+    def up
+      add_column :deeply_associated_records, :new_column, :string
+    end
+
+    def down
+      remove_column :deeply_associated_records, :new_column
+    end
+  end
+
 
   def setup
     super
+
+    AssociatedRecord.reset_column_information
+    DeeplyAssociatedRecord.reset_column_information
+
     ActiveRecord::Migration.verbose = false
     Record.cache_has_one :associated
     Record.cache_index :title, :unique => true
+    AssociatedRecord.cache_has_many :deeply_associated_records, :embed => true
+
+    @associated_record = AssociatedRecord.new(:name => 'bar')
+
+    @deeply_associated_record = DeeplyAssociatedRecord.new(:name => "corge")
+
+    @associated_record.deeply_associated_records << @deeply_associated_record
+    @associated_record.deeply_associated_records << DeeplyAssociatedRecord.new(:name => "qux")
+
     @record = Record.new(:title => 'foo')
-    @record.associated = AssociatedRecord.new(:name => 'bar')
-    @record.save
+    @record.associated = @associated_record
+
+    @associated_record.save!
+    @record.save!
 
     @record.reload
   end
 
-  def test_schema_changes_on_embedded_association_when_the_cached_object_is_already_loaded_in_memmory_should_not_use_the_embedded_cache
-    Record.fetch(1)
+  def test_schema_changes_on_embedded_association_when_the_cached_object_is_already_in_the_cache_should_request_from_the_db
+    record = Record.fetch(@record.id)
     AddCoulmnToChild.new.up
     AssociatedRecord.reset_column_information
 
-    assert_nothing_raised { Record.fetch(1).fetch_associated.shiny }
+    assert_nothing_raised { record.fetch_associated.shiny }
+
+    assert_no_queries { record.fetch_associated.shiny }
+    AddCoulmnToChild.new.down
   end
 
-  def teardown
-    AddCoulmnToChild.new.down
-    ActiveRecord::Migration.verbose = true
+  def test_schema_changes_on_deeply_embedded_association_when_the_cached_object_is_already_in_the_cache_should_request_from_the_db
+    record_from_cache = Record.fetch(@record.id)
+    associated_record_from_cache = record_from_cache.fetch_associated
+
+    AddCoulmnToDeepChild.new.up
+    DeeplyAssociatedRecord.reset_column_information
+
+    assert_nothing_raised do
+      associated_record_from_cache.fetch_deeply_associated_records.map(&:new_column)
+    end
+
+    assert_no_queries do
+      associated_record_from_cache.fetch_deeply_associated_records.each{ |obj| assert_nil obj.new_column }
+      record_from_cache.fetch_associated.fetch_deeply_associated_records.each{ |obj| assert_nil obj.new_column }
+    end
+
+    AddCoulmnToDeepChild.new.down
   end
 end
