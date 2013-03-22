@@ -24,7 +24,10 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
   end
 
   def test_on_cache_miss_record_should_embed_nil_object
-    @record.expects(:associated => nil)
+
+    @record.associated = nil
+    @record.save!
+    @record.reload
     Record.expects(:find_by_id).with(@record.id, :include => Record.cache_fetch_includes).returns(@record)
     IdentityCache.cache.expects(:read).with(@record.secondary_cache_index_key_for_current_values([:title]))
     IdentityCache.cache.expects(:read).with(@record.primary_cache_index_key)
@@ -57,7 +60,10 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
   end
 
   def test_on_cache_hit_record_should_come_back_with_cached_nil_association
-    @record.expects(:associated => nil)
+    @record.associated = nil
+    @record.save!
+    @record.reload
+
     Record.expects(:find_by_id).with(1, :include => Record.cache_fetch_includes).once.returns(@record)
     Record.fetch_by_title('foo')
 
