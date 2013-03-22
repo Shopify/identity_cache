@@ -112,7 +112,7 @@ module IdentityCache
       result
     end
 
-    def colums_to_string(columns)
+    def columns_to_string(columns)
       columns.sort_by(&:name).map {|c| "#{c.name}:#{c.type}"} * ","
     end
 
@@ -551,7 +551,7 @@ module IdentityCache
 
     def rails_cache_key_prefix
       @rails_cache_key_prefix ||= begin
-        "IDC:blob:#{base_class.name}:#{IdentityCache.memcache_hash(IdentityCache.colums_to_string(columns))}:"
+        "IDC:blob:#{base_class.name}:#{IdentityCache.memcache_hash(IdentityCache.columns_to_string(columns))}:"
       end
     end
 
@@ -592,8 +592,8 @@ module IdentityCache
 
   def populate_denormalized_cached_association(ivar_name, association_name) # :nodoc:
     reflection = association(association_name)
-    colums_string = IdentityCache.colums_to_string(reflection.klass.columns)
-    current_schema_hash = IdentityCache.memcache_hash(colums_string)
+    columns_string = IdentityCache.columns_to_string(reflection.klass.columns)
+    current_schema_hash = IdentityCache.memcache_hash(columns_string)
 
     ivar_full_name = :"@#{ivar_name}"
     schema_hash_ivar = :"@#{ivar_name}_schema_hash"

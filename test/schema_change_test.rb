@@ -1,7 +1,7 @@
 require "test_helper"
 
 class SchemaChangeTest < IdentityCache::TestCase
-  class AddCoulmnToChild < ActiveRecord::Migration
+  class AddColumnToChild < ActiveRecord::Migration
     def up
       add_column :associated_records, :shiny, :string
     end
@@ -11,7 +11,7 @@ class SchemaChangeTest < IdentityCache::TestCase
     end
   end
 
-  class AddCoulmnToDeepChild < ActiveRecord::Migration
+  class AddColumnToDeepChild < ActiveRecord::Migration
     def up
       add_column :deeply_associated_records, :new_column, :string
     end
@@ -51,20 +51,20 @@ class SchemaChangeTest < IdentityCache::TestCase
 
   def test_schema_changes_on_embedded_association_when_the_cached_object_is_already_in_the_cache_should_request_from_the_db
     record = Record.fetch(@record.id)
-    AddCoulmnToChild.new.up
+    AddColumnToChild.new.up
     AssociatedRecord.reset_column_information
 
     assert_nothing_raised { record.fetch_associated.shiny }
 
     assert_no_queries { record.fetch_associated.shiny }
-    AddCoulmnToChild.new.down
+    AddColumnToChild.new.down
   end
 
   def test_schema_changes_on_deeply_embedded_association_when_the_cached_object_is_already_in_the_cache_should_request_from_the_db
     record_from_cache = Record.fetch(@record.id)
     associated_record_from_cache = record_from_cache.fetch_associated
 
-    AddCoulmnToDeepChild.new.up
+    AddColumnToDeepChild.new.up
     DeeplyAssociatedRecord.reset_column_information
 
     assert_nothing_raised do
@@ -76,6 +76,6 @@ class SchemaChangeTest < IdentityCache::TestCase
       record_from_cache.fetch_associated.fetch_deeply_associated_records.each{ |obj| assert_nil obj.new_column }
     end
 
-    AddCoulmnToDeepChild.new.down
+    AddColumnToDeepChild.new.down
   end
 end
