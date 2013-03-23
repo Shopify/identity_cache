@@ -54,23 +54,39 @@ class SchemaChangeTest < IdentityCache::TestCase
 
   def test_schema_changes_on_embedded_association_when_the_cached_object_is_already_in_the_cache_should_request_from_the_db
     record = Record.fetch(@record.id)
+    record.fetch_associated
 
     AddColumnToChild.new.up
     read_new_schema
 
-    assert_nothing_raised { record.fetch_associated.shiny }
+    # Reloading the association queries
+    # SHOW FULL FIELDS FROM `associated_records`
+    # SHOW TABLES LIKE 'associated_records'
+    # SELECT  `associated_records`.* FROM `associated_records`  WHERE `associated_records`.`record_id` = 1 ORDER BY id ASC LIMIT 1.
+    assert_queries(3) do
+      assert_nothing_raised { record.fetch_associated.shiny }
+    end
+
     assert_no_queries { record.fetch_associated.shiny }
   end
 
   def test_schema_changes_on_deeply_embedded_association_when_the_cached_object_is_already_in_the_cache_should_request_from_the_db
     record = Record.fetch(@record.id)
     associated_record_from_cache = record.fetch_associated
+    associated_record_from_cache.fetch_deeply_associated_records
 
     AddColumnToDeepChild.new.up
     read_new_schema
 
-    assert_nothing_raised do
-      associated_record_from_cache.fetch_deeply_associated_records.map(&:new_column)
+    # Loading association queries
+    # SHOW FULL FIELDS FROM `deeply_associated_records`
+    # SHOW FULL FIELDS FROM `associated_records`
+    # SHOW TABLES LIKE 'deeply_associated_records'
+    # SELECT `deeply_associated_records`.* FROM `deeply_associated_records` WHERE `deeply_associated_records`.`associated_record_id` = 1 ORDER BY name DESC.
+    assert_queries(4) do
+      assert_nothing_raised do
+        associated_record_from_cache.fetch_deeply_associated_records.map(&:new_column)
+      end
     end
 
     assert_no_queries do
