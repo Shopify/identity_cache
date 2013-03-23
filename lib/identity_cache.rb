@@ -135,13 +135,18 @@ module IdentityCache
       base.class_attribute :cache_attributes
       base.class_attribute :cached_has_manys
       base.class_attribute :cached_has_ones
+      base.class_attribute :embedded_schema_hashes
       base.send(:extend, ClassMethods)
+
+      base.cached_has_manys = {}
+      base.cached_has_ones = {}
+      base.embedded_schema_hashes = {}
+      base.cache_attributes = []
+      base.cache_indexes = []
 
       base.private_class_method :require_if_necessary, :build_normalized_has_many_cache, :build_denormalized_association_cache, :add_parent_expiry_hook,
         :identity_cache_multiple_value_dynamic_fetcher, :identity_cache_single_value_dynamic_fetcher
 
-      base.class_attribute :embedded_schema_hashes
-      base.embedded_schema_hashes = {}
 
       base.instance_eval(ruby = <<-CODE, __FILE__, __LINE__)
         private :expire_cache, :was_new_record?, :fetch_denormalized_cached_association, :populate_denormalized_cached_association
@@ -179,7 +184,6 @@ module IdentityCache
     #
     def cache_index(*fields)
       options = fields.extract_options!
-      self.cache_indexes ||= []
       self.cache_indexes.push fields
 
       field_list = fields.join("_and_")
@@ -255,7 +259,6 @@ module IdentityCache
       options[:embed] ||= false
       options[:inverse_name] ||= self.name.underscore.to_sym
       raise InverseAssociationError unless self.reflect_on_association(association)
-      self.cached_has_manys ||= {}
       self.cached_has_manys[association] = options
 
       if options[:embed]
@@ -293,7 +296,6 @@ module IdentityCache
       options[:embed] ||= true
       options[:inverse_name] ||= self.name.underscore.to_sym
       raise InverseAssociationError unless self.reflect_on_association(association)
-      self.cached_has_ones ||= {}
       self.cached_has_ones[association] = options
 
       build_denormalized_association_cache(association, options)
@@ -369,7 +371,6 @@ module IdentityCache
       options[:by] ||= :id
       fields = Array(options[:by])
 
-      self.cache_attributes ||= []
       self.cache_attributes.push [attribute, fields]
 
       field_list = fields.join("_and_")
