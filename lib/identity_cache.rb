@@ -112,7 +112,7 @@ module IdentityCache
       result
     end
 
-    def columns_to_string(columns)
+    def schema_to_string(columns)
       columns.sort_by(&:name).map {|c| "#{c.name}:#{c.type}"} * ","
     end
 
@@ -139,6 +139,9 @@ module IdentityCache
 
       base.private_class_method :require_if_necessary, :build_normalized_has_many_cache, :build_denormalized_association_cache, :add_parent_expiry_hook,
         :identity_cache_multiple_value_dynamic_fetcher, :identity_cache_single_value_dynamic_fetcher
+
+      base.class_attribute :embedded_schema_hashes
+      base.embedded_schema_hashes = {}
 
       base.instance_eval(ruby = <<-CODE, __FILE__, __LINE__)
         private :expire_cache, :was_new_record?, :fetch_denormalized_cached_association, :populate_denormalized_cached_association
@@ -551,7 +554,7 @@ module IdentityCache
 
     def rails_cache_key_prefix
       @rails_cache_key_prefix ||= begin
-        "IDC:blob:#{base_class.name}:#{IdentityCache.memcache_hash(IdentityCache.columns_to_string(columns))}:"
+        "IDC:blob:#{base_class.name}:#{IdentityCache.memcache_hash(IdentityCache.schema_to_string(columns))}:"
       end
     end
 
@@ -591,27 +594,27 @@ module IdentityCache
   end
 
   def populate_denormalized_cached_association(ivar_name, association_name) # :nodoc:
-    reflection = association(association_name)
-    columns_string = IdentityCache.columns_to_string(reflection.klass.columns)
-    current_schema_hash = IdentityCache.memcache_hash(columns_string)
-
     ivar_full_name = :"@#{ivar_name}"
     schema_hash_ivar = :"@#{ivar_name}_schema_hash"
+    reflection = association(association_name)
+
+    current_schema_hash = self.class.embedded_schema_hashes[association_name] ||= begin
+      IdentityCache.memcache_hash(IdentityCache.schema_to_string(reflection.klass.columns))
+    end
 
     saved_schema_hash = instance_variable_get(schema_hash_ivar)
-    schema_changed = saved_schema_hash && saved_schema_hash != current_schema_hash
 
-    if !schema_changed
+    if saved_schema_hash == current_schema_hash
       value = instance_variable_get(ivar_full_name)
       return value unless value.nil?
     end
 
-    reflection.load_target unless reflection.loaded? 
+    reflection.load_target unless reflection.loaded?
 
     loaded_association = send(association_name)
 
     instance_variable_set(ivar_full_name, IdentityCache.map_cached_nil_for(loaded_association))
-    instance_variable_set(schema_hash_ivar, current_schema_hash)
+    instance_variable_set(schema_hash_ivar, current_schema_hash) 
   end
 
   def primary_cache_index_key # :nodoc:

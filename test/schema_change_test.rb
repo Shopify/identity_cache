@@ -21,25 +21,19 @@ class SchemaChangeTest < IdentityCache::TestCase
     end
   end
 
-
   def setup
     super
-
-    AssociatedRecord.reset_column_information
-    DeeplyAssociatedRecord.reset_column_information
-
     ActiveRecord::Migration.verbose = false
-    Record.cache_has_one :associated
+
+    read_new_schema
+    Record.cache_has_one :associated, :embed => true
     Record.cache_index :title, :unique => true
     AssociatedRecord.cache_has_many :deeply_associated_records, :embed => true
 
     @associated_record = AssociatedRecord.new(:name => 'bar')
-
     @deeply_associated_record = DeeplyAssociatedRecord.new(:name => "corge")
-
     @associated_record.deeply_associated_records << @deeply_associated_record
     @associated_record.deeply_associated_records << DeeplyAssociatedRecord.new(:name => "qux")
-
     @record = Record.new(:title => 'foo')
     @record.associated = @associated_record
 
@@ -49,23 +43,31 @@ class SchemaChangeTest < IdentityCache::TestCase
     @record.reload
   end
 
+  # This helper simulates the models being reloaded
+  def read_new_schema
+    AssociatedRecord.reset_column_information
+    DeeplyAssociatedRecord.reset_column_information
+
+    AssociatedRecord.embedded_schema_hashes = {}
+    Record.embedded_schema_hashes = {}
+  end
+
   def test_schema_changes_on_embedded_association_when_the_cached_object_is_already_in_the_cache_should_request_from_the_db
     record = Record.fetch(@record.id)
+
     AddColumnToChild.new.up
-    AssociatedRecord.reset_column_information
+    read_new_schema
 
     assert_nothing_raised { record.fetch_associated.shiny }
-
     assert_no_queries { record.fetch_associated.shiny }
-    AddColumnToChild.new.down
   end
 
   def test_schema_changes_on_deeply_embedded_association_when_the_cached_object_is_already_in_the_cache_should_request_from_the_db
-    record_from_cache = Record.fetch(@record.id)
-    associated_record_from_cache = record_from_cache.fetch_associated
+    record = Record.fetch(@record.id)
+    associated_record_from_cache = record.fetch_associated
 
     AddColumnToDeepChild.new.up
-    DeeplyAssociatedRecord.reset_column_information
+    read_new_schema
 
     assert_nothing_raised do
       associated_record_from_cache.fetch_deeply_associated_records.map(&:new_column)
@@ -73,9 +75,7 @@ class SchemaChangeTest < IdentityCache::TestCase
 
     assert_no_queries do
       associated_record_from_cache.fetch_deeply_associated_records.each{ |obj| assert_nil obj.new_column }
-      record_from_cache.fetch_associated.fetch_deeply_associated_records.each{ |obj| assert_nil obj.new_column }
+      record.fetch_associated.fetch_deeply_associated_records.each{ |obj| assert_nil obj.new_column }
     end
-
-    AddColumnToDeepChild.new.down
   end
 end
