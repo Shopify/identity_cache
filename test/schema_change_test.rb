@@ -5,19 +5,11 @@ class SchemaChangeTest < IdentityCache::TestCase
     def up
       add_column :associated_records, :shiny, :string
     end
-
-    def down
-      remove_column :associated_records, :shiny
-    end
   end
 
   class AddColumnToDeepChild < ActiveRecord::Migration
     def up
       add_column :deeply_associated_records, :new_column, :string
-    end
-
-    def down
-      remove_column :deeply_associated_records, :new_column
     end
   end
 
