@@ -19,7 +19,6 @@ class SchemaChangeTest < IdentityCache::TestCase
 
     read_new_schema
     Record.cache_has_one :associated, :embed => true
-    Record.cache_index :title, :unique => true
     AssociatedRecord.cache_has_many :deeply_associated_records, :embed => true
 
     @associated_record = AssociatedRecord.new(:name => 'bar')
