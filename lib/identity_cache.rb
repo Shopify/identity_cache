@@ -30,7 +30,7 @@ module IdentityCache
       @logger || Rails.logger
     end
 
-    def should_cache?
+    def should_cache? # :nodoc:
       !readonly && ActiveRecord::Base.connection.open_transactions == 0
     end
 
@@ -50,6 +50,7 @@ module IdentityCache
             result = yield
           end
           result = map_cached_nil_for(result)
+
           if should_cache?
             cache.write(key, result)
           end
@@ -111,6 +112,10 @@ module IdentityCache
       result
     end
 
+    def schema_to_string(columns)
+      columns.sort_by(&:name).map {|c| "#{c.name}:#{c.type}"} * ","
+    end
+
     def included(base) #:nodoc:
       raise AlreadyIncludedError if base.respond_to? :cache_indexes
 
@@ -130,10 +135,18 @@ module IdentityCache
       base.class_attribute :cache_attributes
       base.class_attribute :cached_has_manys
       base.class_attribute :cached_has_ones
+      base.class_attribute :embedded_schema_hashes
       base.send(:extend, ClassMethods)
+
+      base.cached_has_manys = {}
+      base.cached_has_ones = {}
+      base.embedded_schema_hashes = {}
+      base.cache_attributes = []
+      base.cache_indexes = []
 
       base.private_class_method :require_if_necessary, :build_normalized_has_many_cache, :build_denormalized_association_cache, :add_parent_expiry_hook,
         :identity_cache_multiple_value_dynamic_fetcher, :identity_cache_single_value_dynamic_fetcher
+
 
       base.instance_eval(ruby = <<-CODE, __FILE__, __LINE__)
         private :expire_cache, :was_new_record?, :fetch_denormalized_cached_association, :populate_denormalized_cached_association
@@ -171,7 +184,6 @@ module IdentityCache
     #
     def cache_index(*fields)
       options = fields.extract_options!
-      self.cache_indexes ||= []
       self.cache_indexes.push fields
 
       field_list = fields.join("_and_")
@@ -247,7 +259,6 @@ module IdentityCache
       options[:embed] ||= false
       options[:inverse_name] ||= self.name.underscore.to_sym
       raise InverseAssociationError unless self.reflect_on_association(association)
-      self.cached_has_manys ||= {}
       self.cached_has_manys[association] = options
 
       if options[:embed]
@@ -285,7 +296,6 @@ module IdentityCache
       options[:embed] ||= true
       options[:inverse_name] ||= self.name.underscore.to_sym
       raise InverseAssociationError unless self.reflect_on_association(association)
-      self.cached_has_ones ||= {}
       self.cached_has_ones[association] = options
 
       build_denormalized_association_cache(association, options)
@@ -295,6 +305,7 @@ module IdentityCache
       options[:cached_accessor_name] ||= "fetch_#{association}"
       options[:cache_variable_name]  ||= "cached_#{association}"
       options[:population_method_name]  ||= "populate_#{association}_cache"
+
 
       unless instance_methods.include?(options[:cached_accessor_name].to_sym)
         self.class_eval(ruby = <<-CODE, __FILE__, __LINE__)
@@ -360,7 +371,6 @@ module IdentityCache
       options[:by] ||= :id
       fields = Array(options[:by])
 
-      self.cache_attributes ||= []
       self.cache_attributes.push [attribute, fields]
 
       field_list = fields.join("_and_")
@@ -393,7 +403,6 @@ module IdentityCache
 
         require_if_necessary do
           object = IdentityCache.fetch(rails_cache_key(id)){ resolve_cache_miss(id) }
-          object.clear_association_cache if object.respond_to?(:clear_association_cache)
           IdentityCache.logger.error "[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{object.id} for #{object.inspect[(0..100)]} " if object && object.id != id.to_i
           object
         end
@@ -427,12 +436,7 @@ module IdentityCache
             records
           end
 
-          objects_in_order = cache_keys.map {|key| objects_by_key[key] }
-          objects_in_order.each do |object|
-            object.clear_association_cache if object.respond_to?(:clear_association_cache)
-          end
-
-          objects_in_order.compact
+          cache_keys.map {|key| objects_by_key[key] }.compact
         end
 
       else
@@ -548,10 +552,10 @@ module IdentityCache
       rails_cache_key_prefix + id.to_s
     end
 
+
     def rails_cache_key_prefix
       @rails_cache_key_prefix ||= begin
-        column_list = columns.sort_by(&:name).map {|c| "#{c.name}:#{c.type}"} * ","
-        "IDC:blob:#{base_class.name}:#{IdentityCache.memcache_hash(column_list)}:"
+        "IDC:blob:#{base_class.name}:#{IdentityCache.memcache_hash(IdentityCache.schema_to_string(columns))}:"
       end
     end
 
@@ -577,6 +581,7 @@ module IdentityCache
         child_objects.each(&:populate_association_caches)
       end
     end
+    self.clear_association_cache if self.respond_to?(:clear_association_cache)
   end
 
   def fetch_denormalized_cached_association(ivar_name, association_name) # :nodoc:
@@ -591,14 +596,25 @@ module IdentityCache
 
   def populate_denormalized_cached_association(ivar_name, association_name) # :nodoc:
     ivar_full_name = :"@#{ivar_name}"
-
-    value = instance_variable_get(ivar_full_name)
-    return value unless value.nil?
-
+    schema_hash_ivar = :"@#{ivar_name}_schema_hash"
     reflection = association(association_name)
+
+    current_schema_hash = self.class.embedded_schema_hashes[association_name] ||= begin
+      IdentityCache.memcache_hash(IdentityCache.schema_to_string(reflection.klass.columns))
+    end
+
+    saved_schema_hash = instance_variable_get(schema_hash_ivar)
+
+    if saved_schema_hash == current_schema_hash
+      value = instance_variable_get(ivar_full_name)
+      return value unless value.nil?
+    end
+
     reflection.load_target unless reflection.loaded?
 
     loaded_association = send(association_name)
+
+    instance_variable_set(schema_hash_ivar, current_schema_hash)
     instance_variable_set(ivar_full_name, IdentityCache.map_cached_nil_for(loaded_association))
   end
 

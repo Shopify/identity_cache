@@ -44,6 +44,12 @@ class IdentityCache::TestCase < MiniTest::Unit::TestCase
       assert_equal num, counter.log.size, "#{counter.log.size} instead of #{num} queries were executed.#{counter.log.size == 0 ? '' : "\nQueries:\n#{counter.log.join("\n")}"}"
   end
 
+  def assert_no_queries
+    assert_queries(0) do
+      yield
+    end
+  end
+
   def cache_hash(key)
     CityHash.hash64(key)
   end
