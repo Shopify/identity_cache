@@ -614,8 +614,8 @@ module IdentityCache
 
     loaded_association = send(association_name)
 
+    instance_variable_set(schema_hash_ivar, current_schema_hash)
     instance_variable_set(ivar_full_name, IdentityCache.map_cached_nil_for(loaded_association))
-    instance_variable_set(schema_hash_ivar, current_schema_hash) 
   end
 
   def primary_cache_index_key # :nodoc:
