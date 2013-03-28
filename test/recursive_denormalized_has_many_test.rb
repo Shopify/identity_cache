@@ -55,13 +55,16 @@ class RecursiveDenormalizedHasManyTest < IdentityCache::TestCase
   end
 
   def test_on_cache_miss_child_record_fetch_should_include_nested_associations_to_avoid_n_plus_ones
-    record_from_cache_miss = Record.fetch(@record.id)
-    expected = @associated_record.deeply_associated_records
-    
-    assert record_from_cache_miss.fetch_associated_records[0].deeply_associated_records.loaded?
-    assert record_from_cache_miss.fetch_associated_records[1].deeply_associated_records.loaded?
+    assert_queries(5) do
+      # one for the top level record
+      # one for the mid level has_many association
+      # one for the mid level has_one association
+      # one for the deep level level has_many on the mid level has_many association
+      # one for the deep level level has_many on the mid level has_one association
+      record_from_cache_miss = Record.fetch(@record.id)
+    end
   end
-  
+
   def test_saving_child_record_should_expire_parent_record
     IdentityCache.cache.expects(:delete).with(@record.primary_cache_index_key)
     IdentityCache.cache.expects(:delete).with(@associated_record.primary_cache_index_key)

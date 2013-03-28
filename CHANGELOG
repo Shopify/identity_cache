@@ -1,0 +1,1 @@
+* Fix: Existent embedded entries will no longer raise when ActiveModel::MissingAttributeError when accessing a newly created attribute.

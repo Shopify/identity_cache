@@ -1,5 +1,5 @@
 # IdentityCache
-[![Build Status](https://api.travis-ci.org/Shopify/identity_cache.png)](http://travis-ci.org/Shopify/identity_cache)
+[![Build Status](https://api.travis-ci.org/Shopify/identity_cache.png?branch=master)](http://travis-ci.org/Shopify/identity_cache)
 
 Opt in read through ActiveRecord caching used in production and extracted from Shopify. IdentityCache lets you specify how you want to cache your model objects, at the model level, and adds a number of convenience methods for accessing those objects through the cache. Memcached is used as the backend cache store, and the database is only hit when a copy of the object cannot be found in Memcached.
 
@@ -10,7 +10,7 @@ IdentityCache keeps track of the objects that have cached indexes and uses an `a
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'identity_cache', :git => 'git://github.com/Shopify/identity_cache.git'
+gem 'identity_cache'
 ```
 
 And then execute:
@@ -25,7 +25,7 @@ config.identity_cache_store = :mem_cache_store, Memcached::Rails.new(:servers =>
 
 ## Usage
 
-### Basic Usage:
+### Basic Usage
 
 ``` ruby
 class Product < ActiveRecord::Base
@@ -197,7 +197,7 @@ class ApplicationController < ActionController::Base
 end
 ```
 
-## Cavets
+## Caveats
 
 A word of warning. Some versions of rails will silently rescue all exceptions in `after_commit` hooks. If an `after_commit` fails before the cache expiry `after_commit` the cache will not be expired and you will be left with stale data.
 
@@ -210,7 +210,7 @@ Caching is hard. Chances are that if some feature was left out, it was left out 
 Types of contributions we are looking for:
 
 - Bug fixes
-- Performance improvments
+- Performance improvements
 - Documentation and/or clearer interfaces
 
 ### How To Contribute
