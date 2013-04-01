@@ -1,5 +1,6 @@
 module DatabaseConnection
   def self.setup
+    DATABASE_CONFIG['port'] ||= $mysql_port
     ActiveRecord::Base.establish_connection(DATABASE_CONFIG)
     ActiveRecord::Base.connection
   rescue

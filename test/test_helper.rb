@@ -6,6 +6,14 @@ require 'helpers/database_connection'
 
 require File.dirname(__FILE__) + '/../lib/identity_cache'
 
+if ENV['BOXEN_HOME'].present?
+  $memcached_port = 21211
+  $mysql_port = 13306
+else
+  $memcached_port = 11211
+  $mysql_port = 3306
+end
+
 DatabaseConnection.setup
 
 class IdentityCache::TestCase < MiniTest::Unit::TestCase
