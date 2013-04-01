@@ -110,6 +110,7 @@ class FetchMultiTest < IdentityCache::TestCase
   def test_fetch_multi_includes_cached_associations
     Record.send(:cache_has_many, :associated_records, :embed => true)
     Record.send(:cache_has_one, :associated)
+    Record.send(:cache_belongs_to, :record)
 
     cache_response = {}
     cache_response[@bob_blob_key] = nil
@@ -122,6 +123,24 @@ class FetchMultiTest < IdentityCache::TestCase
     Record.expects(:where).returns(mock_relation)
     mock_relation.expects(:includes).with([:associated_records, :associated]).returns(stub(:all => [@bob, @joe, @fred]))
     assert_equal [@bob, @joe, @fred], Record.fetch_multi(@bob.id, @joe.id, @fred.id)
+  end
+
+  def test_fetch_multi_includes_cached_associations_and_other_asked_for_associations
+    Record.send(:cache_has_many, :associated_records, :embed => true)
+    Record.send(:cache_has_one, :associated)
+    Record.send(:cache_belongs_to, :record)
+
+    cache_response = {}
+    cache_response[@bob_blob_key] = nil
+    cache_response[@joe_blob_key] = nil
+    cache_response[@fred_blob_key] = nil
+
+    IdentityCache.cache.expects(:read_multi).with(@bob_blob_key, @joe_blob_key, @fred_blob_key).returns(cache_response)
+
+    mock_relation = mock("ActiveRecord::Relation")
+    Record.expects(:where).returns(mock_relation)
+    mock_relation.expects(:includes).with([:associated_records, :associated, {:record => []}]).returns(stub(:all => [@bob, @joe, @fred]))
+    assert_equal [@bob, @joe, @fred], Record.fetch_multi(@bob.id, @joe.id, @fred.id, {:includes => :record})
   end
 
   def test_find_batch_coerces_ids_to_primary_key_type
