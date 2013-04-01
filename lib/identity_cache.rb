@@ -526,6 +526,12 @@ module IdentityCache
       (cached_has_manys || {}).merge(cached_has_ones || {}).merge(cached_belongs_tos || {})
     end
 
+    def all_cached_associations_needing_population
+      all_cached_associations.select do |cached_association, options|
+        options[:population_method_name].present? # non-embedded belongs_to associations don't need population
+      end
+    end
+
     def cache_fetch_includes(additions = {})
       additions = hashify_includes_structure(additions)
       embedded_associations = all_cached_associations.select { |name, options| options[:embed] }
@@ -539,7 +545,7 @@ module IdentityCache
           child_includes = child_class.cache_fetch_includes(child_includes)
         end
 
-        if child_includes.nil? || child_includes.empty?
+        if child_includes.blank?
           child_association
         else
           { child_association => child_includes }
@@ -608,8 +614,7 @@ module IdentityCache
   end
 
   def populate_association_caches # :nodoc:
-    self.class.all_cached_associations.each do |cached_association, options|
-      next unless options[:population_method_name]
+    self.class.all_cached_associations_needing_population.each do |cached_association, options|
       send(options[:population_method_name])
       reflection = options[:embed] && self.class.reflect_on_association(cached_association)
       if reflection && reflection.klass.respond_to?(:cached_has_manys)
