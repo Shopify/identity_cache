@@ -4,7 +4,7 @@ module Rails
   end
 
   def self.cache
-    @@cache ||= Cache.new
+    @@cache ||= Cache.new("localhost:#{$memcached_port}")
   end
 
   class Logger
