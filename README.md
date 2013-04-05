@@ -60,7 +60,7 @@ end
 # If the object isn't in the cache it is pulled from the db and stored in the cache.
 product = Product.fetch_by_handle(handle)
 
-products = Product.fetch_by_vendor_and_product_type(handle)
+products = Product.fetch_by_vendor_and_product_type(vendor, product_type)
 ```
 
 This gives you a lot of freedom to use your objects the way you want to, and doesn't get in your way. This does keep an independent cache copy in Memcached so you might want to watch the number of different caches that are being added.
