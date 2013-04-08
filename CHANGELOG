@@ -1,1 +1,3 @@
+0.0.2
 * Fix: Existent embedded entries will no longer raise when ActiveModel::MissingAttributeError when accessing a newly created attribute.
+* Fix: Do not marshal raw AcriveRecord associations
