@@ -21,4 +21,15 @@ module Rails
   def self.logger
     @logger = Logger.new
   end
+
+  class Configuration
+    def self.identity_cache_store
+      :mem_cache_store
+    end
+  end
+
+  def self.configuration
+    @@configuration ||= Configuration.new
+  end
+
 end

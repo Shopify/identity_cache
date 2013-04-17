@@ -1,7 +1,7 @@
 require 'minitest/autorun'
 require 'mocha/setup'
 require 'active_record'
-require 'helpers/cache'
+require 'helpers/rails'
 require 'helpers/database_connection'
 
 require File.dirname(__FILE__) + '/../lib/identity_cache'
