@@ -21,4 +21,15 @@ module Rails
   def self.logger
     @logger = Logger.new
   end
+
+  class Configuration
+    def self.identity_cache_store
+      ActiveSupport::Cache::MemCacheStore.new("localhost:#{$memcached_port}")
+    end
+  end
+
+  def self.configuration
+    @@configuration ||= Configuration.new
+  end
+
 end

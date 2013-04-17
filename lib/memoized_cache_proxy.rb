@@ -5,7 +5,7 @@ module IdentityCache
     attr_writer :memcache
 
     def initialize(memcache = nil)
-      @memcache = memcache || Rails.cache
+      @memcache = memcache || config_cache_store || Rails.cache
       @key_value_maps = Hash.new {|h, k| h[k] = {} }
     end
 
@@ -59,6 +59,12 @@ module IdentityCache
     end
 
     private
+
+    def config_cache_store
+      rails_config = Rails.configuration
+      return unless rails_config.respond_to?(:identity_cache_store)
+      ActiveSupport::Cache.lookup_store(rails_config.identity_cache_store)
+    end
 
     def clear_memoization
       @key_value_maps.delete(Thread.current.object_id)
