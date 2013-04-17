@@ -24,7 +24,7 @@ module Rails
 
   class Configuration
     def self.identity_cache_store
-      :mem_cache_store
+      ActiveSupport::Cache::MemCacheStore.new("localhost:#{$memcached_port}")
     end
   end
 
