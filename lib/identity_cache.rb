@@ -188,13 +188,11 @@ module IdentityCache
 
       field_list = fields.join("_and_")
       arg_list = (0...fields.size).collect { |i| "arg#{i}" }.join(',')
-      where_list = fields.each_with_index.collect { |f, i| "#{f} = \#{quote_value(arg#{i})}" }.join(" AND ")
 
       if options[:unique]
         self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__)
           def fetch_by_#{field_list}(#{arg_list})
-            sql = "SELECT id FROM #{table_name} WHERE #{where_list} LIMIT 1"
-            identity_cache_single_value_dynamic_fetcher(#{fields.inspect}, [#{arg_list}], sql)
+            identity_cache_single_value_dynamic_fetcher(#{fields.inspect}, [#{arg_list}])
           end
 
           # exception throwing variant
@@ -205,15 +203,16 @@ module IdentityCache
       else
         self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__)
           def fetch_by_#{field_list}(#{arg_list})
-            sql = "SELECT id FROM #{table_name} WHERE #{where_list}"
-            identity_cache_multiple_value_dynamic_fetcher(#{fields.inspect}, [#{arg_list}], sql)
+            identity_cache_multiple_value_dynamic_fetcher(#{fields.inspect}, [#{arg_list}])
           end
         CODE
       end
     end
 
-    def identity_cache_single_value_dynamic_fetcher(fields, values, sql_on_miss) # :nodoc:
+    def identity_cache_single_value_dynamic_fetcher(fields, values) # :nodoc:
       cache_key = rails_cache_index_key_for_fields_and_values(fields, values)
+      sql_on_miss = "SELECT id FROM #{table_name} WHERE #{sql_conditions(fields, values)} LIMIT 1"
+
       id = IdentityCache.fetch(cache_key) { connection.select_value(sql_on_miss) }
       unless id.nil?
         record = fetch_by_id(id.to_i)
@@ -223,8 +222,10 @@ module IdentityCache
       record
     end
 
-    def identity_cache_multiple_value_dynamic_fetcher(fields, values, sql_on_miss) # :nodoc:
+    def identity_cache_multiple_value_dynamic_fetcher(fields, values) # :nodoc:
       cache_key = rails_cache_index_key_for_fields_and_values(fields, values)
+      sql_on_miss = "SELECT id FROM #{table_name} WHERE #{sql_conditions(fields, values)}"
+
       ids = IdentityCache.fetch(cache_key) { connection.select_values(sql_on_miss) }
 
       ids.empty? ? [] : fetch_multi(*ids)
@@ -290,7 +291,7 @@ module IdentityCache
     # * embed: If set will cause IdentityCache to keep the values for this
     #   association in the same cache entry as the parent, instead of its own.
     # * inverse_name: The name of the parent in the association ( only
-    #   necessary if the name is not the lowercase pluralization of the 
+    #   necessary if the name is not the lowercase pluralization of the
     #   parent object's class)
     def cache_has_one(association, options = {})
       options[:embed] ||= true
@@ -375,18 +376,18 @@ module IdentityCache
 
       field_list = fields.join("_and_")
       arg_list = (0...fields.size).collect { |i| "arg#{i}" }.join(',')
-      where_list = fields.each_with_index.collect { |f, i| "#{f} = \#{quote_value(arg#{i})}" }.join(" AND ")
 
       self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__)
         def fetch_#{attribute}_by_#{field_list}(#{arg_list})
-          sql = "SELECT #{attribute} FROM #{table_name} WHERE #{where_list} LIMIT 1"
-          attribute_dynamic_fetcher(#{attribute.inspect}, #{fields.inspect}, [#{arg_list}], sql)
+          attribute_dynamic_fetcher(#{attribute.inspect}, #{fields.inspect}, [#{arg_list}])
         end
       CODE
     end
 
-    def attribute_dynamic_fetcher(attribute, fields, values, sql_on_miss) #:nodoc:
+    def attribute_dynamic_fetcher(attribute, fields, values) #:nodoc:
       cache_key = rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, values)
+      sql_on_miss = "SELECT #{attribute} FROM #{table_name} WHERE #{sql_conditions(fields, values)} LIMIT 1"
+
       IdentityCache.fetch(cache_key) { connection.select_value(sql_on_miss) }
     end
 
@@ -610,6 +611,10 @@ module IdentityCache
           end
         end
       end
+    end
+
+    def sql_conditions(fields, values)
+      fields.each_with_index.collect { |f, i| "#{f} = #{quote_value(values[i])}" }.join(" AND ")
     end
   end
 

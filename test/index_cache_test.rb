@@ -93,4 +93,11 @@ class ExpirationTest < IdentityCache::TestCase
     assert_equal nil, IdentityCache.cache.read(@cache_key)
   end
 
+  def test_set_table_name_cache_fetch
+    Record.cache_index :title
+    Record.table_name = 'records2'
+    @record.save!
+    assert_equal [@record], Record.fetch_by_title('bob')
+    assert_equal [@record.id], IdentityCache.cache.read(@cache_key)
+  end
 end
