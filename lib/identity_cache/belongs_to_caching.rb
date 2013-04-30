@@ -15,6 +15,7 @@ module IdentityCache
         options[:cached_accessor_name]    ||= "fetch_#{association}"
         options[:foreign_key]             ||= reflect_on_association(association).foreign_key
         options[:association_class]       ||= reflect_on_association(association).klass
+        options[:prepopulate_method_name] ||= "prepopulate_fetched_#{association}"
         if options[:embed]
           raise NotImplementedError
         else
@@ -30,6 +31,10 @@ module IdentityCache
             else
               #{association}
             end
+          end
+
+          def #{options[:prepopulate_method_name]}(record)
+            self.#{association} = record
           end
         CODE
       end

@@ -247,6 +247,10 @@ module IdentityCache
               #{association}
             end
           end
+
+          def #{options[:prepopulate_method_name]}(records)
+            @#{options[:records_cache_name]} = records
+          end
         CODE
 
         add_parent_expiry_hook(options.merge(:only_on_foreign_key_change => true))

@@ -5,7 +5,8 @@ module IdentityCache
     included do |base|
       base.private_class_method :require_if_necessary
       base.instance_eval(ruby = <<-CODE, __FILE__, __LINE__)
-        private :expire_cache, :was_new_record?, :fetch_denormalized_cached_association, :populate_denormalized_cached_association
+        private :expire_cache, :was_new_record?, :fetch_denormalized_cached_association,
+                :populate_denormalized_cached_association
       CODE
       base.after_commit :expire_cache
       base.after_touch  :expire_cache
@@ -58,7 +59,10 @@ module IdentityCache
               records
             end
 
-            cache_keys.map {|key| objects_by_key[key] }.compact
+            records = cache_keys.map {|key| objects_by_key[key] }.compact
+            prefetch_associations(options[:includes], records) if options[:includes]
+
+            records
           end
 
         else
@@ -133,6 +137,51 @@ module IdentityCache
         mismatching_ids = records.compact.map(&:id) - ids
         IdentityCache.logger.error "[IDC id mismatch] fetch_batch_requested=#{ids.inspect} fetch_batch_got=#{mismatchig_ids.inspect} mismatching ids "  unless mismatching_ids.empty?
         records
+      end
+
+      def prefetch_associations(associations, records)
+        associations = hashify_includes_structure(associations)
+
+        associations.keys.each do |association|
+          case
+          when details = cached_has_manys[association]
+
+            if !details[:embed]
+              ids_to_child_record = records.each_with_object({}) do |record, hash|
+                child_ids = record.send(details[:ids_cache_name])
+                child_ids.each do |child_id|
+                  hash[child_id] = record
+                end
+              end
+
+              parent_record_to_child_records = Hash.new { |h, k| h[k] = [] }
+              child_records = details[:association_class].fetch_multi(*ids_to_child_record.keys)
+              child_records.each do |child_record|
+                parent_record = ids_to_child_record[child_record.id]
+                parent_record_to_child_records[parent_record] << child_record
+              end
+
+              parent_record_to_child_records.each do |parent_record, child_records|
+                parent_record.send(details[:prepopulate_method_name], child_records)
+              end
+            end
+
+          when details = cached_belongs_tos[association]
+            if !details[:embed]
+              ids_to_child_record = records.each_with_object({}) do |child_record, hash|
+                parent_id = child_record.send(details[:foreign_key])
+                hash[parent_id] = child_record
+              end
+              parent_records = details[:association_class].fetch_multi(*ids_to_child_record.keys)
+              parent_records.each do |parent_record|
+                child_record = ids_to_child_record[parent_record.id]
+                child_record.send(details[:prepopulate_method_name], parent_record)
+              end
+            end
+          else
+            raise ArgumentError("Unknown cached association #{association} listed for prefetching")
+          end
+        end
       end
 
       def hashify_includes_structure(structure)

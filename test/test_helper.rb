@@ -17,6 +17,17 @@ end
 DatabaseConnection.setup
 ActiveSupport::Cache::Store.instrument = true
 
+# This patches AR::MemcacheStore to notify AS::Notifications upon read_multis like the rest of rails does
+class ActiveSupport::Cache::MemCacheStore
+  def read_multi_with_instrumentation(*args, &block)
+    instrument("read_multi", "many keys") do
+      read_multi_without_instrumentation(*args, &block)
+    end
+  end
+
+  alias_method_chain :read_multi, :instrumentation
+end
+
 class IdentityCache::TestCase < MiniTest::Unit::TestCase
   def setup
     DatabaseConnection.drop_tables
