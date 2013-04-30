@@ -1,14 +1,14 @@
 module IdentityCache
   module BelongsToCaching
+    extend ActiveSupport::Concern
 
-    def self.included(base)
-      base.send(:extend, ClassMethods)
+    included do |base|
       base.class_attribute :cached_belongs_tos
+      base.cached_belongs_tos = {}
     end
 
     module ClassMethods
       def cache_belongs_to(association, options = {})
-        self.cached_belongs_tos ||= {}
         self.cached_belongs_tos[association] = options
 
         options[:embed] ||= false
