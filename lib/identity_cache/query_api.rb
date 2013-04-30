@@ -170,7 +170,7 @@ module IdentityCache
             if !details[:embed]
               ids_to_child_record = records.each_with_object({}) do |child_record, hash|
                 parent_id = child_record.send(details[:foreign_key])
-                hash[parent_id] = child_record
+                hash[parent_id] = child_record if parent_id.present?
               end
               parent_records = details[:association_class].fetch_multi(*ids_to_child_record.keys)
               parent_records.each do |parent_record|

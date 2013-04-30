@@ -180,6 +180,17 @@ class FetchMultiTest < IdentityCache::TestCase
     end
   end
 
+  def test_fetch_multi_doesnt_batch_fetches_belongs_to_associations_if_the_foreign_key_isnt_present
+    AssociatedRecord.send(:cache_belongs_to, :record, :embed => false)
+    @child = AssociatedRecord.create!(:name => "bob child")
+    # populate the cache entry
+    AssociatedRecord.fetch_multi(@child.id)
+
+    assert_memcache_operations(1) do
+      @cached_child = AssociatedRecord.fetch_multi(@child.id, :includes => :record)
+    end
+  end
+
   def test_find_batch_coerces_ids_to_primary_key_type
     mock_relation = mock("ActiveRecord::Relation")
     Record.expects(:where).returns(mock_relation)
