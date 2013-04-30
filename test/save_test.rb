@@ -7,7 +7,7 @@ class SaveTest < IdentityCache::TestCase
     Record.cache_index :id, :title, :unique => true
 
     @record = Record.create(:title => 'bob')
-    @blob_key = "IDC:blob:Record:#{cache_hash("created_at:datetime,id:integer,title:string,updated_at:datetime")}:1"
+    @blob_key = "IDC:blob:Record:#{cache_hash("created_at:datetime,id:integer,record_id:integer,title:string,updated_at:datetime")}:1"
   end
 
   def test_create
@@ -16,7 +16,7 @@ class SaveTest < IdentityCache::TestCase
 
     IdentityCache.cache.expects(:delete).with("IDC:index:Record:id/title:#{cache_hash('2/bob')}")
     IdentityCache.cache.expects(:delete).with("IDC:index:Record:title:#{cache_hash('bob')}")
-    IdentityCache.cache.expects(:delete).with("IDC:blob:Record:#{cache_hash("created_at:datetime,id:integer,title:string,updated_at:datetime")}:2").once
+    IdentityCache.cache.expects(:delete).with("IDC:blob:Record:#{cache_hash("created_at:datetime,id:integer,record_id:integer,title:string,updated_at:datetime")}:2").once
     @record.save
   end
 

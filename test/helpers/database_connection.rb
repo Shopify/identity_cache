@@ -30,7 +30,7 @@ module DatabaseConnection
     :deeply_associated_records  => [[:string, :name], [:integer, :associated_record_id]],
     :associated_records         => [[:string, :name], [:integer, :record_id]],
     :not_cached_records         => [[:string, :name], [:integer, :record_id]],
-    :records                    => [[:string, :title], [:timestamps]]
+    :records                    => [[:integer, :record_id], [:string, :title], [:timestamps]]
   }
 
   DATABASE_CONFIG = {

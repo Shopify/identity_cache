@@ -9,7 +9,7 @@ class FetchTest < IdentityCache::TestCase
     @record = Record.new
     @record.id = 1
     @record.title = 'bob'
-    @blob_key = "IDC:blob:Record:#{cache_hash("created_at:datetime,id:integer,title:string,updated_at:datetime")}:1"
+    @blob_key = "IDC:blob:Record:#{cache_hash("created_at:datetime,id:integer,record_id:integer,title:string,updated_at:datetime")}:1"
     @index_key = "IDC:index:Record:title:#{cache_hash('bob')}"
   end
 
