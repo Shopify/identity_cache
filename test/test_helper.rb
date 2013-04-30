@@ -15,6 +15,7 @@ else
 end
 
 DatabaseConnection.setup
+ActiveSupport::Cache::Store.instrument = true
 
 class IdentityCache::TestCase < MiniTest::Unit::TestCase
   def setup
@@ -46,10 +47,21 @@ class IdentityCache::TestCase < MiniTest::Unit::TestCase
   def assert_queries(num = 1)
     counter = SQLCounter.new
     subscriber = ActiveSupport::Notifications.subscribe('sql.active_record', counter)
-      yield
-    ensure
-      ActiveSupport::Notifications.unsubscribe(subscriber)
-      assert_equal num, counter.log.size, "#{counter.log.size} instead of #{num} queries were executed.#{counter.log.size == 0 ? '' : "\nQueries:\n#{counter.log.join("\n")}"}"
+    yield
+  ensure
+    ActiveSupport::Notifications.unsubscribe(subscriber)
+    assert_equal num, counter.log.size, "#{counter.log.size} instead of #{num} queries were executed.#{counter.log.size == 0 ? '' : "\nQueries:\n#{counter.log.join("\n")}"}"
+  end
+
+  def assert_memcache_operations(num)
+    counter = 0
+    subscriber = ActiveSupport::Notifications.subscribe(/cache_.*\.active_support/) do |*args|
+      counter += 1
+    end
+    yield
+  ensure
+    ActiveSupport::Notifications.unsubscribe(subscriber)
+    assert_equal num, counter, "#{counter} instead of #{num} memcache operations were executed."
   end
 
   def assert_no_queries
