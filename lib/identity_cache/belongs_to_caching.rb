@@ -12,10 +12,9 @@ module IdentityCache
         self.cached_belongs_tos[association] = options
 
         options[:embed] ||= false
-        options[:cached_accessor_name] ||= "fetch_#{association}"
-        options[:foreign_key] ||= reflect_on_association(association).foreign_key
-        options[:associated_class] ||= reflect_on_association(association).class_name
-
+        options[:cached_accessor_name]    ||= "fetch_#{association}"
+        options[:foreign_key]             ||= reflect_on_association(association).foreign_key
+        options[:association_class]       ||= reflect_on_association(association).klass
         if options[:embed]
           raise NotImplementedError
         else
@@ -27,7 +26,7 @@ module IdentityCache
         self.class_eval(ruby = <<-CODE, __FILE__, __LINE__)
           def #{options[:cached_accessor_name]}
             if IdentityCache.should_cache? && #{options[:foreign_key]}.present? && !association(:#{association}).loaded?
-              self.#{association} = #{options[:associated_class]}.fetch_by_id(#{options[:foreign_key]})
+              self.#{association} = #{options[:association_class]}.fetch_by_id(#{options[:foreign_key]})
             else
               #{association}
             end

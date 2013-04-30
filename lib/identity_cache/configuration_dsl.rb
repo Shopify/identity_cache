@@ -141,7 +141,11 @@ module IdentityCache
         raise InverseAssociationError unless self.reflect_on_association(association)
         self.cached_has_ones[association] = options
 
-        build_denormalized_association_cache(association, options)
+        if options[:embed]
+          build_denormalized_association_cache(association, options)
+        else
+          raise NotImplementedError
+        end
       end
 
       # Will cache a single attribute on its own blob, it will add a
@@ -197,34 +201,36 @@ module IdentityCache
       end
 
       def build_denormalized_association_cache(association, options) #:nodoc:
-        options[:cached_accessor_name] ||= "fetch_#{association}"
-        options[:cache_variable_name]  ||= "cached_#{association}"
-        options[:population_method_name]  ||= "populate_#{association}_cache"
+        options[:association_class]      ||= reflect_on_association(association).klass
+        options[:cached_accessor_name]   ||= "fetch_#{association}"
+        options[:records_cache_name]     ||= "cached_#{association}"
+        options[:population_method_name] ||= "populate_#{association}_cache"
 
 
         unless instance_methods.include?(options[:cached_accessor_name].to_sym)
           self.class_eval(ruby = <<-CODE, __FILE__, __LINE__)
             def #{options[:cached_accessor_name]}
-              fetch_denormalized_cached_association('#{options[:cache_variable_name]}', :#{association})
+              fetch_denormalized_cached_association('#{options[:records_cache_name]}', :#{association})
             end
 
             def #{options[:population_method_name]}
-              populate_denormalized_cached_association('#{options[:cache_variable_name]}', :#{association})
+              populate_denormalized_cached_association('#{options[:records_cache_name]}', :#{association})
             end
           CODE
 
-          association_class = reflect_on_association(association).klass
-          add_parent_expiry_hook(association_class, options.merge(:only_on_foreign_key_change => false))
+          add_parent_expiry_hook(options.merge(:only_on_foreign_key_change => false))
         end
       end
 
       def build_normalized_has_many_cache(association, options) #:nodoc:
         singular_association = association.to_s.singularize
-        association_class    = reflect_on_association(association).klass
+        options[:association_class]       ||= reflect_on_association(association).klass
         options[:cached_accessor_name]    ||= "fetch_#{association}"
         options[:ids_name]                ||= "#{singular_association}_ids"
         options[:ids_cache_name]          ||= "cached_#{options[:ids_name]}"
+        options[:records_cache_name]      ||= "cached_#{association}"
         options[:population_method_name]  ||= "populate_#{association}_cache"
+        options[:prepopulate_method_name] ||= "prepopulate_fetched_#{association}"
 
         self.class_eval(ruby = <<-CODE, __FILE__, __LINE__)
           attr_reader :#{options[:ids_cache_name]}
@@ -235,15 +241,15 @@ module IdentityCache
 
           def #{options[:cached_accessor_name]}
             if IdentityCache.should_cache? || #{association}.loaded?
-              populate_#{association}_cache unless @#{options[:ids_cache_name]}
-              @cached_#{association} ||= #{association_class}.fetch_multi(*@#{options[:ids_cache_name]})
+              populate_#{association}_cache unless @#{options[:ids_cache_name]} || @#{options[:records_cache_name]}
+              @#{options[:records_cache_name]} ||= #{options[:association_class]}.fetch_multi(*@#{options[:ids_cache_name]})
             else
               #{association}
             end
           end
         CODE
 
-        add_parent_expiry_hook(association_class, options.merge(:only_on_foreign_key_change => true))
+        add_parent_expiry_hook(options.merge(:only_on_foreign_key_change => true))
       end
 
       def attribute_dynamic_fetcher(attribute, fields, values, sql_on_miss) #:nodoc:
@@ -251,7 +257,8 @@ module IdentityCache
         IdentityCache.fetch(cache_key) { connection.select_value(sql_on_miss) }
       end
 
-      def add_parent_expiry_hook(child_class, options = {})
+      def add_parent_expiry_hook(options)
+        child_class = options[:association_class]
         child_association = child_class.reflect_on_association(options[:inverse_name])
         raise InverseAssociationError unless child_association
         foreign_key = child_association.association_foreign_key
@@ -266,7 +273,7 @@ module IdentityCache
           after_touch  :expire_parent_cache
 
           def expire_parent_cache
-            expire_parent_cache_on_changes(:#{options[:inverse_name]}, '#{foreign_key}', #{parent_class}, #{options.inspect})
+            expire_parent_cache_on_changes(:#{options[:inverse_name]}, '#{foreign_key}', #{parent_class}, #{options[:only_on_foreign_key_change]})
           end
         CODE
       end
