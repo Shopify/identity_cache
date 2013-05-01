@@ -142,7 +142,7 @@ module IdentityCache
       def prefetch_associations(associations, records)
         associations = hashify_includes_structure(associations)
 
-        associations.keys.each do |association|
+        associations.each do |association, sub_associations|
           case
           when details = cached_has_manys[association]
 
@@ -166,6 +166,7 @@ module IdentityCache
               end
             end
 
+            details[:association_class].prefetch_associations(sub_associations, child_records)
           when details = cached_belongs_tos[association]
             if !details[:embed]
               ids_to_child_record = records.each_with_object({}) do |child_record, hash|
@@ -178,8 +179,9 @@ module IdentityCache
                 child_record.send(details[:prepopulate_method_name], parent_record)
               end
             end
+            details[:association_class].prefetch_associations(sub_associations, parent_records)
           else
-            raise ArgumentError("Unknown cached association #{association} listed for prefetching")
+            raise ArgumentError.new("Unknown cached association #{association} listed for prefetching")
           end
         end
       end
