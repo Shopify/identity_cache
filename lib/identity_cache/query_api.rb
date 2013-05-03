@@ -147,7 +147,7 @@ module IdentityCache
           when details = cached_has_manys[association]
 
             if !details[:embed]
-              ids_to_child_record = records.each_with_object({}) do |record, hash|
+              ids_to_parent_record = records.each_with_object({}) do |record, hash|
                 child_ids = record.send(details[:ids_cache_name])
                 child_ids.each do |child_id|
                   hash[child_id] = record
@@ -155,9 +155,9 @@ module IdentityCache
               end
 
               parent_record_to_child_records = Hash.new { |h, k| h[k] = [] }
-              child_records = details[:association_class].fetch_multi(*ids_to_child_record.keys)
+              child_records = details[:association_class].fetch_multi(*ids_to_parent_record.keys)
               child_records.each do |child_record|
-                parent_record = ids_to_child_record[child_record.id]
+                parent_record = ids_to_parent_record[child_record.id]
                 parent_record_to_child_records[parent_record] << child_record
               end
 
