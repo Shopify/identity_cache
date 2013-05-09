@@ -1,10 +1,10 @@
 module IdentityCache
   module ParentModelExpiration # :nodoc:
-    def expire_parent_cache_on_changes(parent_name, foreign_key, parent_class, options = {})
+    def expire_parent_cache_on_changes(parent_name, foreign_key, parent_class, only_on_foreign_key_change)
       new_parent = send(parent_name)
 
       if new_parent && new_parent.respond_to?(:expire_primary_index, true)
-        if should_expire_identity_cache_parent?(foreign_key, options[:only_on_foreign_key_change])
+        if should_expire_identity_cache_parent?(foreign_key, only_on_foreign_key_change)
           new_parent.expire_primary_index
           new_parent.expire_parent_cache if new_parent.respond_to?(:expire_parent_cache)
         end
