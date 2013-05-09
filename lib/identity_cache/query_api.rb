@@ -164,6 +164,8 @@ module IdentityCache
               parent_record_to_child_records.each do |parent_record, child_records|
                 parent_record.send(details[:prepopulate_method_name], child_records)
               end
+            else
+              child_records = records.map(&details[:cached_accessor_name].to_sym).flatten
             end
 
             details[:association_class].prefetch_associations(sub_associations, child_records)
@@ -178,7 +180,18 @@ module IdentityCache
                 child_record = ids_to_child_record[parent_record.id]
                 child_record.send(details[:prepopulate_method_name], parent_record)
               end
+            else
+              raise ArgumentError.new("Embedded belongs_to associations do not support prefetching yet.")
             end
+
+            details[:association_class].prefetch_associations(sub_associations, parent_records)
+          when details = cached_has_ones[association]
+            if !details[:embed]
+              raise ArgumentError.new("Non-embedded has_one associations do not support prefetching yet.")
+            else
+              parent_records = records.map(&details[:cached_accessor_name].to_sym)
+            end
+
             details[:association_class].prefetch_associations(sub_associations, parent_records)
           else
             raise ArgumentError.new("Unknown cached association #{association} listed for prefetching")
