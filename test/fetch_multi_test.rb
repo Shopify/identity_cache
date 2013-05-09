@@ -151,6 +151,19 @@ class FetchMultiTest < IdentityCache::TestCase
     Record.find_batch([@bob, @joe, @fred].map(&:id).map(&:to_s))
   end
 
+  def test_fetch_multi_accurately_logs_hits_and_misses
+    cache_response = {}
+    cache_response[@bob_blob_key] = @bob
+    cache_response[@joe_blob_key] = nil
+    cache_response[@fred_blob_key] = @fred
+    IdentityCache.cache.stubs(:read_multi).returns(cache_response)
+
+    IdentityCache.logger.expects(:debug).with {|str| str[/hit/] }.times(2)
+    IdentityCache.logger.expects(:debug).with {|str| str[/miss/] }.once
+
+    Record.fetch_multi(@bob.id, @joe.id, @fred.id)
+  end
+
   private
 
   def populate_only_fred

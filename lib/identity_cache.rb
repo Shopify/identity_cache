@@ -93,7 +93,8 @@ module IdentityCache
       result = {}
       result = cache.read_multi(*keys) if should_cache?
 
-      missed_keys = keys - result.select {|key, value| value.present? }.keys
+      hit_keys = result.select {|key, value| value.present? }.keys
+      missed_keys = keys - hit_keys
 
       if missed_keys.size > 0
         if block_given?
@@ -110,10 +111,10 @@ module IdentityCache
             result[key] = replacement_result
           end
         end
-      else
-        result.keys.each do |key|
-          logger.debug "[IdentityCache] cache hit for #{key} (multi)"
-        end
+      end
+
+      hit_keys.each do |key|
+        logger.debug "[IdentityCache] cache hit for #{key} (multi)"
       end
 
       result.keys.each do |key|
