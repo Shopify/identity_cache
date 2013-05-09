@@ -15,6 +15,18 @@ else
 end
 
 DatabaseConnection.setup
+ActiveSupport::Cache::Store.instrument = true
+
+# This patches AR::MemcacheStore to notify AS::Notifications upon read_multis like the rest of rails does
+class ActiveSupport::Cache::MemCacheStore
+  def read_multi_with_instrumentation(*args, &block)
+    instrument("read_multi", "MULTI", {:keys => args}) do
+      read_multi_without_instrumentation(*args, &block)
+    end
+  end
+
+  alias_method_chain :read_multi, :instrumentation
+end
 
 class IdentityCache::TestCase < MiniTest::Unit::TestCase
   def setup
@@ -46,10 +58,27 @@ class IdentityCache::TestCase < MiniTest::Unit::TestCase
   def assert_queries(num = 1)
     counter = SQLCounter.new
     subscriber = ActiveSupport::Notifications.subscribe('sql.active_record', counter)
-      yield
-    ensure
-      ActiveSupport::Notifications.unsubscribe(subscriber)
-      assert_equal num, counter.log.size, "#{counter.log.size} instead of #{num} queries were executed.#{counter.log.size == 0 ? '' : "\nQueries:\n#{counter.log.join("\n")}"}"
+    exception = false
+    yield
+  rescue => e
+    exception = true
+    raise
+  ensure
+    ActiveSupport::Notifications.unsubscribe(subscriber)
+    assert_equal num, counter.log.size, "#{counter.log.size} instead of #{num} queries were executed.#{counter.log.size == 0 ? '' : "\nQueries:\n#{counter.log.join("\n")}"}" unless exception
+  end
+
+  def assert_memcache_operations(num)
+    counter = CacheCounter.new
+    subscriber = ActiveSupport::Notifications.subscribe(/cache_.*\.active_support/, counter)
+    exception = false
+    yield
+  rescue => e
+    exception = true
+    raise
+  ensure
+    ActiveSupport::Notifications.unsubscribe(subscriber)
+    assert_equal num, counter.log.size, "#{counter.log.size} instead of #{num} memcache operations were executed. #{counter.log.size == 0 ? '' : "\nOperations:\n#{counter.log.join("\n")}"}" unless exception
   end
 
   def assert_no_queries
@@ -118,5 +147,17 @@ class SQLCounter
     # the query was cached
     return if 'CACHE' == values[:name] || ignore.any? { |x| x =~ sql }
     self.log << sql
+  end
+end
+
+class CacheCounter
+  attr_accessor :log
+
+  def initialize()
+    @log = []
+  end
+
+  def call(name, start, finish, message_id, values)
+    self.log << (values[:keys].try(:join, ', ') || values[:key])
   end
 end
