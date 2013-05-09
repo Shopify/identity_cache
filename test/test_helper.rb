@@ -58,7 +58,7 @@ class IdentityCache::TestCase < MiniTest::Unit::TestCase
   def assert_queries(num = 1)
     counter = SQLCounter.new
     subscriber = ActiveSupport::Notifications.subscribe('sql.active_record', counter)
-    excpetion = false
+    exception = false
     yield
   rescue => e
     exception = true
@@ -71,7 +71,7 @@ class IdentityCache::TestCase < MiniTest::Unit::TestCase
   def assert_memcache_operations(num)
     counter = CacheCounter.new
     subscriber = ActiveSupport::Notifications.subscribe(/cache_.*\.active_support/, counter)
-    excpetion = false
+    exception = false
     yield
   rescue => e
     exception = true
