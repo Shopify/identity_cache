@@ -128,6 +128,16 @@ class FetchMultiTest < IdentityCache::TestCase
     Record.fetch_multi(@bob.id, @joe.id, @fred.id)
   end
 
+  def test_fetch_multi_doesnt_freeze_keys
+    cache_response = {}
+    cache_response[@bob_blob_key] = @bob
+    cache_response[@joe_blob_key] = @fred
+
+    IdentityCache.expects(:fetch_multi).with{ |*args| args.none?(&:frozen?) }.returns(cache_response)
+
+    Record.fetch_multi(@bob.id, @joe.id)
+  end
+
   private
 
   def populate_only_fred
