@@ -52,7 +52,7 @@ module IdentityCache
             cache_keys = ids.map {|id| rails_cache_key(id) }
             key_to_id_map = Hash[ cache_keys.zip(ids) ]
 
-            objects_by_key = IdentityCache.fetch_multi(*key_to_id_map.keys) do |unresolved_keys|
+            objects_by_key = IdentityCache.fetch_multi(*cache_keys) do |unresolved_keys|
               ids = unresolved_keys.map {|key| key_to_id_map[key] }
               records = find_batch(ids, options)
               records.compact.each(&:populate_association_caches)
