@@ -85,6 +85,21 @@ class FetchMultiTest < IdentityCache::TestCase
     end
   end
 
+  def test_fetch_multi_batch_fetches_first_level_associations_who_dont_include_identity_cache
+    Record.send(:has_many, :not_cached_records)
+    Record.send(:cache_has_many, :not_cached_records, :embed => true)
+
+    @bob_child  = @bob.not_cached_records.create!(:name => "bob child")
+    @fred_child = @fred.not_cached_records.create!(:name => "fred child")
+
+    # populate the cache entries and associated children ID variables
+    Record.fetch_multi(@bob.id, @fred.id)
+
+    assert_memcache_operations(1) do
+      @cached_bob_child, @cached_fred_child = Record.fetch_multi(@bob.id, @fred.id, :includes => :not_cached_records)
+    end
+  end
+
   def test_fetch_multi_batch_fetches_non_embedded_second_level_has_many_associations
     Record.send(:cache_has_many, :associated_records, :embed => false)
     AssociatedRecord.send(:cache_has_many, :deeply_associated_records, :embed => false)

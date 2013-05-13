@@ -146,7 +146,9 @@ module IdentityCache
           case
           when details = cached_has_manys[association]
 
-            if !details[:embed]
+            if details[:embed]
+              child_records = records.map(&details[:cached_accessor_name].to_sym).flatten
+            else
               ids_to_parent_record = records.each_with_object({}) do |record, hash|
                 child_ids = record.send(details[:ids_cache_name])
                 child_ids.each do |child_id|
@@ -164,13 +166,14 @@ module IdentityCache
               parent_record_to_child_records.each do |parent_record, child_records|
                 parent_record.send(details[:prepopulate_method_name], child_records)
               end
-            else
-              child_records = records.map(&details[:cached_accessor_name].to_sym).flatten
             end
 
-            details[:association_class].prefetch_associations(sub_associations, child_records)
+            next_level_records = child_records
+
           when details = cached_belongs_tos[association]
-            if !details[:embed]
+            if details[:embed]
+              raise ArgumentError.new("Embedded belongs_to associations do not support prefetching yet.")
+            else
               ids_to_child_record = records.each_with_object({}) do |child_record, hash|
                 parent_id = child_record.send(details[:foreign_key])
                 hash[parent_id] = child_record if parent_id.present?
@@ -180,21 +183,25 @@ module IdentityCache
                 child_record = ids_to_child_record[parent_record.id]
                 child_record.send(details[:prepopulate_method_name], parent_record)
               end
-            else
-              raise ArgumentError.new("Embedded belongs_to associations do not support prefetching yet.")
             end
 
-            details[:association_class].prefetch_associations(sub_associations, parent_records)
+            next_level_records = parent_records
+
           when details = cached_has_ones[association]
-            if !details[:embed]
-              raise ArgumentError.new("Non-embedded has_one associations do not support prefetching yet.")
-            else
+            if details[:embed]
               parent_records = records.map(&details[:cached_accessor_name].to_sym)
+            else
+              raise ArgumentError.new("Non-embedded has_one associations do not support prefetching yet.")
             end
 
-            details[:association_class].prefetch_associations(sub_associations, parent_records)
+            next_level_records = parent_records
+
           else
             raise ArgumentError.new("Unknown cached association #{association} listed for prefetching")
+          end
+
+          if details && details[:association_class].respond_to?(:prefetch_associations)
+            details[:association_class].prefetch_associations(sub_associations, next_level_records)
           end
         end
       end
