@@ -54,7 +54,7 @@ module IdentityCache
         if options[:unique]
           self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__)
             def fetch_by_#{field_list}(#{arg_list})
-              sql = "SELECT id FROM #{table_name} WHERE #{where_list} LIMIT 1"
+              sql = "SELECT `id` FROM `#{table_name}` WHERE #{where_list} LIMIT 1"
               identity_cache_single_value_dynamic_fetcher(#{fields.inspect}, [#{arg_list}], sql)
             end
 
@@ -66,7 +66,7 @@ module IdentityCache
         else
           self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__)
             def fetch_by_#{field_list}(#{arg_list})
-              sql = "SELECT id FROM #{table_name} WHERE #{where_list}"
+              sql = "SELECT `id` FROM `#{table_name}` WHERE #{where_list}"
               identity_cache_multiple_value_dynamic_fetcher(#{fields.inspect}, [#{arg_list}], sql)
             end
           CODE
