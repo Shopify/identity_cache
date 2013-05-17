@@ -43,9 +43,8 @@ module IdentityCache
       hash = {}
 
       if memoizing?
-        keys.reduce({}) do |hash, key|
+        keys.each do |key|
           hash[key] = memoized_key_values[key] if memoized_key_values[key].present?
-          hash
         end
       end
 
