@@ -40,17 +40,17 @@ module IdentityCache
     end
 
     def read_multi(*keys)
-      hash = {}
-
       if memoizing?
+        hash = {}
         mkv = memoized_key_values
         keys.each do |key|
           hash[key] = mkv[key] if mkv.has_key?(key)
         end
+        missing_keys = keys - hash.keys
+        hash.merge(@memcache.read_multi(*missing_keys))
+      else
+        @memcache.read_multi(*keys)
       end
-
-      missing_keys = keys - hash.keys
-      hash.merge(@memcache.read_multi(*missing_keys))
     end
 
     def clear
