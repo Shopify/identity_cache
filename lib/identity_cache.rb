@@ -129,8 +129,8 @@ module IdentityCache
       end
 
 
-      result.keys.each do |key|
-        result[key] = unmap_cached_nil_for(result[key])
+      result.each do |key, value|
+        result[key] = unmap_cached_nil_for(value)
       end
 
       result
