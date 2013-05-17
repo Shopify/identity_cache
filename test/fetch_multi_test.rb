@@ -121,11 +121,13 @@ class FetchMultiTest < IdentityCache::TestCase
     cache_response[@joe_blob_key] = nil
     cache_response[@fred_blob_key] = @fred
     IdentityCache.cache.stubs(:read_multi).returns(cache_response)
-
-    IdentityCache.logger.expects(:debug).with {|str| str[/hit/] }.times(2)
-    IdentityCache.logger.expects(:debug).with {|str| str[/miss/] }.once
+    log = ''
+    IdentityCache.logger = Logger.new(StringIO.new(log))
 
     Record.fetch_multi(@bob.id, @joe.id, @fred.id)
+
+    assert_equal 2, log.scan(/hit/).count
+    assert_equal 1, log.scan(/miss/).count
   end
 
   def test_fetch_multi_doesnt_freeze_keys

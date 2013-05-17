@@ -66,9 +66,9 @@ module IdentityCache
             cache.write(key, result)
           end
         end
-        logger.debug "[IdentityCache] cache miss for #{key}"
+        logger.debug { "[IdentityCache] cache miss for #{key}" }
       else
-        logger.debug "[IdentityCache] cache hit for #{key}"
+        logger.debug { "[IdentityCache] cache hit for #{key}" }
       end
 
       unmap_cached_nil_for(result)
@@ -106,7 +106,7 @@ module IdentityCache
             if should_cache?
               replacement_result  = map_cached_nil_for(replacement_result )
               cache.write(key, replacement_result)
-              logger.debug "[IdentityCache] cache miss for #{key} (multi)"
+              logger.debug { "[IdentityCache] cache miss for #{key} (multi)" }
             end
             result[key] = replacement_result
           end
@@ -115,7 +115,7 @@ module IdentityCache
 
       hit_keys.each do |key|
         logger.debug "[IdentityCache] cache hit for #{key} (multi)"
-      end
+      end if logger.debug?
 
       result.keys.each do |key|
         result[key] = unmap_cached_nil_for(result[key])
