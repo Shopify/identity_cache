@@ -49,6 +49,17 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
     end
   end
 
+  def test_read_multi_with_blank_values
+    Rails.cache.expects(:read_multi).with().returns({})
+
+    IdentityCache.cache.with_memoization do
+      IdentityCache.cache.write('foo', [])
+      IdentityCache.cache.write('bar', nil)
+      IdentityCache.cache.write('baz', {})
+      assert_equal({'foo' => [], 'bar' => nil, 'baz' => {}}, IdentityCache.cache.read_multi('foo', 'bar', 'baz'))
+    end
+  end
+
   def test_with_memoization_should_not_clear_rails_cache_when_the_block_ends
     IdentityCache.cache.with_memoization do
       IdentityCache.cache.write('foo', 'bar')

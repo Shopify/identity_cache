@@ -45,7 +45,7 @@ module IdentityCache
       if memoizing?
         mkv = memoized_key_values
         keys.each do |key|
-          hash[key] = mkv[key] if mkv[key].present?
+          hash[key] = mkv[key] if mkv.has_key?(key)
         end
       end
 
