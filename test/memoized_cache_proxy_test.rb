@@ -21,6 +21,17 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
     end
   end
 
+  def test_read_should_short_circuit_on_falsy_memoized_values
+    Rails.cache.expects(:read).never
+
+    IdentityCache.cache.with_memoization do
+      IdentityCache.cache.write('foo', nil)
+      assert_equal nil, IdentityCache.cache.read('foo')
+      IdentityCache.cache.write('bar', false)
+      assert_equal false, IdentityCache.cache.read('bar')
+    end
+  end
+
   def test_read_should_try_memcached_on_not_memoized_values
     Rails.cache.expects(:read).with('foo').returns('bar')
 

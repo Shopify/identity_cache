@@ -28,7 +28,8 @@ module IdentityCache
 
     def read(key)
       if memoizing?
-        memoized_key_values[key] ||= @memcache.read(key)
+        mkv = memoized_key_values
+        mkv.fetch(key){ mkv[key] = @memcache.read(key) }
       else
         @memcache.read(key)
       end
