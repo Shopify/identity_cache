@@ -10,7 +10,7 @@ module IdentityCache
     end
 
     def memoized_key_values
-      @key_value_maps[Thread.current.object_id]
+      @key_value_maps[Thread.current]
     end
 
     def with_memoization(&block)
@@ -64,7 +64,7 @@ module IdentityCache
     private
 
     def clear_memoization
-      @key_value_maps.delete(Thread.current.object_id)
+      @key_value_maps.delete(Thread.current)
     end
 
     def memoizing?
