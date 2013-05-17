@@ -1,3 +1,5 @@
+require 'logger'
+
 module Rails
 
   class Cache < ActiveSupport::Cache::MemCacheStore
@@ -7,18 +9,7 @@ module Rails
     @@cache ||= Cache.new("localhost:#{$memcached_port}")
   end
 
-  class Logger
-    def info(string)
-    end
-
-    def debug(string)
-    end
-
-    def error(string)
-    end
-  end
-
   def self.logger
-    @logger ||= Logger.new
+    @logger ||= Logger.new(nil)
   end
 end
