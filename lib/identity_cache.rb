@@ -75,7 +75,7 @@ module IdentityCache
     # == Parameters
     # +key+ A cache key string
     #
-    def fetch(key, &block)
+    def fetch(key)
       result = cache.read(key) if should_cache?
 
       if result.nil?
@@ -105,7 +105,7 @@ module IdentityCache
     #
     # == Parameters
     # +keys+ A collection of key strings
-    def fetch_multi(*keys, &block)
+    def fetch_multi(*keys)
       return {} if keys.size == 0
       result = {}
       result = cache.read_multi(*keys) if should_cache?
