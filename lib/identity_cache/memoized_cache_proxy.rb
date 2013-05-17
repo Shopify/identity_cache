@@ -43,10 +43,12 @@ module IdentityCache
       if memoizing?
         hash = {}
         mkv = memoized_key_values
-        keys.each do |key|
-          hash[key] = mkv[key] if mkv.has_key?(key)
+        missing_keys = keys.reject do |key|
+          if mkv.has_key?(key)
+            hash[key] = mkv[key]
+            true
+          end
         end
-        missing_keys = keys - hash.keys
         hash.merge(@memcache.read_multi(*missing_keys))
       else
         @memcache.read_multi(*keys)
