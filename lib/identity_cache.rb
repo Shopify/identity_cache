@@ -110,7 +110,7 @@ module IdentityCache
       result = {}
       result = cache.read_multi(*keys) if should_cache?
 
-      hit_keys = result.select {|key, value| value.present? }.keys
+      hit_keys = result.reject {|key, value| value == nil }.keys
       missed_keys = keys - hit_keys
 
       if missed_keys.size > 0
