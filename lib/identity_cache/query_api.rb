@@ -280,7 +280,7 @@ module IdentityCache
       else
         ""
       end
-      IdentityCache.logger.debug "[IdentityCache] expiring=#{self.class.name} expiring_id=#{id} #{extra_keys}"
+      IdentityCache.logger.debug { "[IdentityCache] expiring=#{self.class.name} expiring_id=#{id} #{extra_keys}" }
 
       IdentityCache.cache.delete(primary_cache_index_key)
     end
