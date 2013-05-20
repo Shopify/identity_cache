@@ -14,7 +14,7 @@ module IdentityCache
 
     module ClassMethods
       # Similar to ActiveRecord::Base#exists? will return true if the id can be
-      # found in the cache.
+      # found in the cache or in the DB.
       def exists_with_identity_cache?(id)
         !!fetch_by_id(id)
       end
