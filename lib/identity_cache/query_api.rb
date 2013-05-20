@@ -218,7 +218,7 @@ module IdentityCache
           structure.each_with_object({}) do |member, hash|
             case member
             when Hash
-              hash.merge(hash)
+              hash.merge!(member)
             when Symbol
               hash[member] = []
             end
