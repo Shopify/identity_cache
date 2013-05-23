@@ -4,6 +4,9 @@ require 'active_record'
 require 'helpers/cache'
 require 'helpers/database_connection'
 
+require_relative 'helpers/cache'
+require_relative 'helpers/database_connection'
+
 require File.dirname(__FILE__) + '/../lib/identity_cache'
 
 if ENV['BOXEN_HOME'].present?
@@ -92,27 +95,27 @@ class IdentityCache::TestCase < MiniTest::Unit::TestCase
   end
 
   private
-  def setup_models
-    Object.send :const_set, 'DeeplyAssociatedRecord', Class.new(ActiveRecord::Base).tap {|klass|
+  def setup_models(base = ActiveRecord::Base)
+    Object.send :const_set, 'DeeplyAssociatedRecord', Class.new(base).tap {|klass|
       klass.send :include, IdentityCache
       klass.belongs_to :associated_record
     }
 
-    Object.send :const_set, 'AssociatedRecord', Class.new(ActiveRecord::Base).tap {|klass|
+    Object.send :const_set, 'AssociatedRecord', Class.new(base).tap {|klass|
       klass.send :include, IdentityCache
       klass.belongs_to :record
       klass.has_many :deeply_associated_records, :order => "name DESC"
     }
 
-    Object.send :const_set, 'NotCachedRecord', Class.new(ActiveRecord::Base).tap {|klass|
+    Object.send :const_set, 'NotCachedRecord', Class.new(base).tap {|klass|
       klass.belongs_to :record, :touch => true
     }
 
-    Object.send :const_set, 'PolymorphicRecord', Class.new(ActiveRecord::Base).tap {|klass|
+    Object.send :const_set, 'PolymorphicRecord', Class.new(base).tap {|klass|
       klass.belongs_to :owner, :polymorphic => true
     }
 
-    Object.send :const_set, 'Record', Class.new(ActiveRecord::Base).tap {|klass|
+    Object.send :const_set, 'Record', Class.new(base).tap {|klass|
       klass.send :include, IdentityCache
       klass.belongs_to :record
       klass.has_many :associated_records, :order => "id DESC"
