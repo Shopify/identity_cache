@@ -16,11 +16,16 @@ Rake::TestTask.new(:test) do |t|
 end
 
 namespace :benchmark do
-
   desc "Run the identity cache CPU benchmark"
   task :cpu do
     ruby "./performance/cpu.rb"
   end
+end
 
+namespace :profile do
+  desc "Profile IDC code"
+  task :run do
+    ruby "./performance/profile.rb"
+  end
 end
 

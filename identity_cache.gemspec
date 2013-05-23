@@ -25,4 +25,5 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency('mocha', '0.14.0')
   gem.add_development_dependency('mysql2')
   gem.add_development_dependency('debugger')
+  gem.add_development_dependency('ruby-prof')
 end
