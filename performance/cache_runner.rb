@@ -90,6 +90,10 @@ class FindRunner < CacheRunner
 end
 
 class FetchMissRunner < CacheRunner
+  def prepare
+    IdentityCache.cache.clear
+  end
+
   def run
     i = 0
     @count.times do

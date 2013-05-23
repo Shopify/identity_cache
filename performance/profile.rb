@@ -5,7 +5,7 @@ require 'ruby-prof'
 require_relative 'cache_runner'
 
 RUNS = 10000
-RubyProf.measure_mode = RubyProf::WALL_TIME
+RubyProf.measure_mode = RubyProf::CPU_TIME
 
 def run(obj, bench)
   obj.prepare
