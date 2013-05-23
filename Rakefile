@@ -14,3 +14,13 @@ Rake::TestTask.new(:test) do |t|
   t.pattern = 'test/**/*_test.rb'
   t.verbose = true
 end
+
+namespace :benchmark do
+
+  desc "Run the identity cache CPU benchmark"
+  task :cpu do
+    ruby "./performance/cpu.rb"
+  end
+
+end
+
