@@ -18,40 +18,46 @@ require File.dirname(__FILE__) + '/../test/helpers/active_record_objects'
 require File.dirname(__FILE__) + '/../test/helpers/database_connection'
 require File.dirname(__FILE__) + '/../test/helpers/cache'
 
-class FakeColumn
-  attr_reader :name
-
-  def initialize(name)
-    @name = name
-  end
-
-  def type
-    :integer
-  end
-  def default
-    0
-  end
-  def type_cast_code(arg)
-    "1"
-  end
-
+def create_record(id)
+  r = Record.new(id)
 end
 
-class FakeRecord < ActiveRecord::Base
-  attr_accessor :id
+def database_ready(count)
+  Record.where(:id => (1..count)) == count
+rescue
+  false
+end
 
-  def self.find_by_id(id, args = {})
-    ret = Record.new
-    ret.id = id
-    return ret
-  end
+def create_database(count)
+  DatabaseConnection.setup
+  a = CacheRunner.new(count)
 
-  def self.find(id, args = {})
-    find_by_id(id, args)
-  end
+  a.setup_models
 
-  def self.columns
-    ['field1', 'field2', 'field3'].map { |f| FakeColumn.new(f) }
+  DatabaseConnection.setup
+  # set up associations
+  Record.cache_has_one :associated
+  Record.cache_has_many :associated_records, :embed => true
+  Record.cache_index :title, :unique => :true
+  AssociatedRecord.cache_has_many :deeply_associated_records, :embed => true
+
+  return if database_ready(count)
+  puts "Database not ready for performance testing, generating records"
+
+  DatabaseConnection.drop_tables
+  DatabaseConnection.create_tables
+  existing = Record.all
+  (1..count).to_a.each do |i|
+    unless existing.any? { |e| e.id == i }
+      a = Record.new
+      a.id = i
+      a.associated = AssociatedRecord.new(name: "Associated for #{i}")
+      a.associated_records
+      (1..5).each do |j|
+        a.associated_records << AssociatedRecord.new(name: "Has Many #{j} for #{i}")
+      end
+      a.save
+    end
   end
 end
 
@@ -63,25 +69,13 @@ class CacheRunner
     @count = count
   end
 
-  def setup
-    DatabaseConnection.setup
-    DatabaseConnection.drop_tables
-    DatabaseConnection.create_tables
-    setup_models(FakeRecord)
-  end
-
   def prepare
-  end
-
-  def finish
-    teardown_models
-    DatabaseConnection.drop_tables
   end
 end
 
 class FindRunner < CacheRunner
   def run
-    i = 0
+    i = 1
     @count.times do
       ::Record.find(i)
       i+=1
@@ -95,7 +89,7 @@ class FetchMissRunner < CacheRunner
   end
 
   def run
-    i = 0
+    i = 1
     @count.times do
       ::Record.fetch(i)
       i+=1
