@@ -1,4 +1,22 @@
-require File.dirname(__FILE__) + '/../test/test_helper'
+$LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
+require 'active_record'
+require 'active_support/core_ext'
+require 'active_support/cache'
+require 'identity_cache'
+require 'memcache'
+require 'debugger'
+
+if ENV['BOXEN_HOME'].present?
+  $memcached_port = 21211
+  $mysql_port = 13306
+else
+  $memcached_port = 11211
+  $mysql_port = 3306
+end
+
+require File.dirname(__FILE__) + '/../test/helpers/active_record_objects'
+require File.dirname(__FILE__) + '/../test/helpers/database_connection'
+require File.dirname(__FILE__) + '/../test/helpers/cache'
 
 class FakeColumn
   attr_reader :name
@@ -37,24 +55,34 @@ class FakeRecord < ActiveRecord::Base
   end
 end
 
-class CacheRunner < IdentityCache::TestCase
+class CacheRunner
+  include ActiveRecordObjects
+  include DatabaseConnection
 
-  def initialize
+  def initialize(count)
+    @count = count
   end
 
   def setup
+    DatabaseConnection.setup
+    DatabaseConnection.drop_tables
+    DatabaseConnection.create_tables
     setup_models(FakeRecord)
   end
 
+  def prepare
+  end
+
   def finish
-    teardown
+    teardown_models
+    DatabaseConnection.drop_tables
   end
 end
 
 class FindRunner < CacheRunner
-  def run(run)
+  def run
     i = 0
-    run.times do
+    @count.times do
       ::Record.find(i)
       i+=1
     end
@@ -62,11 +90,10 @@ class FindRunner < CacheRunner
 end
 
 class FetchMissRunner < CacheRunner
-  def run(run)
+  def run
     i = 0
-
-    run.times do
-      Record.fetch(i)
+    @count.times do
+      ::Record.fetch(i)
       i+=1
     end
   end
@@ -74,9 +101,13 @@ end
 
 class FetchHitRunner < CacheRunner
 
-  def run(run)
-    raise "Run fetch_miss first to fill cache" unless @ran_fetch_miss
-    fetch_miss(bench, run)
+  def setup
+    #@runner = FetchMissRunner.new(@count)
+    #@runner.run
+  end
+
+  def run
+    #@runner.run(@count)
   end
 end
 

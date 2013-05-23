@@ -1,23 +1,28 @@
 require 'rubygems'
 require 'benchmark'
+
 require_relative 'cache_runner'
 
 RUNS = 10000
 
-def run(obj, bench, runs)
+class ARCreator
+  include ActiveRecordObjects
+end
+
+def run(obj, bench)
+  obj.prepare
   bench.report("#{obj.class.name}:") do
-    obj.setup
-    obj.run(runs)
-    obj.finish
+    obj.run
   end
 end
 
+a = FindRunner.new(RUNS)
+a.setup
 Benchmark.bmbm do |x|
-  run(FindRunner.new, x, RUNS)
+  run(FindRunner.new(RUNS), x)
 
-  run(FetchMissRunner.new, x, RUNS)
+  run(FetchMissRunner.new(RUNS), x)
 
-#  runner.fetch_hit(x, RUNS)
-
-#  runner.fetch_multi(x, RUNS)
+  run(FetchHitRunner.new(RUNS), x)
 end
+a.finish
