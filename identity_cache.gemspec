@@ -22,7 +22,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency('cityhash', '0.6.0')
   gem.add_development_dependency('memcache-client')
   gem.add_development_dependency('rake')
-  gem.add_development_dependency('mocha')
+  gem.add_development_dependency('mocha', '0.14.0')
   gem.add_development_dependency('mysql2')
   gem.add_development_dependency('debugger')
 end
