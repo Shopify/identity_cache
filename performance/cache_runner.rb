@@ -23,7 +23,7 @@ def create_record(id)
 end
 
 def database_ready(count)
-  Record.where(:id => (1..count)) == count
+  Record.where(:id => (1..count)).count == count
 rescue
   false
 end
