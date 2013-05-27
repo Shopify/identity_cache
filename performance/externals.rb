@@ -43,9 +43,6 @@ create_database(RUNS)
 
 run(FindRunner.new(RUNS))
 
-
-
 run(FetchHitRunner.new(RUNS))
-ActiveRecord::Base.logger = Logger.new(STDOUT)
 
 run(FetchMissRunner.new(RUNS))
