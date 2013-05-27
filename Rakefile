@@ -20,6 +20,10 @@ namespace :benchmark do
   task :cpu do
     ruby "./performance/cpu.rb"
   end
+
+  task :externals do
+    ruby "./performance/externals.rb"
+  end
 end
 
 namespace :profile do

@@ -91,21 +91,34 @@ class FetchMissRunner < CacheRunner
   def run
     i = 1
     @count.times do
-      ::Record.fetch(i)
+      rec = ::Record.fetch(i)
+      rec.fetch_associated
+      rec.fetch_associated_records
+
       i+=1
     end
   end
 end
 
 class FetchHitRunner < CacheRunner
-
-  def setup
-    #@runner = FetchMissRunner.new(@count)
-    #@runner.run
+  def prepare
+    IdentityCache.cache.clear
+    i = 1
+    @count.times do
+      ::Record.fetch(i)
+      i+=1
+    end
   end
 
   def run
-    #@runner.run(@count)
+    i = 1
+    @count.times do
+      rec = ::Record.fetch(i)
+      # these should all be no cost
+      rec.fetch_associated
+      rec.fetch_associated_records
+      i+=1
+    end
   end
 end
 

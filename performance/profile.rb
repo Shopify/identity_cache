@@ -7,7 +7,7 @@ require_relative 'cache_runner'
 RUNS = 1000
 RubyProf.measure_mode = RubyProf::CPU_TIME
 
-def run(obj, bench)
+def run(obj)
   obj.prepare
   RubyProf.start
   obj.run
@@ -19,10 +19,8 @@ end
 
 create_database(RUNS)
 
-Benchmark.bmbm do |x|
-  run(FindRunner.new(RUNS), x)
+run(FindRunner.new(RUNS))
 
-  run(FetchMissRunner.new(RUNS), x)
+run(FetchMissRunner.new(RUNS))
 
-  run(FetchHitRunner.new(RUNS), x)
-end
+run(FetchHitRunner.new(RUNS))
