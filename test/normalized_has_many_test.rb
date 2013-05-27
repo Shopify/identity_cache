@@ -28,6 +28,17 @@ class NormalizedHasManyTest < IdentityCache::TestCase
     assert_equal [2, 1], fetched_record.cached_associated_record_ids
   end
 
+  def test_fetching_associated_ids_will_populate_the_value_if_the_record_isnt_from_the_cache
+    assert_equal [2, 1], @record.fetch_associated_record_ids
+  end
+
+  def test_fetching_associated_ids_will_use_the_cached_value_if_the_record_is_from_the_cache
+    @record = Record.fetch(@record.id)
+    assert_queries(0) do
+      assert_equal [2, 1], @record.fetch_associated_record_ids
+    end
+  end
+
   def test_the_cached_the_list_of_associated_ids_on_the_parent_record_should_not_be_populated_by_default
     assert_nil @record.cached_associated_record_ids
   end
@@ -122,4 +133,5 @@ class NormalizedHasManyTest < IdentityCache::TestCase
     IdentityCache.cache.expects(:delete).with(@record.primary_cache_index_key).once
     @not_cached.save
   end
+
 end
