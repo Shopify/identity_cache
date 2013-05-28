@@ -150,7 +150,7 @@ module IdentityCache
               child_records = records.map(&details[:cached_accessor_name].to_sym).flatten
             else
               ids_to_parent_record = records.each_with_object({}) do |record, hash|
-                child_ids = record.send(details[:ids_cache_name])
+                child_ids = record.send(details[:ids_variable_name])
                 child_ids.each do |child_id|
                   hash[child_id] = record
                 end
