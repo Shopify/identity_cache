@@ -3,6 +3,7 @@ require 'mocha/setup'
 require 'active_record'
 require 'helpers/cache'
 require 'helpers/database_connection'
+require 'helpers/active_record_objects'
 
 require File.dirname(__FILE__) + '/../lib/identity_cache'
 
@@ -29,6 +30,8 @@ class ActiveSupport::Cache::MemCacheStore
 end
 
 class IdentityCache::TestCase < MiniTest::Unit::TestCase
+  include ActiveRecordObjects
+
   def setup
     DatabaseConnection.drop_tables
     DatabaseConnection.create_tables
@@ -38,13 +41,7 @@ class IdentityCache::TestCase < MiniTest::Unit::TestCase
 
   def teardown
     IdentityCache.cache.clear
-    ActiveSupport::DescendantsTracker.clear
-    ActiveSupport::Dependencies.clear
-    Object.send :remove_const, 'DeeplyAssociatedRecord'
-    Object.send :remove_const, 'PolymorphicRecord'
-    Object.send :remove_const, 'AssociatedRecord'
-    Object.send :remove_const, 'NotCachedRecord'
-    Object.send :remove_const, 'Record'
+    teardown_models
   end
 
   def assert_nothing_raised
@@ -89,38 +86,6 @@ class IdentityCache::TestCase < MiniTest::Unit::TestCase
 
   def cache_hash(key)
     CityHash.hash64(key)
-  end
-
-  private
-  def setup_models
-    Object.send :const_set, 'DeeplyAssociatedRecord', Class.new(ActiveRecord::Base).tap {|klass|
-      klass.send :include, IdentityCache
-      klass.belongs_to :associated_record
-    }
-
-    Object.send :const_set, 'AssociatedRecord', Class.new(ActiveRecord::Base).tap {|klass|
-      klass.send :include, IdentityCache
-      klass.belongs_to :record
-      klass.has_many :deeply_associated_records, :order => "name DESC"
-    }
-
-    Object.send :const_set, 'NotCachedRecord', Class.new(ActiveRecord::Base).tap {|klass|
-      klass.belongs_to :record, :touch => true
-    }
-
-    Object.send :const_set, 'PolymorphicRecord', Class.new(ActiveRecord::Base).tap {|klass|
-      klass.belongs_to :owner, :polymorphic => true
-    }
-
-    Object.send :const_set, 'Record', Class.new(ActiveRecord::Base).tap {|klass|
-      klass.send :include, IdentityCache
-      klass.belongs_to :record
-      klass.has_many :associated_records, :order => "id DESC"
-      klass.has_many :not_cached_records, :order => "id DESC"
-      klass.has_many :polymorphic_records, :as => 'owner'
-      klass.has_one :polymorphic_record, :as => 'owner'
-      klass.has_one :associated, :class_name => 'AssociatedRecord', :order => "id ASC"
-    }
   end
 end
 
