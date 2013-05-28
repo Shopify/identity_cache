@@ -24,8 +24,6 @@ end
 
 def count_externals(results)
   count = {}
-  EXTERNALS.each do
-  end
   results.split(/\n/).each do |line|
     fields = line.split
     if ext = EXTERNALS.detect { |e| e[1].any? { |method| method == fields[-1] } }
@@ -39,7 +37,6 @@ def count_externals(results)
 end
 
 create_database(RUNS)
-
 
 run(FindRunner.new(RUNS))
 

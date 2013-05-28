@@ -4,7 +4,6 @@ require 'active_support/core_ext'
 require 'active_support/cache'
 require 'identity_cache'
 require 'memcache'
-require 'debugger'
 
 if ENV['BOXEN_HOME'].present?
   $memcached_port = 21211
