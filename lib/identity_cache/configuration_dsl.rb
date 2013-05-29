@@ -7,11 +7,9 @@ module IdentityCache
       base.class_attribute :cache_attributes
       base.class_attribute :cached_has_manys
       base.class_attribute :cached_has_ones
-      base.class_attribute :embedded_schema_hashes
 
       base.cached_has_manys = {}
       base.cached_has_ones = {}
-      base.embedded_schema_hashes = {}
       base.cache_attributes = []
       base.cache_indexes = []
 

@@ -128,6 +128,17 @@ module IdentityCache
       columns.sort_by(&:name).map {|c| "#{c.name}:#{c.type}"} * ","
     end
 
+    def embedded_schema_to_string(klass)
+      schema_string = schema_to_string(klass.columns)
+      unless (embeded_associations = klass.all_cached_associations_needing_population).empty?
+        embedded_schema = embeded_associations.map do |name, options|
+          "#{name}:(#{embedded_schema_to_string(options[:association_class])})"
+        end.sort.join(',')
+        schema_string << "," << embedded_schema
+      end
+      schema_string
+    end
+
     def included(base) #:nodoc:
       raise AlreadyIncludedError if base.respond_to? :cache_indexes
 

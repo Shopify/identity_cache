@@ -250,27 +250,13 @@ module IdentityCache
 
     def populate_denormalized_cached_association(ivar_name, association_name) # :nodoc:
       ivar_full_name = :"@#{ivar_name}"
-      schema_hash_ivar = :"@#{ivar_name}_schema_hash"
       reflection = association(association_name)
 
-      current_schema_hash = self.class.embedded_schema_hashes[association_name] ||= begin
-        IdentityCache.memcache_hash(IdentityCache.schema_to_string(reflection.klass.columns))
-      end
-
-      saved_schema_hash = instance_variable_get(schema_hash_ivar)
-
-      if saved_schema_hash == current_schema_hash
-        value = instance_variable_get(ivar_full_name)
-        return value unless value.nil?
-      elsif saved_schema_hash
-        reflection.reset
-      end
-
-      reflection.load_target unless reflection.loaded?
+      value = instance_variable_get(ivar_full_name)
+      return value unless value.nil?
 
       loaded_association = send(association_name)
 
-      instance_variable_set(schema_hash_ivar, current_schema_hash)
       instance_variable_set(ivar_full_name, IdentityCache.map_cached_nil_for(loaded_association))
     end
 
