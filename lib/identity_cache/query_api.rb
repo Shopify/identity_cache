@@ -262,6 +262,8 @@ module IdentityCache
       if saved_schema_hash == current_schema_hash
         value = instance_variable_get(ivar_full_name)
         return value unless value.nil?
+      elsif saved_schema_hash
+        reflection.reset
       end
 
       reflection.load_target unless reflection.loaded?
