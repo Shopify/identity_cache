@@ -9,7 +9,7 @@ module IdentityCache
 
       def rails_cache_key_prefix
         @rails_cache_key_prefix ||= begin
-          "IDC:blob:#{base_class.name}:#{IdentityCache.memcache_hash(IdentityCache.schema_to_string(columns))}:"
+          "IDC:blob:#{base_class.name}:#{IdentityCache.denormalized_schema_hash(self)}:"
         end
       end
 
