@@ -49,7 +49,7 @@ module IdentityCache
 
         field_list = fields.join("_and_")
         arg_list = (0...fields.size).collect { |i| "arg#{i}" }.join(',')
-        where_list = fields.each_with_index.collect { |f, i| "#{f} = \#{quote_value(arg#{i})}" }.join(" AND ")
+        where_list = fields.each_with_index.collect { |f, i| "`#{f}` = \#{quote_value(arg#{i})}" }.join(" AND ")
 
         if options[:unique]
           self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__)
@@ -171,7 +171,7 @@ module IdentityCache
 
         field_list = fields.join("_and_")
         arg_list = (0...fields.size).collect { |i| "arg#{i}" }.join(',')
-        where_list = fields.each_with_index.collect { |f, i| "#{f} = \#{quote_value(arg#{i})}" }.join(" AND ")
+        where_list = fields.each_with_index.collect { |f, i| "`#{f}` = \#{quote_value(arg#{i})}" }.join(" AND ")
 
         self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__)
           def fetch_#{attribute}_by_#{field_list}(#{arg_list})
