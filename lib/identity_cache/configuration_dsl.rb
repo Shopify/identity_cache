@@ -235,7 +235,7 @@ module IdentityCache
           attr_reader :#{options[:ids_variable_name]}
 
           def #{options[:cached_ids_name]}
-            populate_#{association}_cache unless @#{options[:ids_variable_name]}
+            #{options[:population_method_name]} unless @#{options[:ids_variable_name]}
             @#{options[:ids_variable_name]}
           end
 
@@ -245,7 +245,7 @@ module IdentityCache
 
           def #{options[:cached_accessor_name]}
             if IdentityCache.should_cache? || #{association}.loaded?
-              populate_#{association}_cache unless @#{options[:ids_variable_name]} || @#{options[:records_variable_name]}
+              #{options[:population_method_name]} unless @#{options[:ids_variable_name]} || @#{options[:records_variable_name]}
               @#{options[:records_variable_name]} ||= #{options[:association_class]}.fetch_multi(*@#{options[:ids_variable_name]})
             else
               #{association}
