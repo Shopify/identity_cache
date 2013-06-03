@@ -10,7 +10,7 @@ module IdentityCache
     end
 
     def memoized_key_values
-      @key_value_maps[Thread.current.object_id]
+      @key_value_maps[Thread.current]
     end
 
     def with_memoization(&block)
@@ -28,7 +28,8 @@ module IdentityCache
 
     def read(key)
       if memoizing?
-        memoized_key_values[key] ||= @memcache.read(key)
+        mkv = memoized_key_values
+        mkv.fetch(key){ mkv[key] = @memcache.read(key) }
       else
         @memcache.read(key)
       end
@@ -40,17 +41,19 @@ module IdentityCache
     end
 
     def read_multi(*keys)
-      hash = {}
-
       if memoizing?
-        keys.reduce({}) do |hash, key|
-          hash[key] = memoized_key_values[key] if memoized_key_values[key].present?
-          hash
+        hash = {}
+        mkv = memoized_key_values
+        missing_keys = keys.reject do |key|
+          if mkv.has_key?(key)
+            hash[key] = mkv[key]
+            true
+          end
         end
+        hash.merge(@memcache.read_multi(*missing_keys))
+      else
+        @memcache.read_multi(*keys)
       end
-
-      missing_keys = keys - hash.keys
-      hash.merge(@memcache.read_multi(*missing_keys))
     end
 
     def clear
@@ -61,7 +64,7 @@ module IdentityCache
     private
 
     def clear_memoization
-      @key_value_maps.delete(Thread.current.object_id)
+      @key_value_maps.delete(Thread.current)
     end
 
     def memoizing?
