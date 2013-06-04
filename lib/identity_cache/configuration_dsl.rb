@@ -7,11 +7,13 @@ module IdentityCache
       base.class_attribute :cache_attributes
       base.class_attribute :cached_has_manys
       base.class_attribute :cached_has_ones
+      base.class_attribute :primary_cache_index_enabled
 
       base.cached_has_manys = {}
       base.cached_has_ones = {}
       base.cache_attributes = []
       base.cache_indexes = []
+      base.primary_cache_index_enabled = true
 
       base.private_class_method :build_normalized_has_many_cache, :build_denormalized_association_cache,
                                 :add_parent_expiry_hook, :identity_cache_multiple_value_dynamic_fetcher,
@@ -42,6 +44,7 @@ module IdentityCache
       # * unique: if the index would only have unique values
       #
       def cache_index(*fields)
+        raise NotImplementedError, "Cache indexes need an enabled primary index" unless primary_cache_index_enabled
         options = fields.extract_options!
         self.cache_indexes.push fields
 
@@ -179,6 +182,10 @@ module IdentityCache
         CODE
       end
 
+      def disable_primary_cache_index
+        raise NotImplementedError, "Secondary indexes rely on the primary index to function. You must either remove the secondary indexes or don't disable the primary" if self.cache_indexes.size > 0
+        self.primary_cache_index_enabled = false
+      end
 
       def identity_cache_single_value_dynamic_fetcher(fields, values, sql_on_miss) # :nodoc:
         cache_key = rails_cache_index_key_for_fields_and_values(fields, values)

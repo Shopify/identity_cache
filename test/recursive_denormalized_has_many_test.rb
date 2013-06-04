@@ -67,14 +67,22 @@ class RecursiveDenormalizedHasManyTest < IdentityCache::TestCase
 
   def test_saving_child_record_should_expire_parent_record
     IdentityCache.cache.expects(:delete).with(@record.primary_cache_index_key)
-    IdentityCache.cache.expects(:delete).with(@associated_record.primary_cache_index_key)
+    if AssociatedRecord.primary_cache_index_enabled
+      IdentityCache.cache.expects(:delete).with(@associated_record.primary_cache_index_key)
+    else
+      IdentityCache.cache.expects(:delete).with(@associated_record.primary_cache_index_key).never
+    end
     @associated_record.name = 'different'
     @associated_record.save!
   end
 
   def test_saving_grand_child_record_should_expire_parent_record
     IdentityCache.cache.expects(:delete).with(@record.primary_cache_index_key)
-    IdentityCache.cache.expects(:delete).with(@associated_record.primary_cache_index_key)
+    if AssociatedRecord.primary_cache_index_enabled
+      IdentityCache.cache.expects(:delete).with(@associated_record.primary_cache_index_key)
+    else
+      IdentityCache.cache.expects(:delete).with(@associated_record.primary_cache_index_key).never
+    end
     IdentityCache.cache.expects(:delete).with(@deeply_associated_record.primary_cache_index_key)
     @deeply_associated_record.name = 'different'
     @deeply_associated_record.save!
@@ -96,5 +104,12 @@ class RecursiveNormalizedHasManyTest < IdentityCache::TestCase
   def test_cache_repopulation_should_not_fetch_non_embedded_associations
     Record.any_instance.expects(:fetch_associated_records).never
     record_from_cache_miss = Record.fetch(@record.id)
+  end
+end
+
+class DisabledPrimaryIndexTest < RecursiveDenormalizedHasManyTest
+  def setup
+    super
+    AssociatedRecord.disable_primary_cache_index
   end
 end
