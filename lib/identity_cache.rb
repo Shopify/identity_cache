@@ -64,9 +64,6 @@ module IdentityCache
             cache.write(key, result)
           end
         end
-        logger.debug { "[IdentityCache] cache miss for #{key}" }
-      else
-        logger.debug { "[IdentityCache] cache hit for #{key}" }
       end
 
       unmap_cached_nil_for(result)

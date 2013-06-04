@@ -27,12 +27,28 @@ module IdentityCache
     end
 
     def read(key)
-      if memoizing?
+      used_memcached = true
+
+      result = if memoizing?
+        used_memcached = false
         mkv = memoized_key_values
-        mkv.fetch(key){ mkv[key] = @memcache.read(key) }
+
+        mkv.fetch(key) do
+          used_memcached = true
+          mkv[key] = @memcache.read(key)
+        end
+
       else
         @memcache.read(key)
       end
+
+      if result
+        IdentityCache.logger.debug { "[IdentityCache] #{ used_memcached ? ''  : '(memoized)'  } cache hit for #{key}" }
+      else
+        IdentityCache.logger.debug { "[IdentityCache] cache miss for #{key}" }
+      end
+
+      result
     end
 
     def delete(key)
