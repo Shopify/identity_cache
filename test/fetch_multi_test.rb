@@ -115,21 +115,6 @@ class FetchMultiTest < IdentityCache::TestCase
     Record.find_batch([@bob, @joe, @fred].map(&:id).map(&:to_s))
   end
 
-  def test_fetch_multi_accurately_logs_hits_and_misses
-    cache_response = {}
-    cache_response[@bob_blob_key] = @bob
-    cache_response[@joe_blob_key] = nil
-    cache_response[@fred_blob_key] = @fred
-    IdentityCache.cache.stubs(:read_multi).returns(cache_response)
-    log = ''
-    IdentityCache.logger = Logger.new(StringIO.new(log))
-
-    Record.fetch_multi(@bob.id, @joe.id, @fred.id)
-
-    assert_equal 2, log.scan(/hit/).count
-    assert_equal 1, log.scan(/miss/).count
-  end
-
   def test_fetch_multi_doesnt_freeze_keys
     cache_response = {}
     cache_response[@bob_blob_key] = @bob
