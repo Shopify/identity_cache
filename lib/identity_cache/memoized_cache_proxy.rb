@@ -58,7 +58,7 @@ module IdentityCache
 
     def read_multi(*keys)
       memoized_keys = []
-      memcached_keys = []
+      memcache_keys = []
 
       result = if memoizing?
         hash = {}
@@ -80,11 +80,11 @@ module IdentityCache
       if IdentityCache.logger.debug?
 
         result.each do |k, v|
-          memcached_keys << k if !v.nil? && !memoized_keys.include?(k)
+          memcache_keys << k if !v.nil? && !memoized_keys.include?(k)
         end
 
         memoized_keys.each{ |k| IdentityCache.logger.debug "[IdentityCache] (memoized) cache hit for #{k} (multi)" }
-        memoized_keys.each{ |k| IdentityCache.logger.debug "[IdentityCache] (memcache) cache hit for #{k} (multi)" }
+        memcache_keys.each{ |k| IdentityCache.logger.debug "[IdentityCache] (memcache) cache hit for #{k} (multi)" }
       end
 
       result
