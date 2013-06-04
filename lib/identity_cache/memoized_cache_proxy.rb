@@ -57,8 +57,10 @@ module IdentityCache
     end
 
     def read_multi(*keys)
-      memoized_keys = []
-      memcache_keys = []
+
+      if IdentityCache.logger.debug?
+        memoized_keys , memcache_keys = [], []
+      end
 
       result = if memoizing?
         hash = {}
@@ -66,7 +68,7 @@ module IdentityCache
 
         missing_keys = keys.reject do |key|
           if mkv.has_key?(key)
-            memoized_keys << key
+            memoized_keys << key if IdentityCache.logger.debug?
             hash[key] = mkv[key]
             true
           end
