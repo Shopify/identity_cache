@@ -27,12 +27,28 @@ module IdentityCache
     end
 
     def read(key)
-      if memoizing?
+      used_memcached = true
+
+      result = if memoizing?
+        used_memcached = false
         mkv = memoized_key_values
-        mkv.fetch(key){ mkv[key] = @memcache.read(key) }
+
+        mkv.fetch(key) do
+          used_memcached = true
+          mkv[key] = @memcache.read(key)
+        end
+
       else
         @memcache.read(key)
       end
+
+      if result
+        IdentityCache.logger.debug { "[IdentityCache] #{ used_memcached ? '(memcache)'  : '(memoized)'  } cache hit for #{key}" }
+      else
+        IdentityCache.logger.debug { "[IdentityCache] cache miss for #{key}" }
+      end
+
+      result
     end
 
     def delete(key)
@@ -41,19 +57,39 @@ module IdentityCache
     end
 
     def read_multi(*keys)
-      if memoizing?
+
+      if IdentityCache.logger.debug?
+        memoized_keys , memcache_keys = [], []
+      end
+
+      result = if memoizing?
         hash = {}
         mkv = memoized_key_values
+
         missing_keys = keys.reject do |key|
           if mkv.has_key?(key)
+            memoized_keys << key if IdentityCache.logger.debug?
             hash[key] = mkv[key]
             true
           end
         end
         hash.merge(@memcache.read_multi(*missing_keys))
+
       else
         @memcache.read_multi(*keys)
       end
+
+      if IdentityCache.logger.debug?
+
+        result.each do |k, v|
+          memcache_keys << k if !v.nil? && !memoized_keys.include?(k)
+        end
+
+        memoized_keys.each{ |k| IdentityCache.logger.debug "[IdentityCache] (memoized) cache hit for #{k} (multi)" }
+        memcache_keys.each{ |k| IdentityCache.logger.debug "[IdentityCache] (memcache) cache hit for #{k} (multi)" }
+      end
+
+      result
     end
 
     def clear
