@@ -143,7 +143,6 @@ module IdentityCache
         self.cached_has_ones[association] = options
 
         if options[:embed]
-          raise NotImplementedError, "Cache has_ones need an enabled primary index" unless primary_cache_index_enabled
           build_denormalized_association_cache(association, options)
         else
           raise NotImplementedError
@@ -184,6 +183,7 @@ module IdentityCache
       end
 
       def disable_primary_cache_index
+        raise NotImplementedError, "Secondary indexes rely on the primary index to function. You must either remove the secondary indexes or don't disable the primary" if self.cache_indexes.size > 0
         self.primary_cache_index_enabled = false
       end
 
