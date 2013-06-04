@@ -57,9 +57,7 @@ module IdentityCache
 
       if result.nil?
         if block_given?
-          ActiveRecord::Base.connection.with_master do
-            result = yield
-          end
+          result = yield
           result = map_cached_nil_for(result)
 
           if should_cache?
@@ -99,9 +97,7 @@ module IdentityCache
       if missed_keys.size > 0
         if block_given?
           replacement_results = nil
-          ActiveRecord::Base.connection.with_master do
-            replacement_results = yield missed_keys
-          end
+          replacement_results = yield missed_keys
           missed_keys.zip(replacement_results) do |(key, replacement_result)|
             if should_cache?
               replacement_result  = map_cached_nil_for(replacement_result )
@@ -141,14 +137,6 @@ module IdentityCache
 
     def included(base) #:nodoc:
       raise AlreadyIncludedError if base.respond_to? :cache_indexes
-
-      unless ActiveRecord::Base.connection.respond_to?(:with_master)
-        ActiveRecord::Base.connection.class.class_eval(ruby = <<-CODE, __FILE__, __LINE__)
-          def with_master
-            yield
-          end
-        CODE
-      end
 
       base.send(:include, ArTransactionChanges) unless base.include?(ArTransactionChanges)
       base.send(:include, IdentityCache::BelongsToCaching)
