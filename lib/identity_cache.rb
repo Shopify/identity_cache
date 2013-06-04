@@ -120,7 +120,7 @@ module IdentityCache
 
     def denormalized_schema_hash(klass)
       schema_string = schema_to_string(klass.columns)
-      unless (embeded_associations = klass.all_cached_associations_needing_population).empty?
+      if klass.respond_to?(:all_cached_associations_needing_population) && !(embeded_associations = klass.all_cached_associations_needing_population).empty?
         embedded_schema = embeded_associations.map do |name, options|
           "#{name}:(#{denormalized_schema_hash(options[:association_class])})"
         end.sort.join(',')
