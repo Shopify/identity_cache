@@ -16,12 +16,14 @@ module IdentityCache
       # Similar to ActiveRecord::Base#exists? will return true if the id can be
       # found in the cache or in the DB.
       def exists_with_identity_cache?(id)
+        raise NotImplementedError, "exists_with_identity_cache? needs the primary index enabled" unless primary_cache_index_enabled
         !!fetch_by_id(id)
       end
 
       # Default fetcher added to the model on inclusion, it behaves like
       # ActiveRecord::Base.find_by_id
       def fetch_by_id(id)
+        raise NotImplementedError, "fetching needs the primary index enabled" unless primary_cache_index_enabled
         if IdentityCache.should_cache?
 
           require_if_necessary do
@@ -45,6 +47,7 @@ module IdentityCache
       # Default fetcher added to the model on inclusion, if behaves like
       # ActiveRecord::Base.find_all_by_id
       def fetch_multi(*ids)
+        raise NotImplementedError, "fetching needs the primary index enabled" unless primary_cache_index_enabled
         options = ids.extract_options!
         if IdentityCache.should_cache?
 
@@ -250,7 +253,6 @@ module IdentityCache
 
     def populate_denormalized_cached_association(ivar_name, association_name) # :nodoc:
       ivar_full_name = :"@#{ivar_name}"
-      reflection = association(association_name)
 
       value = instance_variable_get(ivar_full_name)
       return value unless value.nil?
@@ -261,6 +263,7 @@ module IdentityCache
     end
 
     def expire_primary_index # :nodoc:
+      return unless self.class.primary_cache_index_enabled
       extra_keys = if respond_to? :updated_at
         old_updated_at = old_values_for_fields([:updated_at]).first
         "expiring_last_updated_at=#{old_updated_at}"
@@ -273,6 +276,7 @@ module IdentityCache
     end
 
     def expire_secondary_indexes # :nodoc:
+      return unless self.class.primary_cache_index_enabled
       cache_indexes.try(:each) do |fields|
         if self.destroyed?
           IdentityCache.cache.delete(secondary_cache_index_key_for_previous_values(fields))
