@@ -248,6 +248,7 @@ module IdentityCache
 
           def #{options[:population_method_name]}
             @#{options[:ids_variable_name]} = #{options[:ids_name]}
+            association_cache.delete(:#{association})
           end
 
           def #{options[:cached_accessor_name]}
