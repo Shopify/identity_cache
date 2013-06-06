@@ -26,6 +26,7 @@ class NormalizedHasManyTest < IdentityCache::TestCase
   def test_defining_a_denormalized_has_many_cache_caches_the_list_of_associated_ids_on_the_parent_record_during_cache_miss
     fetched_record = Record.fetch(@record.id)
     assert_equal [2, 1], fetched_record.cached_associated_record_ids
+    assert_equal false, fetched_record.associated_records.loaded?
   end
 
   def test_fetching_associated_ids_will_populate_the_value_if_the_record_isnt_from_the_cache
