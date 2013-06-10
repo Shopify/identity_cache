@@ -17,7 +17,7 @@ module IdentityCache
 
       base.private_class_method :build_normalized_has_many_cache, :build_denormalized_association_cache,
                                 :add_parent_expiry_hook, :identity_cache_multiple_value_dynamic_fetcher,
-                                :identity_cache_single_value_dynamic_fetcher
+                                :identity_cache_single_value_dynamic_fetcher, :identity_cache_sql_conditions
     end
 
     module ClassMethods
@@ -50,13 +50,11 @@ module IdentityCache
 
         field_list = fields.join("_and_")
         arg_list = (0...fields.size).collect { |i| "arg#{i}" }.join(',')
-        where_list = fields.each_with_index.collect { |f, i| "`#{f}` = \#{quote_value(arg#{i})}" }.join(" AND ")
 
         if options[:unique]
           self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__)
             def fetch_by_#{field_list}(#{arg_list})
-              sql = "SELECT `id` FROM `#{table_name}` WHERE #{where_list} LIMIT 1"
-              identity_cache_single_value_dynamic_fetcher(#{fields.inspect}, [#{arg_list}], sql)
+              identity_cache_single_value_dynamic_fetcher(#{fields.inspect}, [#{arg_list}])
             end
 
             # exception throwing variant
@@ -67,8 +65,7 @@ module IdentityCache
         else
           self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__)
             def fetch_by_#{field_list}(#{arg_list})
-              sql = "SELECT `id` FROM `#{table_name}` WHERE #{where_list}"
-              identity_cache_multiple_value_dynamic_fetcher(#{fields.inspect}, [#{arg_list}], sql)
+              identity_cache_multiple_value_dynamic_fetcher(#{fields.inspect}, [#{arg_list}])
             end
           CODE
         end
@@ -172,12 +169,10 @@ module IdentityCache
 
         field_list = fields.join("_and_")
         arg_list = (0...fields.size).collect { |i| "arg#{i}" }.join(',')
-        where_list = fields.each_with_index.collect { |f, i| "`#{f}` = \#{quote_value(arg#{i})}" }.join(" AND ")
 
         self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__)
           def fetch_#{attribute}_by_#{field_list}(#{arg_list})
-            sql = "SELECT #{attribute} FROM #{table_name} WHERE #{where_list} LIMIT 1"
-            attribute_dynamic_fetcher(#{attribute.inspect}, #{fields.inspect}, [#{arg_list}], sql)
+            attribute_dynamic_fetcher(#{attribute.inspect}, #{fields.inspect}, [#{arg_list}])
           end
         CODE
       end
@@ -187,7 +182,8 @@ module IdentityCache
         self.primary_cache_index_enabled = false
       end
 
-      def identity_cache_single_value_dynamic_fetcher(fields, values, sql_on_miss) # :nodoc:
+      def identity_cache_single_value_dynamic_fetcher(fields, values) # :nodoc:
+        sql_on_miss = "SELECT `id` FROM `#{table_name}` WHERE #{identity_cache_sql_conditions(fields, values)} LIMIT 1"
         cache_key = rails_cache_index_key_for_fields_and_values(fields, values)
         id = IdentityCache.fetch(cache_key) { connection.select_value(sql_on_miss) }
         unless id.nil?
@@ -198,7 +194,8 @@ module IdentityCache
         record
       end
 
-      def identity_cache_multiple_value_dynamic_fetcher(fields, values, sql_on_miss) # :nodoc:
+      def identity_cache_multiple_value_dynamic_fetcher(fields, values) # :nodoc
+        sql_on_miss = "SELECT `id` FROM `#{table_name}` WHERE #{identity_cache_sql_conditions(fields, values)}"
         cache_key = rails_cache_index_key_for_fields_and_values(fields, values)
         ids = IdentityCache.fetch(cache_key) { connection.select_values(sql_on_miss) }
 
@@ -268,8 +265,10 @@ module IdentityCache
         add_parent_expiry_hook(options.merge(:only_on_foreign_key_change => true))
       end
 
-      def attribute_dynamic_fetcher(attribute, fields, values, sql_on_miss) #:nodoc:
+      def attribute_dynamic_fetcher(attribute, fields, values) #:nodoc:
         cache_key = rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, values)
+        sql_on_miss = "SELECT `#{attribute}` FROM `#{table_name}` WHERE #{identity_cache_sql_conditions(fields, values)} LIMIT 1"
+
         IdentityCache.fetch(cache_key) { connection.select_value(sql_on_miss) }
       end
 
@@ -292,6 +291,10 @@ module IdentityCache
             expire_parent_cache_on_changes(:#{options[:inverse_name]}, '#{foreign_key}', #{parent_class}, #{options[:only_on_foreign_key_change]})
           end
         CODE
+      end
+
+      def identity_cache_sql_conditions(fields, values)
+        fields.each_with_index.collect { |f, i| "`#{f}` = #{quote_value(values[i])}" }.join(" AND ")
       end
     end
   end
