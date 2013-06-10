@@ -83,8 +83,8 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
     end
   end
 
-  def test_read_multi_with_blank_values
-    Rails.cache.expects(:read_multi).with().returns({})
+  def test_read_multi_with_blank_values_should_not_hit_the_cache_engine
+    Rails.cache.expects(:read_multi).never
 
     IdentityCache.cache.with_memoization do
       IdentityCache.cache.write('foo', [])
