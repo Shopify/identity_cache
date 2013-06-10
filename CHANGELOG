@@ -1,3 +1,10 @@
+0.0.3
+* Fix: memoization for multi hits actually work
+* Fix: quotes SELECT projection elements on cache misses
+* Add CPU performance benchmark
+* Fix: table names are not hardcoded anymore
+* Logger now differentiates memoized vs non memoized hits
+
 0.0.2
 * Fix: Existent embedded entries will no longer raise when ActiveModel::MissingAttributeError when accessing a newly created attribute.
 * Fix: Do not marshal raw AcriveRecord associations
