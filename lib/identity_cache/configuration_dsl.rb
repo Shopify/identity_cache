@@ -67,8 +67,7 @@ module IdentityCache
         else
           self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__)
             def fetch_by_#{field_list}(#{arg_list})
-              sql = "SELECT `id` FROM `#{table_name}` WHERE #{where_list}"
-              identity_cache_multiple_value_dynamic_fetcher(#{fields.inspect}, [#{arg_list}], sql)
+              identity_cache_multiple_value_dynamic_fetcher(#{fields.inspect}, [#{arg_list}])
             end
           CODE
         end
@@ -198,11 +197,16 @@ module IdentityCache
         record
       end
 
-      def identity_cache_multiple_value_dynamic_fetcher(fields, values, sql_on_miss) # :nodoc:
+      def identity_cache_multiple_value_dynamic_fetcher(fields, values) # :nodoc:
+        sql = "SELECT id FROM #{table_name} WHERE #{where_condition(fields, values)}"
         cache_key = rails_cache_index_key_for_fields_and_values(fields, values)
-        ids = IdentityCache.fetch(cache_key) { connection.select_values(sql_on_miss) }
+        ids = IdentityCache.fetch(cache_key) { connection.select_values(sql) }
 
         ids.empty? ? [] : fetch_multi(*ids)
+      end
+
+      def where_condition(fields, values)
+        fields.each_with_index.collect { |f, i| "#{f} = #{quote_value(values[i])}" }.join(" AND ")
       end
 
       def build_denormalized_association_cache(association, options) #:nodoc:
