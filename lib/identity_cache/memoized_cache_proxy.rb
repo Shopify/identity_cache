@@ -74,7 +74,9 @@ module IdentityCache
             true
           end
         end
-        hits = @memcache.read_multi(*missing_keys)
+
+        hits =   missing_keys.empty? ? {} : @memcache.read_multi(*missing_keys)
+
         missing_keys.each do |key|
           hit = hits[key]
           mkv[key] = hit
