@@ -30,7 +30,7 @@ module IdentityCache
     # +cache_adaptor+ - A ActiveSupport::Cache::Store
     #
     def cache_backend=(cache_adaptor)
-      cache.memcache = cache_adaptor
+      cache.cache_backend = cache_adaptor
     end
 
     def cache

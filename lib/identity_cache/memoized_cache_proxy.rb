@@ -2,10 +2,10 @@ require 'monitor'
 
 module IdentityCache
   class MemoizedCacheProxy
-    attr_writer :memcache
+    attr_accessor :cache_backend
 
-    def initialize(memcache = nil)
-      @memcache = memcache || Rails.cache
+    def initialize(cache_backend = nil)
+      @cache_backend = cache_backend || Rails.cache
       @key_value_maps = Hash.new {|h, k| h[k] = {} }
     end
 
@@ -23,27 +23,27 @@ module IdentityCache
 
     def write(key, value)
       memoized_key_values[key] = value if memoizing?
-      @memcache.write(key, value)
+      @cache_backend.write(key, value)
     end
 
     def read(key)
-      used_memcached = true
+      used_cache_backendd = true
 
       result = if memoizing?
-        used_memcached = false
+        used_cache_backendd = false
         mkv = memoized_key_values
 
         mkv.fetch(key) do
-          used_memcached = true
-          mkv[key] = @memcache.read(key)
+          used_cache_backendd = true
+          mkv[key] = @cache_backend.read(key)
         end
 
       else
-        @memcache.read(key)
+        @cache_backend.read(key)
       end
 
       if result
-        IdentityCache.logger.debug { "[IdentityCache] #{ used_memcached ? '(memcache)'  : '(memoized)'  } cache hit for #{key}" }
+        IdentityCache.logger.debug { "[IdentityCache] #{ used_cache_backendd ? '(cache_backend)'  : '(memoized)'  } cache hit for #{key}" }
       else
         IdentityCache.logger.debug { "[IdentityCache] cache miss for #{key}" }
       end
@@ -53,13 +53,13 @@ module IdentityCache
 
     def delete(key)
       memoized_key_values.delete(key) if memoizing?
-      @memcache.delete(key)
+      @cache_backend.delete(key)
     end
 
     def read_multi(*keys)
 
       if IdentityCache.logger.debug?
-        memoized_keys , memcache_keys = [], []
+        memoized_keys , cache_backend_keys = [], []
       end
 
       result = if memoizing?
@@ -75,7 +75,7 @@ module IdentityCache
           end
         end
 
-        hits =   missing_keys.empty? ? {} : @memcache.read_multi(*missing_keys)
+        hits =   missing_keys.empty? ? {} : @cache_backend.read_multi(*missing_keys)
 
         missing_keys.each do |key|
           hit = hits[key]
@@ -84,17 +84,17 @@ module IdentityCache
         end
         hash
       else
-        @memcache.read_multi(*keys)
+        @cache_backend.read_multi(*keys)
       end
 
       if IdentityCache.logger.debug?
 
         result.each do |k, v|
-          memcache_keys << k if !v.nil? && !memoized_keys.include?(k)
+          cache_backend_keys << k if !v.nil? && !memoized_keys.include?(k)
         end
 
         memoized_keys.each{ |k| IdentityCache.logger.debug "[IdentityCache] (memoized) cache hit for #{k} (multi)" }
-        memcache_keys.each{ |k| IdentityCache.logger.debug "[IdentityCache] (memcache) cache hit for #{k} (multi)" }
+        cache_backend_keys.each{ |k| IdentityCache.logger.debug "[IdentityCache] (cache_backend) cache hit for #{k} (multi)" }
       end
 
       result
@@ -102,7 +102,7 @@ module IdentityCache
 
     def clear
       clear_memoization
-      @memcache.clear
+      @cache_backend.clear
     end
 
     private
