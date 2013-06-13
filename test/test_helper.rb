@@ -85,7 +85,7 @@ class IdentityCache::TestCase < MiniTest::Unit::TestCase
   end
 
   def cache_hash(key)
-    CityHash.hash64(key)
+    IdentityCache.memcache_hash(key)
   end
 end
 
