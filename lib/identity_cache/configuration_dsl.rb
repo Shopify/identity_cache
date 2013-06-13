@@ -183,7 +183,7 @@ module IdentityCache
       end
 
       def identity_cache_single_value_dynamic_fetcher(fields, values) # :nodoc:
-        sql_on_miss = "SELECT `id` FROM `#{table_name}` WHERE #{identity_cache_sql_conditions(fields, values)} LIMIT 1"
+        sql_on_miss = "SELECT #{quoted_id_column} FROM `#{table_name}` WHERE #{identity_cache_sql_conditions(fields, values)} LIMIT 1"
         cache_key = rails_cache_index_key_for_fields_and_values(fields, values)
         id = IdentityCache.fetch(cache_key) { connection.select_value(sql_on_miss) }
         unless id.nil?
@@ -195,7 +195,7 @@ module IdentityCache
       end
 
       def identity_cache_multiple_value_dynamic_fetcher(fields, values) # :nodoc
-        sql_on_miss = "SELECT `id` FROM `#{table_name}` WHERE #{identity_cache_sql_conditions(fields, values)}"
+        sql_on_miss = "SELECT #{quoted_id_column} FROM `#{table_name}` WHERE #{identity_cache_sql_conditions(fields, values)}"
         cache_key = rails_cache_index_key_for_fields_and_values(fields, values)
         ids = IdentityCache.fetch(cache_key) { connection.select_values(sql_on_miss) }
 
@@ -296,6 +296,12 @@ module IdentityCache
       def identity_cache_sql_conditions(fields, values)
         fields.each_with_index.collect { |f, i| "`#{f}` = #{quote_value(values[i])}" }.join(" AND ")
       end
+
+      protected
+
+        def quoted_id_column
+          @quoted_id_column ||= connection.quote_column_name(:id)
+        end
     end
   end
 end
