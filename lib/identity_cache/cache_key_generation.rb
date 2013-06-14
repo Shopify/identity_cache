@@ -10,8 +10,9 @@ module IdentityCache
       schema_string = schema_to_string(klass.columns)
       if !(associations = embedded_associations(klass)).empty?
         embedded_schema = associations.map do |name, options|
+          next if options[:association_class] == klass
           "#{name}:(#{denormalized_schema_hash(options[:association_class])})"
-        end.sort.join(',')
+        end.compact.sort.join(',')
         schema_string << "," << embedded_schema
       end
       IdentityCache.memcache_hash(schema_string)
