@@ -27,14 +27,14 @@ module IdentityCache
     end
 
     def read(key)
-      used_cache_backendd = true
+      used_cache_backend = true
 
       result = if memoizing?
-        used_cache_backendd = false
+        used_cache_backend = false
         mkv = memoized_key_values
 
         mkv.fetch(key) do
-          used_cache_backendd = true
+          used_cache_backend = true
           mkv[key] = @cache_backend.read(key)
         end
 
@@ -43,7 +43,7 @@ module IdentityCache
       end
 
       if result
-        IdentityCache.logger.debug { "[IdentityCache] #{ used_cache_backendd ? '(cache_backend)'  : '(memoized)'  } cache hit for #{key}" }
+        IdentityCache.logger.debug { "[IdentityCache] #{ used_cache_backend ? '(cache_backend)'  : '(memoized)'  } cache hit for #{key}" }
       else
         IdentityCache.logger.debug { "[IdentityCache] cache miss for #{key}" }
       end
