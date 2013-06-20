@@ -65,4 +65,14 @@ class SchemaChangeTest < IdentityCache::TestCase
     Record.expects(:resolve_cache_miss).returns(@record)
     record = Record.fetch(@record.id)
   end
+
+  def test_schema_changes_on_new_cached_child_association
+    record = Record.fetch(@record.id)
+
+    Record.cache_has_many :polymorphic_records, :inverse_name => :owner, :embed => true
+    read_new_schema
+
+    Record.expects(:resolve_cache_miss).returns(@record)
+    record = Record.fetch(@record.id)
+  end
 end
