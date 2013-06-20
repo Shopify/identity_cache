@@ -2,6 +2,21 @@ module IdentityCache
   module CacheKeyGeneration
     extend ActiveSupport::Concern
 
+    def self.schema_to_string(columns)
+      columns.sort_by(&:name).map{|c| "#{c.name}:#{c.type}"}.join(',')
+    end
+
+    def self.denormalized_schema_hash(klass)
+      schema_string = schema_to_string(klass.columns)
+      if klass.respond_to?(:all_cached_associations_needing_population) && !(embeded_associations = klass.all_cached_associations_needing_population).empty?
+        embedded_schema = embeded_associations.map do |name, options|
+          "#{name}:(#{denormalized_schema_hash(options[:association_class])})"
+        end.sort.join(',')
+        schema_string << "," << embedded_schema
+      end
+      IdentityCache.memcache_hash(schema_string)
+    end
+
     module ClassMethods
       def rails_cache_key(id)
         rails_cache_key_prefix + id.to_s
@@ -9,7 +24,7 @@ module IdentityCache
 
       def rails_cache_key_prefix
         @rails_cache_key_prefix ||= begin
-          "IDC:blob:#{base_class.name}:#{IdentityCache.denormalized_schema_hash(self)}:"
+          "IDC:blob:#{base_class.name}:#{IdentityCache::CacheKeyGeneration.denormalized_schema_hash(self)}:"
         end
       end
 

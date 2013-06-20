@@ -114,21 +114,6 @@ module IdentityCache
       result
     end
 
-    def schema_to_string(columns)
-      columns.sort_by(&:name).map{|c| "#{c.name}:#{c.type}"}.join(',')
-    end
-
-    def denormalized_schema_hash(klass)
-      schema_string = schema_to_string(klass.columns)
-      if klass.respond_to?(:all_cached_associations_needing_population) && !(embeded_associations = klass.all_cached_associations_needing_population).empty?
-        embedded_schema = embeded_associations.map do |name, options|
-          "#{name}:(#{denormalized_schema_hash(options[:association_class])})"
-        end.sort.join(',')
-        schema_string << "," << embedded_schema
-      end
-      IdentityCache.memcache_hash(schema_string)
-    end
-
     def included(base) #:nodoc:
       raise AlreadyIncludedError if base.respond_to? :cache_indexes
 
