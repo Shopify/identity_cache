@@ -14,6 +14,7 @@ module IdentityCache
         end.sort.join(',')
         schema_string << "," << embedded_schema
       end
+      IdentityCache.memcache_hash(schema_string)
     end
 
     def self.embedded_associations(klass)
