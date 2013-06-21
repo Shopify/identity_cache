@@ -40,7 +40,7 @@ module DatabaseConnection
       'database'     => 'identity_cache_test',
       'host'         => 'localhost',
       'port'         => 5432,
-      'min_messages' => 'warning'
+      'min_messages' => 'warning',
       'username' => 'root'
     }
   else
