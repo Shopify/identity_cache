@@ -298,10 +298,6 @@ module IdentityCache
         fields.each_with_index.collect {|f, i| "#{safe_column_name(f)} = #{quote_value(values[i])}" }.join(" AND ")
       end
 
-      def connection
-        @connection ||= ActiveRecord::Base.connection
-      end
-
       def safe_table_name(name)
         connection.quote_table_name(name)
       end
