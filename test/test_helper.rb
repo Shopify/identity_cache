@@ -10,9 +10,11 @@ require File.dirname(__FILE__) + '/../lib/identity_cache'
 if ENV['BOXEN_HOME'].present?
   $memcached_port = 21211
   $mysql_port = 13306
+  $postgres_port = 5432
 else
   $memcached_port = 11211
   $mysql_port = 3306
+  $postgres_port = 5432
 end
 
 DatabaseConnection.setup
@@ -124,5 +126,25 @@ class CacheCounter
 
   def call(name, start, finish, message_id, values)
     self.log << (values[:keys].try(:join, ', ') || values[:key])
+  end
+end
+
+def connection
+  @connection ||= ActiveRecord::Base.connection
+end
+
+def safe_table_name(name)
+  connection.quote_table_name(name)
+end
+
+def safe_column_name(name)
+  connection.quote_column_name(name)
+end
+
+def db_aware_record_id(record)
+  if ENV['DB'] == 'postgres'
+    record.id.to_s
+  else
+    record.id
   end
 end

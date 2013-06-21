@@ -1,6 +1,6 @@
 module DatabaseConnection
   def self.setup
-    DATABASE_CONFIG['port'] ||= $mysql_port
+    DATABASE_CONFIG['port'] ||= (ENV['DB'] == 'postgres' ? $postgres_port : $mysql_port)
     ActiveRecord::Base.establish_connection(DATABASE_CONFIG)
     ActiveRecord::Base.connection
   rescue
@@ -34,10 +34,21 @@ module DatabaseConnection
     :records2                   => [[:integer, :record_id], [:string, :title], [:timestamps]]
   }
 
-  DATABASE_CONFIG = {
-    'adapter'  => 'mysql2',
-    'database' => 'identity_cache_test',
-    'host'     => '127.0.0.1',
-    'username' => 'root'
-  }
+  DATABASE_CONFIG = if ENV['DB'] == 'postgres'
+    {
+      'adapter'      => 'postgresql',
+      'database'     => 'identity_cache_test',
+      'host'         => 'localhost',
+      'port'         => 5432,
+      'min_messages' => 'warning'
+      'username' => 'root'
+    }
+  else
+    {
+      'adapter'  => 'mysql2',
+      'database' => 'identity_cache_test',
+      'host'     => '127.0.0.1',
+      'username' => 'root'
+    }
+  end
 end

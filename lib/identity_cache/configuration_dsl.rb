@@ -17,7 +17,8 @@ module IdentityCache
 
       base.private_class_method :build_normalized_has_many_cache, :build_denormalized_association_cache,
                                 :add_parent_expiry_hook, :identity_cache_multiple_value_dynamic_fetcher,
-                                :identity_cache_single_value_dynamic_fetcher, :identity_cache_sql_conditions
+                                :identity_cache_single_value_dynamic_fetcher, :identity_cache_sql_conditions,
+                                :safe_table_name, :safe_column_name
     end
 
     module ClassMethods
@@ -183,7 +184,7 @@ module IdentityCache
       end
 
       def identity_cache_single_value_dynamic_fetcher(fields, values) # :nodoc:
-        sql_on_miss = "SELECT `id` FROM `#{table_name}` WHERE #{identity_cache_sql_conditions(fields, values)} LIMIT 1"
+        sql_on_miss = "SELECT #{safe_column_name("id")} FROM #{safe_table_name(table_name)} WHERE #{identity_cache_sql_conditions(fields, values)} LIMIT 1"
         cache_key = rails_cache_index_key_for_fields_and_values(fields, values)
         id = IdentityCache.fetch(cache_key) { connection.select_value(sql_on_miss) }
         unless id.nil?
@@ -195,7 +196,7 @@ module IdentityCache
       end
 
       def identity_cache_multiple_value_dynamic_fetcher(fields, values) # :nodoc
-        sql_on_miss = "SELECT `id` FROM `#{table_name}` WHERE #{identity_cache_sql_conditions(fields, values)}"
+        sql_on_miss = "SELECT #{safe_column_name("id")} FROM #{safe_table_name(table_name)} WHERE #{identity_cache_sql_conditions(fields, values)}"
         cache_key = rails_cache_index_key_for_fields_and_values(fields, values)
         ids = IdentityCache.fetch(cache_key) { connection.select_values(sql_on_miss) }
 
@@ -267,7 +268,7 @@ module IdentityCache
 
       def attribute_dynamic_fetcher(attribute, fields, values) #:nodoc:
         cache_key = rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, values)
-        sql_on_miss = "SELECT `#{attribute}` FROM `#{table_name}` WHERE #{identity_cache_sql_conditions(fields, values)} LIMIT 1"
+        sql_on_miss = "SELECT #{safe_column_name(attribute)} FROM #{safe_table_name(table_name)} WHERE #{identity_cache_sql_conditions(fields, values)} LIMIT 1"
 
         IdentityCache.fetch(cache_key) { connection.select_value(sql_on_miss) }
       end
@@ -294,7 +295,19 @@ module IdentityCache
       end
 
       def identity_cache_sql_conditions(fields, values)
-        fields.each_with_index.collect { |f, i| "`#{f}` = #{quote_value(values[i])}" }.join(" AND ")
+        fields.each_with_index.collect {|f, i| "#{safe_column_name(f)} = #{quote_value(values[i])}".join(" AND ") }
+      end
+
+      def connection
+        @connection ||= ActiveRecord::Base.connection
+      end
+
+      def safe_table_name(name)
+        connection.quote_table_name(name)
+      end
+
+      def safe_column_name(name)
+        connection.quote_column_name(name)
       end
     end
   end
