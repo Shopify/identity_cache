@@ -1,4 +1,5 @@
 require 'monitor'
+require 'set'
 
 module IdentityCache
   class MemoizedCacheProxy
@@ -7,6 +8,7 @@ module IdentityCache
     def initialize(cache_backend = nil)
       @cache_backend = cache_backend || Rails.cache
       @key_value_maps = Hash.new {|h, k| h[k] = {} }
+      @deletion_queue = []
     end
 
     def memoized_key_values
@@ -51,9 +53,25 @@ module IdentityCache
       result
     end
 
+    def begin_batch
+      @batch = true
+      @deletion_queue.unshift Set.new
+    end
+
+    def end_batch
+      @deletion_queue.shift.each do |key|
+        @cache_backend.delete(key)
+      end
+      @batch = (@deletion_queue != [])
+    end
+
     def delete(key)
       memoized_key_values.delete(key) if memoizing?
-      @cache_backend.delete(key)
+      if @batch
+        @deletion_queue.first << key
+      else
+        @cache_backend.delete(key)
+      end
     end
 
     def read_multi(*keys)

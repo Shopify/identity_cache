@@ -102,4 +102,33 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
     assert_equal 'bar', Rails.cache.read('foo')
   end
 
+  def test_batching_deletes
+    c = IdentityCache.cache
+
+    c.cache_backend.expects('delete').with('foo').once
+    c.cache_backend.expects('delete').with('bar').once
+
+    c.begin_batch
+    c.delete('foo')
+    c.delete('foo')
+    c.delete('bar')
+    c.end_batch
+  end
+
+  def test_batching_handles_nested_transactions
+    c = IdentityCache.cache
+    c.cache_backend.expects('delete').with('foo').twice
+    c.cache_backend.expects('delete').with('bar').once
+    c.cache_backend.expects('delete').with('baz').once
+
+    c.begin_batch
+    3.times { c.delete('foo') }
+    c.delete('bar')
+    c.begin_batch
+    4.times { c.delete('foo') }
+    c.delete('baz')
+    c.end_batch
+    c.end_batch
+  end
+
 end
