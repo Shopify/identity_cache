@@ -4,7 +4,6 @@ class ExpirationTest < IdentityCache::TestCase
   def setup
     super
     @record = Record.new
-    @record.id = 1
     @record.title = 'bob'
     @cache_key = "IDC:index:Record:title:#{cache_hash(@record.title)}"
   end
@@ -26,7 +25,7 @@ class ExpirationTest < IdentityCache::TestCase
     Record.cache_index :title, :unique => true
     @record.save!
     assert_equal @record, Record.fetch_by_title('bob')
-    assert_equal @record.id, IdentityCache.cache.read(@cache_key)
+    assert_equal db_aware_record_id(@record), IdentityCache.cache.read(@cache_key)
   end
 
   def test_unique_index_expired_by_updated_record
@@ -60,16 +59,16 @@ class ExpirationTest < IdentityCache::TestCase
     Record.cache_index :title
     @record.save!
     assert_equal [@record], Record.fetch_by_title('bob')
-    assert_equal [@record.id], IdentityCache.cache.read(@cache_key)
+    assert_equal [db_aware_record_id(@record)], IdentityCache.cache.read(@cache_key)
   end
 
   def test_non_unique_index_fetches_multiple_records
     Record.cache_index :title
     @record.save!
-    record2 = Record.create(:id => 2, :title => 'bob')
+    record2 = Record.create(:title => 'bob')
 
     assert_equal [@record, record2], Record.fetch_by_title('bob')
-    assert_equal [1, 2], IdentityCache.cache.read(@cache_key)
+    assert_equal [db_aware_record_id(@record), db_aware_record_id(record2)], IdentityCache.cache.read(@cache_key)
   end
 
   def test_non_unique_index_expired_by_updating_record
@@ -98,6 +97,6 @@ class ExpirationTest < IdentityCache::TestCase
     Record.table_name = 'records2'
     @record.save!
     assert_equal [@record], Record.fetch_by_title('bob')
-    assert_equal [@record.id], IdentityCache.cache.read(@cache_key)
+    assert_equal [db_aware_record_id(@record)], IdentityCache.cache.read(@cache_key)
   end
 end
