@@ -1,9 +1,9 @@
-## Load a hashing library: CityHash (fast choice for CRuby),
-##  MurmurHash3 (safe for JRuby), or Digest::MD5 (built-in)
-
-begin; require 'cityhash';    rescue LoadError; nil end
-begin; require 'murmurhash3'; rescue LoadError; nil end
-require 'digest/md5'
+## Use CityHash for fast hashing if it is available; use Digest::MD5 otherwise
+begin
+  require 'cityhash'
+rescue LoadError
+  require 'digest/md5'
+end
 
 require 'ar_transaction_changes'
 require "identity_cache/version"
@@ -145,16 +145,11 @@ module IdentityCache
       base.send(:include, IdentityCache::QueryAPI)
     end
 
-    ## Select a noncrypto hash function based on what is installed.
+    ## Select a hash function based on what is available.
     ## memcache_hash(key) should return a uint64.
 
     def _cityhash_memcache_hash(key) #:nodoc:
       ::CityHash.hash64(key)
-    end
-
-    def _murmurhash_memcache_hash(key) #:nodoc:
-      a = ::MurmurHash3::V128.str_hash(key)
-      (a[0] << 32) | a[1]
     end
 
     def _digest_md5_memcache_hash(key) #:nodoc:
@@ -164,8 +159,6 @@ module IdentityCache
 
     if defined?(CityHash)
       alias_method :memcache_hash, :_cityhash_memcache_hash
-    elsif defined?(MurmurHash3)
-      alias_method :memcache_hash, :_murmurhash_memcache_hash
     else
       alias_method :memcache_hash, :_digest_md5_memcache_hash
     end
