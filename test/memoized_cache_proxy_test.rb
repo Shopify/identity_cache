@@ -117,7 +117,7 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
 
   def test_batching_handles_nested_transactions
     c = IdentityCache.cache
-    c.cache_backend.expects('delete').with('foo').twice
+    c.cache_backend.expects('delete').with('foo').once
     c.cache_backend.expects('delete').with('bar').once
     c.cache_backend.expects('delete').with('baz').once
 

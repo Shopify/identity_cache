@@ -8,7 +8,7 @@ module IdentityCache
     def initialize(cache_backend = nil)
       @cache_backend = cache_backend || Rails.cache
       @key_value_maps = Hash.new {|h, k| h[k] = {} }
-      @deletion_queue = []
+      @deletion_queue = Set.new
     end
 
     def memoized_key_values
@@ -55,20 +55,26 @@ module IdentityCache
 
     def begin_batch
       @batch = true
-      @deletion_queue.unshift Set.new
     end
 
     def end_batch
-      @deletion_queue.shift.each do |key|
-        @cache_backend.delete(key)
+      if ending_top_level_transaction?
+        @deletion_queue.each do |key|
+          @cache_backend.delete(key)
+        end
+        @deletion_queue.clear
+        @batch = false
       end
-      @batch = (@deletion_queue != [])
+    end
+
+    def ending_top_level_transaction?
+      ActiveRecord::Base.connection.open_transactions.zero?
     end
 
     def delete(key)
       memoized_key_values.delete(key) if memoizing?
       if @batch
-        @deletion_queue.first << key
+        @deletion_queue << key
       else
         @cache_backend.delete(key)
       end
