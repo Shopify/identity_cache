@@ -53,7 +53,9 @@ module IdentityCache
 
     def delete(key)
       memoized_key_values.delete(key) if memoizing?
-      @cache_backend.delete(key)
+      result = @cache_backend.delete(key)
+      IdentityCache.logger.debug { "[IdentityCache] delete #{ result ? 'hit'  : 'miss'  } for #{key}" }
+      result
     end
 
     def read_multi(*keys)
