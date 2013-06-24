@@ -5,10 +5,6 @@ class MemcacheHashTest < IdentityCache::TestCase
     test_hash_fn(:_cityhash_memcache_hash)
   end
 
-  def test_murmurhash3
-    test_hash_fn(:_murmurhash_memcache_hash)
-  end
-
   def test_digest_md5
     test_hash_fn(:_digest_md5_memcache_hash)
   end

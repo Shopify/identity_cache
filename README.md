@@ -11,8 +11,7 @@ Add this line to your application's Gemfile:
 
 ```ruby
 gem 'identity_cache'
-gem 'cityhash'        # optional, for faster hashing (C-Ruby only), OR:
-gem 'murmurhash3'     # optional, for faster hashing (any Ruby platform)
+gem 'cityhash'        # optional, for faster hashing (C-Ruby only)
 ```
 
 And then execute:
