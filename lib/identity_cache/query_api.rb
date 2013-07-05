@@ -41,7 +41,7 @@ module IdentityCache
       # ActiveRecord::Base.find, will raise ActiveRecord::RecordNotFound exception
       # if id is not in the cache or the db.
       def fetch(id)
-        fetch_by_id(id) or raise(ActiveRecord::RecordNotFound, "Couldn't find #{self.class.name} with ID=#{id}")
+        fetch_by_id(id) or raise(ActiveRecord::RecordNotFound, "Couldn't find #{self.name} with ID=#{id}")
       end
 
       # Default fetcher added to the model on inclusion, if behaves like
