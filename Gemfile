@@ -1,4 +1,12 @@
 source 'https://rubygems.org'
-
-# Specify your gem's dependencies in identity_cache.gemspec
 gemspec
+
+gem 'rake'
+
+group :test do
+  gem 'memcache-client'
+  gem 'mysql2'
+  gem 'mocha', '= 0.14.0'
+  gem 'debugger'
+  gem 'ruby-prof'
+end
