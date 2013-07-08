@@ -239,6 +239,8 @@ module IdentityCache
           child_objects.each(&:populate_association_caches)
         end
       end
+
+      self.clear_association_cache if self.respond_to?(:clear_association_cache)
     end
 
     def fetch_denormalized_cached_association(ivar_name, association_name) # :nodoc:
