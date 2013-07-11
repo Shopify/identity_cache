@@ -264,13 +264,18 @@ module IdentityCache
 
     def expire_primary_index # :nodoc:
       return unless self.class.primary_cache_index_enabled
-      extra_keys = if respond_to? :updated_at
-        old_updated_at = old_values_for_fields([:updated_at]).first
-        "expiring_last_updated_at=#{old_updated_at}"
-      else
-        ""
+
+      IdentityCache.logger.debug do
+        extra_keys =
+          if respond_to?(:updated_at)
+            old_updated_at = old_values_for_fields([:updated_at]).first
+            "expiring_last_updated_at=#{old_updated_at}"
+          else
+            ""
+          end
+
+        "[IdentityCache] expiring=#{self.class.name} expiring_id=#{id} #{extra_keys}"
       end
-      IdentityCache.logger.debug { "[IdentityCache] expiring=#{self.class.name} expiring_id=#{id} #{extra_keys}" }
 
       IdentityCache.cache.delete(primary_cache_index_key)
     end
