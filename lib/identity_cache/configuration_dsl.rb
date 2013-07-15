@@ -277,7 +277,6 @@ module IdentityCache
         raise InverseAssociationError unless child_association
         foreign_key = child_association.association_foreign_key
         parent_class ||= self.name
-        new_parent = options[:inverse_name]
 
         child_class.send(:include, ArTransactionChanges) unless child_class.include?(ArTransactionChanges)
         child_class.send(:include, ParentModelExpiration) unless child_class.include?(ParentModelExpiration)
