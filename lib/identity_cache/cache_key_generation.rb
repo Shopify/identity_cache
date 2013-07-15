@@ -1,6 +1,7 @@
 module IdentityCache
   module CacheKeyGeneration
     extend ActiveSupport::Concern
+    DEFAULT_NAMESPACE = "IDC:".freeze
 
     def self.schema_to_string(columns)
       columns.sort_by(&:name).map{|c| "#{c.name}:#{c.type}"}.join(',')
@@ -32,18 +33,23 @@ module IdentityCache
 
       def rails_cache_key_prefix
         @rails_cache_key_prefix ||= begin
-          "IDC:blob:#{base_class.name}:#{IdentityCache::CacheKeyGeneration.denormalized_schema_hash(self)}:"
+          "#{rails_cache_key_namespace}blob:#{base_class.name}:#{IdentityCache::CacheKeyGeneration.denormalized_schema_hash(self)}:"
         end
       end
 
       def rails_cache_index_key_for_fields_and_values(fields, values)
-        "IDC:index:#{base_class.name}:#{rails_cache_string_for_fields_and_values(fields, values)}"
+        "#{rails_cache_key_namespace}index:#{base_class.name}:#{rails_cache_string_for_fields_and_values(fields, values)}"
       end
 
       def rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, values)
-        "IDC:attribute:#{base_class.name}:#{attribute}:#{rails_cache_string_for_fields_and_values(fields, values)}"
+        "#{rails_cache_key_namespace}attribute:#{base_class.name}:#{attribute}:#{rails_cache_string_for_fields_and_values(fields, values)}"
       end
 
+      def rails_cache_key_namespace
+        DEFAULT_NAMESPACE
+      end
+
+      private
       def rails_cache_string_for_fields_and_values(fields, values)
         "#{fields.join('/')}:#{IdentityCache.memcache_hash(values.join('/'))}"
       end

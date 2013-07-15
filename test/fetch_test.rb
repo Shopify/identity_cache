@@ -13,9 +13,18 @@ class FetchTest < IdentityCache::TestCase
     @index_key = "IDC:index:Record:title:#{cache_hash('bob')}"
   end
 
-
   def test_fetch_cache_hit
     IdentityCache.cache.expects(:read).with(@blob_key).returns(@record)
+
+    assert_equal @record, Record.fetch(1)
+  end
+
+  def test_fetch_hit_cache_namespace
+    Record.send(:include, SwitchNamespace)
+    Record.namespace = 'test_namespace'
+
+    new_blob_key = "test_namespace:#{@blob_key}"
+    IdentityCache.cache.expects(:read).with(new_blob_key).returns(@record)
 
     assert_equal @record, Record.fetch(1)
   end
@@ -85,6 +94,14 @@ class FetchTest < IdentityCache::TestCase
 
     # got id, do memcache lookup on that, hit -> done
     IdentityCache.cache.expects(:read).with(@blob_key).returns(@record)
+
+    assert_equal @record, Record.fetch_by_title('bob')
+  end
+
+  def test_fetch_by_title_cache_namespace
+    Record.send(:include, SwitchNamespace)
+    IdentityCache.cache.expects(:read).with("ns:#{@index_key}").returns(1)
+    IdentityCache.cache.expects(:read).with("ns:#{@blob_key}").returns(@record)
 
     assert_equal @record, Record.fetch_by_title('bob')
   end
