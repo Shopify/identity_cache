@@ -1,4 +1,23 @@
+module SwitchNamespace
+
+  module ClassMethods
+    def rails_cache_key_namespace
+      "#{self.namespace}:#{super}"
+    end
+  end
+
+  def self.included(base)
+    base.instance_variable_set :@rails_cache_key_prefix, nil
+    base.extend ClassMethods
+    base.class_eval do
+      class_attribute :namespace
+      self.namespace = 'ns'
+    end
+  end
+end
+
 module ActiveRecordObjects
+
   def setup_models(base = ActiveRecord::Base)
     Object.send :const_set, 'DeeplyAssociatedRecord', Class.new(base).tap {|klass|
       klass.send :include, IdentityCache
@@ -40,4 +59,3 @@ module ActiveRecordObjects
     Object.send :remove_const, 'Record'
   end
 end
-

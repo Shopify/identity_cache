@@ -16,6 +16,17 @@ class FetchMultiTest < IdentityCache::TestCase
     assert_equal [], Record.fetch_multi
   end
 
+  def test_fetch_multi_namespace
+    Record.send(:include, SwitchNamespace)
+    bob_blob_key, joe_blob_key, fred_blob_key = [@bob_blob_key, @joe_blob_key, @fred_blob_key].map { |k| "ns:#{k}" }
+    cache_response = {}
+    cache_response[bob_blob_key] = @bob
+    cache_response[joe_blob_key] = @joe
+    cache_response[fred_blob_key] = @fred
+    IdentityCache.cache.expects(:read_multi).with(bob_blob_key, joe_blob_key, fred_blob_key).returns(cache_response)
+    assert_equal [@bob, @joe, @fred], Record.fetch_multi(@bob.id, @joe.id, @fred.id)
+  end
+
   def test_fetch_multi_with_all_hits
     cache_response = {}
     cache_response[@bob_blob_key] = @bob
