@@ -132,20 +132,17 @@ module IdentityCache
 
     ## Select a hash function based on what is available.
     ## memcache_hash(key) should return a uint64.
-
-    def _cityhash_memcache_hash(key) #:nodoc:
-      ::CityHash.hash64(key)
-    end
-
-    def _digest_md5_memcache_hash(key) #:nodoc:
-      a = ::Digest::MD5.digest(key).unpack('LL')
-      (a[0] << 32) | a[1]
-    end
-
     if defined?(CityHash)
-      alias_method :memcache_hash, :_cityhash_memcache_hash
+
+      def memcache_hash(key) #:nodoc:
+        ::CityHash.hash64(key)
+      end
     else
-      alias_method :memcache_hash, :_digest_md5_memcache_hash
+
+      def memcache_hash(key) #:nodoc:
+        a = ::Digest::MD5.digest(key).unpack('LL')
+        (a[0] << 32) | a[1]
+      end
     end
 
   end
