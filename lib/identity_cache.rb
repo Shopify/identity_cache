@@ -2,6 +2,18 @@
 begin
   require 'cityhash'
 rescue LoadError
+  unless RUBY_PLATFORM == 'java'
+    warn <<-NOTICE
+      ** Notice: CityHash was not loaded. **
+
+      For optimal performance, use of the cityhash gem is recommended.
+
+      Run the following command, or add it to your Gemfile:
+
+        gem install cityhash
+    NOTICE
+  end
+
   require 'digest/md5'
 end
 
