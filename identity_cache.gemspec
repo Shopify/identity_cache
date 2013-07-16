@@ -23,8 +23,15 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency('memcache-client')
   gem.add_development_dependency('rake')
   gem.add_development_dependency('mocha', '0.14.0')
-  gem.add_development_dependency('mysql2')
-  gem.add_development_dependency('debugger')
-  gem.add_development_dependency('ruby-prof')
-  gem.add_development_dependency('cityhash', '0.6.0')
+
+  if RUBY_PLATFORM == 'java'
+    gem.add_development_dependency 'jruby-openssl'
+    gem.add_development_dependency 'activerecord-jdbcmysql-adapter'
+    gem.add_development_dependency 'jdbc-mysql'
+  else
+    gem.add_development_dependency('debugger')
+    gem.add_development_dependency('ruby-prof')
+    gem.add_development_dependency('cityhash', '0.6.0')
+    gem.add_development_dependency('mysql2')
+  end
 end
