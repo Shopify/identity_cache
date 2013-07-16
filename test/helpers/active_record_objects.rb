@@ -7,7 +7,6 @@ module SwitchNamespace
   end
 
   def self.included(base)
-    base.instance_variable_set :@rails_cache_key_prefix, nil
     base.extend ClassMethods
     base.class_eval do
       class_attribute :namespace

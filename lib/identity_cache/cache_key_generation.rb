@@ -28,13 +28,12 @@ module IdentityCache
 
     module ClassMethods
       def rails_cache_key(id)
-        rails_cache_key_prefix + id.to_s
+        "#{rails_cache_key_prefix}#{id}"
       end
 
       def rails_cache_key_prefix
-        @rails_cache_key_prefix ||= begin
-          "#{rails_cache_key_namespace}blob:#{base_class.name}:#{IdentityCache::CacheKeyGeneration.denormalized_schema_hash(self)}:"
-        end
+        @rails_cache_key_prefix ||= IdentityCache::CacheKeyGeneration.denormalized_schema_hash(self)
+        "#{rails_cache_key_namespace}blob:#{base_class.name}:#{@rails_cache_key_prefix}:"
       end
 
       def rails_cache_index_key_for_fields_and_values(fields, values)
