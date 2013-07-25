@@ -294,14 +294,6 @@ module IdentityCache
       def identity_cache_sql_conditions(fields, values)
         fields.each_with_index.collect { |f, i| "#{connection.quote_column_name(f)} = #{quote_value(values[i])}" }.join(" AND ")
       end
-
-      def quoted_table_name
-        @quoted_table_name ||= connection.quote_table_name(table_name)
-      end
-
-      def quoted_primary_key
-        @quoted_primary_key ||= connection.quote_column_name(primary_key)
-      end
     end
   end
 end
