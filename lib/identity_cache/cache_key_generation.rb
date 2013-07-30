@@ -1,7 +1,8 @@
 module IdentityCache
   module CacheKeyGeneration
     extend ActiveSupport::Concern
-    DEFAULT_NAMESPACE = "IDC:".freeze
+    VERSION = 1
+    DEFAULT_NAMESPACE = "IDC:#{VERSION}:".freeze
 
     def self.schema_to_string(columns)
       columns.sort_by(&:name).map{|c| "#{c.name}:#{c.type}"}.join(',')
