@@ -20,18 +20,18 @@ class FetchMultiTest < IdentityCache::TestCase
     Record.send(:include, SwitchNamespace)
     bob_blob_key, joe_blob_key, fred_blob_key = [@bob_blob_key, @joe_blob_key, @fred_blob_key].map { |k| "ns:#{k}" }
     cache_response = {}
-    cache_response[bob_blob_key] = @bob
-    cache_response[joe_blob_key] = @joe
-    cache_response[fred_blob_key] = @fred
+    cache_response[bob_blob_key] = cache_response_for(@bob)
+    cache_response[joe_blob_key] = cache_response_for(@joe)
+    cache_response[fred_blob_key] = cache_response_for(@fred)
     IdentityCache.cache.expects(:read_multi).with(bob_blob_key, joe_blob_key, fred_blob_key).returns(cache_response)
     assert_equal [@bob, @joe, @fred], Record.fetch_multi(@bob.id, @joe.id, @fred.id)
   end
 
   def test_fetch_multi_with_all_hits
     cache_response = {}
-    cache_response[@bob_blob_key] = @bob
-    cache_response[@joe_blob_key] = @joe
-    cache_response[@fred_blob_key] = @fred
+    cache_response[@bob_blob_key] = cache_response_for(@bob)
+    cache_response[@joe_blob_key] = cache_response_for(@joe)
+    cache_response[@fred_blob_key] = cache_response_for(@fred)
     IdentityCache.cache.expects(:read_multi).with(@bob_blob_key, @joe_blob_key, @fred_blob_key).returns(cache_response)
     assert_equal [@bob, @joe, @fred], Record.fetch_multi(@bob.id, @joe.id, @fred.id)
   end
@@ -47,9 +47,9 @@ class FetchMultiTest < IdentityCache::TestCase
 
   def test_fetch_multi_with_mixed_hits_and_misses
     cache_response = {}
-    cache_response[@bob_blob_key] = @bob
+    cache_response[@bob_blob_key] = cache_response_for(@bob)
     cache_response[@joe_blob_key] = nil
-    cache_response[@fred_blob_key] = @fred
+    cache_response[@fred_blob_key] = cache_response_for(@fred)
     IdentityCache.cache.expects(:read_multi).with(@bob_blob_key, @joe_blob_key, @fred_blob_key).returns(cache_response)
     assert_equal [@bob, @joe, @fred], Record.fetch_multi(@bob.id, @joe.id, @fred.id)
   end
@@ -58,7 +58,7 @@ class FetchMultiTest < IdentityCache::TestCase
     cache_response = {}
     cache_response[@bob_blob_key] = nil
     cache_response[@joe_blob_key] = nil
-    cache_response[@fred_blob_key] = @fred
+    cache_response[@fred_blob_key] = cache_response_for(@fred)
     IdentityCache.cache.expects(:read_multi).with(@bob_blob_key, @fred_blob_key, @joe_blob_key).returns(cache_response)
     assert_equal [@bob, @fred, @joe], Record.fetch_multi(@bob.id, @fred.id, @joe.id)
   end
@@ -128,8 +128,8 @@ class FetchMultiTest < IdentityCache::TestCase
 
   def test_fetch_multi_doesnt_freeze_keys
     cache_response = {}
-    cache_response[@bob_blob_key] = @bob
-    cache_response[@joe_blob_key] = @fred
+    cache_response[@bob_blob_key] = cache_response_for(@bob)
+    cache_response[@joe_blob_key] = cache_response_for(@fred)
 
     IdentityCache.expects(:fetch_multi).with{ |*args| args.none?(&:frozen?) }.returns(cache_response)
 
@@ -143,6 +143,12 @@ class FetchMultiTest < IdentityCache::TestCase
     @cache_response[@bob_blob_key] = nil
     @cache_response[@joe_blob_key] = nil
     @cache_response[@tenth_blob_key] = nil
-    @cache_response[@fred_blob_key] = @fred
+    @cache_response[@fred_blob_key] = cache_response_for(@fred)
+  end
+
+  def cache_response_for(record)
+    coder = {:class => record.class}
+    record.encode_with(coder)
+    coder
   end
 end

@@ -4,6 +4,8 @@ module IdentityCache
 
     included do |base|
       base.private_class_method :require_if_necessary
+      base.private_class_method :coder_from_record
+      base.private_class_method :record_from_coder
       base.instance_eval(ruby = <<-CODE, __FILE__, __LINE__)
         private :expire_cache, :was_new_record?, :fetch_denormalized_cached_association,
                 :populate_denormalized_cached_association
@@ -27,7 +29,9 @@ module IdentityCache
         if IdentityCache.should_cache?
 
           require_if_necessary do
-            object = IdentityCache.fetch(rails_cache_key(id)){ resolve_cache_miss(id) }
+            object = nil
+            coder = IdentityCache.fetch(rails_cache_key(id)){ coder_from_record(object = resolve_cache_miss(id)) }
+            object = record_from_coder(coder) if object.nil?
             IdentityCache.logger.error "[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{object.id} for #{object.inspect[(0..100)]} " if object && object.id != id.to_i
             object
           end
@@ -55,14 +59,15 @@ module IdentityCache
             cache_keys = ids.map {|id| rails_cache_key(id) }
             key_to_id_map = Hash[ cache_keys.zip(ids) ]
 
-            objects_by_key = IdentityCache.fetch_multi(*cache_keys) do |unresolved_keys|
+            coders_by_key = IdentityCache.fetch_multi(*cache_keys) do |unresolved_keys|
               ids = unresolved_keys.map {|key| key_to_id_map[key] }
               records = find_batch(ids, options)
               records.compact.each(&:populate_association_caches)
-              records
+              records.map {|record| coder_from_record(record) }
             end
 
-            records = cache_keys.map {|key| objects_by_key[key] }.compact
+            # TODO cache result of find_batch rather than reinflating coders unnecessarily
+            records = cache_keys.map {|key| record_from_coder(coders_by_key[key]) }.compact
             prefetch_associations(options[:includes], records) if options[:includes]
 
             records
@@ -70,6 +75,29 @@ module IdentityCache
 
         else
           find_batch(ids, options)
+        end
+      end
+
+      def record_from_coder(coder) #:nodoc:
+        unless coder.nil? or not coder.has_key?(:class)
+          klass = coder[:class]
+          record = klass.allocate
+          record.init_with(coder)
+          coder[:embedded_associations].each {|name, value| record.instance_variable_set(:"@#{name}", value) } if coder.has_key?(:embedded_associations)
+          record
+        end
+      end
+
+      def coder_from_record(record) #:nodoc:
+        unless record.nil?
+          coder = {:class => record.class }
+          record.encode_with(coder)
+          unless record.class.all_cached_associations.empty?
+            embedded_variable_names = record.class.all_cached_associations.values.select {|options| options[:embed] }.map {|options| options[:records_variable_name] }
+            embedded_variable_values = embedded_variable_names.map {|name| record.instance_variable_get(:"@#{name}") }
+            coder[:embedded_associations] = Hash[ embedded_variable_names.zip(embedded_variable_values) ]
+          end
+          coder
         end
       end
 

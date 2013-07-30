@@ -9,12 +9,14 @@ class FetchTest < IdentityCache::TestCase
     @record = Record.new
     @record.id = 1
     @record.title = 'bob'
+    @cached_value = {:class => @record.class}
+    @record.encode_with(@cached_value)
     @blob_key = "IDC:blob:Record:#{cache_hash("created_at:datetime,id:integer,record_id:integer,title:string,updated_at:datetime")}:1"
     @index_key = "IDC:index:Record:title:#{cache_hash('bob')}"
   end
 
   def test_fetch_cache_hit
-    IdentityCache.cache.expects(:read).with(@blob_key).returns(@record)
+    IdentityCache.cache.expects(:read).with(@blob_key).returns(@cached_value)
 
     assert_equal @record, Record.fetch(1)
   end
@@ -24,13 +26,13 @@ class FetchTest < IdentityCache::TestCase
     Record.namespace = 'test_namespace'
 
     new_blob_key = "test_namespace:#{@blob_key}"
-    IdentityCache.cache.expects(:read).with(new_blob_key).returns(@record)
+    IdentityCache.cache.expects(:read).with(new_blob_key).returns(@cached_value)
 
     assert_equal @record, Record.fetch(1)
   end
 
   def test_exists_with_identity_cache_when_cache_hit
-    IdentityCache.cache.expects(:read).with(@blob_key).returns(@record)
+    IdentityCache.cache.expects(:read).with(@blob_key).returns(@cached_value)
 
     assert Record.exists_with_identity_cache?(1)
   end
@@ -53,7 +55,7 @@ class FetchTest < IdentityCache::TestCase
     Record.expects(:find_by_id).with(1, :include => []).returns(@record)
 
     IdentityCache.cache.expects(:read).with(@blob_key).returns(nil)
-    IdentityCache.cache.expects(:write).with(@blob_key, @record)
+    IdentityCache.cache.expects(:write).with(@blob_key, @cached_value)
 
     assert_equal @record, Record.fetch(1)
   end
@@ -93,7 +95,7 @@ class FetchTest < IdentityCache::TestCase
     IdentityCache.cache.expects(:write).with(@index_key, 1)
 
     # got id, do memcache lookup on that, hit -> done
-    IdentityCache.cache.expects(:read).with(@blob_key).returns(@record)
+    IdentityCache.cache.expects(:read).with(@blob_key).returns(@cached_value)
 
     assert_equal @record, Record.fetch_by_title('bob')
   end
@@ -101,7 +103,7 @@ class FetchTest < IdentityCache::TestCase
   def test_fetch_by_title_cache_namespace
     Record.send(:include, SwitchNamespace)
     IdentityCache.cache.expects(:read).with("ns:#{@index_key}").returns(1)
-    IdentityCache.cache.expects(:read).with("ns:#{@blob_key}").returns(@record)
+    IdentityCache.cache.expects(:read).with("ns:#{@blob_key}").returns(@cached_value)
 
     assert_equal @record, Record.fetch_by_title('bob')
   end
