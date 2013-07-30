@@ -66,7 +66,6 @@ module IdentityCache
               records.map {|record| coder_from_record(record) }
             end
 
-            # TODO cache result of find_batch rather than reinflating coders unnecessarily
             records = cache_keys.map {|key| record_from_coder(coders_by_key[key]) }.compact
             prefetch_associations(options[:includes], records) if options[:includes]
 
@@ -79,7 +78,7 @@ module IdentityCache
       end
 
       def record_from_coder(coder) #:nodoc:
-        unless coder.nil? or not coder.has_key?(:class)
+        if coder.present? && coder.has_key?(:class)
           klass = coder[:class]
           record = klass.allocate
           record.init_with(coder)
