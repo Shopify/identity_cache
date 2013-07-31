@@ -1,15 +1,17 @@
 require "test_helper"
 
 class FetchMultiTest < IdentityCache::TestCase
+  NAMESPACE = IdentityCache::CacheKeyGeneration::DEFAULT_NAMESPACE
+
   def setup
     super
     @bob = Record.create!(:title => 'bob')
     @joe = Record.create!(:title => 'joe')
     @fred = Record.create!(:title => 'fred')
-    @bob_blob_key = "IDC:blob:Record:#{cache_hash("created_at:datetime,id:integer,record_id:integer,title:string,updated_at:datetime")}:1"
-    @joe_blob_key = "IDC:blob:Record:#{cache_hash("created_at:datetime,id:integer,record_id:integer,title:string,updated_at:datetime")}:2"
-    @fred_blob_key = "IDC:blob:Record:#{cache_hash("created_at:datetime,id:integer,record_id:integer,title:string,updated_at:datetime")}:3"
-    @tenth_blob_key = "IDC:blob:Record:#{cache_hash("created_at:datetime,id:integer,record_id:integer,title:string,updated_at:datetime")}:10"
+    @bob_blob_key = "#{NAMESPACE}blob:Record:#{cache_hash("created_at:datetime,id:integer,record_id:integer,title:string,updated_at:datetime")}:1"
+    @joe_blob_key = "#{NAMESPACE}blob:Record:#{cache_hash("created_at:datetime,id:integer,record_id:integer,title:string,updated_at:datetime")}:2"
+    @fred_blob_key = "#{NAMESPACE}blob:Record:#{cache_hash("created_at:datetime,id:integer,record_id:integer,title:string,updated_at:datetime")}:3"
+    @tenth_blob_key = "#{NAMESPACE}blob:Record:#{cache_hash("created_at:datetime,id:integer,record_id:integer,title:string,updated_at:datetime")}:10"
   end
 
   def test_fetch_multi_includes_cached_associations_in_the_database_find

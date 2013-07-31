@@ -1,6 +1,8 @@
 require "test_helper"
 
 class FetchTest < IdentityCache::TestCase
+  NAMESPACE = IdentityCache::CacheKeyGeneration::DEFAULT_NAMESPACE
+
   def setup
     super
     Record.cache_index :title, :unique => true
@@ -11,8 +13,8 @@ class FetchTest < IdentityCache::TestCase
     @record.title = 'bob'
     @cached_value = {:class => @record.class}
     @record.encode_with(@cached_value)
-    @blob_key = "IDC:blob:Record:#{cache_hash("created_at:datetime,id:integer,record_id:integer,title:string,updated_at:datetime")}:1"
-    @index_key = "IDC:index:Record:title:#{cache_hash('bob')}"
+    @blob_key = "#{NAMESPACE}blob:Record:#{cache_hash("created_at:datetime,id:integer,record_id:integer,title:string,updated_at:datetime")}:1"
+    @index_key = "#{NAMESPACE}index:Record:title:#{cache_hash('bob')}"
   end
 
   def test_fetch_cache_hit
