@@ -1,7 +1,6 @@
 module IdentityCache
   module CacheKeyGeneration
     extend ActiveSupport::Concern
-    VERSION = 1
     DEFAULT_NAMESPACE = "IDC:#{VERSION}:".freeze
 
     def self.schema_to_string(columns)
