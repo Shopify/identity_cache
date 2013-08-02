@@ -92,9 +92,13 @@ module IdentityCache
           coder = {:class => record.class }
           record.encode_with(coder)
           unless record.class.all_cached_associations.empty?
-            embedded_variable_names = record.class.all_cached_associations.values.select {|options| options[:embed] }.map {|options| options[:records_variable_name] }
-            embedded_variable_values = embedded_variable_names.map {|name| record.instance_variable_get(:"@#{name}") }
-            coder[:embedded_associations] = Hash[ embedded_variable_names.zip(embedded_variable_values) ]
+            coder[:embedded_associations] = record.class.all_cached_associations.values.inject({}) do |hash, options|
+              if options[:embed]
+                embedded_variable_name = options[:records_variable_name]
+                hash[embedded_variable_name] = record.instance_variable_get(:"@#{embedded_variable_name}")
+              end
+              hash
+            end
           end
           coder
         end
