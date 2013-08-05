@@ -83,6 +83,7 @@ module IdentityCache
           record = klass.allocate
           record.init_with(coder)
           coder[:embedded_associations].each {|name, value| record.instance_variable_set(:"@#{name}", value) } if coder.has_key?(:embedded_associations)
+          coder[:normalized_has_many_associations].each {|name, value| record.instance_variable_set(:"@#{name}", value) } if coder.has_key?(:normalized_has_many_associations)
           record
         end
       end
@@ -96,6 +97,13 @@ module IdentityCache
               if options[:embed]
                 embedded_variable_name = options[:records_variable_name]
                 hash[embedded_variable_name] = record.instance_variable_get(:"@#{embedded_variable_name}")
+              end
+              hash
+            end
+            coder[:normalized_has_many_associations] = record.class.all_cached_associations.values.inject({}) do |hash, options|
+              if !options[:embed] && options[:ids_variable_name].present?
+                ids_variable_name = options[:ids_variable_name]
+                hash[ids_variable_name] = record.send(ids_variable_name)
               end
               hash
             end
