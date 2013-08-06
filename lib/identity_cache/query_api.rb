@@ -83,7 +83,8 @@ module IdentityCache
           record = klass.allocate
           record.init_with(coder)
           coder[:embedded_associations].each {|name, value| record.instance_variable_set(:"@#{name}", value) } if coder.has_key?(:embedded_associations)
-          coder[:normalized_has_many_associations].each {|name, value| record.instance_variable_set(:"@#{name}", value) } if coder.has_key?(:normalized_has_many_associations)
+          # coder[:normalized_belongs_to_associations].each {|cached_accessor_name| record.send(cached_accessor_name) } if coder.has_key?(:normalized_belongs_to_associations)
+          # coder[:normalized_has_many_associations].each {|name, value| record.instance_variable_set(:"@#{name}", value) } if coder.has_key?(:normalized_has_many_associations)
           record
         end
       end
@@ -100,13 +101,14 @@ module IdentityCache
               end
               hash
             end
-            coder[:normalized_has_many_associations] = record.class.all_cached_associations.values.inject({}) do |hash, options|
-              if !options[:embed] && options[:ids_variable_name].present?
-                ids_variable_name = options[:ids_variable_name]
-                hash[ids_variable_name] = record.send(ids_variable_name)
-              end
-              hash
-            end
+            # coder[:normalized_belongs_to_associations] = record.class.all_cached_associations.values.map {|options| options[:cached_accessor_name] unless options[:embed] || options[:ids_variable_name].present? }.compact
+            # coder[:normalized_has_many_associations] = record.class.all_cached_associations.values.inject({}) do |hash, options|
+            #   if !options[:embed] && options[:ids_variable_name].present?
+            #     ids_variable_name = options[:ids_variable_name]
+            #     hash[ids_variable_name] = record.send(ids_variable_name)
+            #   end
+            #   hash
+            # end
           end
           coder
         end
