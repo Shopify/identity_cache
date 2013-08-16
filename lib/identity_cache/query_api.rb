@@ -6,6 +6,8 @@ module IdentityCache
       base.private_class_method :require_if_necessary
       base.private_class_method :coder_from_record
       base.private_class_method :record_from_coder
+      base.private_class_method :set_embedded_association
+      base.private_class_method :get_embedded_association
       base.instance_eval(ruby = <<-CODE, __FILE__, __LINE__)
         private :expire_cache, :was_new_record?, :fetch_denormalized_cached_association,
                 :populate_denormalized_cached_association
@@ -79,13 +81,31 @@ module IdentityCache
 
       def record_from_coder(coder) #:nodoc:
         if coder.present? && coder.has_key?(:class)
-          klass = coder[:class]
-          record = klass.allocate
-          record.init_with(coder)
-          coder[:embedded_associations].each {|name, value| record.instance_variable_set(:"@#{name}", value) } if coder.has_key?(:embedded_associations)
-          # coder[:normalized_belongs_to_associations].each {|cached_accessor_name| record.send(cached_accessor_name) } if coder.has_key?(:normalized_belongs_to_associations)
-          # coder[:normalized_has_many_associations].each {|name, value| record.instance_variable_set(:"@#{name}", value) } if coder.has_key?(:normalized_has_many_associations)
-          record
+          coder[:class].allocate.init_with(coder).tap do |record|
+            coder[:embedded_associations].each {|name, value| set_embedded_association(record, name, value) } if coder.has_key?(:embedded_associations)
+          end
+        end
+      end
+
+      def set_embedded_association(record, name, embedded_association) #:nodoc:
+        value = if IdentityCache.unmap_cached_nil_for(embedded_association).nil?
+          nil
+        elsif embedded_association.is_a? Array
+          embedded_association.map {|e| record_from_coder(e) }
+        else
+          record_from_coder(embedded_association)
+        end
+        record.instance_variable_set(:"@#{name}", IdentityCache.map_cached_nil_for(value))
+      end
+
+      def get_embedded_association(record, embedded_variable_name) #:nodoc:
+        embedded_variable = record.instance_variable_get(:"@#{embedded_variable_name}")
+        if IdentityCache.unmap_cached_nil_for(embedded_variable).nil?
+          nil
+        elsif embedded_variable.is_a? Array
+          embedded_variable.map {|e| coder_from_record(e) }
+        else
+          coder_from_record(embedded_variable)
         end
       end
 
@@ -93,22 +113,14 @@ module IdentityCache
         unless record.nil?
           coder = {:class => record.class }
           record.encode_with(coder)
-          unless record.class.all_cached_associations.empty?
+          if record.class.respond_to?(:all_cached_associations) && record.class.all_cached_associations.present?
             coder[:embedded_associations] = record.class.all_cached_associations.values.inject({}) do |hash, options|
               if options[:embed]
                 embedded_variable_name = options[:records_variable_name]
-                hash[embedded_variable_name] = record.instance_variable_get(:"@#{embedded_variable_name}")
+                hash[embedded_variable_name] = IdentityCache.map_cached_nil_for(get_embedded_association(record, embedded_variable_name))
               end
               hash
             end
-            # coder[:normalized_belongs_to_associations] = record.class.all_cached_associations.values.map {|options| options[:cached_accessor_name] unless options[:embed] || options[:ids_variable_name].present? }.compact
-            # coder[:normalized_has_many_associations] = record.class.all_cached_associations.values.inject({}) do |hash, options|
-            #   if !options[:embed] && options[:ids_variable_name].present?
-            #     ids_variable_name = options[:ids_variable_name]
-            #     hash[ids_variable_name] = record.send(ids_variable_name)
-            #   end
-            #   hash
-            # end
           end
           coder
         end
