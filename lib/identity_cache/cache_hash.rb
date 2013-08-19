@@ -1,4 +1,4 @@
-## Use CityHash for fast hashing if it is available; use Digest::MD5 otherwise
+# Use CityHash for fast hashing if it is available; use Digest::MD5 otherwise
 begin
   require 'cityhash'
 rescue LoadError
@@ -20,17 +20,15 @@ end
 module IdentityCache
   module CacheHash
 
-    ## Select a hash function based on what is available.
-    ## memcache_hash(key) should return a uint64.
     if defined?(CityHash)
       
       def memcache_hash(key) #:nodoc:
-        ::CityHash.hash64(key)
+        CityHash.hash64(key)
       end
     else
       
       def memcache_hash(key) #:nodoc:
-        a = ::Digest::MD5.digest(key).unpack('LL')
+        a = Digest::MD5.digest(key).unpack('LL')
         (a[0] << 32) | a[1]
       end
     end
