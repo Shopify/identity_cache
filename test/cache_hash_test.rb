@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class MemcacheHashTest < IdentityCache::TestCase
+class CacheHashTest < IdentityCache::TestCase
 
   def test_memcache_hash
 
@@ -13,5 +13,4 @@ class MemcacheHashTest < IdentityCache::TestCase
       assert_equal 0, (hash_val >> 64)
     end
   end
-
 end
