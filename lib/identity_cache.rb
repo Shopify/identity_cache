@@ -38,8 +38,8 @@ module IdentityCache
 
   class << self
 
-    attr_accessor :logger, :readonly
-    attr_reader :cache
+    attr_accessor :readonly
+    attr_writer :logger
 
     # Sets the cache adaptor IdentityCache will be using
     #
