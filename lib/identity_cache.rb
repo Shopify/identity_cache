@@ -1,23 +1,6 @@
-## Use CityHash for fast hashing if it is available; use Digest::MD5 otherwise
-begin
-  require 'cityhash'
-rescue LoadError
-  unless RUBY_PLATFORM == 'java'
-    warn <<-NOTICE
-      ** Notice: CityHash was not loaded. **
-
-      For optimal performance, use of the cityhash gem is recommended.
-
-      Run the following command, or add it to your Gemfile:
-
-        gem install cityhash
-    NOTICE
-  end
-
-  require 'digest/md5'
-end
-
+require 'active_record'
 require 'ar_transaction_changes'
+
 require "identity_cache/version"
 require 'identity_cache/memoized_cache_proxy'
 require 'identity_cache/belongs_to_caching'
@@ -25,6 +8,7 @@ require 'identity_cache/cache_key_generation'
 require 'identity_cache/configuration_dsl'
 require 'identity_cache/parent_model_expiration'
 require 'identity_cache/query_api'
+require "identity_cache/cache_hash"
 
 module IdentityCache
   CACHED_NIL = :idc_cached_nil
@@ -37,9 +21,20 @@ module IdentityCache
   end
 
   class << self
+    include IdentityCache::CacheHash
 
     attr_accessor :readonly
     attr_writer :logger
+
+    def included(base) #:nodoc:
+      raise AlreadyIncludedError if base.respond_to? :cache_indexes
+
+      base.send(:include, ArTransactionChanges) unless base.include?(ArTransactionChanges)
+      base.send(:include, IdentityCache::BelongsToCaching)
+      base.send(:include, IdentityCache::CacheKeyGeneration)
+      base.send(:include, IdentityCache::ConfigurationDSL)
+      base.send(:include, IdentityCache::QueryAPI)
+    end
 
     # Sets the cache adaptor IdentityCache will be using
     #
@@ -91,7 +86,6 @@ module IdentityCache
       value.nil? ? IdentityCache::CACHED_NIL : value
     end
 
-
     def unmap_cached_nil_for(value)
       value == IdentityCache::CACHED_NIL ? nil : value
     end
@@ -131,31 +125,5 @@ module IdentityCache
 
       result
     end
-
-    def included(base) #:nodoc:
-      raise AlreadyIncludedError if base.respond_to? :cache_indexes
-
-      base.send(:include, ArTransactionChanges) unless base.include?(ArTransactionChanges)
-      base.send(:include, IdentityCache::BelongsToCaching)
-      base.send(:include, IdentityCache::CacheKeyGeneration)
-      base.send(:include, IdentityCache::ConfigurationDSL)
-      base.send(:include, IdentityCache::QueryAPI)
-    end
-
-    ## Select a hash function based on what is available.
-    ## memcache_hash(key) should return a uint64.
-    if defined?(CityHash)
-
-      def memcache_hash(key) #:nodoc:
-        ::CityHash.hash64(key)
-      end
-    else
-
-      def memcache_hash(key) #:nodoc:
-        a = ::Digest::MD5.digest(key).unpack('LL')
-        (a[0] << 32) | a[1]
-      end
-    end
-
   end
 end
