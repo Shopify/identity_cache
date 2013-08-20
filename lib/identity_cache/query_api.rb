@@ -92,6 +92,16 @@ module IdentityCache
           nil
         elsif embedded_association.is_a? Array
           embedded_association.map {|e| record_from_coder(e) }
+        elsif embedded_association.has_key?(:collection)
+          collection = embedded_association[:collection].map {|e| record_from_coder(e) }
+          association = embedded_association[:class].allocate
+          association.instance_variable_set(:@owner, record)
+          association.instance_variable_set(:@reflection, embedded_association[:reflection])
+          association.instance_variable_set(:@target, collection)
+          association.instance_variable_set(:@proxy, ActiveRecord::Associations::CollectionProxy.new(association))
+          record.association_cache[embedded_association[:reflection].name] = association
+          collection.each {|e| association.set_inverse_instance(e) }
+          association.proxy
         else
           record_from_coder(embedded_association)
         end
@@ -102,6 +112,12 @@ module IdentityCache
         embedded_variable = record.instance_variable_get(:"@#{embedded_variable_name}")
         if IdentityCache.unmap_cached_nil_for(embedded_variable).nil?
           nil
+        elsif embedded_variable.respond_to? :proxy_association
+          {
+            :class => embedded_variable.proxy_association.class,
+            :reflection => embedded_variable.proxy_association.reflection,
+            :collection => embedded_variable.map {|e| coder_from_record(e) }
+          }
         elsif embedded_variable.is_a? Array
           embedded_variable.map {|e| coder_from_record(e) }
         else
