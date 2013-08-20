@@ -99,6 +99,7 @@ module IdentityCache
           association.instance_variable_set(:@reflection, embedded_association[:reflection])
           association.instance_variable_set(:@target, collection)
           association.instance_variable_set(:@proxy, ActiveRecord::Associations::CollectionProxy.new(association))
+          association.instance_variable_set(:@loaded, true)
           record.association_cache[embedded_association[:reflection].name] = association
           collection.each {|e| association.set_inverse_instance(e) }
           association.proxy
