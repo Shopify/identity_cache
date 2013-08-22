@@ -8,6 +8,7 @@ module IdentityCache
       base.private_class_method :record_from_coder
       base.private_class_method :set_embedded_association
       base.private_class_method :get_embedded_association
+      base.private_class_method :add_cached_associations_to_coder
       base.instance_eval(ruby = <<-CODE, __FILE__, __LINE__)
         private :expire_cache, :was_new_record?, :fetch_denormalized_cached_association,
                 :populate_denormalized_cached_association
@@ -33,7 +34,7 @@ module IdentityCache
           require_if_necessary do
             object = nil
             coder = IdentityCache.fetch(rails_cache_key(id)){ coder_from_record(object = resolve_cache_miss(id)) }
-            object = record_from_coder(coder) if object.nil?
+            object ||= record_from_coder(coder)
             IdentityCache.logger.error "[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{object.id} for #{object.inspect[(0..100)]} " if object && object.id != id.to_i
             object
           end
@@ -82,44 +83,32 @@ module IdentityCache
       def record_from_coder(coder) #:nodoc:
         if coder.present? && coder.has_key?(:class)
           coder[:class].allocate.init_with(coder).tap do |record|
-            coder[:embedded_associations].each {|name, value| set_embedded_association(record, name, value) } if coder.has_key?(:embedded_associations)
+            coder[:associations].each {|name, value| set_embedded_association(record, name, value) } if coder.has_key?(:associations)
           end
         end
       end
 
-      def set_embedded_association(record, name, embedded_association) #:nodoc:
-        value = if IdentityCache.unmap_cached_nil_for(embedded_association).nil?
+      def set_embedded_association(record, association_name, coder_or_array) #:nodoc:
+        value = if IdentityCache.unmap_cached_nil_for(coder_or_array).nil?
           nil
-        elsif embedded_association.is_a? Array
-          embedded_association.map {|e| record_from_coder(e) }
-        elsif embedded_association.has_key?(:collection)
-          collection = embedded_association[:collection].map {|e| record_from_coder(e) }
-          association = embedded_association[:class].allocate
-          association.instance_variable_set(:@owner, record)
-          association.instance_variable_set(:@reflection, embedded_association[:reflection])
-          association.instance_variable_set(:@target, collection)
-          association.instance_variable_set(:@proxy, ActiveRecord::Associations::CollectionProxy.new(association))
-          association.instance_variable_set(:@loaded, true)
-          record.association_cache[embedded_association[:reflection].name] = association
-          collection.each {|e| association.set_inverse_instance(e) }
+        elsif (reflection = record.class.reflect_on_association(association_name)).collection?
+          association = reflection.association_class.new(record, reflection)
+          association.target = coder_or_array.map {|e| record_from_coder(e) }
+          record.association_cache[association_name] = association
+          association.target.each {|e| association.set_inverse_instance(e) }
           association.proxy
         else
-          record_from_coder(embedded_association)
+          record_from_coder(coder_or_array)
         end
-        record.instance_variable_set(:"@#{name}", IdentityCache.map_cached_nil_for(value))
+        variable_name = record.class.all_embedded_associations[association_name][:records_variable_name]
+        record.instance_variable_set(:"@#{variable_name}", IdentityCache.map_cached_nil_for(value))
       end
 
-      def get_embedded_association(record, embedded_variable_name) #:nodoc:
-        embedded_variable = record.instance_variable_get(:"@#{embedded_variable_name}")
+      def get_embedded_association(record, association, options) #:nodoc:
+        embedded_variable = record.instance_variable_get(:"@#{options[:records_variable_name]}")
         if IdentityCache.unmap_cached_nil_for(embedded_variable).nil?
           nil
-        elsif embedded_variable.respond_to? :proxy_association
-          {
-            :class => embedded_variable.proxy_association.class,
-            :reflection => embedded_variable.proxy_association.reflection,
-            :collection => embedded_variable.map {|e| coder_from_record(e) }
-          }
-        elsif embedded_variable.is_a? Array
+        elsif record.class.reflect_on_association(association).collection?
           embedded_variable.map {|e| coder_from_record(e) }
         else
           coder_from_record(embedded_variable)
@@ -130,16 +119,16 @@ module IdentityCache
         unless record.nil?
           coder = {:class => record.class }
           record.encode_with(coder)
-          if record.class.respond_to?(:all_cached_associations) && record.class.all_cached_associations.present?
-            coder[:embedded_associations] = record.class.all_cached_associations.values.inject({}) do |hash, options|
-              if options[:embed]
-                embedded_variable_name = options[:records_variable_name]
-                hash[embedded_variable_name] = IdentityCache.map_cached_nil_for(get_embedded_association(record, embedded_variable_name))
-              end
-              hash
-            end
-          end
+          add_cached_associations_to_coder(record, coder)
           coder
+        end
+      end
+
+      def add_cached_associations_to_coder(record, coder)
+        if record.class.respond_to?(:all_embedded_associations) && record.class.all_embedded_associations.present?
+          coder[:associations] = record.class.all_embedded_associations.each_with_object({}) do |(name, options), hash|
+            hash[name] = IdentityCache.map_cached_nil_for(get_embedded_association(record, name, options))
+          end
         end
       end
 
@@ -164,6 +153,12 @@ module IdentityCache
       def resolve_cache_miss(id)
         self.find_by_id(id, :include => cache_fetch_includes).tap do |object|
           object.try(:populate_association_caches)
+        end
+      end
+
+      def all_embedded_associations
+        all_cached_associations.select do |cached_association, options|
+          options[:embed].present?
         end
       end
 
