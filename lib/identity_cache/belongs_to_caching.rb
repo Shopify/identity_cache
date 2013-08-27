@@ -29,7 +29,7 @@ module IdentityCache
             if IdentityCache.should_cache? && #{options[:foreign_key]}.present? && !association(:#{association}).loaded?
               self.#{association} = #{options[:association_class]}.fetch_by_id(#{options[:foreign_key]})
             else
-              #{association}
+              load_and_readonlyify(:#{association})
             end
           end
 
@@ -38,6 +38,18 @@ module IdentityCache
           end
         CODE
       end
+    end
+
+    def load_and_readonlyify(association_name)
+      record_or_records = send(association_name)
+      if self.class.reflect_on_association(association_name).collection?
+        record_or_records.each do |child_record|
+          child_record.readonly!
+        end
+      else
+        record_or_records.try(:readonly!)
+      end
+      record_or_records
     end
   end
 end

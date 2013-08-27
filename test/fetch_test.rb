@@ -126,4 +126,25 @@ class FetchTest < IdentityCache::TestCase
       Record.fetch_by_title!('bob')
     end
   end
+
+  def test_returned_records_are_readonly_on_cache_hit
+    IdentityCache.cache.expects(:read).with(@blob_key).returns(@cached_value)
+
+    assert Record.fetch(1).readonly?
+  end
+
+  def test_returned_records_are_readonly_on_cache_miss
+    Record.expects(:find_by_id).with(1, :include => []).returns(@record)
+    IdentityCache.cache.expects(:read).with(@blob_key).returns(nil)
+
+    assert Record.fetch(1).readonly?
+  end
+
+  def test_returned_records_are_readonly_with_open_transactions
+    Record.expects(:find_by_id).with(1).returns(@record)
+
+    @record.transaction do
+      assert Record.fetch(1).readonly?
+    end
+  end
 end
