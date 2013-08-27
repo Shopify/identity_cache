@@ -15,6 +15,11 @@ Rake::TestTask.new(:test) do |t|
   t.verbose = true
 end
 
+desc 'Update serialization format test fixture.'
+task :update_serialization_format do
+  ruby './test/helpers/update_serialization_format.rb'
+end
+
 namespace :benchmark do
   desc "Run the identity cache CPU benchmark"
   task :cpu do
@@ -32,4 +37,3 @@ namespace :profile do
     ruby "./performance/profile.rb"
   end
 end
-

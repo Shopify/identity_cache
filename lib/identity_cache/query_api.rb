@@ -4,6 +4,11 @@ module IdentityCache
 
     included do |base|
       base.private_class_method :require_if_necessary
+      base.private_class_method :coder_from_record
+      base.private_class_method :record_from_coder
+      base.private_class_method :set_embedded_association
+      base.private_class_method :get_embedded_association
+      base.private_class_method :add_cached_associations_to_coder
       base.instance_eval(ruby = <<-CODE, __FILE__, __LINE__)
         private :expire_cache, :was_new_record?, :fetch_denormalized_cached_association,
                 :populate_denormalized_cached_association
@@ -27,7 +32,9 @@ module IdentityCache
         if IdentityCache.should_cache?
 
           require_if_necessary do
-            object = IdentityCache.fetch(rails_cache_key(id)){ resolve_cache_miss(id) }
+            object = nil
+            coder = IdentityCache.fetch(rails_cache_key(id)){ coder_from_record(object = resolve_cache_miss(id)) }
+            object ||= record_from_coder(coder)
             IdentityCache.logger.error "[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{object.id} for #{object.inspect[(0..100)]} " if object && object.id != id.to_i
             object
           end
@@ -55,14 +62,14 @@ module IdentityCache
             cache_keys = ids.map {|id| rails_cache_key(id) }
             key_to_id_map = Hash[ cache_keys.zip(ids) ]
 
-            objects_by_key = IdentityCache.fetch_multi(*cache_keys) do |unresolved_keys|
+            coders_by_key = IdentityCache.fetch_multi(*cache_keys) do |unresolved_keys|
               ids = unresolved_keys.map {|key| key_to_id_map[key] }
               records = find_batch(ids, options)
               records.compact.each(&:populate_association_caches)
-              records
+              records.map {|record| coder_from_record(record) }
             end
 
-            records = cache_keys.map {|key| objects_by_key[key] }.compact
+            records = cache_keys.map {|key| record_from_coder(coders_by_key[key]) }.compact
             prefetch_associations(options[:includes], records) if options[:includes]
 
             records
@@ -70,6 +77,58 @@ module IdentityCache
 
         else
           find_batch(ids, options)
+        end
+      end
+
+      def record_from_coder(coder) #:nodoc:
+        if coder.present? && coder.has_key?(:class)
+          coder[:class].allocate.init_with(coder).tap do |record|
+            coder[:associations].each {|name, value| set_embedded_association(record, name, value) } if coder.has_key?(:associations)
+          end
+        end
+      end
+
+      def set_embedded_association(record, association_name, coder_or_array) #:nodoc:
+        value = if IdentityCache.unmap_cached_nil_for(coder_or_array).nil?
+          nil
+        elsif (reflection = record.class.reflect_on_association(association_name)).collection?
+          association = reflection.association_class.new(record, reflection)
+          association.target = coder_or_array.map {|e| record_from_coder(e) }
+          record.association_cache[association_name] = association
+          association.target.each {|e| association.set_inverse_instance(e) }
+          association.proxy
+        else
+          record_from_coder(coder_or_array)
+        end
+        variable_name = record.class.all_embedded_associations[association_name][:records_variable_name]
+        record.instance_variable_set(:"@#{variable_name}", IdentityCache.map_cached_nil_for(value))
+      end
+
+      def get_embedded_association(record, association, options) #:nodoc:
+        embedded_variable = record.instance_variable_get(:"@#{options[:records_variable_name]}")
+        if IdentityCache.unmap_cached_nil_for(embedded_variable).nil?
+          nil
+        elsif record.class.reflect_on_association(association).collection?
+          embedded_variable.map {|e| coder_from_record(e) }
+        else
+          coder_from_record(embedded_variable)
+        end
+      end
+
+      def coder_from_record(record) #:nodoc:
+        unless record.nil?
+          coder = {:class => record.class }
+          record.encode_with(coder)
+          add_cached_associations_to_coder(record, coder)
+          coder
+        end
+      end
+
+      def add_cached_associations_to_coder(record, coder)
+        if record.class.respond_to?(:all_embedded_associations) && record.class.all_embedded_associations.present?
+          coder[:associations] = record.class.all_embedded_associations.each_with_object({}) do |(name, options), hash|
+            hash[name] = IdentityCache.map_cached_nil_for(get_embedded_association(record, name, options))
+          end
         end
       end
 
@@ -94,6 +153,12 @@ module IdentityCache
       def resolve_cache_miss(id)
         self.find_by_id(id, :include => cache_fetch_includes).tap do |object|
           object.try(:populate_association_caches)
+        end
+      end
+
+      def all_embedded_associations
+        all_cached_associations.select do |cached_association, options|
+          options[:embed].present?
         end
       end
 
