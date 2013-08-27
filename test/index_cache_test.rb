@@ -1,12 +1,14 @@
 require "test_helper"
 
 class ExpirationTest < IdentityCache::TestCase
+  NAMESPACE = IdentityCache::CacheKeyGeneration::DEFAULT_NAMESPACE
+
   def setup
     super
     @record = Record.new
     @record.id = 1
     @record.title = 'bob'
-    @cache_key = "IDC:index:Record:title:#{cache_hash(@record.title)}"
+    @cache_key = "#{NAMESPACE}index:Record:title:#{cache_hash(@record.title)}"
   end
 
   def test_unique_index_caches_nil
@@ -35,7 +37,7 @@ class ExpirationTest < IdentityCache::TestCase
     IdentityCache.cache.write(@cache_key, @record.id)
 
     @record.title = 'robert'
-    new_cache_key = "IDC:index:Record:title:#{cache_hash(@record.title)}"
+    new_cache_key = "#{NAMESPACE}index:Record:title:#{cache_hash(@record.title)}"
     IdentityCache.cache.write(new_cache_key, IdentityCache::CACHED_NIL)
     @record.save!
     assert_equal nil, IdentityCache.cache.read(@cache_key)
@@ -78,7 +80,7 @@ class ExpirationTest < IdentityCache::TestCase
     IdentityCache.cache.write(@cache_key, [@record.id])
 
     @record.title = 'robert'
-    new_cache_key = "IDC:index:Record:title:#{cache_hash(@record.title)}"
+    new_cache_key = "#{NAMESPACE}index:Record:title:#{cache_hash(@record.title)}"
     IdentityCache.cache.write(new_cache_key, [])
     @record.save!
     assert_equal nil, IdentityCache.cache.read(@cache_key)

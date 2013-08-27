@@ -1,6 +1,8 @@
 require "test_helper"
 
 class AttributeCacheTest < IdentityCache::TestCase
+  NAMESPACE = IdentityCache::CacheKeyGeneration::DEFAULT_NAMESPACE
+
   def setup
     super
     AssociatedRecord.cache_attribute :name
@@ -8,8 +10,8 @@ class AttributeCacheTest < IdentityCache::TestCase
 
     @parent = Record.create!(:title => 'bob')
     @record = @parent.associated_records.create!(:name => 'foo')
-    @name_attribute_key = "IDC:attribute:AssociatedRecord:name:id:#{cache_hash(@record.id.to_s)}"
-    @blob_key = "IDC:blob:AssociatedRecord:#{cache_hash("id:integer,name:string,record_id:integer")}:1"
+    @name_attribute_key = "#{NAMESPACE}attribute:AssociatedRecord:name:id:#{cache_hash(@record.id.to_s)}"
+    @blob_key = "#{NAMESPACE}blob:AssociatedRecord:#{cache_hash("id:integer,name:string,record_id:integer")}:1"
   end
 
   def test_attribute_values_are_returned_on_cache_hits
@@ -57,7 +59,7 @@ class AttributeCacheTest < IdentityCache::TestCase
   end
 
   def test_cached_attribute_values_are_expired_from_the_cache_when_a_new_record_is_saved
-    IdentityCache.cache.expects(:delete).with("IDC:blob:AssociatedRecord:#{cache_hash("id:integer,name:string,record_id:integer")}:2")
+    IdentityCache.cache.expects(:delete).with("#{NAMESPACE}blob:AssociatedRecord:#{cache_hash("id:integer,name:string,record_id:integer")}:2")
     @parent.associated_records.create(:name => 'bar')
   end
 
