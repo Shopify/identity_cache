@@ -10,5 +10,7 @@ class SerializationFormatChangeTest < IdentityCache::TestCase
     serialization = serialize(serialized_record)
     preserialization = File.binread(serialized_record_file)
     assert_equal(preserialization, serialization, MESSAGE)
+  rescue SystemCallError
+    assert(false, MESSAGE)
   end
 end

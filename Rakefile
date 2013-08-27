@@ -16,10 +16,8 @@ Rake::TestTask.new(:test) do |t|
 end
 
 desc 'Update serialization format test fixture.'
-Rake::TestTask.new(:update_serialization_format) do |t|
-  t.libs << 'lib'
-  t.libs << 'test'
-  t.pattern = 'test/update_serialization_format.rb'
+task :update_serialization_format do
+  ruby './test/helpers/update_serialization_format.rb'
 end
 
 namespace :benchmark do
