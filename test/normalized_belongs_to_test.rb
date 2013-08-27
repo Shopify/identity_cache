@@ -43,4 +43,19 @@ class NormalizedBelongsToTest < IdentityCache::TestCase
     Record.expects(:fetch_by_id).with(@parent_record.id).returns(nil)
     assert_equal nil, @record.fetch_record
   end
+
+  def test_returned_record_should_be_readonly_on_cache_hit
+    Record.fetch(@parent_record.id) # warm cache
+    assert @record.fetch_record.readonly?
+  end
+
+  def test_returned_record_should_be_readonly_on_cache_miss
+    assert @record.fetch_record.readonly?
+  end
+
+  def test_returned_record_with_open_transactions_should_be_readonly
+    Record.transaction do
+      assert @record.fetch_record.readonly?
+    end
+  end
 end

@@ -32,15 +32,20 @@ module IdentityCache
         if IdentityCache.should_cache?
 
           require_if_necessary do
-            object = nil
-            coder = IdentityCache.fetch(rails_cache_key(id)){ coder_from_record(object = resolve_cache_miss(id)) }
-            object ||= record_from_coder(coder)
-            IdentityCache.logger.error "[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{object.id} for #{object.inspect[(0..100)]} " if object && object.id != id.to_i
-            object
-          end
+            record = nil
+            coder = IdentityCache.fetch(rails_cache_key(id)) do
+              record = resolve_cache_miss(id)
+              coder_from_record(record)
+            end
 
+            record ||= record_from_coder(coder)
+            IdentityCache.logger.error "[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{record.id} for #{record.inspect[(0..100)]} " if record && record.id != id.to_i
+            record
+          end
         else
-          self.find_by_id(id)
+          record = self.find_by_id(id)
+          record.readonly! if record.present?
+          record
         end
       end
 
@@ -84,6 +89,7 @@ module IdentityCache
         if coder.present? && coder.has_key?(:class)
           coder[:class].allocate.init_with(coder).tap do |record|
             coder[:associations].each {|name, value| set_embedded_association(record, name, value) } if coder.has_key?(:associations)
+            record.readonly!
           end
         end
       end
@@ -153,6 +159,7 @@ module IdentityCache
       def resolve_cache_miss(id)
         self.find_by_id(id, :include => cache_fetch_includes).tap do |object|
           object.try(:populate_association_caches)
+          object.try(:readonly!)
         end
       end
 
@@ -200,6 +207,7 @@ module IdentityCache
         @id_column ||= columns.detect {|c| c.name == "id"}
         ids = ids.map{ |id| @id_column.type_cast(id) }
         records = where('id IN (?)', ids).includes(cache_fetch_includes(options[:includes])).all
+        records.map(&:readonly!)
         records_by_id = records.index_by(&:id)
         records = ids.map{ |id| records_by_id[id] }
         mismatching_ids = records.compact.map(&:id) - ids
@@ -312,7 +320,7 @@ module IdentityCache
         populate_denormalized_cached_association(ivar_name, association_name)
         IdentityCache.unmap_cached_nil_for(instance_variable_get(ivar_full_name))
       else
-        send(association_name.to_sym)
+        load_and_readonlyify(association_name)
       end
     end
 
@@ -322,7 +330,7 @@ module IdentityCache
       value = instance_variable_get(ivar_full_name)
       return value unless value.nil?
 
-      loaded_association = send(association_name)
+      loaded_association = load_and_readonlyify(association_name)
 
       instance_variable_set(ivar_full_name, IdentityCache.map_cached_nil_for(loaded_association))
     end
