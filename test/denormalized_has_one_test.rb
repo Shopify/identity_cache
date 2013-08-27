@@ -110,4 +110,23 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
       Item.cache_has_one :polymorphic_record, :inverse_name => :owner, :embed => true
     end
   end
+
+  def test_returned_record_should_be_readonly_on_cache_hit
+    record = Item.fetch_by_title('foo')
+
+    record_from_cache_hit = Item.fetch(record.id)
+    assert record_from_cache_hit.fetch_associated.readonly?
+  end
+
+
+  def test_returned_record_should_be_readonly_on_cache_miss
+    record_from_cache_miss = Item.fetch(@record.id)
+    assert record_from_cache_miss.fetch_associated.readonly?
+  end
+
+  def test_returned_record_with_open_transactions_should_be_readonly
+    Item.transaction do
+      assert Item.fetch(@record.id).fetch_associated.readonly?
+    end
+  end
 end

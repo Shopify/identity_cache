@@ -205,6 +205,27 @@ class FetchMultiTest < IdentityCache::TestCase
     end
   end
 
+  def test_fetch_multi_with_mixed_hits_and_misses_returns_only_readonly_records
+    cache_response = {}
+    cache_response[@bob_blob_key] = cache_response_for(@bob)
+    cache_response[@joe_blob_key] = nil
+    cache_response[@fred_blob_key] = cache_response_for(@fred)
+    IdentityCache.cache.expects(:fetch_multi).with(@bob_blob_key, @joe_blob_key, @fred_blob_key).returns(cache_response)
+
+    Item.fetch_multi(@bob.id, @joe.id, @fred.id).each do |record|
+      assert record.readonly?, "Item #{record} wasn't readonly"
+    end
+  end
+
+  def test_fetch_multi_with_open_transactions_returns_only_readonly_records
+    Item.connection.expects(:open_transactions).at_least_once.returns(1)
+    IdentityCache.cache.expects(:fetch_multi).never
+    Item.fetch_multi(@bob.id, @joe.id, @fred.id).each do |record|
+      assert record.readonly?, "Item #{record} wasn't readonly"
+    end
+  end
+
+
   private
 
   def populate_only_fred

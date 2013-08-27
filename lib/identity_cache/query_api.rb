@@ -26,15 +26,20 @@ module IdentityCache
         if IdentityCache.should_use_cache?
 
           require_if_necessary do
-            object = nil
-            coder = IdentityCache.fetch(rails_cache_key(id)){ coder_from_record(object = resolve_cache_miss(id)) }
-            object ||= record_from_coder(coder)
-            IdentityCache.logger.error "[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{object.id} for #{object.inspect[(0..100)]} " if object && object.id != id.to_i
-            object
-          end
+            record = nil
+            coder = IdentityCache.fetch(rails_cache_key(id)) do
+              record = resolve_cache_miss(id)
+              coder_from_record(record)
+            end
 
+            record ||= record_from_coder(coder)
+            IdentityCache.logger.error "[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{record.id} for #{record.inspect[(0..100)]} " if record && record.id != id.to_i
+            record
+          end
         else
-          self.reorder(nil).where(primary_key => id).first
+          record = self.reorder(nil).where(primary_key => id).first
+          record.readonly! if record.present?
+          record
         end
       end
 
@@ -99,6 +104,7 @@ module IdentityCache
             coder['attributes'] = coder['attributes'].dup
           end
           record.init_with(coder)
+          record.readonly!
 
           coder[:associations].each {|name, value| set_embedded_association(record, name, value) } if coder.has_key?(:associations)
           coder[:normalized_has_many].each {|name, ids| record.instance_variable_set(:"@#{record.class.cached_has_manys[name][:ids_variable_name]}", ids) } if coder.has_key?(:normalized_has_many)
@@ -176,8 +182,10 @@ module IdentityCache
       end
 
       def resolve_cache_miss(id)
-        object = self.includes(cache_fetch_includes).reorder(nil).where(primary_key => id).try(:first)
-        object.send(:populate_association_caches) if object
+        if object = self.includes(cache_fetch_includes).reorder(nil).where(primary_key => id).try(:first)
+          object.send(:populate_association_caches)
+          object.readonly!
+        end
         object
       end
 
@@ -220,6 +228,7 @@ module IdentityCache
         @id_column ||= columns.detect {|c| c.name == primary_key}
         ids = ids.map{ |id| connection.type_cast(id, @id_column) }
         records = where(primary_key => ids).includes(cache_fetch_includes).to_a
+        records.map(&:readonly!)
         records_by_id = records.index_by(&:id)
         ids.map{ |id| records_by_id[id] }
       end
@@ -332,7 +341,7 @@ module IdentityCache
         assoc = IdentityCache.unmap_cached_nil_for(instance_variable_get(ivar_full_name))
         assoc.is_a?(ActiveRecord::Associations::CollectionAssociation) ? assoc.reader : assoc
       else
-        send(association_name.to_sym)
+        load_and_readonlyify(association_name)
       end
     end
 
@@ -342,7 +351,7 @@ module IdentityCache
       value = instance_variable_get(ivar_full_name)
       return value unless value.nil?
 
-      loaded_association = send(association_name)
+      loaded_association = load_and_readonlyify(association_name)
 
       instance_variable_set(ivar_full_name, IdentityCache.map_cached_nil_for(loaded_association))
     end

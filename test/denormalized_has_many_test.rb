@@ -88,4 +88,29 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     IdentityCache.cache.expects(:delete).with(@record.primary_cache_index_key)
     child.save!
   end
+
+  def test_returned_records_should_be_readonly_on_cache_hit
+    Item.fetch(@record.id) # warm cache
+
+    record_from_cache_hit = Item.fetch(@record.id)
+    record_from_cache_hit.fetch_associated_records.each do |record|
+      assert record.readonly?, "Item #{record} wasn't readonly"
+    end
+  end
+
+  def test_returned_records_should_be_readonly_on_cache_miss
+    record_from_cache_miss = Item.fetch(@record.id)
+
+    record_from_cache_miss.fetch_associated_records.each do |record|
+      assert record.readonly?, "Item #{record} wasn't readonly"
+    end
+  end
+
+  def test_returned_records_with_open_transactions_should_be_readonly
+    Item.transaction do
+      Item.fetch(@record.id).fetch_associated_records.each do |record|
+        assert record.readonly?, "Item #{record} wasn't readonly"
+      end
+    end
+  end
 end

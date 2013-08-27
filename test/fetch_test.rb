@@ -211,4 +211,17 @@ class FetchTest < IdentityCache::TestCase
       Item.where(updated_at: nil).fetch_by_id(1)
     end
   end
+
+  def test_returned_records_are_readonly_on_cache_hit
+    @record.save!
+    assert_equal true, Item.fetch(@record.id).readonly? # miss
+    assert_equal true, Item.fetch(@record.id).readonly? # hit
+  end
+
+  def test_returned_records_are_readonly_with_open_transactions
+    @record.save!
+    Item.transaction do
+      assert Item.fetch(@record.id).readonly?
+    end
+  end
 end

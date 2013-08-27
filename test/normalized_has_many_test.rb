@@ -151,4 +151,20 @@ class NormalizedHasManyTest < IdentityCache::TestCase
     @not_cached.save!
   end
 
+  def test_returned_records_should_be_readonly_on_cache_hit
+    Item.fetch(@record.id) # warm cache
+
+    record_from_cache_hit = Item.fetch(@record.id)
+    record_from_cache_hit.fetch_associated_records.each do |record|
+      assert record.readonly?
+    end
+  end
+
+  def test_returned_records_should_be_readonly_on_cache_miss
+    record_from_cache_miss = Item.fetch(@record.id)
+
+    record_from_cache_miss.fetch_associated_records.each do |record|
+      assert record.readonly?
+    end
+  end
 end
