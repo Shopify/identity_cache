@@ -7,8 +7,8 @@ class SerializationFormatChangeTest < IdentityCache::TestCase
   MESSAGE = "serialization format changed => increment IdentityCache.CACHE_VERSION and run rake update_serialization_format"
 
   def test_serialization_format_has_not_changed
-    serialization = serialize(serialized_record)
-    preserialization = File.binread(serialized_record_file)
+    serialization = Marshal.load(serialize(serialized_record))
+    preserialization = Marshal.load(File.binread(serialized_record_file))
     assert_equal(preserialization, serialization, MESSAGE)
   rescue SystemCallError
     assert(false, MESSAGE)
