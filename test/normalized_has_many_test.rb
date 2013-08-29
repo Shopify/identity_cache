@@ -48,6 +48,16 @@ class NormalizedHasManyTest < IdentityCache::TestCase
     assert_equal [@baz, @bar], @record.fetch_associated_records
   end
 
+  def test_fetching_the_association_from_a_record_on_a_cache_hit_should_not_issue_any_queries
+    # Populate the cache
+    @record = Record.fetch(@record.id)
+    @record.fetch_associated_records
+    assert_queries(0) do
+      @record = Record.fetch(@record.id)
+      assert_equal [@baz, @bar], @record.fetch_associated_records
+    end
+  end
+
   def test_fetching_the_association_from_a_identity_cached_record_should_not_re_fetch_the_association_ids
     @record = Record.fetch(@record.id)
     @record.expects(:associated_record_ids).never
