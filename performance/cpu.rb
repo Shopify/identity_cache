@@ -25,4 +25,7 @@ Benchmark.bmbm do |x|
 
   run(FetchHitRunner.new(RUNS), x)
 
+  run(DoubleFetchHitRunner.new(RUNS), x)
+
+  run(DoubleFetchMissRunner.new(RUNS), x)
 end

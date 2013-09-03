@@ -24,3 +24,7 @@ run(FindRunner.new(RUNS))
 run(FetchMissRunner.new(RUNS))
 
 run(FetchHitRunner.new(RUNS))
+
+run(DoubleFetchHitRunner.new(RUNS))
+
+run(DoubleFetchMissRunner.new(RUNS))

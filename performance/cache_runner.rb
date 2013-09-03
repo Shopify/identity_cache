@@ -37,6 +37,7 @@ def create_database(count)
   # set up associations
   Record.cache_has_one :associated
   Record.cache_has_many :associated_records, :embed => true
+  Record.cache_has_many :normalized_associated_records, :embed => false
   Record.cache_index :title, :unique => :true
   AssociatedRecord.cache_has_many :deeply_associated_records, :embed => true
 
@@ -54,6 +55,7 @@ def create_database(count)
       a.associated_records
       (1..5).each do |j|
         a.associated_records << AssociatedRecord.new(name: "Has Many #{j} for #{i}")
+        a.normalized_associated_records << NormalizedAssociatedRecord.new(name: "Normalized Has Many #{j} for #{i}")
       end
       a.save
     end
@@ -74,49 +76,75 @@ end
 
 class FindRunner < CacheRunner
   def run
-    i = 1
-    @count.times do
+    (1..@count).each do |i|
       ::Record.find(i)
-      i+=1
     end
   end
 end
 
-class FetchMissRunner < CacheRunner
+module MissRunner
   def prepare
     IdentityCache.cache.clear
   end
+end
+
+class FetchMissRunner < CacheRunner
+  include MissRunner
 
   def run
-    i = 1
-    @count.times do
+    (1..@count).each do |i|
       rec = ::Record.fetch(i)
       rec.fetch_associated
       rec.fetch_associated_records
+    end
+  end
+end
 
-      i+=1
+class DoubleFetchMissRunner < CacheRunner
+  include MissRunner
+
+  def run
+    (1..@count).each do |i|
+      rec = ::Record.fetch(i)
+      rec.fetch_associated
+      rec.fetch_associated_records
+      rec.fetch_normalized_associated_records
+    end
+  end
+end
+
+module HitRunner
+  def prepare
+    IdentityCache.cache.clear
+    (1..@count).each do |i|
+      ::Record.fetch(i)
     end
   end
 end
 
 class FetchHitRunner < CacheRunner
-  def prepare
-    IdentityCache.cache.clear
-    i = 1
-    @count.times do
-      ::Record.fetch(i)
-      i+=1
-    end
-  end
+  include HitRunner
 
   def run
-    i = 1
-    @count.times do
+    (1..@count).each do |i|
       rec = ::Record.fetch(i)
       # these should all be no cost
       rec.fetch_associated
       rec.fetch_associated_records
-      i+=1
+    end
+  end
+end
+
+class DoubleFetchHitRunner < CacheRunner
+  include HitRunner
+
+  def run
+    (1..@count).each do |i|
+      rec = ::Record.fetch(i)
+      # these should all be no cost
+      rec.fetch_associated
+      rec.fetch_associated_records
+      rec.fetch_normalized_associated_records
     end
   end
 end
