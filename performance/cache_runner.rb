@@ -117,7 +117,8 @@ module HitRunner
   def prepare
     IdentityCache.cache.clear
     (1..@count).each do |i|
-      ::Record.fetch(i)
+      rec = ::Record.fetch(i)
+      rec.fetch_normalized_associated_records
     end
   end
 end
