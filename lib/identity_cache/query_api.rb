@@ -82,9 +82,25 @@ module IdentityCache
 
       def record_from_coder(coder) #:nodoc:
         if coder.present? && coder.has_key?(:class)
-          coder[:class].allocate.init_with(coder).tap do |record|
-            coder[:associations].each {|name, value| set_embedded_association(record, name, value) } if coder.has_key?(:associations)
+          record = coder[:class].allocate
+          if record.class._initialize_callbacks.empty?
+            record.instance_eval do
+              @attributes = self.class.initialize_attributes(coder['attributes'])
+              @relation = nil
+
+              @attributes_cache, @previously_changed, @changed_attributes = {}, {}, {}
+              @association_cache = {}
+              @aggregation_cache = {}
+              @readonly = @destroyed = @marked_for_destruction = false
+              @new_record = false
+            end
+          else
+            record.init_with(coder)
           end
+
+          coder[:associations].each {|name, value| set_embedded_association(record, name, value) } if coder.has_key?(:associations)
+          coder[:normalized_has_many].each {|name, ids| record.instance_variable_set(:"@#{record.class.cached_has_manys[name][:ids_variable_name]}", ids) } if coder.has_key?(:normalized_has_many)
+          record
         end
       end
 
@@ -94,7 +110,6 @@ module IdentityCache
         elsif (reflection = record.class.reflect_on_association(association_name)).collection?
           association = reflection.association_class.new(record, reflection)
           association.target = coder_or_array.map {|e| record_from_coder(e) }
-          record.association_cache[association_name] = association
           association.target.each {|e| association.set_inverse_instance(e) }
           association.proxy
         else
@@ -128,6 +143,11 @@ module IdentityCache
         if record.class.respond_to?(:all_embedded_associations) && record.class.all_embedded_associations.present?
           coder[:associations] = record.class.all_embedded_associations.each_with_object({}) do |(name, options), hash|
             hash[name] = IdentityCache.map_cached_nil_for(get_embedded_association(record, name, options))
+          end
+        end
+        if record.class.respond_to?(:cached_has_manys) && record.class.cached_has_manys.present?
+          coder[:normalized_has_many] = record.class.cached_has_manys.each_with_object({}) do |(name, options), hash|
+            hash[name] = record.instance_variable_get(:"@#{options[:ids_variable_name]}") unless options[:embed]
           end
         end
       end
