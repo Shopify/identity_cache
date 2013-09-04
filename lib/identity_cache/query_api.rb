@@ -83,15 +83,19 @@ module IdentityCache
       def record_from_coder(coder) #:nodoc:
         if coder.present? && coder.has_key?(:class)
           record = coder[:class].allocate
-          record.instance_eval do
-            @attributes = self.class.initialize_attributes(coder['attributes'])
-            @relation = nil
+          if record.class._initialize_callbacks.empty?
+            record.instance_eval do
+              @attributes = self.class.initialize_attributes(coder['attributes'])
+              @relation = nil
 
-            @attributes_cache, @previously_changed, @changed_attributes = {}, {}, {}
-            @association_cache = {}
-            @aggregation_cache = {}
-            @readonly = @destroyed = @marked_for_destruction = false
-            @new_record = false
+              @attributes_cache, @previously_changed, @changed_attributes = {}, {}, {}
+              @association_cache = {}
+              @aggregation_cache = {}
+              @readonly = @destroyed = @marked_for_destruction = false
+              @new_record = false
+            end
+          else
+            record.init_with(coder)
           end
 
           coder[:associations].each {|name, value| set_embedded_association(record, name, value) } if coder.has_key?(:associations)
