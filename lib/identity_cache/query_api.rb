@@ -82,10 +82,21 @@ module IdentityCache
 
       def record_from_coder(coder) #:nodoc:
         if coder.present? && coder.has_key?(:class)
-          coder[:class].allocate.init_with(coder).tap do |record|
-            coder[:associations].each {|name, value| set_embedded_association(record, name, value) } if coder.has_key?(:associations)
-            coder[:normalized_has_many].each {|name, ids| record.instance_variable_set(:"@#{record.class.cached_has_manys[name][:ids_variable_name]}", ids) } if coder.has_key?(:normalized_has_many)
+          record = coder[:class].allocate
+          record.instance_eval do
+            @attributes = self.class.initialize_attributes(coder['attributes'])
+            @relation = nil
+
+            @attributes_cache, @previously_changed, @changed_attributes = {}, {}, {}
+            @association_cache = {}
+            @aggregation_cache = {}
+            @readonly = @destroyed = @marked_for_destruction = false
+            @new_record = false
           end
+
+          coder[:associations].each {|name, value| set_embedded_association(record, name, value) } if coder.has_key?(:associations)
+          coder[:normalized_has_many].each {|name, ids| record.instance_variable_set(:"@#{record.class.cached_has_manys[name][:ids_variable_name]}", ids) } if coder.has_key?(:normalized_has_many)
+          record
         end
       end
 
