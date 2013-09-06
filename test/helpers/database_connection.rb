@@ -26,12 +26,13 @@ module DatabaseConnection
   end
 
   TABLES = {
-    :polymorphic_records        => [[:string, :owner_type], [:integer, :owner_id], [:timestamps]],
-    :deeply_associated_records  => [[:string, :name], [:integer, :associated_record_id]],
-    :associated_records         => [[:string, :name], [:integer, :record_id]],
-    :not_cached_records         => [[:string, :name], [:integer, :record_id]],
-    :records                    => [[:integer, :record_id], [:string, :title], [:timestamps]],
-    :records2                   => [[:integer, :record_id], [:string, :title], [:timestamps]]
+    :polymorphic_records           => [[:string, :owner_type], [:integer, :owner_id], [:timestamps]],
+    :deeply_associated_records     => [[:string, :name], [:integer, :associated_record_id]],
+    :associated_records            => [[:string, :name], [:integer, :record_id]],
+    :normalized_associated_records => [[:string, :name], [:integer, :record_id]],
+    :not_cached_records            => [[:string, :name], [:integer, :record_id]],
+    :records                       => [[:integer, :record_id], [:string, :title], [:timestamps]],
+    :records2                      => [[:integer, :record_id], [:string, :title], [:timestamps]]
   }
 
   DATABASE_CONFIG = {
