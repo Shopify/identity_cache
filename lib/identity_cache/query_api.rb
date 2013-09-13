@@ -83,6 +83,10 @@ module IdentityCache
       def record_from_coder(coder) #:nodoc:
         if coder.present? && coder.has_key?(:class)
           record = coder[:class].allocate
+          unless coder[:class].serialized_attributes.empty?
+            coder = coder.dup
+            coder['attributes'] = coder['attributes'].dup
+          end
           if record.class._initialize_callbacks.empty?
             record.instance_eval do
               @attributes = self.class.initialize_attributes(coder['attributes'])
