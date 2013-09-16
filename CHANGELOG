@@ -1,3 +1,8 @@
+0.0.4
+* Fix: only marshal attributes, embedded associations and normalized association IDs
+* Add cache version number to cache keys
+* Add test case to ensure version number is updated when the marshalled format changes
+
 0.0.3
 * Fix: memoization for multi hits actually work
 * Fix: quotes SELECT projection elements on cache misses

@@ -206,6 +206,10 @@ class ApplicationController < ActionController::Base
 end
 ```
 
+## Versioning
+
+Cache keys include a version number by default, specified in `IdentityCache::CACHE_VERSION`. This version number is updated whenever the storage format for cache values is modified. If you modify the cache value format, you must run `rake update_serialization_format` in order to pass the unit tests, and include the modified `test/fixtures/serialized_record` file in your pull request.
+
 ## Caveats
 
 A word of warning. Some versions of rails will silently rescue all exceptions in `after_commit` hooks. If an `after_commit` fails before the cache expiry `after_commit` the cache will not be expired and you will be left with stale data.
