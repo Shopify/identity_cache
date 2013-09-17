@@ -1,5 +1,6 @@
 require 'active_record'
 require 'ar_transaction_changes'
+require 'memcached'
 
 require "identity_cache/version"
 require 'identity_cache/memoized_cache_proxy'
@@ -9,6 +10,7 @@ require 'identity_cache/configuration_dsl'
 require 'identity_cache/parent_model_expiration'
 require 'identity_cache/query_api'
 require "identity_cache/cache_hash"
+require "identity_cache/memcached_adapter"
 
 module IdentityCache
   CACHED_NIL = :idc_cached_nil
