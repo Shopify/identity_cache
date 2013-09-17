@@ -59,7 +59,7 @@ module IdentityCache
       false
     end
 
-    def replace(key, value, ttl)
+    def replace(key, value, ttl = 0)
       super(key, value, ttl)
     rescue *NONFATAL_EXCEPTIONS
       false
