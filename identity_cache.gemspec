@@ -26,6 +26,7 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency('mocha', '0.14.0')
 
   if RUBY_PLATFORM == 'java'
+    raise
     gem.add_development_dependency 'jruby-openssl'
     gem.add_development_dependency 'activerecord-jdbcmysql-adapter'
     gem.add_development_dependency 'jdbc-mysql'
