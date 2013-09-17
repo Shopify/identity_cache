@@ -52,7 +52,7 @@ module IdentityCache
         arg_list = (0...fields.size).collect { |i| "arg#{i}" }.join(',')
 
         if options[:unique]
-          self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__)
+          self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
             def fetch_by_#{field_list}(#{arg_list})
               identity_cache_single_value_dynamic_fetcher(#{fields.inspect}, [#{arg_list}])
             end
@@ -63,7 +63,7 @@ module IdentityCache
             end
           CODE
         else
-          self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__)
+          self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
             def fetch_by_#{field_list}(#{arg_list})
               identity_cache_multiple_value_dynamic_fetcher(#{fields.inspect}, [#{arg_list}])
             end
@@ -170,7 +170,7 @@ module IdentityCache
         field_list = fields.join("_and_")
         arg_list = (0...fields.size).collect { |i| "arg#{i}" }.join(',')
 
-        self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__)
+        self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
           def fetch_#{attribute}_by_#{field_list}(#{arg_list})
             attribute_dynamic_fetcher(#{attribute.inspect}, #{fields.inspect}, [#{arg_list}])
           end
@@ -210,7 +210,7 @@ module IdentityCache
 
 
         unless instance_methods.include?(options[:cached_accessor_name].to_sym)
-          self.class_eval(ruby = <<-CODE, __FILE__, __LINE__)
+          self.class_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
             def #{options[:cached_accessor_name]}
               fetch_denormalized_cached_association('#{options[:records_variable_name]}', :#{association})
             end
@@ -235,7 +235,7 @@ module IdentityCache
         options[:population_method_name]  ||= "populate_#{association}_cache"
         options[:prepopulate_method_name] ||= "prepopulate_fetched_#{association}"
 
-        self.class_eval(ruby = <<-CODE, __FILE__, __LINE__)
+        self.class_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
           attr_reader :#{options[:ids_variable_name]}
 
           def #{options[:cached_ids_name]}
@@ -281,7 +281,7 @@ module IdentityCache
         child_class.send(:include, ArTransactionChanges) unless child_class.include?(ArTransactionChanges)
         child_class.send(:include, ParentModelExpiration) unless child_class.include?(ParentModelExpiration)
 
-        child_class.class_eval(ruby = <<-CODE, __FILE__, __LINE__)
+        child_class.class_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
           after_commit :expire_parent_cache
           after_touch  :expire_parent_cache
 
