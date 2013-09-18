@@ -17,6 +17,8 @@ module IdentityCache
       super(servers, opts.merge(support_cas: true))
     end
 
+    alias :clear :flush
+
     %w{delete incr decr append prepend}.each do |meth|
       define_method(meth) do |*args|
         begin
@@ -31,6 +33,33 @@ module IdentityCache
       cas = @struct.result.cas
       [value, cas]
     rescue *NONFATAL_EXCEPTIONS
+    end
+
+    def get_multi(keys, decode=true)
+      ret = Lib.memcached_mget(@struct, keys);
+      check_return_code(ret, keys)
+
+      hash = {}
+      value, key, flags, ret = Lib.memcached_fetch_rvalue(@struct)
+      cas = @struct.result.cas
+      while ret != 21 do # Lib::MEMCACHED_END
+        if ret == 0 # Lib::MEMCACHED_SUCCESS
+          hash[key] = decode ? [value, flags, cas] : [value, cas]
+        elsif ret != 16 # Lib::MEMCACHED_NOTFOUND
+          check_return_code(ret, key)
+        end
+        value, key, flags, ret = Lib.memcached_fetch_rvalue(@struct)
+        cas = @struct.result.cas
+      end
+      if decode
+        hash.each do |key, value_and_flags|
+          cas = value_and_flags.pop
+          hash[key] = [@codec.decode(key, *value_and_flags), cas]
+        end
+      end
+      hash
+    rescue *NONFATAL_EXCEPTIONS
+      {}
     end
 
     def add(key, value)

@@ -70,4 +70,20 @@ class MemcachedAdapterTest < IdentityCache::TestCase
     value, cas = @client.get(KEY)
     assert_equal 99, value
   end
+
+  def test_get_multi
+    @client.add('foo', 1)
+    @client.add('bar', 2)
+    @client.add('baz', 3)
+
+    hash = @client.get_multi(['foo', 'bar', 'baz'])
+    @client.set('foo', 999)
+    @client.cas('foo', 'xxx', hash['foo'][1])
+    @client.cas('bar', 'xxx', hash['bar'][1])
+    @client.cas('baz', 'xxx', hash['baz'][1])
+
+    refute_equal 'xxx', @client.get('foo')[0]
+    assert_equal 'xxx', @client.get('bar')[0]
+    assert_equal 'xxx', @client.get('baz')[0]
+  end
 end
