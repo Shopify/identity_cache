@@ -1,7 +1,7 @@
 require "test_helper"
 
 class FetchMultiTest < IdentityCache::TestCase
-  NAMESPACE = IdentityCache::CacheKeyGeneration::DEFAULT_NAMESPACE unless const_defined?(:NAMESPACE)
+  NAMESPACE = IdentityCache::CacheKeyGeneration::DEFAULT_NAMESPACE
 
   def setup
     super
