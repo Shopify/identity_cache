@@ -45,7 +45,8 @@ module IdentityCache
       end
 
       def rails_cache_key_namespace
-        DEFAULT_NAMESPACE
+        ns = IdentityCache.cache_namespace
+        ns.is_a?(Proc) ? ns.call(self) : ns
       end
 
       private

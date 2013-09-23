@@ -26,6 +26,9 @@ module IdentityCache
     attr_accessor :readonly
     attr_writer :logger
 
+    mattr_accessor :cache_namespace
+    self.cache_namespace = "IDC:#{CACHE_VERSION}:".freeze
+
     def included(base) #:nodoc:
       raise AlreadyIncludedError if base.respond_to? :cache_indexes
 
