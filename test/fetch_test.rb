@@ -24,13 +24,15 @@ class FetchTest < IdentityCache::TestCase
   end
 
   def test_fetch_hit_cache_namespace
-    Record.send(:include, SwitchNamespace)
-    Record.namespace = 'test_namespace'
+    old_ns = IdentityCache.cache_namespace
+    IdentityCache.cache_namespace = proc { |model| "#{model.table_name}:#{old_ns}" }
 
-    new_blob_key = "test_namespace:#{@blob_key}"
+    new_blob_key = "records:#{@blob_key}"
     IdentityCache.cache.expects(:read).with(new_blob_key).returns(@cached_value)
 
     assert_equal @record, Record.fetch(1)
+  ensure
+    IdentityCache.cache_namespace = old_ns
   end
 
   def test_exists_with_identity_cache_when_cache_hit
