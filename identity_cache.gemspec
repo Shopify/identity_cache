@@ -19,12 +19,14 @@ Gem::Specification.new do |gem|
   gem.add_dependency('ar_transaction_changes', '0.0.1')
   gem.add_dependency('activerecord', '~> 3.2.12')
   gem.add_dependency('activesupport', '~> 3.2.12')
+  gem.add_dependency('memcached', '~> 1.7.0')
 
   gem.add_development_dependency('memcache-client')
   gem.add_development_dependency('rake')
   gem.add_development_dependency('mocha', '0.14.0')
 
   if RUBY_PLATFORM == 'java'
+    raise
     gem.add_development_dependency 'jruby-openssl'
     gem.add_development_dependency 'activerecord-jdbcmysql-adapter'
     gem.add_development_dependency 'jdbc-mysql'
