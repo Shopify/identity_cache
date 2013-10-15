@@ -138,6 +138,33 @@ class FetchMultiTest < IdentityCache::TestCase
     Record.fetch_multi(@bob.id, @joe.id)
   end
 
+  def test_fetch_multi_emits_a_notification_with_the_hit_status
+    data = nil
+    callback = lambda {|*args| data = args }
+
+    ActiveSupport::Notifications.subscribed(callback, "fetch_multi.identity_cache") do
+      cache_response = {}
+      cache_response[@bob_blob_key] = nil
+      cache_response[@joe_blob_key] = nil
+      cache_response[@fred_blob_key] = nil
+      IdentityCache.cache.expects(:read_multi).with(@bob_blob_key, @joe_blob_key, @fred_blob_key).returns(cache_response)
+      Record.fetch_multi(@bob.id, @joe.id, @fred.id)
+
+      expected = ["fetch_multi.identity_cache", {hits: 0, ids: [@bob.id, @joe.id, @fred.id]}]
+      assert_equal expected, data
+
+      cache_response = {}
+      cache_response[@bob_blob_key] = cache_response_for(@bob)
+      cache_response[@joe_blob_key] = nil
+      cache_response[@fred_blob_key] = cache_response_for(@fred)
+      IdentityCache.cache.expects(:read_multi).with(@bob_blob_key, @joe_blob_key, @fred_blob_key).returns(cache_response)
+      Record.fetch_multi(@bob.id, @joe.id, @fred.id)
+
+      expected = ["fetch_multi.identity_cache", {hits: 2, ids: [@bob.id, @joe.id, @fred.id]}]
+      assert_equal expected, data
+    end
+  end
+
   private
 
   def populate_only_fred
