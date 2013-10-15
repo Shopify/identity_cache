@@ -128,4 +128,21 @@ class FetchTest < IdentityCache::TestCase
       Record.fetch_by_title!('bob')
     end
   end
+
+  def test_fetch_emits_a_notification_with_the_hit_status
+    data = nil
+    callback = lambda {|*args| data = args }
+
+    ActiveSupport::Notifications.subscribed(callback, "fetch.identity_cache") do
+      Record.expects(:find_by_id).with(1, :include => []).returns(@record).at_least_once
+      IdentityCache.cache.expects(:read).with(@blob_key).times(2).returns(nil, @cached_value)
+      Record.fetch(1)
+      expected = ["fetch.identity_cache", {hit: false, id: 1}]
+      assert_equal expected, data
+
+      Record.fetch(1)
+      expected = ["fetch.identity_cache", {hit: true, id: 1}]
+      assert_equal expected, data
+    end
+  end
 end

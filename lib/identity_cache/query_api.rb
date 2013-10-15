@@ -32,10 +32,17 @@ module IdentityCache
         if IdentityCache.should_cache?
 
           require_if_necessary do
+            hit = true
             object = nil
-            coder = IdentityCache.fetch(rails_cache_key(id)){ coder_from_record(object = resolve_cache_miss(id)) }
+
+            coder = IdentityCache.fetch(rails_cache_key(id)) do
+              hit = false
+              object = resolve_cache_miss(id)
+              coder_from_record(object)
+            end
+
+            ActiveSupport::Notifications.publish "fetch.identity_cache", {hit: hit, id: id}
             object ||= record_from_coder(coder)
-            IdentityCache.logger.error "[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{object.id} for #{object.inspect[(0..100)]} " if object && object.id != id.to_i
             object
           end
 
@@ -61,10 +68,12 @@ module IdentityCache
           require_if_necessary do
             cache_keys = ids.map {|id| rails_cache_key(id) }
             key_to_id_map = Hash[ cache_keys.zip(ids) ]
+            hits = ids.size
 
             coders_by_key = IdentityCache.fetch_multi(*cache_keys) do |unresolved_keys|
-              ids = unresolved_keys.map {|key| key_to_id_map[key] }
-              records = find_batch(ids, options)
+              hits = ids.size - unresolved_keys.size
+              miss_ids = unresolved_keys.map {|key| key_to_id_map[key] }
+              records = find_batch(miss_ids, options)
               records.compact.each(&:populate_association_caches)
               records.map {|record| coder_from_record(record) }
             end
@@ -72,6 +81,7 @@ module IdentityCache
             records = cache_keys.map {|key| record_from_coder(coders_by_key[key]) }.compact
             prefetch_associations(options[:includes], records) if options[:includes]
 
+            ActiveSupport::Notifications.publish "fetch_multi.identity_cache", {hits: hits, ids: ids}
             records
           end
 
