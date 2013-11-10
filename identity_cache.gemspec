@@ -17,8 +17,8 @@ Gem::Specification.new do |gem|
 
 
   gem.add_dependency('ar_transaction_changes', '0.0.1')
-  gem.add_dependency('activerecord', '~> 3.2.12')
-  gem.add_dependency('activesupport', '~> 3.2.12')
+  gem.add_dependency('activerecord', '>= 3.2.12')
+  gem.add_dependency('activesupport', '>= 3.2.12')
 
   gem.add_development_dependency('memcache-client')
   gem.add_development_dependency('rake')
