@@ -15,8 +15,7 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = IdentityCache::VERSION
 
-
-  gem.add_dependency('ar_transaction_changes', '0.0.1')
+  gem.add_dependency('ar_transaction_changes', '= 0.0.3')
   gem.add_dependency('activerecord', '>= 3.2.12')
   gem.add_dependency('activesupport', '>= 3.2.12')
 
