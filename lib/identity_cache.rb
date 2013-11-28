@@ -1,4 +1,5 @@
 require 'active_record'
+require 'active_support/core_ext/module/attribute_accessors'
 require 'ar_transaction_changes'
 
 require "identity_cache/version"
