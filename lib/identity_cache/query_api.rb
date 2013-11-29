@@ -240,6 +240,7 @@ module IdentityCache
 
             if details[:embed]
               child_records = records.map(&details[:cached_accessor_name].to_sym).flatten
+              records.map { |r| r.association(association).loaded! }
             else
               ids_to_parent_record = records.each_with_object({}) do |record, hash|
                 child_ids = record.send(details[:cached_ids_name])
@@ -282,6 +283,7 @@ module IdentityCache
           when details = cached_has_ones[association]
             if details[:embed]
               parent_records = records.map(&details[:cached_accessor_name].to_sym)
+              records.map { |r| r.association(association).loaded! }
             else
               raise ArgumentError.new("Non-embedded has_one associations do not support prefetching yet.")
             end

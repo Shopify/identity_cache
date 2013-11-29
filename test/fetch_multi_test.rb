@@ -138,6 +138,42 @@ class FetchMultiTest < IdentityCache::TestCase
     Record.fetch_multi(@bob.id, @joe.id)
   end
 
+  def test_fetch_multi_with_includes_mark_embeded_has_one_associations_as_loaded
+    Record.cache_has_one :associated, embed: true
+    record = Record.fetch_multi(@bob.id, includes: :associated).first
+
+    assert record
+    assert record.association(:associated).loaded?, 'association should be marked as loaded'
+    assert_nil record.associated
+  end
+
+  def test_fetch_multi_with_includes_mark_embeded_has_many_associations_as_loaded
+    Record.cache_has_many :associated_records, embed: true
+    record = Record.fetch_multi(@bob.id, includes: :associated_records).first
+
+    assert record
+    assert record.association(:associated_records).loaded?, 'association should be marked as loaded'
+    assert_equal [], record.associated_records
+  end
+
+  def test_fetch_multi_with_includes_do_not_mark_non_embeded_has_many_associations_as_loaded
+    Record.cache_has_many :associated_records, embed: false
+    record = Record.fetch_multi(@bob.id, includes: :associated_records).first
+
+    assert record
+    refute record.association(:associated_records).loaded?, 'association should not be marked as loaded'
+    assert_equal [], record.associated_records
+  end
+
+  def test_fetch_multi_with_includes_do_not_mark_the_belongs_to_associations_as_loaded
+    Record.cache_belongs_to :record, embed: false
+    record = Record.fetch_multi(@bob.id, includes: :record).first
+
+    assert record
+    refute record.association(:record).loaded?, 'association should not be marked as loaded'
+    assert_equal nil, record.record
+  end
+
   private
 
   def populate_only_fred
