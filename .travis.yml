@@ -2,6 +2,7 @@ language: ruby
 rvm:
   - 1.9.3
   - 2.0.0
+  - ruby-head
   - jruby-19mode
 services:
   - memcache
@@ -9,5 +10,6 @@ services:
 matrix:
   allow_failures:
     - rvm: jruby-19mode
+    - rvm: ruby-head
 before_script:
   - mysql -e 'create database identity_cache_test'
