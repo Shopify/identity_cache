@@ -4,6 +4,9 @@ rvm:
   - 2.0.0
   - ruby-head
   - jruby-19mode
+gemfile:
+  - Gemfile
+  - Gemfile.rails4
 services:
   - memcache
   - mysql
@@ -11,6 +14,7 @@ matrix:
   allow_failures:
     - rvm: jruby-19mode
     - rvm: ruby-head
+    - gemfile: Gemfile.rails4
   fast_finish: true
 before_script:
   - mysql -e 'create database identity_cache_test'
