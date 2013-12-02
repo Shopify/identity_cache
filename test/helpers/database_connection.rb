@@ -28,11 +28,11 @@ module DatabaseConnection
   TABLES = {
     :polymorphic_records           => [[:string, :owner_type], [:integer, :owner_id], [:timestamps]],
     :deeply_associated_records     => [[:string, :name], [:integer, :associated_record_id]],
-    :associated_records            => [[:string, :name], [:integer, :record_id]],
-    :normalized_associated_records => [[:string, :name], [:integer, :record_id]],
-    :not_cached_records            => [[:string, :name], [:integer, :record_id]],
-    :records                       => [[:integer, :record_id], [:string, :title], [:timestamps]],
-    :records2                      => [[:integer, :record_id], [:string, :title], [:timestamps]]
+    :associated_records            => [[:string, :name], [:integer, :item_id]],
+    :normalized_associated_records => [[:string, :name], [:integer, :item_id]],
+    :not_cached_records            => [[:string, :name], [:integer, :item_id]],
+    :items                         => [[:integer, :item_id], [:string, :title], [:timestamps]],
+    :items2                        => [[:integer, :item_id], [:string, :title], [:timestamps]]
   }
 
   DATABASE_CONFIG = {

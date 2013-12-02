@@ -4,10 +4,10 @@ class RecursiveDenormalizedHasManyTest < IdentityCache::TestCase
   def setup
     super
     AssociatedRecord.cache_has_many :deeply_associated_records, :embed => true
-    Record.cache_has_many :associated_records, :embed => true
-    Record.cache_has_one :associated
+    Item.cache_has_many :associated_records, :embed => true
+    Item.cache_has_one :associated
 
-    @record = Record.new(:title => 'foo')
+    @record = Item.new(:title => 'foo')
 
     @associated_record = AssociatedRecord.new(:name => 'bar')
     @record.associated_records << AssociatedRecord.new(:name => 'baz')
@@ -23,17 +23,17 @@ class RecursiveDenormalizedHasManyTest < IdentityCache::TestCase
   end
 
   def test_cache_fetch_includes
-    assert_equal [{:associated_records => [:deeply_associated_records]}, :associated => [:deeply_associated_records]], Record.cache_fetch_includes
+    assert_equal [{:associated_records => [:deeply_associated_records]}, :associated => [:deeply_associated_records]], Item.cache_fetch_includes
   end
 
   def test_uncached_record_from_the_db_will_use_normal_association_for_deeply_associated_records
     expected = @associated_record.deeply_associated_records
-    record_from_db = Record.find(@record.id)
+    record_from_db = Item.find(@record.id)
     assert_equal expected, record_from_db.fetch_associated_records[0].fetch_deeply_associated_records
   end
 
   def test_on_cache_miss_record_should_embed_associated_objects_and_return
-    record_from_cache_miss = Record.fetch(@record.id)
+    record_from_cache_miss = Item.fetch(@record.id)
     expected = @associated_record.deeply_associated_records
 
     child_record_from_cache_miss = record_from_cache_miss.fetch_associated_records[0]
@@ -42,13 +42,13 @@ class RecursiveDenormalizedHasManyTest < IdentityCache::TestCase
   end
 
   def test_on_cache_hit_record_should_return_embed_associated_objects
-    Record.fetch(@record.id) # warm cache
+    Item.fetch(@record.id) # warm cache
     expected = @associated_record.deeply_associated_records
 
-    Record.any_instance.expects(:associated_records).never
+    Item.any_instance.expects(:associated_records).never
     AssociatedRecord.any_instance.expects(:deeply_associated_records).never
 
-    record_from_cache_hit = Record.fetch(@record.id)
+    record_from_cache_hit = Item.fetch(@record.id)
     child_record_from_cache_hit = record_from_cache_hit.fetch_associated_records[0]
     assert_equal @associated_record, child_record_from_cache_hit
     assert_equal expected, child_record_from_cache_hit.fetch_deeply_associated_records
@@ -61,7 +61,7 @@ class RecursiveDenormalizedHasManyTest < IdentityCache::TestCase
       # one for the mid level has_one association
       # one for the deep level level has_many on the mid level has_many association
       # one for the deep level level has_many on the mid level has_one association
-      record_from_cache_miss = Record.fetch(@record.id)
+      record_from_cache_miss = Item.fetch(@record.id)
     end
   end
 
@@ -94,16 +94,16 @@ class RecursiveNormalizedHasManyTest < IdentityCache::TestCase
   def setup
     super
     AssociatedRecord.cache_has_many :deeply_associated_records, :embed => true
-    Record.cache_has_many :associated_records, :embed => false
+    Item.cache_has_many :associated_records, :embed => false
 
-    @record = Record.new(:title => 'foo')
+    @record = Item.new(:title => 'foo')
     @record.save
     @record.reload
   end
 
   def test_cache_repopulation_should_not_fetch_non_embedded_associations
-    Record.any_instance.expects(:fetch_associated_records).never
-    record_from_cache_miss = Record.fetch(@record.id)
+    Item.any_instance.expects(:fetch_associated_records).never
+    record_from_cache_miss = Item.fetch(@record.id)
   end
 end
 
