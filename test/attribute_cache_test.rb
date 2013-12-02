@@ -6,12 +6,12 @@ class AttributeCacheTest < IdentityCache::TestCase
   def setup
     super
     AssociatedRecord.cache_attribute :name
-    AssociatedRecord.cache_attribute :record, :by => [:id, :name]
+    AssociatedRecord.cache_attribute :item, :by => [:id, :name]
 
-    @parent = Record.create!(:title => 'bob')
+    @parent = Item.create!(:title => 'bob')
     @record = @parent.associated_records.create!(:name => 'foo')
     @name_attribute_key = "#{NAMESPACE}attribute:AssociatedRecord:name:id:#{cache_hash(@record.id.to_s)}"
-    @blob_key = "#{NAMESPACE}blob:AssociatedRecord:#{cache_hash("id:integer,name:string,record_id:integer")}:1"
+    @blob_key = "#{NAMESPACE}blob:AssociatedRecord:#{cache_hash("id:integer,item_id:integer,name:string")}:1"
   end
 
   def test_attribute_values_are_returned_on_cache_hits
@@ -21,7 +21,7 @@ class AttributeCacheTest < IdentityCache::TestCase
 
   def test_attribute_values_are_fetched_and_returned_on_cache_misses
     IdentityCache.cache.expects(:read).with(@name_attribute_key).returns(nil)
-    Record.connection.expects(:select_value).with("SELECT `name` FROM `associated_records` WHERE `id` = 1 LIMIT 1").returns('foo')
+    Item.connection.expects(:select_value).with("SELECT `name` FROM `associated_records` WHERE `id` = 1 LIMIT 1").returns('foo')
     assert_equal 'foo', AssociatedRecord.fetch_name_by_id(1)
   end
 
@@ -31,7 +31,7 @@ class AttributeCacheTest < IdentityCache::TestCase
     IdentityCache.cache.expects(:read).with(@name_attribute_key).returns(nil)
 
     # Grab the value of the attribute from the DB
-    Record.connection.expects(:select_value).with("SELECT `name` FROM `associated_records` WHERE `id` = 1 LIMIT 1").returns('foo')
+    Item.connection.expects(:select_value).with("SELECT `name` FROM `associated_records` WHERE `id` = 1 LIMIT 1").returns('foo')
 
     # And write it back to the cache
     IdentityCache.cache.expects(:write).with(@name_attribute_key, 'foo').returns(nil)
@@ -59,14 +59,14 @@ class AttributeCacheTest < IdentityCache::TestCase
   end
 
   def test_cached_attribute_values_are_expired_from_the_cache_when_a_new_record_is_saved
-    IdentityCache.cache.expects(:delete).with("#{NAMESPACE}blob:AssociatedRecord:#{cache_hash("id:integer,name:string,record_id:integer")}:2")
+    IdentityCache.cache.expects(:delete).with("#{NAMESPACE}blob:AssociatedRecord:#{cache_hash("id:integer,item_id:integer,name:string")}:2")
     @parent.associated_records.create(:name => 'bar')
   end
 
   def test_fetching_by_attribute_delegates_to_block_if_transactions_are_open
     IdentityCache.cache.expects(:read).with(@name_attribute_key).never
 
-    Record.connection.expects(:select_value).with("SELECT `name` FROM `associated_records` WHERE `id` = 1 LIMIT 1").returns('foo')
+    Item.connection.expects(:select_value).with("SELECT `name` FROM `associated_records` WHERE `id` = 1 LIMIT 1").returns('foo')
 
     @record.transaction do
       assert_equal 'foo', AssociatedRecord.fetch_name_by_id(1)

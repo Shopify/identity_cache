@@ -26,19 +26,19 @@ module ActiveRecordObjects
 
     Object.send :const_set, 'AssociatedRecord', Class.new(base) {
       include IdentityCache
-      belongs_to :record
+      belongs_to :item
       has_many :deeply_associated_records
       default_scope { order('id DESC') }
     }
 
     Object.send :const_set, 'NormalizedAssociatedRecord', Class.new(base) {
       include IdentityCache
-      belongs_to :record
+      belongs_to :item
       default_scope { order('id DESC') }
     }
 
     Object.send :const_set, 'NotCachedRecord', Class.new(base) {
-      belongs_to :record, :touch => true
+      belongs_to :item, :touch => true
       default_scope { order('id DESC') }
     }
 
@@ -46,9 +46,9 @@ module ActiveRecordObjects
       belongs_to :owner, :polymorphic => true
     }
 
-    Object.send :const_set, 'Record', Class.new(base) {
+    Object.send :const_set, 'Item', Class.new(base) {
       include IdentityCache
-      belongs_to :record
+      belongs_to :item
       has_many :associated_records
       has_many :normalized_associated_records
       has_many :not_cached_records
@@ -66,6 +66,6 @@ module ActiveRecordObjects
     Object.send :remove_const, 'NormalizedAssociatedRecord'
     Object.send :remove_const, 'AssociatedRecord'
     Object.send :remove_const, 'NotCachedRecord'
-    Object.send :remove_const, 'Record'
+    Object.send :remove_const, 'Item'
   end
 end
