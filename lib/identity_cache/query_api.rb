@@ -115,7 +115,7 @@ module IdentityCache
           association = reflection.association_class.new(record, reflection)
           association.target = coder_or_array.map {|e| record_from_coder(e) }
           association.target.each {|e| association.set_inverse_instance(e) }
-          association.proxy
+          association.reader
         else
           record_from_coder(coder_or_array)
         end
