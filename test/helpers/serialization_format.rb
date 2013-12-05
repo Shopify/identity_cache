@@ -12,9 +12,9 @@ module SerializationFormat
     record.not_cached_records << NotCachedRecord.new(:name => 'NoCache')
     record.associated.deeply_associated_records << DeeplyAssociatedRecord.new(:name => "corge")
     record.associated.deeply_associated_records << DeeplyAssociatedRecord.new(:name => "qux")
-    record.created_at = DateTime.new
+    record.created_at = DateTime.parse('1970-01-01T00:00:00 +0000')
     record.save
-    Item.update_all("updated_at='#{record.created_at}'", "id='#{record.id}'")
+    Item.where(id: record.id).update_all(updated_at: record.created_at)
     record.reload
     Item.fetch(record.id)
     IdentityCache.fetch(record.primary_cache_index_key)
