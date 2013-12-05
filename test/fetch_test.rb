@@ -43,20 +43,20 @@ class FetchTest < IdentityCache::TestCase
 
   def test_exists_with_identity_cache_when_cache_miss_and_in_db
     IdentityCache.cache.expects(:read).with(@blob_key).returns(nil)
-    Item.expects(:find_by_id).with(1, :include => []).returns(@record)
+    Item.expects(:resolve_cache_miss).with(1).once.returns(@record)
 
     assert Item.exists_with_identity_cache?(1)
   end
 
   def test_exists_with_identity_cache_when_cache_miss_and_not_in_db
     IdentityCache.cache.expects(:read).with(@blob_key).returns(nil)
-    Item.expects(:find_by_id).with(1, :include => []).returns(nil)
+    Item.expects(:resolve_cache_miss).with(1).once.returns(nil)
 
     assert !Item.exists_with_identity_cache?(1)
   end
 
   def test_fetch_miss
-    Item.expects(:find_by_id).with(1, :include => []).returns(@record)
+    Item.expects(:resolve_cache_miss).with(1).once.returns(@record)
 
     IdentityCache.cache.expects(:read).with(@blob_key).returns(nil)
     IdentityCache.cache.expects(:write).with(@blob_key, @cached_value)

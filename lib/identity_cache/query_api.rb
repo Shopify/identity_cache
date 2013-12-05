@@ -26,7 +26,7 @@ module IdentityCache
       end
 
       # Default fetcher added to the model on inclusion, it behaves like
-      # ActiveRecord::Base.find_by_id
+      # ActiveRecord::Base.where(id: id).first
       def fetch_by_id(id)
         raise NotImplementedError, "fetching needs the primary index enabled" unless primary_cache_index_enabled
         if IdentityCache.should_cache?
@@ -40,7 +40,7 @@ module IdentityCache
           end
 
         else
-          self.find_by_id(id)
+          self.where(id: id).first
         end
       end
 
@@ -175,9 +175,9 @@ module IdentityCache
       end
 
       def resolve_cache_miss(id)
-        self.find_by_id(id, :include => cache_fetch_includes).tap do |object|
-          object.try(:populate_association_caches)
-        end
+        object = self.includes(cache_fetch_includes).where(id: id).try(:first)
+        object.try(:populate_association_caches)
+        object
       end
 
       def all_embedded_associations
