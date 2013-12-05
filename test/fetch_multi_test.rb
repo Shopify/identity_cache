@@ -123,7 +123,7 @@ class FetchMultiTest < IdentityCache::TestCase
   def test_find_batch_coerces_ids_to_primary_key_type
     mock_relation = mock("ActiveRecord::Relation")
     Item.expects(:where).returns(mock_relation)
-    mock_relation.expects(:includes).returns(stub(:all => [@bob, @joe, @fred]))
+    mock_relation.expects(:includes).returns(stub(:to_a => [@bob, @joe, @fred]))
 
     Item.find_batch([@bob, @joe, @fred].map(&:id).map(&:to_s))
   end
