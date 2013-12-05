@@ -97,6 +97,7 @@ module IdentityCache
               @aggregation_cache = {}
               @readonly = @destroyed = @marked_for_destruction = false
               @new_record = false
+              @column_types = self.class.column_types if self.class.respond_to?(:column_types)
             end
           else
             record.init_with(coder)
