@@ -46,6 +46,7 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     key = @record.primary_cache_index_key
     assert_not_nil IdentityCache.cache.read(key)
 
+    IdentityCache.cache.expects(:delete).with(@record.associated_records.first.primary_cache_index_key)
     IdentityCache.cache.expects(:delete).with(key)
     @record.associated_records.first.save
   end
@@ -56,6 +57,7 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     @new_record = Item.create
     new_key = @new_record.primary_cache_index_key
 
+    IdentityCache.cache.expects(:delete).with(@associatated_record.primary_cache_index_key)
     IdentityCache.cache.expects(:delete).with(old_key)
     IdentityCache.cache.expects(:delete).with(new_key)
     @associatated_record.item_id = @new_record.id
