@@ -6,7 +6,6 @@ class AttributeCacheTest < IdentityCache::TestCase
   def setup
     super
     AssociatedRecord.cache_attribute :name
-    AssociatedRecord.cache_attribute :item, :by => [:id, :name]
 
     @parent = Item.create!(:title => 'bob')
     @record = @parent.associated_records.create!(:name => 'foo')
