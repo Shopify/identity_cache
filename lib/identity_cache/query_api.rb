@@ -223,7 +223,7 @@ module IdentityCache
       def find_batch(ids, options = {})
         @id_column ||= columns.detect {|c| c.name == "id"}
         ids = ids.map{ |id| @id_column.type_cast(id) }
-        records = where('id IN (?)', ids).includes(cache_fetch_includes(options[:includes])).all
+        records = where('id IN (?)', ids).includes(cache_fetch_includes(options[:includes])).to_a
         records_by_id = records.index_by(&:id)
         records = ids.map{ |id| records_by_id[id] }
         mismatching_ids = records.compact.map(&:id) - ids

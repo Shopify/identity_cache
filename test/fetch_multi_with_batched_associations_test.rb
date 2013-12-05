@@ -28,7 +28,7 @@ class FetchMultiWithBatchedAssociationsTest < IdentityCache::TestCase
 
     mock_relation = mock("ActiveRecord::Relation")
     Item.expects(:where).returns(mock_relation)
-    mock_relation.expects(:includes).with([:associated_records, :associated]).returns(stub(:all => [@bob, @joe, @fred]))
+    mock_relation.expects(:includes).with([:associated_records, :associated]).returns(stub(:to_a => [@bob, @joe, @fred]))
     assert_equal [@bob, @joe, @fred], Item.fetch_multi(@bob.id, @joe.id, @fred.id)
   end
 
@@ -46,7 +46,7 @@ class FetchMultiWithBatchedAssociationsTest < IdentityCache::TestCase
 
     mock_relation = mock("ActiveRecord::Relation")
     Item.expects(:where).returns(mock_relation)
-    mock_relation.expects(:includes).with([:associated_records, :associated, {:item => []}]).returns(stub(:all => [@bob, @joe, @fred]))
+    mock_relation.expects(:includes).with([:associated_records, :associated, {:item => []}]).returns(stub(:to_a => [@bob, @joe, @fred]))
     assert_equal [@bob, @joe, @fred], Item.fetch_multi(@bob.id, @joe.id, @fred.id, {:includes => :item})
   end
 
@@ -201,7 +201,7 @@ class FetchMultiWithBatchedAssociationsTest < IdentityCache::TestCase
   def test_find_batch_coerces_ids_to_primary_key_type
     mock_relation = mock("ActiveRecord::Relation")
     Item.expects(:where).returns(mock_relation)
-    mock_relation.expects(:includes).returns(stub(:all => [@bob, @joe, @fred]))
+    mock_relation.expects(:includes).returns(stub(:to_a => [@bob, @joe, @fred]))
 
     Item.find_batch([@bob, @joe, @fred].map(&:id).map(&:to_s))
   end
