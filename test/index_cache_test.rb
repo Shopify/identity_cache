@@ -44,7 +44,6 @@ class ExpirationTest < IdentityCache::TestCase
     assert_equal nil, IdentityCache.cache.read(new_cache_key)
   end
 
-
   def test_non_unique_index_caches_empty_result
     Item.cache_index :title
     assert_equal [], Item.fetch_by_title('bob')

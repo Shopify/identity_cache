@@ -389,7 +389,14 @@ module IdentityCache
 
     def expire_attribute_indexes # :nodoc:
       cache_attributes.try(:each) do |(attribute, fields)|
-        IdentityCache.cache.delete(attribute_cache_key_for_attribute_and_previous_values(attribute, fields)) unless was_new_record?
+        unless was_new_record?
+          old_cache_attribute_key = attribute_cache_key_for_attribute_and_previous_values(attribute, fields)
+          IdentityCache.cache.delete(old_cache_attribute_key)
+        end
+        new_cache_attribute_key = attribute_cache_key_for_attribute_and_current_values(attribute, fields)
+        if new_cache_attribute_key != old_cache_attribute_key
+          IdentityCache.cache.delete(new_cache_attribute_key)
+        end
       end
     end
 
