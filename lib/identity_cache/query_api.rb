@@ -95,6 +95,7 @@ module IdentityCache
               @attributes_cache, @previously_changed, @changed_attributes = {}, {}, {}
               @association_cache = {}
               @aggregation_cache = {}
+              @_start_transaction_state = {}
               @readonly = @destroyed = @marked_for_destruction = false
               @new_record = false
               @column_types = self.class.column_types if self.class.respond_to?(:column_types)
