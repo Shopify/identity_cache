@@ -60,15 +60,23 @@ module IdentityCache
     end
 
     def secondary_cache_index_key_for_current_values(fields) # :nodoc:
-      self.class.rails_cache_index_key_for_fields_and_values(fields, fields.collect {|field| self.send(field)})
+      self.class.rails_cache_index_key_for_fields_and_values(fields, current_values_for_fields(fields))
     end
 
     def secondary_cache_index_key_for_previous_values(fields) # :nodoc:
       self.class.rails_cache_index_key_for_fields_and_values(fields, old_values_for_fields(fields))
     end
 
+    def attribute_cache_key_for_attribute_and_current_values(attribute, fields) # :nodoc:
+      self.class.rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, current_values_for_fields(fields))
+    end
+
     def attribute_cache_key_for_attribute_and_previous_values(attribute, fields) # :nodoc:
       self.class.rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, old_values_for_fields(fields))
+    end
+
+    def current_values_for_fields(fields) # :nodoc:
+      fields.collect {|field| self.send(field)}
     end
 
     def old_values_for_fields(fields) # :nodoc:
