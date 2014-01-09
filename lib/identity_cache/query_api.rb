@@ -28,6 +28,7 @@ module IdentityCache
       # Default fetcher added to the model on inclusion, it behaves like
       # ActiveRecord::Base.where(id: id).first
       def fetch_by_id(id)
+        return unless id
         raise NotImplementedError, "fetching needs the primary index enabled" unless primary_cache_index_enabled
         if IdentityCache.should_cache?
 
