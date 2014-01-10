@@ -130,6 +130,7 @@ class FetchTest < IdentityCache::TestCase
   end
 
   def test_fetch_does_not_communicate_to_cache_with_nil_id
+    IdentityCache.cache.expects(:read).never
     IdentityCache.cache.expects(:write).never
     assert_raises(ActiveRecord::RecordNotFound) { Item.fetch(nil) }
   end
