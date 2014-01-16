@@ -292,7 +292,7 @@ module IdentityCache
       end
 
       def identity_cache_sql_conditions(fields, values)
-        fields.each_with_index.collect { |f, i| "#{connection.quote_column_name(f)} = #{quote_value(values[i])}" }.join(" AND ")
+        fields.each_with_index.collect { |f, i| "#{connection.quote_column_name(f)} = #{quote_value(values[i],nil)}" }.join(" AND ")
       end
     end
   end
