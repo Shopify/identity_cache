@@ -18,11 +18,11 @@ require File.dirname(__FILE__) + '/../test/helpers/database_connection'
 require File.dirname(__FILE__) + '/../test/helpers/cache'
 
 def create_record(id)
-  r = Record.new(id)
+  Item.new(id)
 end
 
 def database_ready(count)
-  Record.where(:id => (1..count)).count == count
+  Item.where(:id => (1..count)).count == count
 rescue
   false
 end
@@ -35,10 +35,10 @@ def create_database(count)
 
   DatabaseConnection.setup
   # set up associations
-  Record.cache_has_one :associated
-  Record.cache_has_many :associated_records, :embed => true
-  Record.cache_has_many :normalized_associated_records, :embed => false
-  Record.cache_index :title, :unique => :true
+  Item.cache_has_one :associated
+  Item.cache_has_many :associated_records, :embed => true
+  Item.cache_has_many :normalized_associated_records, :embed => false
+  Item.cache_index :title, :unique => :true
   AssociatedRecord.cache_has_many :deeply_associated_records, :embed => true
 
   return if database_ready(count)
@@ -46,10 +46,10 @@ def create_database(count)
 
   DatabaseConnection.drop_tables
   DatabaseConnection.create_tables
-  existing = Record.all
+  existing = Item.all
   (1..count).to_a.each do |i|
     unless existing.any? { |e| e.id == i }
-      a = Record.new
+      a = Item.new
       a.id = i
       a.associated = AssociatedRecord.new(name: "Associated for #{i}")
       a.associated_records
@@ -77,7 +77,7 @@ end
 class FindRunner < CacheRunner
   def run
     (1..@count).each do |i|
-      ::Record.find(i)
+      ::Item.find(i)
     end
   end
 end
@@ -93,7 +93,7 @@ class FetchMissRunner < CacheRunner
 
   def run
     (1..@count).each do |i|
-      rec = ::Record.fetch(i)
+      rec = ::Item.fetch(i)
       rec.fetch_associated
       rec.fetch_associated_records
     end
@@ -105,7 +105,7 @@ class DoubleFetchMissRunner < CacheRunner
 
   def run
     (1..@count).each do |i|
-      rec = ::Record.fetch(i)
+      rec = ::Item.fetch(i)
       rec.fetch_associated
       rec.fetch_associated_records
       rec.fetch_normalized_associated_records
@@ -117,7 +117,7 @@ module HitRunner
   def prepare
     IdentityCache.cache.clear
     (1..@count).each do |i|
-      rec = ::Record.fetch(i)
+      rec = ::Item.fetch(i)
       rec.fetch_normalized_associated_records
     end
   end
@@ -128,7 +128,7 @@ class FetchHitRunner < CacheRunner
 
   def run
     (1..@count).each do |i|
-      rec = ::Record.fetch(i)
+      rec = ::Item.fetch(i)
       # these should all be no cost
       rec.fetch_associated
       rec.fetch_associated_records
@@ -141,7 +141,7 @@ class DoubleFetchHitRunner < CacheRunner
 
   def run
     (1..@count).each do |i|
-      rec = ::Record.fetch(i)
+      rec = ::Item.fetch(i)
       # these should all be no cost
       rec.fetch_associated
       rec.fetch_associated_records
@@ -149,4 +149,3 @@ class DoubleFetchHitRunner < CacheRunner
     end
   end
 end
-
