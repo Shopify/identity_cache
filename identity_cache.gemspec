@@ -27,8 +27,6 @@ Gem::Specification.new do |gem|
     gem.add_development_dependency 'activerecord-jdbcmysql-adapter'
     gem.add_development_dependency 'jdbc-mysql'
   else
-    gem.add_development_dependency('debugger')
-    gem.add_development_dependency('ruby-prof')
     gem.add_development_dependency('cityhash', '0.6.0')
     gem.add_development_dependency('mysql2')
   end
