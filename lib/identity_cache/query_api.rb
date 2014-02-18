@@ -9,7 +9,7 @@ module IdentityCache
       base.private_class_method :set_embedded_association
       base.private_class_method :get_embedded_association
       base.private_class_method :add_cached_associations_to_coder
-      base.instance_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
+      base.instance_eval(<<-CODE, __FILE__, __LINE__ + 1)
         private :expire_cache, :was_new_record?, :fetch_denormalized_cached_association,
                 :populate_denormalized_cached_association
       CODE
