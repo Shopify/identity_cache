@@ -19,8 +19,8 @@ module IdentityCache
     end
 
     def self.embedded_associations(klass)
-      if klass.respond_to?(:all_cached_associations_needing_population)
-        klass.all_cached_associations_needing_population
+      if klass.respond_to?(:all_embedded_associations)
+        klass.all_embedded_associations
       else
         {}
       end
