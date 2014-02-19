@@ -102,4 +102,9 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
     assert_equal 'bar', Rails.cache.read('foo')
   end
 
+  def test_set_backend_should_not_touch_rails
+    Rails.expects(:cache).never
+    IdentityCache.instance_variable_set(:@cache, nil)
+    IdentityCache.cache_backend = Rails::Cache.new
+  end
 end
