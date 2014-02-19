@@ -118,7 +118,7 @@ module IdentityCache
           association = reflection.association_class.new(record, reflection)
           association.target = coder_or_array.map {|e| record_from_coder(e) }
           association.target.each {|e| association.set_inverse_instance(e) }
-          association.reader
+          association
         else
           record_from_coder(coder_or_array)
         end
@@ -337,7 +337,8 @@ module IdentityCache
       ivar_full_name = :"@#{ivar_name}"
       if IdentityCache.should_cache?
         populate_denormalized_cached_association(ivar_name, association_name)
-        IdentityCache.unmap_cached_nil_for(instance_variable_get(ivar_full_name))
+        assoc = IdentityCache.unmap_cached_nil_for(instance_variable_get(ivar_full_name))
+        assoc.is_a?(ActiveRecord::Associations::CollectionAssociation) ? assoc.reader : assoc
       else
         send(association_name.to_sym)
       end
