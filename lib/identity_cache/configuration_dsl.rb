@@ -187,7 +187,7 @@ module IdentityCache
         cache_key = rails_cache_index_key_for_fields_and_values(fields, values)
         id = IdentityCache.fetch(cache_key) { connection.select_value(sql_on_miss) }
         unless id.nil?
-          record = fetch_by_id(id.to_i)
+          record = fetch_by_id(id)
           IdentityCache.cache.delete(cache_key) unless record
         end
 
