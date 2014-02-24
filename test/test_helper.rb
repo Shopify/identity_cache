@@ -1,6 +1,8 @@
 require 'minitest/autorun'
 require 'mocha/setup'
 require 'active_record'
+require 'memcached_store'
+require 'active_support/cache/memcached_store'
 require 'helpers/cache'
 require 'helpers/database_connection'
 require 'helpers/active_record_objects'
@@ -19,7 +21,7 @@ DatabaseConnection.setup
 ActiveSupport::Cache::Store.instrument = true
 
 # This patches AR::MemcacheStore to notify AS::Notifications upon read_multis like the rest of rails does
-class ActiveSupport::Cache::MemCacheStore
+class ActiveSupport::Cache::MemcachedStore
   def read_multi_with_instrumentation(*args, &block)
     instrument("read_multi", "MULTI", {:keys => args}) do
       read_multi_without_instrumentation(*args, &block)

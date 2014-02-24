@@ -2,7 +2,7 @@ require 'logger'
 
 module Rails
 
-  class Cache < ActiveSupport::Cache::MemCacheStore
+  class Cache < ActiveSupport::Cache::MemcachedStore
   end
 
   def self.cache

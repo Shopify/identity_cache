@@ -5,4 +5,3 @@ gemspec
 
 gem 'activerecord', '~> 4.0.1'
 gem 'activesupport', '~> 4.0.1'
-gem 'dalli'
