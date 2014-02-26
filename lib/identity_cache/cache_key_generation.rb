@@ -9,21 +9,16 @@ module IdentityCache
 
     def self.denormalized_schema_hash(klass)
       schema_string = schema_to_string(klass.columns)
-      if !(associations = embedded_associations(klass)).empty?
-        embedded_schema = associations.map do |name, options|
-          "#{name}:(#{denormalized_schema_hash(options[:association_class])})"
-        end.sort.join(',')
-        schema_string << "," << embedded_schema
+      if klass.include?(IdentityCache)
+        klass.all_cached_associations.sort.each do |name, options|
+          if options[:embed]
+            schema_string << ",#{name}:(#{denormalized_schema_hash(options[:association_class])})"
+          elsif options[:cached_ids_name]
+            schema_string << ",#{name}:ids"
+          end
+        end
       end
       IdentityCache.memcache_hash(schema_string)
-    end
-
-    def self.embedded_associations(klass)
-      if klass.respond_to?(:all_embedded_associations)
-        klass.all_embedded_associations
-      else
-        {}
-      end
     end
 
     module ClassMethods
