@@ -14,16 +14,12 @@ def run(obj)
   end
   StackProf::Report.new(data).print_text(false, 20)
   puts
+ensure
+  obj.cleanup
 end
 
 create_database(RUNS)
 
-run(FindRunner.new(RUNS))
-
-run(FetchMissRunner.new(RUNS))
-
-run(FetchHitRunner.new(RUNS))
-
-run(DoubleFetchHitRunner.new(RUNS))
-
-run(DoubleFetchMissRunner.new(RUNS))
+CACHE_RUNNERS.each do |runner|
+  run(runner.new(RUNS))
+end
