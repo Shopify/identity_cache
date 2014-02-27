@@ -30,17 +30,9 @@ end
 
 def create_database(count)
   DatabaseConnection.setup
-  a = CacheRunner.new(count)
 
-  a.setup_models
-
-  DatabaseConnection.setup
-  # set up associations
-  Item.cache_has_one :associated
-  Item.cache_has_many :associated_records, :embed => true
-  Item.cache_has_many :normalized_associated_records, :embed => false
-  Item.cache_index :title, :unique => :true
-  AssociatedRecord.cache_has_many :deeply_associated_records, :embed => true
+  helper = Object.new.extend(ActiveRecordObjects)
+  helper.setup_models
 
   return if database_ready(count)
   puts "Database not ready for performance testing, generating records"
@@ -61,6 +53,14 @@ def create_database(count)
       a.save
     end
   end
+ensure
+  helper.teardown_models
+end
+
+def setup_embedded_associations
+  Item.cache_has_one :associated
+  Item.cache_has_many :associated_records, :embed => true
+  AssociatedRecord.cache_has_many :deeply_associated_records, :embed => true
 end
 
 class CacheRunner
@@ -72,81 +72,92 @@ class CacheRunner
   end
 
   def prepare
+    setup_models
+  end
+
+  def cleanup
+    teardown_models
   end
 end
+
+CACHE_RUNNERS = []
 
 class FindRunner < CacheRunner
   def run
     (1..@count).each do |i|
-      ::Item.find(i)
+      ::Item.find(i, :include => [:associated, {:associated_records => :deeply_associated_records}])
     end
   end
 end
+CACHE_RUNNERS << FindRunner
 
 module MissRunner
   def prepare
+    super
     IdentityCache.cache.clear
-  end
-end
-
-class FetchMissRunner < CacheRunner
-  include MissRunner
-
-  def run
-    (1..@count).each do |i|
-      rec = ::Item.fetch(i)
-      rec.fetch_associated
-      rec.fetch_associated_records
-    end
-  end
-end
-
-class DoubleFetchMissRunner < CacheRunner
-  include MissRunner
-
-  def run
-    (1..@count).each do |i|
-      rec = ::Item.fetch(i)
-      rec.fetch_associated
-      rec.fetch_associated_records
-      rec.fetch_normalized_associated_records
-    end
   end
 end
 
 module HitRunner
   def prepare
-    IdentityCache.cache.clear
-    (1..@count).each do |i|
-      rec = ::Item.fetch(i)
-      rec.fetch_normalized_associated_records
-    end
+    super
+    run
   end
 end
 
-class FetchHitRunner < CacheRunner
-  include HitRunner
+class EmbedRunner < CacheRunner
+  def setup_models
+    super
+    Item.cache_has_one :associated
+    Item.cache_has_many :associated_records, :embed => true
+    AssociatedRecord.cache_has_many :deeply_associated_records, :embed => true
+  end
 
   def run
     (1..@count).each do |i|
       rec = ::Item.fetch(i)
-      # these should all be no cost
       rec.fetch_associated
       rec.fetch_associated_records
     end
   end
 end
 
-class DoubleFetchHitRunner < CacheRunner
+class FetchEmbedMissRunner < EmbedRunner
+  include MissRunner
+end
+CACHE_RUNNERS << FetchEmbedMissRunner
+
+class FetchEmbedHitRunner < EmbedRunner
   include HitRunner
+end
+CACHE_RUNNERS << FetchEmbedHitRunner
+
+
+class NormalizedRunner < CacheRunner
+  def setup_models
+    super
+    Item.cache_has_one :associated # :embed => false isn't supported
+    Item.cache_has_many :associated_records, :embed => false
+    AssociatedRecord.cache_has_many :deeply_associated_records, :embed => false
+  end
 
   def run
     (1..@count).each do |i|
       rec = ::Item.fetch(i)
-      # these should all be no cost
       rec.fetch_associated
-      rec.fetch_associated_records
-      rec.fetch_normalized_associated_records
+      associated_records = rec.fetch_associated_records
+      # FIXME: Only fetch_multi has :includes support, so use what it uses internally
+      AssociatedRecord.prefetch_associations(:deeply_associated_records, associated_records)
     end
   end
 end
+
+class FetchNormalizedMissRunner < NormalizedRunner
+  include MissRunner
+end
+CACHE_RUNNERS << FetchNormalizedMissRunner
+
+class FetchNormalizedHitRunner < NormalizedRunner
+  include HitRunner
+end
+CACHE_RUNNERS << FetchNormalizedHitRunner

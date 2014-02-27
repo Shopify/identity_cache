@@ -3,29 +3,41 @@ require 'benchmark'
 
 require_relative 'cache_runner'
 
-RUNS = 4000
+RUNS = 400
 
 class ARCreator
   include ActiveRecordObjects
 end
 
-def run(obj, bench)
-  bench.report("#{obj.class.name}:") do
-    obj.prepare
+def run(obj)
+  obj.prepare
+  GC.start
+  Benchmark.measure do
     obj.run
   end
+ensure
+  obj.cleanup
+end
+
+def benchmark(runners, label_width=0)
+  IdentityCache.cache.clear
+  runners.each do |runner|
+    print "#{runner.name}: ".ljust(label_width)
+    puts run(runner.new(RUNS))
+  end
+end
+
+def bmbm(runners)
+  label_width = runners.map{ |r| r.name.size }.max + 2
+  width = label_width + Benchmark::CAPTION.size
+
+  puts 'Rehearsal: '.ljust(width, '-')
+  benchmark(runners, label_width)
+  puts '-' * width
+
+  benchmark(runners, label_width)
 end
 
 create_database(RUNS)
 
-Benchmark.bmbm do |x|
-  run(FindRunner.new(RUNS), x)
-
-  run(FetchMissRunner.new(RUNS), x)
-
-  run(FetchHitRunner.new(RUNS), x)
-
-  run(DoubleFetchHitRunner.new(RUNS), x)
-
-  run(DoubleFetchMissRunner.new(RUNS), x)
-end
+bmbm(CACHE_RUNNERS)
