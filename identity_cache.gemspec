@@ -29,5 +29,6 @@ Gem::Specification.new do |gem|
   else
     gem.add_development_dependency('cityhash', '0.6.0')
     gem.add_development_dependency('mysql2')
+    gem.add_development_dependency('stackprof') if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("2.1.0")
   end
 end

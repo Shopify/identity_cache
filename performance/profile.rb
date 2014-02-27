@@ -1,20 +1,19 @@
 require 'rubygems'
 require 'benchmark'
-require 'ruby-prof'
+require 'stackprof'
 
 require_relative 'cache_runner'
 
 RUNS = 1000
-RubyProf.measure_mode = RubyProf::CPU_TIME
 
 def run(obj)
+  puts "#{obj.class.name}:"
   obj.prepare
-  RubyProf.start
-  obj.run
-  result = RubyProf.stop
-  puts "Results for #{obj.class.name}:"
-  printer = RubyProf::FlatPrinter.new(result)
-  printer.print(STDOUT)
+  data = StackProf.run(mode: :cpu) do
+    obj.run
+  end
+  StackProf::Report.new(data).print_text(false, 20)
+  puts
 end
 
 create_database(RUNS)
