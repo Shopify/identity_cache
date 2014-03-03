@@ -134,7 +134,7 @@ module IdentityCache
       #   necessary if the name is not the lowercase pluralization of the
       #   parent object's class)
       def cache_has_one(association, options = {})
-        options[:embed] ||= true
+        options[:embed] = true unless options.has_key?(:embed)
         options[:inverse_name] ||= self.name.underscore.to_sym
         raise InverseAssociationError unless self.reflect_on_association(association)
         self.cached_has_ones[association] = options
