@@ -10,7 +10,7 @@ module IdentityCache
     def self.denormalized_schema_hash(klass)
       schema_string = schema_to_string(klass.columns)
       if klass.include?(IdentityCache)
-        klass.all_cached_associations.sort.each do |name, options|
+        klass.send(:all_cached_associations).sort.each do |name, options|
           if options[:embed]
             schema_string << ",#{name}:(#{denormalized_schema_hash(options[:association_class])})"
           elsif options[:cached_ids_name]

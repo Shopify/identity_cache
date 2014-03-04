@@ -23,7 +23,7 @@ class RecursiveDenormalizedHasManyTest < IdentityCache::TestCase
   end
 
   def test_cache_fetch_includes
-    assert_equal [{:associated_records => [:deeply_associated_records]}, :associated => [:deeply_associated_records]], Item.cache_fetch_includes
+    assert_equal [{:associated_records => [:deeply_associated_records]}, :associated => [:deeply_associated_records]], Item.send(:cache_fetch_includes)
   end
 
   def test_uncached_record_from_the_db_will_use_normal_association_for_deeply_associated_records
