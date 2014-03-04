@@ -59,8 +59,8 @@ end
 
 def setup_embedded_associations
   Item.cache_has_one :associated
-  Item.cache_has_many :associated_records, :embed => true
-  AssociatedRecord.cache_has_many :deeply_associated_records, :embed => true
+  Item.cache_has_many :associated_records, :embed => :recursively
+  AssociatedRecord.cache_has_many :deeply_associated_records, :embed => :recursively
 end
 
 class CacheRunner
@@ -109,8 +109,8 @@ class EmbedRunner < CacheRunner
   def setup_models
     super
     Item.cache_has_one :associated
-    Item.cache_has_many :associated_records, :embed => true
-    AssociatedRecord.cache_has_many :deeply_associated_records, :embed => true
+    Item.cache_has_many :associated_records, :embed => :recursively
+    AssociatedRecord.cache_has_many :deeply_associated_records, :embed => :recursively
   end
 
   def run
@@ -137,8 +137,8 @@ class NormalizedRunner < CacheRunner
   def setup_models
     super
     Item.cache_has_one :associated # :embed => false isn't supported
-    Item.cache_has_many :associated_records, :embed => false
-    AssociatedRecord.cache_has_many :deeply_associated_records, :embed => false
+    Item.cache_has_many :associated_records, :embed => :ids
+    AssociatedRecord.cache_has_many :deeply_associated_records, :embed => :ids
   end
 
   def run

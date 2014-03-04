@@ -18,8 +18,8 @@ class SchemaChangeTest < IdentityCache::TestCase
     ActiveRecord::Migration.verbose = false
 
     read_new_schema
-    Item.cache_has_one :associated, :embed => true
-    AssociatedRecord.cache_has_many :deeply_associated_records, :embed => true
+    Item.cache_has_one :associated, :embed => :recursively
+    AssociatedRecord.cache_has_many :deeply_associated_records, :embed => :recursively
 
     @associated_record = AssociatedRecord.new(:name => 'bar')
     @deeply_associated_record = DeeplyAssociatedRecord.new(:name => "corge")
@@ -75,7 +75,7 @@ class SchemaChangeTest < IdentityCache::TestCase
   def test_schema_changes_on_new_cached_child_association
     record = Item.fetch(@record.id)
 
-    Item.cache_has_many :polymorphic_records, :inverse_name => :owner, :embed => true
+    Item.cache_has_many :polymorphic_records, :inverse_name => :owner, :embed => :recursively
     read_new_schema
 
     Item.expects(:resolve_cache_miss).returns(@record)
@@ -83,12 +83,12 @@ class SchemaChangeTest < IdentityCache::TestCase
   end
 
   def test_embed_existing_cache_has_many
-    Item.cache_has_many :polymorphic_records, :inverse_name => :owner, :embed => false
+    Item.cache_has_many :polymorphic_records, :inverse_name => :owner, :embed => :ids
     read_new_schema
 
     record = Item.fetch(@record.id)
 
-    Item.cache_has_many :polymorphic_records, :inverse_name => :owner, :embed => true
+    Item.cache_has_many :polymorphic_records, :inverse_name => :owner, :embed => :recursively
     read_new_schema
 
     Item.expects(:resolve_cache_miss).returns(@record)
@@ -98,7 +98,7 @@ class SchemaChangeTest < IdentityCache::TestCase
   def test_add_non_embedded_cache_has_many
     record = Item.fetch(@record.id)
 
-    Item.cache_has_many :polymorphic_records, :inverse_name => :owner, :embed => false
+    Item.cache_has_many :polymorphic_records, :inverse_name => :owner, :embed => :ids
     read_new_schema
 
     Item.expects(:resolve_cache_miss).returns(@record)

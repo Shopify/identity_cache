@@ -93,15 +93,20 @@ module IdentityCache
       # * inverse_name: The name of the parent in the association if the name is
       #   not the lowercase pluralization of the parent object's class
       def cache_has_many(association, options = {})
-        options[:embed] ||= false
+        options[:embed] = :ids unless options.has_key?(:embed)
+        deprecate_embed_option(options, false, :ids)
+        deprecate_embed_option(options, true, :recursively)
         options[:inverse_name] ||= self.name.underscore.to_sym
         raise InverseAssociationError unless self.reflect_on_association(association)
         self.cached_has_manys[association] = options
 
-        if options[:embed]
+        case options[:embed]
+        when :recursively
           build_denormalized_association_cache(association, options)
-        else
+        when :ids
           build_normalized_has_many_cache(association, options)
+        else
+          raise NotImplementedError
         end
       end
 
@@ -130,12 +135,13 @@ module IdentityCache
       #   necessary if the name is not the lowercase pluralization of the
       #   parent object's class)
       def cache_has_one(association, options = {})
-        options[:embed] = true unless options.has_key?(:embed)
+        options[:embed] = :recursively unless options.has_key?(:embed)
+        deprecate_embed_option(options, true, :recursively)
         options[:inverse_name] ||= self.name.underscore.to_sym
         raise InverseAssociationError unless self.reflect_on_association(association)
         self.cached_has_ones[association] = options
 
-        if options[:embed]
+        if options[:embed] == :recursively
           build_denormalized_association_cache(association, options)
         else
           raise NotImplementedError
@@ -291,6 +297,13 @@ module IdentityCache
 
       def identity_cache_sql_conditions(fields, values)
         fields.each_with_index.collect { |f, i| "#{connection.quote_column_name(f)} = #{quote_value(values[i],nil)}" }.join(" AND ")
+      end
+
+      def deprecate_embed_option(options, old_value, new_value)
+        if options[:embed] == old_value
+          options[:embed] = new_value
+          ActiveSupport::Deprecation.warn("`embed: #{old_value.inspect}` was renamed to `embed: #{new_value.inspect}` for clarity", caller(2))
+        end
       end
     end
   end

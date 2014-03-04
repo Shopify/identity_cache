@@ -42,7 +42,7 @@ class Product < ActiveRecord::Base
 
   has_many :images
 
-  cache_has_many :images, :embed => true
+  cache_has_many :images, :embed => :recursively
 end
 
 # Fetch the product by its id, the primary index.
@@ -111,7 +111,7 @@ class Product < ActiveRecord::Base
   include IdentityCache
 
   has_many :images
-  cache_has_many :images, :embed => true
+  cache_has_many :images, :embed => :recursively
 end
 
 @product = Product.fetch(id)
@@ -167,22 +167,22 @@ Example:
 #### cache_has_many
 
 Options:  
-_[:embed]_ Specifies that the association should be included with the parent when caching. This means the associated objects will be loaded already when the parent is loaded from the cache and will not need to be fetched on their own.
+_[:embed]_ When :recursively, specifies that the association should be included with the parent when caching. This means the associated objects will be loaded already when the parent is loaded from the cache and will not need to be fetched on their own. When :ids, only the id of the associated records will be included with the parent when caching.
 
 _[:inverse_name]_ Specifies the name of parent object used by the association. This is useful for polymorphic associations when the association is often named something different between the parent and child objects.
 
 Example:  
-`cache_has_many :metafields, :inverse_name => :owner, :embed => true`
+`cache_has_many :metafields, :inverse_name => :owner, :embed => :recursively`
 
 #### cache_has_one
 
 Options:  
-_[:embed]_ Specifies that the association should be included with the parent when caching. This means the associated objects will be loaded already when the parent is loaded from the cache and will not need to be fetched on their own.
+_[:embed]_ When :recursively, specifies that the association should be included with the parent when caching. This means the associated objects will be loaded already when the parent is loaded from the cache and will not need to be fetched on their own. No other values are currently implemented.
 
 _[:inverse_name]_ Specifies the name of parent object used by the association. This is useful for polymorphic associations when the association is often named something different between the parent and child objects.
 
 Example:
-`cache_has_one :configuration, :embed => true`
+`cache_has_one :configuration, :embed => :recursively`
 
 #### cache_attribute
 

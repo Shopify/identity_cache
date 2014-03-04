@@ -146,7 +146,7 @@ module IdentityCache
         end
         if record.class.respond_to?(:cached_has_manys) && record.class.cached_has_manys.present?
           coder[:normalized_has_many] = record.class.cached_has_manys.each_with_object({}) do |(name, options), hash|
-            hash[name] = record.instance_variable_get(:"@#{options[:ids_variable_name]}") unless options[:embed]
+            hash[name] = record.instance_variable_get(:"@#{options[:ids_variable_name]}") unless options[:embed] == :recursively
           end
         end
       end
@@ -177,7 +177,7 @@ module IdentityCache
 
       def all_embedded_associations
         all_cached_associations.select do |cached_association, options|
-          options[:embed].present?
+          options[:embed] == :recursively
         end
       end
 
@@ -193,7 +193,7 @@ module IdentityCache
 
       def cache_fetch_includes(additions = {})
         additions = hashify_includes_structure(additions)
-        embedded_associations = all_cached_associations.select { |name, options| options[:embed] }
+        embedded_associations = all_cached_associations.select { |name, options| options[:embed] == :recursively }
 
         associations_for_identity_cache = embedded_associations.map do |child_association, options|
           child_class = reflect_on_association(child_association).try(:klass)
@@ -233,7 +233,7 @@ module IdentityCache
           case
           when details = cached_has_manys[association]
 
-            if details[:embed]
+            if details[:embed] == :recursively
               child_records = records.map(&details[:cached_accessor_name].to_sym).flatten
             else
               ids_to_parent_record = records.each_with_object({}) do |record, hash|
@@ -258,7 +258,7 @@ module IdentityCache
             next_level_records = child_records
 
           when details = cached_belongs_tos[association]
-            if details[:embed]
+            if details[:embed] == :recursively
               raise ArgumentError.new("Embedded belongs_to associations do not support prefetching yet.")
             else
               ids_to_child_record = records.each_with_object({}) do |child_record, hash|
@@ -275,7 +275,7 @@ module IdentityCache
             next_level_records = parent_records
 
           when details = cached_has_ones[association]
-            if details[:embed]
+            if details[:embed] == :recursively
               parent_records = records.map(&details[:cached_accessor_name].to_sym)
             else
               raise ArgumentError.new("Non-embedded has_one associations do not support prefetching yet.")
@@ -319,7 +319,7 @@ module IdentityCache
     def populate_association_caches # :nodoc:
       self.class.send(:all_cached_associations_needing_population).each do |cached_association, options|
         send(options[:population_method_name])
-        reflection = options[:embed] && self.class.reflect_on_association(cached_association)
+        reflection = options[:embed] == :recursively && self.class.reflect_on_association(cached_association)
         if reflection && reflection.klass.respond_to?(:cached_has_manys)
           child_objects = Array.wrap(send(options[:cached_accessor_name]))
           child_objects.each{ |child| child.send(:populate_association_caches) }
