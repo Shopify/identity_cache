@@ -14,10 +14,6 @@ module IdentityCache
       base.cache_attributes = []
       base.cache_indexes = []
       base.primary_cache_index_enabled = true
-
-      base.private_class_method :build_normalized_has_many_cache, :build_denormalized_association_cache,
-                                :add_parent_expiry_hook, :identity_cache_multiple_value_dynamic_fetcher,
-                                :identity_cache_single_value_dynamic_fetcher, :identity_cache_sql_conditions
     end
 
     module ClassMethods
@@ -181,6 +177,8 @@ module IdentityCache
         raise NotImplementedError, "Secondary indexes rely on the primary index to function. You must either remove the secondary indexes or don't disable the primary" if self.cache_indexes.size > 0
         self.primary_cache_index_enabled = false
       end
+
+      private
 
       def identity_cache_single_value_dynamic_fetcher(fields, values) # :nodoc:
         sql_on_miss = "SELECT #{quoted_primary_key} FROM #{quoted_table_name} WHERE #{identity_cache_sql_conditions(fields, values)} LIMIT 1"

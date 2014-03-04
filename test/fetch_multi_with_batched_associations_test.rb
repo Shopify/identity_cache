@@ -203,7 +203,7 @@ class FetchMultiWithBatchedAssociationsTest < IdentityCache::TestCase
     Item.expects(:where).returns(mock_relation)
     mock_relation.expects(:includes).returns(stub(:to_a => [@bob, @joe, @fred]))
 
-    Item.find_batch([@bob, @joe, @fred].map(&:id).map(&:to_s))
+    Item.send(:find_batch, [@bob, @joe, @fred].map(&:id).map(&:to_s))
   end
 
   private

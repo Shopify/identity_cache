@@ -3,16 +3,6 @@ module IdentityCache
     extend ActiveSupport::Concern
 
     included do |base|
-      base.private_class_method :require_if_necessary
-      base.private_class_method :coder_from_record
-      base.private_class_method :record_from_coder
-      base.private_class_method :set_embedded_association
-      base.private_class_method :get_embedded_association
-      base.private_class_method :add_cached_associations_to_coder
-      base.instance_eval(<<-CODE, __FILE__, __LINE__ + 1)
-        private :expire_cache, :was_new_record?, :fetch_denormalized_cached_association,
-                :populate_denormalized_cached_association
-      CODE
       base.after_commit :expire_cache
       base.after_touch  :expire_cache
     end
@@ -66,7 +56,7 @@ module IdentityCache
             coders_by_key = IdentityCache.fetch_multi(*cache_keys) do |unresolved_keys|
               ids = unresolved_keys.map {|key| key_to_id_map[key] }
               records = find_batch(ids, options)
-              records.compact.each(&:populate_association_caches)
+              records.compact.each{ |record| record.send(:populate_association_caches) }
               records.map {|record| coder_from_record(record) }
             end
 
@@ -80,6 +70,8 @@ module IdentityCache
           find_batch(ids, options)
         end
       end
+
+      private
 
       def record_from_coder(coder) #:nodoc:
         if coder.present? && coder.has_key?(:class)
@@ -122,7 +114,7 @@ module IdentityCache
         else
           record_from_coder(coder_or_array)
         end
-        variable_name = record.class.all_embedded_associations[association_name][:records_variable_name]
+        variable_name = record.class.send(:all_embedded_associations)[association_name][:records_variable_name]
         record.instance_variable_set(:"@#{variable_name}", IdentityCache.map_cached_nil_for(value))
       end
 
@@ -147,8 +139,8 @@ module IdentityCache
       end
 
       def add_cached_associations_to_coder(record, coder)
-        if record.class.respond_to?(:all_embedded_associations) && record.class.all_embedded_associations.present?
-          coder[:associations] = record.class.all_embedded_associations.each_with_object({}) do |(name, options), hash|
+        if record.class.respond_to?(:all_embedded_associations, true) && record.class.send(:all_embedded_associations).present?
+          coder[:associations] = record.class.send(:all_embedded_associations).each_with_object({}) do |(name, options), hash|
             hash[name] = IdentityCache.map_cached_nil_for(get_embedded_association(record, name, options))
           end
         end
@@ -179,7 +171,7 @@ module IdentityCache
 
       def resolve_cache_miss(id)
         object = self.includes(cache_fetch_includes).where(id: id).try(:first)
-        object.try(:populate_association_caches)
+        object.send(:populate_association_caches) if object
         object
       end
 
@@ -208,8 +200,8 @@ module IdentityCache
 
           child_includes = additions.delete(child_association)
 
-          if child_class.respond_to?(:cache_fetch_includes)
-            child_includes = child_class.cache_fetch_includes(child_includes)
+          if child_class.respond_to?(:cache_fetch_includes, true)
+            child_includes = child_class.send(:cache_fetch_includes, child_includes)
           end
 
           if child_includes.blank?
@@ -295,8 +287,8 @@ module IdentityCache
             raise ArgumentError.new("Unknown cached association #{association} listed for prefetching")
           end
 
-          if details && details[:association_class].respond_to?(:prefetch_associations)
-            details[:association_class].prefetch_associations(sub_associations, next_level_records)
+          if details && details[:association_class].respond_to?(:prefetch_associations, true)
+            details[:association_class].send(:prefetch_associations, sub_associations, next_level_records)
           end
         end
       end
@@ -322,13 +314,15 @@ module IdentityCache
       end
     end
 
+    private
+
     def populate_association_caches # :nodoc:
-      self.class.all_cached_associations_needing_population.each do |cached_association, options|
+      self.class.send(:all_cached_associations_needing_population).each do |cached_association, options|
         send(options[:population_method_name])
         reflection = options[:embed] && self.class.reflect_on_association(cached_association)
         if reflection && reflection.klass.respond_to?(:cached_has_manys)
           child_objects = Array.wrap(send(options[:cached_accessor_name]))
-          child_objects.each(&:populate_association_caches)
+          child_objects.each{ |child| child.send(:populate_association_caches) }
         end
       end
     end

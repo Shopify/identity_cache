@@ -147,7 +147,7 @@ class NormalizedRunner < CacheRunner
       rec.fetch_associated
       associated_records = rec.fetch_associated_records
       # FIXME: Only fetch_multi has :includes support, so use what it uses internally
-      AssociatedRecord.prefetch_associations(:deeply_associated_records, associated_records)
+      AssociatedRecord.send(:prefetch_associations, :deeply_associated_records, associated_records)
     end
   end
 end
