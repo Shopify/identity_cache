@@ -1,3 +1,9 @@
+0.0.7
+* Fix: Not implemented error for cache_has_one with embed: false
+* Fix: cache key to change when adding a cache_has_many association with :embed => false
+* Add support for non-integer primary keys
+* Fix: Compatibility rails 4.1 for quote_value, which needs default column.
+
 0.0.6
 * Fix: bug where previously nil-cached attribute caches weren't expired on record creation
 * Fix: cache key to not change when adding a non-embedded association.
