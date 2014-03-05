@@ -148,7 +148,7 @@ module IdentityCache
           end
           if (cached_has_manys = klass.cached_has_manys).present?
             coder[:normalized_has_many] = cached_has_manys.each_with_object({}) do |(name, options), hash|
-              hash[name] = record.instance_variable_get(:"@#{options[:ids_variable_name]}") unless options[:embed] == :recursively
+              hash[name] = record.instance_variable_get(:"@#{options[:ids_variable_name]}") unless options[:embed] == true
             end
           end
         end
@@ -180,7 +180,7 @@ module IdentityCache
 
       def recursively_embedded_associations
         all_cached_associations.select do |cached_association, options|
-          options[:embed] == :recursively
+          options[:embed] == true
         end
       end
 
@@ -235,7 +235,7 @@ module IdentityCache
           case
           when details = cached_has_manys[association]
 
-            if details[:embed] == :recursively
+            if details[:embed] == true
               child_records = records.map(&details[:cached_accessor_name].to_sym).flatten
             else
               ids_to_parent_record = records.each_with_object({}) do |record, hash|
@@ -260,7 +260,7 @@ module IdentityCache
             next_level_records = child_records
 
           when details = cached_belongs_tos[association]
-            if details[:embed] == :recursively
+            if details[:embed] == true
               raise ArgumentError.new("Embedded belongs_to associations do not support prefetching yet.")
             else
               ids_to_child_record = records.each_with_object({}) do |child_record, hash|
@@ -277,7 +277,7 @@ module IdentityCache
             next_level_records = parent_records
 
           when details = cached_has_ones[association]
-            if details[:embed] == :recursively
+            if details[:embed] == true
               parent_records = records.map(&details[:cached_accessor_name].to_sym)
             else
               raise ArgumentError.new("Non-embedded has_one associations do not support prefetching yet.")
@@ -321,7 +321,7 @@ module IdentityCache
     def populate_association_caches # :nodoc:
       self.class.send(:embedded_associations).each do |cached_association, options|
         send(options[:population_method_name])
-        reflection = options[:embed] == :recursively && self.class.reflect_on_association(cached_association)
+        reflection = options[:embed] == true && self.class.reflect_on_association(cached_association)
         if reflection && reflection.klass.respond_to?(:cached_has_manys)
           child_objects = Array.wrap(send(options[:cached_accessor_name]))
           child_objects.each{ |child| child.send(:populate_association_caches) }

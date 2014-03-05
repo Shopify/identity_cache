@@ -102,7 +102,6 @@ module IdentityCache
 
         case options[:embed]
         when true
-          options[:embed] = :recursively
           build_recursive_association_cache(association, options)
         when :ids
           build_id_embedded_has_many_cache(association, options)
@@ -139,7 +138,6 @@ module IdentityCache
         self.cached_has_ones[association] = options
 
         if options[:embed] == true
-          options[:embed] = :recursively
           build_recursive_association_cache(association, options)
         else
           raise NotImplementedError
