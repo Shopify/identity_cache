@@ -139,14 +139,17 @@ module IdentityCache
       end
 
       def add_cached_associations_to_coder(record, coder)
-        if record.class.respond_to?(:recursively_embedded_associations, true) && record.class.send(:recursively_embedded_associations).present?
-          coder[:associations] = record.class.send(:recursively_embedded_associations).each_with_object({}) do |(name, options), hash|
-            hash[name] = IdentityCache.map_cached_nil_for(get_embedded_association(record, name, options))
+        klass = record.class
+        if klass.include?(IdentityCache)
+          if (recursively_embedded_associations = klass.send(:recursively_embedded_associations)).present?
+            coder[:associations] = recursively_embedded_associations.each_with_object({}) do |(name, options), hash|
+              hash[name] = IdentityCache.map_cached_nil_for(get_embedded_association(record, name, options))
+            end
           end
-        end
-        if record.class.respond_to?(:cached_has_manys) && record.class.cached_has_manys.present?
-          coder[:normalized_has_many] = record.class.cached_has_manys.each_with_object({}) do |(name, options), hash|
-            hash[name] = record.instance_variable_get(:"@#{options[:ids_variable_name]}") unless options[:embed] == :recursively
+          if (cached_has_manys = klass.cached_has_manys).present?
+            coder[:normalized_has_many] = cached_has_manys.each_with_object({}) do |(name, options), hash|
+              hash[name] = record.instance_variable_get(:"@#{options[:ids_variable_name]}") unless options[:embed] == :recursively
+            end
           end
         end
       end
