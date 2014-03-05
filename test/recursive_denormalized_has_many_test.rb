@@ -3,8 +3,8 @@ require "test_helper"
 class RecursiveDenormalizedHasManyTest < IdentityCache::TestCase
   def setup
     super
-    AssociatedRecord.cache_has_many :deeply_associated_records, :embed => :recursively
-    Item.cache_has_many :associated_records, :embed => :recursively
+    AssociatedRecord.cache_has_many :deeply_associated_records, :embed => true
+    Item.cache_has_many :associated_records, :embed => true
     Item.cache_has_one :associated
 
     @record = Item.new(:title => 'foo')
@@ -93,7 +93,7 @@ end
 class RecursiveNormalizedHasManyTest < IdentityCache::TestCase
   def setup
     super
-    AssociatedRecord.cache_has_many :deeply_associated_records, :embed => :recursively
+    AssociatedRecord.cache_has_many :deeply_associated_records, :embed => true
     Item.cache_has_many :associated_records, :embed => :ids
 
     @record = Item.new(:title => 'foo')

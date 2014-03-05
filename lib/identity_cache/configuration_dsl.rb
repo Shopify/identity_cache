@@ -88,7 +88,7 @@ module IdentityCache
       #
       # == Options
       #
-      # * embed: If set to :recursively, will cause IdentityCache to keep the
+      # * embed: If set to true, will cause IdentityCache to keep the
       #   values for this association in the same cache entry as the parent,
       #   instead of its own.
       # * inverse_name: The name of the parent in the association if the name is
@@ -96,13 +96,13 @@ module IdentityCache
       def cache_has_many(association, options = {})
         options[:embed] = :ids unless options.has_key?(:embed)
         deprecate_embed_option(options, false, :ids)
-        deprecate_embed_option(options, true, :recursively)
         options[:inverse_name] ||= self.name.underscore.to_sym
         raise InverseAssociationError unless self.reflect_on_association(association)
         self.cached_has_manys[association] = options
 
         case options[:embed]
-        when :recursively
+        when true
+          options[:embed] = :recursively
           build_recursive_association_cache(association, options)
         when :ids
           build_id_embedded_has_many_cache(association, options)
@@ -117,7 +117,7 @@ module IdentityCache
       #
       # == Example:
       #   class Product
-      #    cached_has_one :store, :embed => :recursively
+      #    cached_has_one :store, :embed => true
       #    cached_has_one :vendor
       #   end
       #
@@ -126,20 +126,20 @@ module IdentityCache
       #
       # == Options
       #
-      # * embed: Only :recursively is supported, which is also the default, so
+      # * embed: Only true is supported, which is also the default, so
       #   IdentityCache will keep the values for this association in the same
       #   cache entry as the parent, instead of its own.
       # * inverse_name: The name of the parent in the association ( only
       #   necessary if the name is not the lowercase pluralization of the
       #   parent object's class)
       def cache_has_one(association, options = {})
-        options[:embed] = :recursively unless options.has_key?(:embed)
-        deprecate_embed_option(options, true, :recursively)
+        options[:embed] = true unless options.has_key?(:embed)
         options[:inverse_name] ||= self.name.underscore.to_sym
         raise InverseAssociationError unless self.reflect_on_association(association)
         self.cached_has_ones[association] = options
 
-        if options[:embed] == :recursively
+        if options[:embed] == true
+          options[:embed] = :recursively
           build_recursive_association_cache(association, options)
         else
           raise NotImplementedError

@@ -1,5 +1,5 @@
 Unreleased
-* Change :embed option values from true to :recursively and from false to :ids
+* Change :embed option value from false to :ids for cache_has_many for clarity
 
 0.0.7
 * Fix: Not implemented error for cache_has_one with embed: false
