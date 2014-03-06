@@ -88,34 +88,35 @@ module IdentityCache
       #
       # == Options
       #
-      # * embed: If set will cause IdentityCache to keep the values for this
-      #   association in the same cache entry as the parent, instead of its own.
+      # * embed: If set to true, will cause IdentityCache to keep the
+      #   values for this association in the same cache entry as the parent,
+      #   instead of its own.
       # * inverse_name: The name of the parent in the association if the name is
       #   not the lowercase pluralization of the parent object's class
       def cache_has_many(association, options = {})
-        options[:embed] ||= false
+        options[:embed] = :ids unless options.has_key?(:embed)
+        deprecate_embed_option(options, false, :ids)
         options[:inverse_name] ||= self.name.underscore.to_sym
         raise InverseAssociationError unless self.reflect_on_association(association)
         self.cached_has_manys[association] = options
 
-        if options[:embed]
-          build_denormalized_association_cache(association, options)
+        case options[:embed]
+        when true
+          build_recursive_association_cache(association, options)
+        when :ids
+          build_id_embedded_has_many_cache(association, options)
         else
-          build_normalized_has_many_cache(association, options)
+          raise NotImplementedError
         end
       end
 
       # Will cache an association to the class including IdentityCache.
-      # The embed option if set will make IdentityCache keep the association
-      # values in the same cache entry as the parent.
-      #
-      # Embedded associations are more effective in offloading database work,
-      # however they will increase the size of the cache entries and make the
-      # whole entry expire with the change of any of the embedded members
+      # IdentityCache will keep the association values in the same cache entry
+      # as the parent.
       #
       # == Example:
       #   class Product
-      #    cached_has_one :store, :embed => false
+      #    cached_has_one :store, :embed => true
       #    cached_has_one :vendor
       #   end
       #
@@ -124,8 +125,9 @@ module IdentityCache
       #
       # == Options
       #
-      # * embed: If set will cause IdentityCache to keep the values for this
-      #   association in the same cache entry as the parent, instead of its own.
+      # * embed: Only true is supported, which is also the default, so
+      #   IdentityCache will keep the values for this association in the same
+      #   cache entry as the parent, instead of its own.
       # * inverse_name: The name of the parent in the association ( only
       #   necessary if the name is not the lowercase pluralization of the
       #   parent object's class)
@@ -135,8 +137,8 @@ module IdentityCache
         raise InverseAssociationError unless self.reflect_on_association(association)
         self.cached_has_ones[association] = options
 
-        if options[:embed]
-          build_denormalized_association_cache(association, options)
+        if options[:embed] == true
+          build_recursive_association_cache(association, options)
         else
           raise NotImplementedError
         end
@@ -200,21 +202,21 @@ module IdentityCache
         ids.empty? ? [] : fetch_multi(*ids)
       end
 
-      def build_denormalized_association_cache(association, options) #:nodoc:
+      def build_recursive_association_cache(association, options) #:nodoc:
         options[:association_class]      ||= reflect_on_association(association).klass
         options[:cached_accessor_name]   ||= "fetch_#{association}"
-        options[:records_variable_name]     ||= "cached_#{association}"
+        options[:records_variable_name]  ||= "cached_#{association}"
         options[:population_method_name] ||= "populate_#{association}_cache"
 
 
         unless instance_methods.include?(options[:cached_accessor_name].to_sym)
           self.class_eval(<<-CODE, __FILE__, __LINE__ + 1)
             def #{options[:cached_accessor_name]}
-              fetch_denormalized_cached_association('#{options[:records_variable_name]}', :#{association})
+              fetch_recursively_cached_association('#{options[:records_variable_name]}', :#{association})
             end
 
             def #{options[:population_method_name]}
-              populate_denormalized_cached_association('#{options[:records_variable_name]}', :#{association})
+              populate_recursively_cached_association('#{options[:records_variable_name]}', :#{association})
             end
           CODE
 
@@ -222,7 +224,7 @@ module IdentityCache
         end
       end
 
-      def build_normalized_has_many_cache(association, options) #:nodoc:
+      def build_id_embedded_has_many_cache(association, options) #:nodoc:
         singular_association = association.to_s.singularize
         options[:association_class]       ||= reflect_on_association(association).klass
         options[:cached_accessor_name]    ||= "fetch_#{association}"
@@ -291,6 +293,13 @@ module IdentityCache
 
       def identity_cache_sql_conditions(fields, values)
         fields.each_with_index.collect { |f, i| "#{connection.quote_column_name(f)} = #{quote_value(values[i],nil)}" }.join(" AND ")
+      end
+
+      def deprecate_embed_option(options, old_value, new_value)
+        if options[:embed] == old_value
+          options[:embed] = new_value
+          ActiveSupport::Deprecation.warn("`embed: #{old_value.inspect}` was renamed to `embed: #{new_value.inspect}` for clarity", caller(2))
+        end
       end
     end
   end

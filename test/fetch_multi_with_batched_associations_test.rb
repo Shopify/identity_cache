@@ -51,7 +51,7 @@ class FetchMultiWithBatchedAssociationsTest < IdentityCache::TestCase
   end
 
   def test_fetch_multi_batch_fetches_non_embedded_first_level_has_many_associations
-    Item.send(:cache_has_many, :associated_records, :embed => false)
+    Item.send(:cache_has_many, :associated_records, :embed => :ids)
 
     child_records = []
     [@bob, @joe].each do |parent|
@@ -103,8 +103,8 @@ class FetchMultiWithBatchedAssociationsTest < IdentityCache::TestCase
   end
 
   def test_fetch_multi_batch_fetches_non_embedded_second_level_has_many_associations
-    Item.send(:cache_has_many, :associated_records, :embed => false)
-    AssociatedRecord.send(:cache_has_many, :deeply_associated_records, :embed => false)
+    Item.send(:cache_has_many, :associated_records, :embed => :ids)
+    AssociatedRecord.send(:cache_has_many, :deeply_associated_records, :embed => :ids)
 
     child_records, grandchildren = setup_has_many_children_and_grandchildren(@bob, @joe)
 
@@ -159,7 +159,7 @@ class FetchMultiWithBatchedAssociationsTest < IdentityCache::TestCase
 
   def test_fetch_multi_batch_fetches_non_embedded_second_level_associations_through_embedded_first_level_has_many_associations
     Item.send(:cache_has_many, :associated_records, :embed => true)
-    AssociatedRecord.send(:cache_has_many, :deeply_associated_records, :embed => false)
+    AssociatedRecord.send(:cache_has_many, :deeply_associated_records, :embed => :ids)
 
     child_records, grandchildren = setup_has_many_children_and_grandchildren(@bob, @joe)
 
@@ -179,7 +179,7 @@ class FetchMultiWithBatchedAssociationsTest < IdentityCache::TestCase
 
   def test_fetch_multi_batch_fetches_non_embedded_second_level_associations_through_embedded_first_level_has_one_associations
     Item.send(:cache_has_one, :associated, :embed => true)
-    AssociatedRecord.send(:cache_has_many, :deeply_associated_records, :embed => false)
+    AssociatedRecord.send(:cache_has_many, :deeply_associated_records, :embed => :ids)
 
     @bob_child = @bob.create_associated!(:name => "bob child")
     @joe_child = @joe.create_associated!(:name => "joe child")

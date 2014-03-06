@@ -114,7 +114,7 @@ module IdentityCache
         else
           record_from_coder(coder_or_array)
         end
-        variable_name = record.class.send(:all_embedded_associations)[association_name][:records_variable_name]
+        variable_name = record.class.send(:recursively_embedded_associations)[association_name][:records_variable_name]
         record.instance_variable_set(:"@#{variable_name}", IdentityCache.map_cached_nil_for(value))
       end
 
@@ -139,14 +139,17 @@ module IdentityCache
       end
 
       def add_cached_associations_to_coder(record, coder)
-        if record.class.respond_to?(:all_embedded_associations, true) && record.class.send(:all_embedded_associations).present?
-          coder[:associations] = record.class.send(:all_embedded_associations).each_with_object({}) do |(name, options), hash|
-            hash[name] = IdentityCache.map_cached_nil_for(get_embedded_association(record, name, options))
+        klass = record.class
+        if klass.include?(IdentityCache)
+          if (recursively_embedded_associations = klass.send(:recursively_embedded_associations)).present?
+            coder[:associations] = recursively_embedded_associations.each_with_object({}) do |(name, options), hash|
+              hash[name] = IdentityCache.map_cached_nil_for(get_embedded_association(record, name, options))
+            end
           end
-        end
-        if record.class.respond_to?(:cached_has_manys) && record.class.cached_has_manys.present?
-          coder[:normalized_has_many] = record.class.cached_has_manys.each_with_object({}) do |(name, options), hash|
-            hash[name] = record.instance_variable_get(:"@#{options[:ids_variable_name]}") unless options[:embed]
+          if (cached_has_manys = klass.cached_has_manys).present?
+            coder[:normalized_has_many] = cached_has_manys.each_with_object({}) do |(name, options), hash|
+              hash[name] = record.instance_variable_get(:"@#{options[:ids_variable_name]}") unless options[:embed] == true
+            end
           end
         end
       end
@@ -175,9 +178,9 @@ module IdentityCache
         object
       end
 
-      def all_embedded_associations
+      def recursively_embedded_associations
         all_cached_associations.select do |cached_association, options|
-          options[:embed].present?
+          options[:embed] == true
         end
       end
 
@@ -185,17 +188,16 @@ module IdentityCache
         (cached_has_manys || {}).merge(cached_has_ones || {}).merge(cached_belongs_tos || {})
       end
 
-      def all_cached_associations_needing_population
+      def embedded_associations
         all_cached_associations.select do |cached_association, options|
-          options[:population_method_name].present? # non-embedded belongs_to associations don't need population
+          options[:embed]
         end
       end
 
       def cache_fetch_includes(additions = {})
         additions = hashify_includes_structure(additions)
-        embedded_associations = all_cached_associations.select { |name, options| options[:embed] }
 
-        associations_for_identity_cache = embedded_associations.map do |child_association, options|
+        associations_for_identity_cache = recursively_embedded_associations.map do |child_association, options|
           child_class = reflect_on_association(child_association).try(:klass)
 
           child_includes = additions.delete(child_association)
@@ -233,7 +235,7 @@ module IdentityCache
           case
           when details = cached_has_manys[association]
 
-            if details[:embed]
+            if details[:embed] == true
               child_records = records.map(&details[:cached_accessor_name].to_sym).flatten
             else
               ids_to_parent_record = records.each_with_object({}) do |record, hash|
@@ -258,7 +260,7 @@ module IdentityCache
             next_level_records = child_records
 
           when details = cached_belongs_tos[association]
-            if details[:embed]
+            if details[:embed] == true
               raise ArgumentError.new("Embedded belongs_to associations do not support prefetching yet.")
             else
               ids_to_child_record = records.each_with_object({}) do |child_record, hash|
@@ -275,7 +277,7 @@ module IdentityCache
             next_level_records = parent_records
 
           when details = cached_has_ones[association]
-            if details[:embed]
+            if details[:embed] == true
               parent_records = records.map(&details[:cached_accessor_name].to_sym)
             else
               raise ArgumentError.new("Non-embedded has_one associations do not support prefetching yet.")
@@ -317,9 +319,9 @@ module IdentityCache
     private
 
     def populate_association_caches # :nodoc:
-      self.class.send(:all_cached_associations_needing_population).each do |cached_association, options|
+      self.class.send(:embedded_associations).each do |cached_association, options|
         send(options[:population_method_name])
-        reflection = options[:embed] && self.class.reflect_on_association(cached_association)
+        reflection = options[:embed] == true && self.class.reflect_on_association(cached_association)
         if reflection && reflection.klass.respond_to?(:cached_has_manys)
           child_objects = Array.wrap(send(options[:cached_accessor_name]))
           child_objects.each{ |child| child.send(:populate_association_caches) }
@@ -327,10 +329,10 @@ module IdentityCache
       end
     end
 
-    def fetch_denormalized_cached_association(ivar_name, association_name) # :nodoc:
+    def fetch_recursively_cached_association(ivar_name, association_name) # :nodoc:
       ivar_full_name = :"@#{ivar_name}"
       if IdentityCache.should_cache?
-        populate_denormalized_cached_association(ivar_name, association_name)
+        populate_recursively_cached_association(ivar_name, association_name)
         assoc = IdentityCache.unmap_cached_nil_for(instance_variable_get(ivar_full_name))
         assoc.is_a?(ActiveRecord::Associations::CollectionAssociation) ? assoc.reader : assoc
       else
@@ -338,7 +340,7 @@ module IdentityCache
       end
     end
 
-    def populate_denormalized_cached_association(ivar_name, association_name) # :nodoc:
+    def populate_recursively_cached_association(ivar_name, association_name) # :nodoc:
       ivar_full_name = :"@#{ivar_name}"
 
       value = instance_variable_get(ivar_full_name)

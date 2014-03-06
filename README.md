@@ -167,7 +167,7 @@ Example:
 #### cache_has_many
 
 Options:  
-_[:embed]_ Specifies that the association should be included with the parent when caching. This means the associated objects will be loaded already when the parent is loaded from the cache and will not need to be fetched on their own.
+_[:embed]_ When true, specifies that the association should be included with the parent when caching. This means the associated objects will be loaded already when the parent is loaded from the cache and will not need to be fetched on their own. When :ids, only the id of the associated records will be included with the parent when caching.
 
 _[:inverse_name]_ Specifies the name of parent object used by the association. This is useful for polymorphic associations when the association is often named something different between the parent and child objects.
 
@@ -177,7 +177,7 @@ Example:
 #### cache_has_one
 
 Options:  
-_[:embed]_ Specifies that the association should be included with the parent when caching. This means the associated objects will be loaded already when the parent is loaded from the cache and will not need to be fetched on their own.
+_[:embed]_ When true, specifies that the association should be included with the parent when caching. This means the associated objects will be loaded already when the parent is loaded from the cache and will not need to be fetched on their own. No other values are currently implemented.
 
 _[:inverse_name]_ Specifies the name of parent object used by the association. This is useful for polymorphic associations when the association is often named something different between the parent and child objects.
 

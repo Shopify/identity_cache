@@ -3,7 +3,7 @@ require "test_helper"
 class NormalizedHasManyTest < IdentityCache::TestCase
   def setup
     super
-    Item.cache_has_many :associated_records, :embed => false
+    Item.cache_has_many :associated_records, :embed => :ids
 
     @record = Item.new(:title => 'foo')
     @record.not_cached_records << NotCachedRecord.new(:name => 'NoCache')

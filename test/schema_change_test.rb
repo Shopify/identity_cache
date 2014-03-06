@@ -83,7 +83,7 @@ class SchemaChangeTest < IdentityCache::TestCase
   end
 
   def test_embed_existing_cache_has_many
-    Item.cache_has_many :polymorphic_records, :inverse_name => :owner, :embed => false
+    Item.cache_has_many :polymorphic_records, :inverse_name => :owner, :embed => :ids
     read_new_schema
 
     record = Item.fetch(@record.id)
@@ -98,7 +98,7 @@ class SchemaChangeTest < IdentityCache::TestCase
   def test_add_non_embedded_cache_has_many
     record = Item.fetch(@record.id)
 
-    Item.cache_has_many :polymorphic_records, :inverse_name => :owner, :embed => false
+    Item.cache_has_many :polymorphic_records, :inverse_name => :owner, :embed => :ids
     read_new_schema
 
     Item.expects(:resolve_cache_miss).returns(@record)

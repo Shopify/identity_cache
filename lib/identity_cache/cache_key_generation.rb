@@ -11,9 +11,10 @@ module IdentityCache
       schema_string = schema_to_string(klass.columns)
       if klass.include?(IdentityCache)
         klass.send(:all_cached_associations).sort.each do |name, options|
-          if options[:embed]
+          case options[:embed]
+          when true
             schema_string << ",#{name}:(#{denormalized_schema_hash(options[:association_class])})"
-          elsif options[:cached_ids_name]
+          when :ids
             schema_string << ",#{name}:ids"
           end
         end

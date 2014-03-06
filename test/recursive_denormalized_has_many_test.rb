@@ -94,7 +94,7 @@ class RecursiveNormalizedHasManyTest < IdentityCache::TestCase
   def setup
     super
     AssociatedRecord.cache_has_many :deeply_associated_records, :embed => true
-    Item.cache_has_many :associated_records, :embed => false
+    Item.cache_has_many :associated_records, :embed => :ids
 
     @record = Item.new(:title => 'foo')
     @record.save

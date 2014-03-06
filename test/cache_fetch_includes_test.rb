@@ -11,7 +11,7 @@ class CacheFetchIncludesTest < IdentityCache::TestCase
   end
 
   def test_cached_nonembedded_has_manys_are_included_in_includes
-    Item.send(:cache_has_many, :associated_records, :embed => false)
+    Item.send(:cache_has_many, :associated_records, :embed => :ids)
     assert_equal [], Item.send(:cache_fetch_includes)
   end
 
