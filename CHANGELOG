@@ -1,4 +1,5 @@
 Unreleased
+* Fix: Avoid unused preload on fetch_multi with :includes option for cache miss
 * Change :embed option value from false to :ids for cache_has_many for clarity
 
 0.0.7

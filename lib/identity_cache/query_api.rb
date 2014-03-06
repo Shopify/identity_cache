@@ -47,28 +47,25 @@ module IdentityCache
       def fetch_multi(*ids)
         raise NotImplementedError, "fetching needs the primary index enabled" unless primary_cache_index_enabled
         options = ids.extract_options!
-        if IdentityCache.should_cache?
-
+        records = if IdentityCache.should_cache?
           require_if_necessary do
             cache_keys = ids.map {|id| rails_cache_key(id) }
             key_to_id_map = Hash[ cache_keys.zip(ids) ]
 
             coders_by_key = IdentityCache.fetch_multi(*cache_keys) do |unresolved_keys|
               ids = unresolved_keys.map {|key| key_to_id_map[key] }
-              records = find_batch(ids, options)
+              records = find_batch(ids)
               records.compact.each{ |record| record.send(:populate_association_caches) }
               records.map {|record| coder_from_record(record) }
             end
 
-            records = cache_keys.map {|key| record_from_coder(coders_by_key[key]) }.compact
-            prefetch_associations(options[:includes], records) if options[:includes]
-
-            records
+            cache_keys.map {|key| record_from_coder(coders_by_key[key]) }.compact
           end
-
         else
-          find_batch(ids, options)
+          find_batch(ids)
         end
+        prefetch_associations(options[:includes], records) if options[:includes]
+        records
       end
 
       private
@@ -194,16 +191,13 @@ module IdentityCache
         end
       end
 
-      def cache_fetch_includes(additions = {})
-        additions = hashify_includes_structure(additions)
-
+      def cache_fetch_includes
         associations_for_identity_cache = recursively_embedded_associations.map do |child_association, options|
           child_class = reflect_on_association(child_association).try(:klass)
 
-          child_includes = additions.delete(child_association)
-
+          child_includes = nil
           if child_class.respond_to?(:cache_fetch_includes, true)
-            child_includes = child_class.send(:cache_fetch_includes, child_includes)
+            child_includes = child_class.send(:cache_fetch_includes)
           end
 
           if child_includes.blank?
@@ -213,14 +207,13 @@ module IdentityCache
           end
         end
 
-        associations_for_identity_cache.push(additions) if additions.keys.size > 0
         associations_for_identity_cache.compact
       end
 
-      def find_batch(ids, options = {})
+      def find_batch(ids)
         @id_column ||= columns.detect {|c| c.name == "id"}
         ids = ids.map{ |id| @id_column.type_cast(id) }
-        records = where('id IN (?)', ids).includes(cache_fetch_includes(options[:includes])).to_a
+        records = where('id IN (?)', ids).includes(cache_fetch_includes).to_a
         records_by_id = records.index_by(&:id)
         records = ids.map{ |id| records_by_id[id] }
         mismatching_ids = records.compact.map(&:id) - ids
