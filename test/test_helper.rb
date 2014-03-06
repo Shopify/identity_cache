@@ -6,6 +6,7 @@ require 'active_support/cache/memcached_store'
 require 'helpers/cache'
 require 'helpers/database_connection'
 require 'helpers/active_record_objects'
+require 'spy'
 
 require File.dirname(__FILE__) + '/../lib/identity_cache'
 

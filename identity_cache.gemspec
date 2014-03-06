@@ -21,6 +21,7 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency('memcached_store', '~> 0.11.2')
   gem.add_development_dependency('rake')
   gem.add_development_dependency('mocha', '0.14.0')
+  gem.add_development_dependency('spy')
 
   if RUBY_PLATFORM == 'java'
     gem.add_development_dependency 'jruby-openssl'

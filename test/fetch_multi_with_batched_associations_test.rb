@@ -14,40 +14,18 @@ class FetchMultiWithBatchedAssociationsTest < IdentityCache::TestCase
     @tenth_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:10"
   end
 
-  def test_fetch_multi_includes_cached_associations_in_the_database_find
-    Item.send(:cache_has_many, :associated_records, :embed => true)
-    Item.send(:cache_has_one, :associated)
+  def test_fetch_multi_with_includes_option_preloads_associations
     Item.send(:cache_belongs_to, :item)
+    john = Item.create!(:title => 'john')
+    jim = Item.create!(:title => 'jim')
+    @bob.update_column(:item_id, john)
+    @joe.update_column(:item_id, jim)
 
-    cache_response = {}
-    cache_response[@bob_blob_key] = nil
-    cache_response[@joe_blob_key] = nil
-    cache_response[@fred_blob_key] = nil
+    spy = Spy.on(Item, :fetch_multi).and_call_through
 
-    IdentityCache.cache.expects(:read_multi).with(@bob_blob_key, @joe_blob_key, @fred_blob_key).returns(cache_response)
+    items = Item.fetch_multi(@bob.id, @joe.id, @fred.id, :includes => :item)
 
-    mock_relation = mock("ActiveRecord::Relation")
-    Item.expects(:where).returns(mock_relation)
-    mock_relation.expects(:includes).with([:associated_records, :associated]).returns(stub(:to_a => [@bob, @joe, @fred]))
-    assert_equal [@bob, @joe, @fred], Item.fetch_multi(@bob.id, @joe.id, @fred.id)
-  end
-
-  def test_fetch_multi_includes_cached_associations_and_other_asked_for_associations_in_the_database_find
-    Item.send(:cache_has_many, :associated_records, :embed => true)
-    Item.send(:cache_has_one, :associated)
-    Item.send(:cache_belongs_to, :item)
-
-    cache_response = {}
-    cache_response[@bob_blob_key] = nil
-    cache_response[@joe_blob_key] = nil
-    cache_response[@fred_blob_key] = nil
-
-    IdentityCache.cache.expects(:read_multi).with(@bob_blob_key, @joe_blob_key, @fred_blob_key).returns(cache_response)
-
-    mock_relation = mock("ActiveRecord::Relation")
-    Item.expects(:where).returns(mock_relation)
-    mock_relation.expects(:includes).with([:associated_records, :associated, {:item => []}]).returns(stub(:to_a => [@bob, @joe, @fred]))
-    assert_equal [@bob, @joe, @fred], Item.fetch_multi(@bob.id, @joe.id, @fred.id, {:includes => :item})
+    assert spy.calls.one?{ |call| call.args == [john.id, jim.id] }
   end
 
   def test_fetch_multi_batch_fetches_non_embedded_first_level_has_many_associations
