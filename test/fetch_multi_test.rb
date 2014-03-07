@@ -115,6 +115,11 @@ class FetchMultiTest < IdentityCache::TestCase
     assert_equal [@joe, @bob, @fred], Item.fetch_multi(@joe.id, @bob.id, @fred.id)
   end
 
+  def test_fetch_multi_with_open_transactions_should_compacts_returned_array
+    Item.connection.expects(:open_transactions).at_least_once.returns(1)
+    assert_equal [@joe, @fred], Item.fetch_multi(@joe.id, 0, @fred.id)
+  end
+
   def test_fetch_multi_with_duplicate_ids_in_transaction_returns_results_in_the_order_of_the_passed_ids
     Item.connection.expects(:open_transactions).at_least_once.returns(1)
     assert_equal [@joe, @bob, @joe], Item.fetch_multi(@joe.id, @bob.id, @joe.id)

@@ -1,4 +1,5 @@
 Unreleased
+* Fix: Bug in fetch_multi in a transaction where results weren't compacted.
 * Fix: Avoid unused preload on fetch_multi with :includes option for cache miss
 * Change :embed option value from false to :ids for cache_has_many for clarity
 
