@@ -219,10 +219,7 @@ module IdentityCache
         ids = ids.map{ |id| @id_column.type_cast(id) }
         records = where('id IN (?)', ids).includes(cache_fetch_includes).to_a
         records_by_id = records.index_by(&:id)
-        records = ids.map{ |id| records_by_id[id] }
-        mismatching_ids = records.compact.map(&:id) - ids
-        IdentityCache.logger.error "[IDC id mismatch] fetch_batch_requested=#{ids.inspect} fetch_batch_got=#{mismatchig_ids.inspect} mismatching ids "  unless mismatching_ids.empty?
-        records
+        ids.map{ |id| records_by_id[id] }
       end
 
       def prefetch_associations(associations, records)
