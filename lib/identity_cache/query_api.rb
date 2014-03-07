@@ -51,15 +51,18 @@ module IdentityCache
           require_if_necessary do
             cache_keys = ids.map {|id| rails_cache_key(id) }
             key_to_id_map = Hash[ cache_keys.zip(ids) ]
+            key_to_record_map = {}
 
             coders_by_key = IdentityCache.fetch_multi(*cache_keys) do |unresolved_keys|
               ids = unresolved_keys.map {|key| key_to_id_map[key] }
               records = find_batch(ids)
-              records.compact.each{ |record| record.send(:populate_association_caches) }
+              found_records = records.compact
+              found_records.each{ |record| record.send(:populate_association_caches) }
+              key_to_record_map = found_records.index_by{ |record| rails_cache_key(record.id) }
               records.map {|record| coder_from_record(record) }
             end
 
-            cache_keys.map {|key| record_from_coder(coders_by_key[key]) }.compact
+            cache_keys.map{ |key| key_to_record_map[key] || record_from_coder(coders_by_key[key]) }.compact
           end
         else
           find_batch(ids)
