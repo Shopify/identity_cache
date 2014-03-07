@@ -62,11 +62,12 @@ module IdentityCache
               records.map {|record| coder_from_record(record) }
             end
 
-            cache_keys.map{ |key| key_to_record_map[key] || record_from_coder(coders_by_key[key]) }.compact
+            cache_keys.map{ |key| key_to_record_map[key] || record_from_coder(coders_by_key[key]) }
           end
         else
           find_batch(ids)
         end
+        records.compact!
         prefetch_associations(options[:includes], records) if options[:includes]
         records
       end
