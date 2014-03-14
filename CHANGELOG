@@ -2,6 +2,7 @@ Unreleased
 * Fix: Bug in fetch_multi in a transaction where results weren't compacted.
 * Fix: Avoid unused preload on fetch_multi with :includes option for cache miss
 * Change :embed option value from false to :ids for cache_has_many for clarity
+* Fix: reload will invalidate the local instance cache
 
 0.0.7
 * Fix: Not implemented error for cache_has_one with embed: false
