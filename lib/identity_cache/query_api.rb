@@ -72,7 +72,24 @@ module IdentityCache
         records
       end
 
+      def force_expiration(id)
+        objects = find_multi_in_cache(*Array(id))
+        objects.each {|object| object.force_expiration}
+      end
+
       private
+
+      def find_multi_in_cache(*ids)
+        raise NotImplementedError, "fetching needs the primary index enabled" unless primary_cache_index_enabled
+        return [] unless IdentityCache.should_cache?
+        records = require_if_necessary do
+          cache_keys = ids.map {|id| rails_cache_key(id) }
+          coders_by_key = IdentityCache.fetch_multi(*cache_keys)
+          cache_keys.map{ |key| record_from_coder(coders_by_key[key]) }
+        end
+        records.compact!
+        records
+      end
 
       def record_from_coder(coder) #:nodoc:
         if coder.present? && coder.has_key?(:class)
@@ -308,6 +325,10 @@ module IdentityCache
           end
         end
       end
+    end
+
+    def force_expiration
+      expire_cache
     end
 
     private
