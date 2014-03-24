@@ -4,7 +4,6 @@ module IdentityCache
 
     included do |base|
       base.after_commit :expire_cache
-      base.after_touch  :expire_cache
     end
 
     module ClassMethods
