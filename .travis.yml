@@ -5,8 +5,8 @@ rvm:
   - 2.1.0
   - jruby
 gemfile:
+  - Gemfile32
   - Gemfile
-  - Gemfile.rails4
 services:
   - memcache
   - mysql
