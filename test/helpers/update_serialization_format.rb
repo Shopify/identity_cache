@@ -1,6 +1,7 @@
 $LOAD_PATH.unshift File.expand_path("../../../lib", __FILE__)
 
 require 'active_record'
+require 'memcached_store'
 require_relative 'serialization_format'
 require_relative 'cache'
 require_relative 'database_connection'

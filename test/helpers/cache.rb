@@ -1,4 +1,5 @@
 require 'logger'
+require 'active_support/cache/memcached_store'
 
 module Rails
 
