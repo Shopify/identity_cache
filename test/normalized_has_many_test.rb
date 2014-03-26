@@ -99,7 +99,7 @@ class NormalizedHasManyTest < IdentityCache::TestCase
 
   def test_saving_a_child_record_should_expire_the_new_and_old_parents_cache_blob
     @new_record = Item.create
-    @baz.item_id = @new_record.id
+    @baz.item = @new_record
 
     IdentityCache.cache.expects(:delete).with(@record.primary_cache_index_key).once
     IdentityCache.cache.expects(:delete).with(@new_record.primary_cache_index_key).once

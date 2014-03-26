@@ -26,7 +26,7 @@ module ActiveRecordObjects
 
     Object.send :const_set, 'AssociatedRecord', Class.new(base) {
       include IdentityCache
-      belongs_to :item
+      belongs_to :item, inverse_of: :associated_records
       has_many :deeply_associated_records
       default_scope { order('id DESC') }
     }
@@ -49,7 +49,7 @@ module ActiveRecordObjects
     Object.send :const_set, 'Item', Class.new(base) {
       include IdentityCache
       belongs_to :item
-      has_many :associated_records
+      has_many :associated_records, inverse_of: :item
       has_many :normalized_associated_records
       has_many :not_cached_records
       has_many :polymorphic_records, :as => 'owner'

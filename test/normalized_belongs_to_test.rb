@@ -28,11 +28,14 @@ class NormalizedBelongsToTest < IdentityCache::TestCase
   end
 
   def test_fetching_the_association_should_fetch_the_record_from_identity_cache
+    @record.association(:item).reset
     Item.expects(:fetch_by_id).with(@parent_record.id).returns(@parent_record)
     assert_equal @parent_record, @record.fetch_item
   end
 
   def test_fetching_the_association_should_assign_the_result_to_the_association_so_that_successive_accesses_are_cached
+    @record.association(:item).reset
+
     Item.expects(:fetch_by_id).with(@parent_record.id).returns(@parent_record)
     @record.fetch_item
     assert @record.association(:item).loaded?
@@ -40,6 +43,8 @@ class NormalizedBelongsToTest < IdentityCache::TestCase
   end
 
   def test_fetching_the_association_shouldnt_raise_if_the_record_cant_be_found
+    @record.association(:item).reset
+
     Item.expects(:fetch_by_id).with(@parent_record.id).returns(nil)
     assert_equal nil, @record.fetch_item
   end

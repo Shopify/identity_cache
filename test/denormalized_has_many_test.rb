@@ -54,13 +54,13 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
   def test_changes_in_associated_records_foreign_keys_should_expire_new_parent_and_old_parents_cache
     @associatated_record = @record.associated_records.first
     old_key = @record.primary_cache_index_key
-    @new_record = Item.create
+    @new_record = Item.create!
     new_key = @new_record.primary_cache_index_key
 
     IdentityCache.cache.expects(:delete).with(@associatated_record.primary_cache_index_key)
     IdentityCache.cache.expects(:delete).with(old_key)
     IdentityCache.cache.expects(:delete).with(new_key)
-    @associatated_record.item_id = @new_record.id
+    @associatated_record.item = @new_record
     @associatated_record.save!
   end
 
