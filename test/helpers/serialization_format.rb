@@ -4,17 +4,20 @@ module SerializationFormat
     AssociatedRecord.cache_belongs_to :item, :embed => false
     Item.cache_has_many :associated_records, :embed => true
     Item.cache_has_one :associated
+    time = Time.parse('1970-01-01T00:00:00 UTC')
 
     record = Item.new(:title => 'foo')
     record.associated_records << AssociatedRecord.new(:name => 'bar')
     record.associated_records << AssociatedRecord.new(:name => 'baz')
     record.associated = AssociatedRecord.new(:name => 'bork')
-    record.not_cached_records << NotCachedRecord.new(:name => 'NoCache')
-    record.associated.deeply_associated_records << DeeplyAssociatedRecord.new(:name => "corge")
-    record.associated.deeply_associated_records << DeeplyAssociatedRecord.new(:name => "qux")
-    record.created_at = Time.parse('1970-01-01T00:00:00 UTC')
+    record.not_cached_records << NotCachedRecord.new(:name => 'NoCache', created_at: time)
+    record.associated.deeply_associated_records << DeeplyAssociatedRecord.new(:name => "corge", created_at: time)
+    record.associated.deeply_associated_records << DeeplyAssociatedRecord.new(:name => "qux", created_at: time)
+    record.created_at = time
     record.save
-    Item.where(id: record.id).update_all(updated_at: record.created_at)
+    [Item, NotCachedRecord, DeeplyAssociatedRecord].each do |model|
+      model.update_all(updated_at: time)
+    end
     record.reload
     Item.fetch(record.id)
     IdentityCache.fetch(record.primary_cache_index_key)
@@ -29,6 +32,7 @@ module SerializationFormat
       :version => IdentityCache::CACHE_VERSION,
       :record => record
     }
+
     if anIO
       Marshal.dump(hash, anIO)
     else
