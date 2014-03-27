@@ -10,6 +10,8 @@ class NormalizedBelongsToTest < IdentityCache::TestCase
     @parent_record.save
     @parent_record.reload
     @record = @parent_record.associated_records.first
+    # Reset association cache, so we remove the inverse of in memory reference
+    @record.association(:item).reset
   end
 
   def test_fetching_the_association_should_delegate_to_the_normal_association_fetcher_if_any_transactions_are_open
