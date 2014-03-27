@@ -5,4 +5,3 @@ gemspec
 
 gem 'activerecord', '~> 4.1.0.rc2'
 gem 'activesupport', '~> 4.1.0.rc2'
-gem 'activerecord-deprecated_finders'
