@@ -107,7 +107,7 @@ module IdentityCache
     # == Parameters
     # +keys+ A collection of key strings
     def fetch_multi(*keys)
-      keys.flatten!
+      keys.flatten!(1)
       return {} if keys.size == 0
       result = {}
       result = read_in_batches(keys) if should_cache?

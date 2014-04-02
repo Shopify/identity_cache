@@ -49,7 +49,7 @@ module IdentityCache
       def fetch_multi(*ids)
         raise NotImplementedError, "fetching needs the primary index enabled" unless primary_cache_index_enabled
         options = ids.extract_options!
-        ids.flatten!
+        ids.flatten!(1)
         records = if IdentityCache.should_cache?
           require_if_necessary do
             cache_keys = ids.map {|id| rails_cache_key(id) }
