@@ -14,6 +14,7 @@ require "identity_cache/cache_invalidation"
 
 module IdentityCache
   CACHED_NIL = :idc_cached_nil
+  BATCH_SIZE = 1000
 
   class AlreadyIncludedError < StandardError; end
   class InverseAssociationError < StandardError
@@ -109,7 +110,7 @@ module IdentityCache
       keys.flatten!
       return {} if keys.size == 0
       result = {}
-      result = cache.read_multi(*keys) if should_cache?
+      result = read_in_batches(keys) if should_cache?
 
       hit_keys = result.reject {|key, value| value == nil }.keys
       missed_keys = keys - hit_keys
@@ -135,6 +136,14 @@ module IdentityCache
       end
 
       result
+    end
+
+    private
+
+    def read_in_batches(keys)
+      keys.each_slice(BATCH_SIZE).each_with_object Hash.new do |slice, result|
+        result.merge! cache.read_multi(*slice)
+      end
     end
   end
 end
