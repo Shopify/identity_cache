@@ -155,6 +155,10 @@ class FetchMultiTest < IdentityCache::TestCase
     Item.fetch_multi(@bob.id, @joe.id)
   end
 
+  def test_fetch_multi_array
+    assert_equal [@joe, @bob], Item.fetch_multi([@joe.id, @bob.id])
+  end
+
   private
 
   def populate_only_fred

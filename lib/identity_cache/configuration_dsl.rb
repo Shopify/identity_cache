@@ -199,7 +199,7 @@ module IdentityCache
         cache_key = rails_cache_index_key_for_fields_and_values(fields, values)
         ids = IdentityCache.fetch(cache_key) { connection.select_values(sql_on_miss) }
 
-        ids.empty? ? [] : fetch_multi(*ids)
+        ids.empty? ? [] : fetch_multi(ids)
       end
 
       def build_recursive_association_cache(association, options) #:nodoc:
@@ -251,7 +251,7 @@ module IdentityCache
           def #{options[:cached_accessor_name]}
             if IdentityCache.should_cache? || #{association}.loaded?
               #{options[:population_method_name]} unless @#{options[:ids_variable_name]} || @#{options[:records_variable_name]}
-              @#{options[:records_variable_name]} ||= #{options[:association_class]}.fetch_multi(*@#{options[:ids_variable_name]})
+              @#{options[:records_variable_name]} ||= #{options[:association_class]}.fetch_multi(@#{options[:ids_variable_name]})
             else
               #{association}
             end

@@ -49,13 +49,14 @@ module IdentityCache
       def fetch_multi(*ids)
         raise NotImplementedError, "fetching needs the primary index enabled" unless primary_cache_index_enabled
         options = ids.extract_options!
+        ids.flatten!
         records = if IdentityCache.should_cache?
           require_if_necessary do
             cache_keys = ids.map {|id| rails_cache_key(id) }
             key_to_id_map = Hash[ cache_keys.zip(ids) ]
             key_to_record_map = {}
 
-            coders_by_key = IdentityCache.fetch_multi(*cache_keys) do |unresolved_keys|
+            coders_by_key = IdentityCache.fetch_multi(cache_keys) do |unresolved_keys|
               ids = unresolved_keys.map {|key| key_to_id_map[key] }
               records = find_batch(ids)
               found_records = records.compact
@@ -263,7 +264,7 @@ module IdentityCache
                 parent_id = child_record.send(details[:foreign_key])
                 hash[parent_id] = child_record if parent_id.present?
               end
-              parent_records = details[:association_class].fetch_multi(*ids_to_child_record.keys)
+              parent_records = details[:association_class].fetch_multi(ids_to_child_record.keys)
               parent_records.each do |parent_record|
                 child_record = ids_to_child_record[parent_record.id]
                 child_record.send(details[:prepopulate_method_name], parent_record)
