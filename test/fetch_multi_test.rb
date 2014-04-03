@@ -162,12 +162,12 @@ class FetchMultiTest < IdentityCache::TestCase
   def test_fetch_multi_reads_in_batches
     cache_response = {}
     cache_response[@bob_blob_key] = cache_response_for(@bob)
-    cache_response[@joe_blob_key] = cache_response_for(@fred)
+    cache_response[@joe_blob_key] = cache_response_for(@joe)
 
     with_batch_size 1 do
       IdentityCache.cache.expects(:read_multi).with(@bob_blob_key).returns(cache_response).once
       IdentityCache.cache.expects(:read_multi).with(@joe_blob_key).returns(cache_response).once
-      Item.fetch_multi(@bob.id, @joe.id)
+      assert_equal [@bob, @joe], Item.fetch_multi(@bob.id, @joe.id)
     end
   end
 
