@@ -102,10 +102,10 @@ module IdentityCache
     end
 
     # Same as +fetch+, except that it will try a collection of keys, using the
-    # multiget operation of the cache adaptor
+    # multiget operation of the cache adaptor.
     #
     # == Parameters
-    # +keys+ A collection of key strings
+    # +keys+ A collection or array of key strings
     def fetch_multi(*keys)
       keys.flatten!(1)
       return {} if keys.size == 0

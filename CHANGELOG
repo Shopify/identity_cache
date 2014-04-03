@@ -1,4 +1,6 @@
 Unreleased
+* fetch_multi accepts an array of keys as argument
+* Fix: SystemStackError when fetching more records than the max stack size
 * Fix: Bug in fetch_multi in a transaction where results weren't compacted.
 * Fix: Avoid unused preload on fetch_multi with :includes option for cache miss
 * Change :embed option value from false to :ids for cache_has_many for clarity
