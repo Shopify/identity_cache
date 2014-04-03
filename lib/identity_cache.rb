@@ -75,7 +75,7 @@ module IdentityCache
     # == Parameters
     # +key+ A cache key string
     #
-    def fetch(key, &block)
+    def fetch(key)
       result = cache.read(key) if should_cache?
 
       if result.nil?
@@ -105,12 +105,12 @@ module IdentityCache
     #
     # == Parameters
     # +keys+ A collection of key strings
-    def fetch_multi(*keys, &block)
+    def fetch_multi(*keys)
       return {} if keys.size == 0
       result = {}
       result = cache.read_multi(*keys) if should_cache?
 
-      hit_keys = result.select {|key, value| value.present? }.keys
+      hit_keys = result.reject {|key, value| value == nil }.keys
       missed_keys = keys - hit_keys
 
       if missed_keys.size > 0
@@ -129,8 +129,8 @@ module IdentityCache
       end
 
 
-      result.keys.each do |key|
-        result[key] = unmap_cached_nil_for(result[key])
+      result.each do |key, value|
+        result[key] = unmap_cached_nil_for(value)
       end
 
       result

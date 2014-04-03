@@ -100,6 +100,18 @@ class FetchMultiTest < IdentityCache::TestCase
     assert_equal fetch_result, results
   end
 
+  def test_fetch_multi_works_with_blanks
+    cache_result = {1 => false, 2 => '   '}
+
+    IdentityCache.cache.expects(:read_multi).with(1,2).returns(cache_result)
+
+    results = IdentityCache.fetch_multi(1,2) do |keys|
+      flunk "Contents should have been fetched from cache successfully"
+    end
+
+    assert_equal cache_result, results
+  end
+
   def test_fetch_multi_duplicate_ids
     assert_equal [@joe, @bob, @joe], Item.fetch_multi(@joe.id, @bob.id, @joe.id)
   end
