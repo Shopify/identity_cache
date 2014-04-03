@@ -85,7 +85,7 @@ CACHE_RUNNERS = []
 class FindRunner < CacheRunner
   def run
     (1..@count).each do |i|
-      ::Item.find(i, :include => [:associated, {:associated_records => :deeply_associated_records}])
+      ::Item.includes(:associated, {:associated_records => :deeply_associated_records}).find(i)
     end
   end
 end
