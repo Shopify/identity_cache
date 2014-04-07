@@ -171,6 +171,12 @@ class FetchMultiTest < IdentityCache::TestCase
     end
   end
 
+  def test_fetch_multi_max_stack_level
+    cache_response = { @fred_blob_key => cache_response_for(@fred) }
+    IdentityCache.cache.stubs(:read_multi).returns(cache_response)
+    assert_nothing_raised { Item.fetch_multi([@fred.id] * 200_000) }
+  end
+
   private
 
   def populate_only_fred
