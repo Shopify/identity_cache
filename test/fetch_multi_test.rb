@@ -155,6 +155,28 @@ class FetchMultiTest < IdentityCache::TestCase
     Item.fetch_multi(@bob.id, @joe.id)
   end
 
+  def test_fetch_multi_array
+    assert_equal [@joe, @bob], Item.fetch_multi([@joe.id, @bob.id])
+  end
+
+  def test_fetch_multi_reads_in_batches
+    cache_response = {}
+    cache_response[@bob_blob_key] = cache_response_for(@bob)
+    cache_response[@joe_blob_key] = cache_response_for(@joe)
+
+    with_batch_size 1 do
+      IdentityCache.cache.expects(:read_multi).with(@bob_blob_key).returns(cache_response).once
+      IdentityCache.cache.expects(:read_multi).with(@joe_blob_key).returns(cache_response).once
+      assert_equal [@bob, @joe], Item.fetch_multi(@bob.id, @joe.id)
+    end
+  end
+
+  def test_fetch_multi_max_stack_level
+    cache_response = { @fred_blob_key => cache_response_for(@fred) }
+    IdentityCache.cache.stubs(:read_multi).returns(cache_response)
+    assert_nothing_raised { Item.fetch_multi([@fred.id] * 200_000) }
+  end
+
   private
 
   def populate_only_fred
@@ -169,5 +191,15 @@ class FetchMultiTest < IdentityCache::TestCase
     coder = {:class => record.class}
     record.encode_with(coder)
     coder
+  end
+
+  def with_batch_size(size)
+    previous_batch_size = IdentityCache::BATCH_SIZE
+    IdentityCache.send(:remove_const, :BATCH_SIZE)
+    IdentityCache.const_set(:BATCH_SIZE, size)
+    yield
+  ensure
+    IdentityCache.send(:remove_const, :BATCH_SIZE)
+    IdentityCache.const_set(:BATCH_SIZE, previous_batch_size)
   end
 end
