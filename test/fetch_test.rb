@@ -64,6 +64,12 @@ class FetchTest < IdentityCache::TestCase
     assert_equal @record, Item.fetch(1)
   end
 
+  def test_fetch_miss_with_non_id_primary_key
+    hashed_key = Zlib::crc32("foo") % (2 ** 30 - 1)
+    fixture = KeyedRecord.create!(:value => "foo") { |r| r.hashed_key = hashed_key }
+    assert_equal fixture, KeyedRecord.fetch(hashed_key)
+  end
+
   def test_fetch_by_id_not_found_should_return_nil
     nonexistent_record_id = 10
     IdentityCache.cache.expects(:write).with(@blob_key + '0', IdentityCache::CACHED_NIL)

@@ -17,7 +17,9 @@ module DatabaseConnection
 
   def self.create_tables
     TABLES.each do |table, fields|
-      ActiveRecord::Base.connection.create_table(table) do |t|
+      fields = fields.dup
+      options = fields.last.is_a?(Hash) ? fields.pop : {}
+      ActiveRecord::Base.connection.create_table(table, options) do |t|
         fields.each do |column_type, *args|
           t.send(column_type, *args)
         end
@@ -32,7 +34,8 @@ module DatabaseConnection
     :normalized_associated_records => [[:string, :name], [:integer, :item_id], [:timestamps]],
     :not_cached_records            => [[:string, :name], [:integer, :item_id], [:timestamps]],
     :items                         => [[:integer, :item_id], [:string, :title], [:timestamps]],
-    :items2                        => [[:integer, :item_id], [:string, :title], [:timestamps]]
+    :items2                        => [[:integer, :item_id], [:string, :title], [:timestamps]],
+    :keyed_records                 => [[:string, :value], :primary_key => "hashed_key"],
   }
 
   DATABASE_CONFIG = {
