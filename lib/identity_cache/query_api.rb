@@ -33,7 +33,7 @@ module IdentityCache
           end
 
         else
-          self.where(id: id).first
+          self.where(primary_key => id).first
         end
       end
 
@@ -177,7 +177,7 @@ module IdentityCache
       end
 
       def resolve_cache_miss(id)
-        object = self.includes(cache_fetch_includes).where(id: id).try(:first)
+        object = self.includes(cache_fetch_includes).where(primary_key => id).try(:first)
         object.send(:populate_association_caches) if object
         object
       end
@@ -218,9 +218,9 @@ module IdentityCache
       end
 
       def find_batch(ids)
-        @id_column ||= columns.detect {|c| c.name == "id"}
+        @id_column ||= columns.detect {|c| c.name == primary_key}
         ids = ids.map{ |id| @id_column.type_cast(id) }
-        records = where('id IN (?)', ids).includes(cache_fetch_includes).to_a
+        records = where(primary_key => ids).includes(cache_fetch_includes).to_a
         records_by_id = records.index_by(&:id)
         ids.map{ |id| records_by_id[id] }
       end
@@ -404,7 +404,8 @@ module IdentityCache
     end
 
     def was_new_record? # :nodoc:
-      !destroyed? && transaction_changed_attributes.has_key?('id') && transaction_changed_attributes['id'].nil?
+      pk = self.class.primary_key
+      !destroyed? && transaction_changed_attributes.has_key?(pk) && transaction_changed_attributes[pk].nil?
     end
   end
 end

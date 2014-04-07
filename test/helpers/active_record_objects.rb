@@ -56,6 +56,11 @@ module ActiveRecordObjects
       has_one :polymorphic_record, :as => 'owner'
       has_one :associated, :class_name => 'AssociatedRecord'
     }
+
+    Object.send :const_set, 'KeyedRecord', Class.new(base) {
+      include IdentityCache
+      self.primary_key = "hashed_key"
+    }
   end
 
   def teardown_models
@@ -67,5 +72,6 @@ module ActiveRecordObjects
     Object.send :remove_const, 'AssociatedRecord'
     Object.send :remove_const, 'NotCachedRecord'
     Object.send :remove_const, 'Item'
+    Object.send :remove_const, 'KeyedRecord'
   end
 end

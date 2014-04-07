@@ -177,6 +177,11 @@ class FetchMultiTest < IdentityCache::TestCase
     assert_nothing_raised { Item.fetch_multi([@fred.id] * 200_000) }
   end
 
+  def test_fetch_multi_with_non_id_primary_key
+    fixture = KeyedRecord.create!(:value => "a") { |r| r.hashed_key = 123 }
+    assert_equal [fixture], KeyedRecord.fetch_multi(123, 456)
+  end
+
   private
 
   def populate_only_fred
