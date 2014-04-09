@@ -1,11 +1,11 @@
 require 'minitest/autorun'
 require 'mocha/setup'
 require 'active_record'
-require 'memcached_store'
-require 'helpers/cache'
 require 'helpers/database_connection'
 require 'helpers/active_record_objects'
 require 'spy'
+require 'memcached_store'
+require 'active_support/cache/memcached_store'
 
 require File.dirname(__FILE__) + '/../lib/identity_cache'
 
@@ -37,6 +37,9 @@ class IdentityCache::TestCase < MiniTest::Unit::TestCase
   def setup
     DatabaseConnection.drop_tables
     DatabaseConnection.create_tables
+
+    IdentityCache.logger = Logger.new(nil)
+    IdentityCache.cache_backend = ActiveSupport::Cache::MemcachedStore.new("localhost:#{$memcached_port}")
 
     setup_models
   end
