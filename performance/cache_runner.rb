@@ -16,7 +16,10 @@ end
 
 require File.dirname(__FILE__) + '/../test/helpers/active_record_objects'
 require File.dirname(__FILE__) + '/../test/helpers/database_connection'
-require File.dirname(__FILE__) + '/../test/helpers/cache'
+
+IdentityCache.logger = Logger.new(nil)
+IdentityCache.cache_backend = ActiveSupport::Cache::MemcachedStore.new("localhost:#{$memcached_port}")
+
 
 def create_record(id)
   Item.new(id)
