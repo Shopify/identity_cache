@@ -120,8 +120,8 @@ class FetchTest < IdentityCache::TestCase
 
   def test_fetch_by_title_stores_idcnil
     Item.connection.expects(:select_value).once.returns(nil)
-    Rails.cache.expects(:write).with(@index_key, IdentityCache::CACHED_NIL)
-    Rails.cache.expects(:read).with(@index_key).times(3).returns(nil, IdentityCache::CACHED_NIL, IdentityCache::CACHED_NIL)
+    IdentityCache.cache.expects(:write).with(@index_key, IdentityCache::CACHED_NIL)
+    IdentityCache.cache.expects(:read).with(@index_key).times(3).returns(nil, IdentityCache::CACHED_NIL, IdentityCache::CACHED_NIL)
     assert_equal nil, Item.fetch_by_title('bob') # select_value => nil
 
     assert_equal nil, Item.fetch_by_title('bob') # returns cached nil

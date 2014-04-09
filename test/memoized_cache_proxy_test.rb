@@ -3,7 +3,7 @@ require "test_helper"
 class MemoizedCacheProxyTest < IdentityCache::TestCase
   def setup
     super
-    IdentityCache.cache_backend = Rails.cache
+    @backend = IdentityCache.cache.cache_backend
   end
 
   def test_changing_default_cache
@@ -13,7 +13,7 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
   end
 
   def test_read_should_short_circuit_on_memoized_values
-    Rails.cache.expects(:read).never
+    @backend.expects(:read).never
 
     IdentityCache.cache.with_memoization do
       IdentityCache.cache.write('foo', 'bar')
@@ -22,7 +22,7 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
   end
 
   def test_read_should_short_circuit_on_falsy_memoized_values
-    Rails.cache.expects(:read).never
+    @backend.expects(:read).never
 
     IdentityCache.cache.with_memoization do
       IdentityCache.cache.write('foo', nil)
@@ -33,7 +33,7 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
   end
 
   def test_read_should_try_memcached_on_not_memoized_values
-    Rails.cache.expects(:read).with('foo').returns('bar')
+    @backend.expects(:read).with('foo').returns('bar')
 
     IdentityCache.cache.with_memoization do
       assert_equal 'bar', IdentityCache.cache.read('foo')
@@ -41,9 +41,8 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
   end
 
   def test_write_should_memoize_values
-    Rails.cache.expects(:read).never
-    Rails.cache.expects(:write).with('foo', 'bar')
-
+    @backend.expects(:read).never
+    @backend.expects(:write).with('foo', 'bar')
 
     IdentityCache.cache.with_memoization do
       IdentityCache.cache.write('foo', 'bar')
@@ -76,7 +75,7 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
 
   def test_read_multi_with_partially_memoized_should_read_missing_keys_from_memcache
     IdentityCache.cache.write('foo', 'bar')
-    Rails.cache.write('fooz', 'baz')
+    @backend.write('fooz', 'baz')
 
     IdentityCache.cache.with_memoization do
       assert_equal({'foo' => 'bar', 'fooz' => 'baz'}, IdentityCache.cache.read_multi('foo', 'fooz'))
@@ -84,7 +83,7 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
   end
 
   def test_read_multi_with_blank_values_should_not_hit_the_cache_engine
-    Rails.cache.expects(:read_multi).never
+    @backend.expects(:read_multi).never
 
     IdentityCache.cache.with_memoization do
       IdentityCache.cache.write('foo', [])
@@ -98,13 +97,6 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
     IdentityCache.cache.with_memoization do
       IdentityCache.cache.write('foo', 'bar')
     end
-
-    assert_equal 'bar', Rails.cache.read('foo')
-  end
-
-  def test_set_backend_should_not_touch_rails
-    Rails.expects(:cache).never
-    IdentityCache.instance_variable_set(:@cache, nil)
-    IdentityCache.cache_backend = Rails::Cache.new
+    assert_equal 'bar', @backend.read('foo')
   end
 end
