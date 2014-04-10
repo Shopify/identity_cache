@@ -1,11 +1,11 @@
 Unreleased
+* Stop expiring cache on after_touch callback. [backwards incompatible]
 * fetch_multi accepts an array of keys as argument
 * Fix: SystemStackError when fetching more records than the max stack size
 * Fix: Bug in fetch_multi in a transaction where results weren't compacted.
 * Fix: Avoid unused preload on fetch_multi with :includes option for cache miss
 * Change :embed option value from false to :ids for cache_has_many for clarity
 * Fix: reload will invalidate the local instance cache
-* Stop expiring cache on after_touch callback. [backwards incompatible]
 
 0.0.7
 * Fix: Not implemented error for cache_has_one with embed: false
