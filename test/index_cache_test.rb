@@ -72,9 +72,9 @@ class ExpirationTest < IdentityCache::TestCase
   def test_non_unique_index_fetches_multiple_records
     Item.cache_index :title
     @record.save!
-    record2 = Item.create(:id => 2, :title => 'bob')
+    @other_record.save!
 
-    assert_equal [@record, record2], Item.fetch_by_title('bob')
+    assert_equal [@record, @other_record], Item.fetch_by_title('bob')
     assert_equal [1, 2], IdentityCache.cache.read(@cache_key)
   end
 
