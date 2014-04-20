@@ -63,6 +63,10 @@ module IdentityCache
             def fetch_by_#{field_list}(#{arg_list})
               identity_cache_multiple_value_dynamic_fetcher(#{fields.inspect}, [#{arg_list}])
             end
+
+            def fetch_multi_by_#{field_list}(#{arg_list})
+              identity_cache_multiple_value_dynamic_multi_fetcher(#{fields.inspect}, [#{arg_list}])
+            end
           CODE
         end
       end
@@ -198,6 +202,20 @@ module IdentityCache
         sql_on_miss = "SELECT #{quoted_primary_key} FROM #{quoted_table_name} WHERE #{identity_cache_sql_conditions(fields, values)}"
         cache_key = rails_cache_index_key_for_fields_and_values(fields, values)
         ids = IdentityCache.fetch(cache_key) { connection.select_values(sql_on_miss) }
+
+        ids.empty? ? [] : fetch_multi(ids)
+      end
+
+      def identity_cache_multiple_value_dynamic_multi_fetcher(fields, groups) # :nodoc
+        groups = groups.first.each_index.each_with_object [] do |i, result|
+          result << groups.map { |value| value[i] }
+        end
+
+        ids = groups.each_with_object [] do |values, result|
+          sql_on_miss = "SELECT #{quoted_primary_key} FROM #{quoted_table_name} WHERE #{identity_cache_sql_conditions(fields, values)}"
+          cache_key = rails_cache_index_key_for_fields_and_values(fields, values)
+          result.concat IdentityCache.fetch(cache_key) { connection.select_values(sql_on_miss) }
+        end
 
         ids.empty? ? [] : fetch_multi(ids)
       end
