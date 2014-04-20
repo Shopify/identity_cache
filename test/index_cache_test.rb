@@ -127,4 +127,14 @@ class ExpirationTest < IdentityCache::TestCase
     @other_record.save!
     assert_equal [@record, @other_record], Item.fetch_multi_by_id_and_title([1, 2], ['bob', 'bob'])
   end
+
+  def test_non_unique_index_fetch_multi_by_arguments_mismatch
+    Item.cache_index :id, :title
+    @record.save!
+    @other_record.save!
+    assert_equal [], Item.fetch_multi_by_id_and_title([1], [])
+    assert_equal [], Item.fetch_multi_by_id_and_title([], ['bob'])
+    assert_equal [@record], Item.fetch_multi_by_id_and_title([1, 2], ['bob'])
+    assert_equal [@other_record], Item.fetch_multi_by_id_and_title([2], ['bob', 'bob'])
+  end
 end
