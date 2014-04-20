@@ -199,10 +199,7 @@ module IdentityCache
       end
 
       def identity_cache_multiple_value_dynamic_fetcher(fields, values) # :nodoc
-        sql_on_miss = "SELECT #{quoted_primary_key} FROM #{quoted_table_name} WHERE #{identity_cache_sql_conditions(fields, values)}"
-        cache_key = rails_cache_index_key_for_fields_and_values(fields, values)
-        ids = IdentityCache.fetch(cache_key) { connection.select_values(sql_on_miss) }
-
+        ids = identity_cache_multiple_value_dynamic_id_fetcher(fields, values)
         ids.empty? ? [] : fetch_multi(ids)
       end
 
@@ -212,12 +209,16 @@ module IdentityCache
         end
 
         ids = groups.each_with_object [] do |values, result|
-          sql_on_miss = "SELECT #{quoted_primary_key} FROM #{quoted_table_name} WHERE #{identity_cache_sql_conditions(fields, values)}"
-          cache_key = rails_cache_index_key_for_fields_and_values(fields, values)
-          result.concat IdentityCache.fetch(cache_key) { connection.select_values(sql_on_miss) }
+          result.concat identity_cache_multiple_value_dynamic_id_fetcher(fields, values)
         end
 
         ids.empty? ? [] : fetch_multi(ids)
+      end
+
+      def identity_cache_multiple_value_dynamic_id_fetcher(fields, values) # :nodoc
+        sql_on_miss = "SELECT #{quoted_primary_key} FROM #{quoted_table_name} WHERE #{identity_cache_sql_conditions(fields, values)}"
+        cache_key = rails_cache_index_key_for_fields_and_values(fields, values)
+        IdentityCache.fetch(cache_key) { connection.select_values(sql_on_miss) }
       end
 
       def build_recursive_association_cache(association, options) #:nodoc:
