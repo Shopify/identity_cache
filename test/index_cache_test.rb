@@ -9,6 +9,11 @@ class ExpirationTest < IdentityCache::TestCase
     @record.id = 1
     @record.title = 'bob'
     @cache_key = "#{NAMESPACE}index:Item:title:#{cache_hash(@record.title)}"
+
+    @other_record = Item.new
+    @other_record.id = 2
+    @other_record.title = 'bob'
+    @other_cache_key = "#{NAMESPACE}index:Item:title:#{cache_hash(@other_record.title)}"
   end
 
   def test_unique_index_caches_nil
@@ -67,9 +72,9 @@ class ExpirationTest < IdentityCache::TestCase
   def test_non_unique_index_fetches_multiple_records
     Item.cache_index :title
     @record.save!
-    record2 = Item.create(:id => 2, :title => 'bob')
+    @other_record.save!
 
-    assert_equal [@record, record2], Item.fetch_by_title('bob')
+    assert_equal [@record, @other_record], Item.fetch_by_title('bob')
     assert_equal [1, 2], IdentityCache.cache.read(@cache_key)
   end
 
@@ -100,5 +105,36 @@ class ExpirationTest < IdentityCache::TestCase
     @record.save!
     assert_equal [@record], Item.fetch_by_title('bob')
     assert_equal [@record.id], IdentityCache.cache.read(@cache_key)
+  end
+
+  def test_non_unique_index_fetch_multi_caches_empty_result
+    Item.cache_index :title
+    assert_equal [], Item.fetch_multi_by_title(['bob'])
+    assert_equal [], IdentityCache.cache.read(@cache_key)
+  end
+
+  def test_non_unique_index_filled_on_fetch_multi_by
+    Item.cache_index :title
+    @record.save!
+    @other_record.save!
+    assert_equal [@record, @other_record], Item.fetch_multi_by_title(['bob'])
+    assert_equal [1, 2], IdentityCache.cache.read(@cache_key)
+  end
+
+  def test_non_unique_index_fetch_multi_by_multiple_values
+    Item.cache_index :id, :title
+    @record.save!
+    @other_record.save!
+    assert_equal [@record, @other_record], Item.fetch_multi_by_id_and_title([1, 2], ['bob', 'bob'])
+  end
+
+  def test_non_unique_index_fetch_multi_by_arguments_mismatch
+    Item.cache_index :id, :title
+    @record.save!
+    @other_record.save!
+    assert_equal [], Item.fetch_multi_by_id_and_title([1], [])
+    assert_equal [], Item.fetch_multi_by_id_and_title([], ['bob'])
+    assert_equal [@record], Item.fetch_multi_by_id_and_title([1, 2], ['bob'])
+    assert_equal [@other_record], Item.fetch_multi_by_id_and_title([2], ['bob', 'bob'])
   end
 end
