@@ -289,11 +289,7 @@ module IdentityCache
       end
 
       def identity_cache_conditons(fields, values)
-        scope = self.reorder(nil)
-        fields.each_with_index do |field, index|
-          scope = scope.where(field => values[index])
-        end
-        scope
+        reorder(nil).where(Hash[fields.zip(values)])
       end
 
       def deprecate_embed_option(options, old_value, new_value)
