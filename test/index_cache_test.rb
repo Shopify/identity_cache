@@ -11,6 +11,16 @@ class ExpirationTest < IdentityCache::TestCase
     @cache_key = "#{NAMESPACE}index:Item:title:#{cache_hash(@record.title)}"
   end
 
+  def test_fetch_with_garbage_input
+    Item.cache_index :title, :id, :unique => true
+
+    Item.connection.expects(:exec_query)
+      .with("SELECT id FROM `items`  WHERE `items`.`title` = 'garbage' AND `items`.`id` = 0", anything)
+      .returns(ActiveRecord::Result.new([], []))
+
+    Item.fetch_by_title_and_id('garbage', 'garbage')
+  end
+
   def test_unique_index_caches_nil
     Item.cache_index :title, :unique => true
     assert_equal nil, Item.fetch_by_title('bob')

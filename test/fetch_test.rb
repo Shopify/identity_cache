@@ -17,6 +17,14 @@ class FetchTest < IdentityCache::TestCase
     @index_key = "#{NAMESPACE}index:Item:title:#{cache_hash('bob')}"
   end
 
+  def test_fetch_with_garbage_input
+    Item.connection.expects(:exec_query)
+      .with('SELECT  `items`.* FROM `items`  WHERE `items`.`id` = 0 LIMIT 1', anything)
+      .returns(ActiveRecord::Result.new([], []))
+
+    assert_equal nil, Item.fetch_by_id('garbage')
+  end
+
   def test_fetch_cache_hit
     IdentityCache.cache.expects(:read).with(@blob_key).returns(@cached_value)
 
@@ -99,7 +107,7 @@ class FetchTest < IdentityCache::TestCase
     IdentityCache.cache.expects(:read).with(@index_key).returns(nil)
 
     # - not found, use sql, SELECT id FROM records WHERE title = '...' LIMIT 1"
-    Item.connection.expects(:select_value).returns(1)
+    Item.connection.expects(:exec_query).returns(ActiveRecord::Result.new(['id'], [1]))
 
     # cache sql result
     IdentityCache.cache.expects(:write).with(@index_key, 1)
@@ -119,17 +127,17 @@ class FetchTest < IdentityCache::TestCase
   end
 
   def test_fetch_by_title_stores_idcnil
-    Item.connection.expects(:select_value).once.returns(nil)
+    Item.connection.expects(:exec_query).once.returns(ActiveRecord::Result.new([], []))
     IdentityCache.cache.expects(:write).with(@index_key, IdentityCache::CACHED_NIL)
     IdentityCache.cache.expects(:read).with(@index_key).times(3).returns(nil, IdentityCache::CACHED_NIL, IdentityCache::CACHED_NIL)
-    assert_equal nil, Item.fetch_by_title('bob') # select_value => nil
+    assert_equal nil, Item.fetch_by_title('bob') # exec_query => nil
 
     assert_equal nil, Item.fetch_by_title('bob') # returns cached nil
     assert_equal nil, Item.fetch_by_title('bob') # returns cached nil
   end
 
   def test_fetch_by_bang_method
-    Item.connection.expects(:select_value).returns(nil)
+    Item.connection.expects(:exec_query).returns(ActiveRecord::Result.new([], []))
     assert_raises ActiveRecord::RecordNotFound do
       Item.fetch_by_title!('bob')
     end
