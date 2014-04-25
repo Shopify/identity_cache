@@ -12,6 +12,8 @@ module IdentityCache
       if klass.include?(IdentityCache)
         klass.send(:all_cached_associations).sort.each do |name, options|
           case options[:embed]
+          when :self
+            schema_string << ",#{name}:self"
           when true
             schema_string << ",#{name}:(#{denormalized_schema_hash(options[:association_class])})"
           when :ids

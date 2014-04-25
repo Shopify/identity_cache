@@ -137,7 +137,7 @@ module IdentityCache
         raise InverseAssociationError unless self.reflect_on_association(association)
         self.cached_has_ones[association] = options
 
-        if options[:embed] == true
+        if options[:embed] == true || options[:embed] == :self
           build_recursive_association_cache(association, options)
         else
           raise NotImplementedError

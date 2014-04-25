@@ -55,6 +55,7 @@ module ActiveRecordObjects
       has_many :polymorphic_records, :as => 'owner'
       has_one :polymorphic_record, :as => 'owner'
       has_one :associated, :class_name => 'AssociatedRecord'
+      has_one :self, :class_name => 'Item'
     }
 
     Object.send :const_set, 'KeyedRecord', Class.new(base) {
