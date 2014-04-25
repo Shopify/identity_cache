@@ -107,7 +107,7 @@ class FetchTest < IdentityCache::TestCase
     IdentityCache.cache.expects(:read).with(@index_key).returns(nil)
 
     # - not found, use sql, SELECT id FROM records WHERE title = '...' LIMIT 1"
-    Item.connection.expects(:exec_query).returns(ActiveRecord::Result.new(['id'], [1]))
+    Item.connection.expects(:exec_query).returns(ActiveRecord::Result.new(['id'], [[1]]))
 
     # cache sql result
     IdentityCache.cache.expects(:write).with(@index_key, 1)
