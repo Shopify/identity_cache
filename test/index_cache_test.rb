@@ -1,6 +1,6 @@
 require "test_helper"
 
-class ExpirationTest < IdentityCache::TestCase
+class IndexCacheTest < IdentityCache::TestCase
   NAMESPACE = IdentityCache::CacheKeyGeneration::DEFAULT_NAMESPACE
 
   def setup
@@ -11,15 +11,25 @@ class ExpirationTest < IdentityCache::TestCase
     @cache_key = "#{NAMESPACE}index:Item:title:#{cache_hash(@record.title)}"
   end
 
-  def test_fetch_with_garbage_input
-    Item.cache_index :title, :id, :unique => true
+  def test_fetch_with_garbage_input_should_use_properly_typed_sql
+    Item.cache_index :title, :id
 
     Item.connection.expects(:exec_query)
       .with("SELECT id FROM `items`  WHERE `items`.`title` = 'garbage' AND `items`.`id` = 0", anything)
       .returns(ActiveRecord::Result.new([], []))
 
-    Item.fetch_by_title_and_id('garbage', 'garbage')
+    assert_equal [], Item.fetch_by_title_and_id('garbage', 'garbage')
   end
+
+  def test_fetch_with_unique_adds_limit_clause
+    Item.cache_index :title, :id, :unique => true
+
+    Item.connection.expects(:exec_query)
+      .with("SELECT  id FROM `items`  WHERE `items`.`title` = 'title' AND `items`.`id` = 2 LIMIT 1", anything)
+      .returns(ActiveRecord::Result.new([], []))
+
+    assert_equal nil, Item.fetch_by_title_and_id('title', '2')
+  end  
 
   def test_unique_index_caches_nil
     Item.cache_index :title, :unique => true
