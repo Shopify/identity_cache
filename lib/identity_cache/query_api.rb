@@ -33,7 +33,7 @@ module IdentityCache
           end
 
         else
-          self.where(primary_key => id).first
+          self.reorder(nil).where(primary_key => id).first
         end
       end
 
@@ -177,7 +177,7 @@ module IdentityCache
       end
 
       def resolve_cache_miss(id)
-        object = self.includes(cache_fetch_includes).where(primary_key => id).try(:first)
+        object = self.includes(cache_fetch_includes).reorder(nil).where(primary_key => id).try(:first)
         object.send(:populate_association_caches) if object
         object
       end

@@ -183,9 +183,8 @@ module IdentityCache
       private
 
       def identity_cache_single_value_dynamic_fetcher(fields, values) # :nodoc:
-        sql_on_miss = "SELECT #{quoted_primary_key} FROM #{quoted_table_name} WHERE #{identity_cache_sql_conditions(fields, values)} LIMIT 1"
         cache_key = rails_cache_index_key_for_fields_and_values(fields, values)
-        id = IdentityCache.fetch(cache_key) { connection.select_value(sql_on_miss) }
+        id = IdentityCache.fetch(cache_key) { identity_cache_conditions(fields, values).limit(1).pluck(primary_key).first }
         unless id.nil?
           record = fetch_by_id(id)
           IdentityCache.cache.delete(cache_key) unless record
@@ -195,9 +194,8 @@ module IdentityCache
       end
 
       def identity_cache_multiple_value_dynamic_fetcher(fields, values) # :nodoc
-        sql_on_miss = "SELECT #{quoted_primary_key} FROM #{quoted_table_name} WHERE #{identity_cache_sql_conditions(fields, values)}"
         cache_key = rails_cache_index_key_for_fields_and_values(fields, values)
-        ids = IdentityCache.fetch(cache_key) { connection.select_values(sql_on_miss) }
+        ids = IdentityCache.fetch(cache_key) { identity_cache_conditions(fields, values).pluck(primary_key) }
 
         ids.empty? ? [] : fetch_multi(ids)
       end
@@ -267,8 +265,7 @@ module IdentityCache
 
       def attribute_dynamic_fetcher(attribute, fields, values) #:nodoc:
         cache_key = rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, values)
-        sql_on_miss = "SELECT #{connection.quote_column_name(attribute)} FROM #{quoted_table_name} WHERE #{identity_cache_sql_conditions(fields, values)} LIMIT 1"
-        IdentityCache.fetch(cache_key) { connection.select_value(sql_on_miss) }
+        IdentityCache.fetch(cache_key) { identity_cache_conditions(fields, values).limit(1).pluck(attribute).first }
       end
 
       def add_parent_expiry_hook(options)
@@ -291,8 +288,8 @@ module IdentityCache
         CODE
       end
 
-      def identity_cache_sql_conditions(fields, values)
-        fields.each_with_index.collect { |f, i| "#{connection.quote_column_name(f)} = #{quote_value(values[i],nil)}" }.join(" AND ")
+      def identity_cache_conditions(fields, values)
+        reorder(nil).where(Hash[fields.zip(values)])
       end
 
       def deprecate_embed_option(options, old_value, new_value)

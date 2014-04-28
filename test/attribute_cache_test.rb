@@ -20,7 +20,10 @@ class AttributeCacheTest < IdentityCache::TestCase
 
   def test_attribute_values_are_fetched_and_returned_on_cache_misses
     IdentityCache.cache.expects(:read).with(@name_attribute_key).returns(nil)
-    Item.connection.expects(:select_value).with("SELECT `name` FROM `associated_records` WHERE `id` = 1 LIMIT 1").returns('foo')
+    Item.connection.expects(:exec_query)
+      .with('SELECT  `associated_records`.`name` FROM `associated_records`  WHERE `associated_records`.`id` = 1 LIMIT 1', anything)
+      .returns(ActiveRecord::Result.new(['name'], [['foo']]))
+
     assert_equal 'foo', AssociatedRecord.fetch_name_by_id(1)
   end
 
@@ -29,7 +32,9 @@ class AttributeCacheTest < IdentityCache::TestCase
     IdentityCache.cache.expects(:read).with(@name_attribute_key).returns(nil)
 
     # Grab the value of the attribute from the DB
-    Item.connection.expects(:select_value).with("SELECT `name` FROM `associated_records` WHERE `id` = 1 LIMIT 1").returns('foo')
+    Item.connection.expects(:exec_query)
+      .with('SELECT  `associated_records`.`name` FROM `associated_records`  WHERE `associated_records`.`id` = 1 LIMIT 1', anything)
+      .returns(ActiveRecord::Result.new(['name'], [['foo']]))
 
     # And write it back to the cache
     IdentityCache.cache.expects(:write).with(@name_attribute_key, 'foo').returns(nil)
@@ -42,7 +47,9 @@ class AttributeCacheTest < IdentityCache::TestCase
     IdentityCache.cache.expects(:read).with(@name_attribute_key).returns(nil)
 
     # Grab the value of the attribute from the DB
-    Item.connection.expects(:select_value).with("SELECT `name` FROM `associated_records` WHERE `id` = 1 LIMIT 1").returns(nil)
+    Item.connection.expects(:exec_query)
+      .with('SELECT  `associated_records`.`name` FROM `associated_records`  WHERE `associated_records`.`id` = 1 LIMIT 1', anything)
+      .returns(ActiveRecord::Result.new(['name'], []))
 
     # And write it back to the cache
     IdentityCache.cache.expects(:write).with(@name_attribute_key, IdentityCache::CACHED_NIL).returns(nil)
@@ -81,7 +88,9 @@ class AttributeCacheTest < IdentityCache::TestCase
   def test_fetching_by_attribute_delegates_to_block_if_transactions_are_open
     IdentityCache.cache.expects(:read).with(@name_attribute_key).never
 
-    Item.connection.expects(:select_value).with("SELECT `name` FROM `associated_records` WHERE `id` = 1 LIMIT 1").returns('foo')
+    Item.connection.expects(:exec_query)
+      .with('SELECT  `associated_records`.`name` FROM `associated_records`  WHERE `associated_records`.`id` = 1 LIMIT 1', anything)
+      .returns(ActiveRecord::Result.new(['name'], [['foo']]))
 
     @record.transaction do
       assert_equal 'foo', AssociatedRecord.fetch_name_by_id(1)
