@@ -15,7 +15,7 @@ class IndexCacheTest < IdentityCache::TestCase
     Item.cache_index :title, :id
 
     Item.connection.expects(:exec_query)
-      .with(regexp_matches(/ WHERE `items`.`title` = 'garbage' AND `items`.`id` = 0\z/), anything)
+      .with(regexp_matches(/ WHERE `items`\.`title` = 'garbage' AND `items`\.`id` = 0\z/i), anything)
       .returns(ActiveRecord::Result.new([], []))
 
     assert_equal [], Item.fetch_by_title_and_id('garbage', 'garbage')
