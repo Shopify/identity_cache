@@ -1,4 +1,7 @@
 Unreleased
+* Consistently use ActiveRecord / Arel APIs to build SQL queries
+	[related #148]
+
 * Stop expiring cache on after_touch callback. [backwards incompatible]
 * fetch_multi accepts an array of keys as argument
 * Fix: SystemStackError when fetching more records than the max stack size
