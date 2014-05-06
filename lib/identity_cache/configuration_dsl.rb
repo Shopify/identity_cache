@@ -118,6 +118,10 @@ module IdentityCache
         if wrapper_method
           self.class_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
             def #{method_name}_with_method_cache(*args)
+              unless @__#{method_name}.present?
+                @__#{method_name} = #{method_name}_without_method_cache
+              end
+
               self.#{wrapper_method}(@__#{method_name}, *args)
             end
 
@@ -126,6 +130,10 @@ module IdentityCache
         else
           self.class_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
             def #{method_name}_with_method_cache
+              unless @__#{method_name}.present?
+                @__#{method_name} = #{method_name}_without_method_cache
+              end
+
               @__#{method_name}
             end
 
