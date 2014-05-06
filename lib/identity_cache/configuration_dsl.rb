@@ -112,15 +112,26 @@ module IdentityCache
         end
       end
 
-      def cache_method_return(method_name)
+      def cache_method_return(method_name, wrapper_method = nil)
         self.cached_methods << method_name
-        self.class_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
-          def #{method_name}_with_method_cache
-              @__#{method_name}
-          end
 
-          alias_method_chain :#{method_name}, :method_cache
-        CODE
+        if wrapper_method
+          self.class_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
+            def #{method_name}_with_method_cache(*args)
+              self.#{wrapper_method}(@__#{method_name}, *args)
+            end
+
+            alias_method_chain :#{method_name}, :method_cache
+          CODE
+        else
+          self.class_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
+            def #{method_name}_with_method_cache
+              @__#{method_name}
+            end
+
+            alias_method_chain :#{method_name}, :method_cache
+          CODE
+        end
       end
 
       # Will cache an association to the class including IdentityCache.

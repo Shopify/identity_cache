@@ -19,6 +19,14 @@ module MethodReturn
   def method_return
     return 'ok'
   end
+
+  def method_return_foo
+    return 'ok'
+  end
+
+  def method_return_wrapper(value, options)
+    return value + options[:append]
+  end
 end
 
 module ActiveRecordObjects
