@@ -7,12 +7,14 @@ module IdentityCache
       base.class_attribute :cache_attributes
       base.class_attribute :cached_has_manys
       base.class_attribute :cached_has_ones
+      base.class_attribute :cached_methods
       base.class_attribute :primary_cache_index_enabled
 
       base.cached_has_manys = {}
       base.cached_has_ones = {}
       base.cache_attributes = []
       base.cache_indexes = []
+      base.cached_methods = []
       base.primary_cache_index_enabled = true
     end
 
@@ -108,6 +110,17 @@ module IdentityCache
         else
           raise NotImplementedError
         end
+      end
+
+      def cache_method_return(method_name)
+        self.cached_methods << method_name
+        self.class_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
+          def #{method_name}_with_method_cache
+              @__#{method_name}
+          end
+
+          alias_method_chain :#{method_name}, :method_cache
+        CODE
       end
 
       # Will cache an association to the class including IdentityCache.

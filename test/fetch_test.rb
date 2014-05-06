@@ -7,11 +7,18 @@ class FetchTest < IdentityCache::TestCase
     super
     Item.cache_index :title, :unique => true
     Item.cache_index :id, :title, :unique => true
+    Item.cache_method_return :method_return
 
     @record = Item.new
     @record.id = 1
     @record.title = 'bob'
-    @cached_value = {:class => @record.class}
+    @cached_value = {
+      :class => @record.class,
+      :method_caches => {
+        :method_return => @record.method_return_without_method_cache
+      }
+    }
+
     @record.encode_with(@cached_value)
     @blob_key = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:1"
     @index_key = "#{NAMESPACE}index:Item:title:#{cache_hash('bob')}"
@@ -140,4 +147,11 @@ class FetchTest < IdentityCache::TestCase
     IdentityCache.cache.expects(:write).never
     assert_raises(ActiveRecord::RecordNotFound) { Item.fetch(nil) }
   end
+
+  def test_fetch_cacehe_method_return_ok
+    IdentityCache.cache.expects(:read).with(@blob_key).returns(@cached_value)
+    record_from_cache = Item.fetch(1)
+    assert_equal record_from_cache.method_return, "ok"
+  end
+
 end
