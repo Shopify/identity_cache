@@ -29,7 +29,7 @@ class IndexCacheTest < IdentityCache::TestCase
       .returns(ActiveRecord::Result.new([], []))
 
     assert_equal nil, Item.fetch_by_title_and_id('title', '2')
-  end  
+  end
 
   def test_unique_index_caches_nil
     Item.cache_index :title, :unique => true

@@ -17,7 +17,6 @@ gem 'cityhash'        # optional, for faster hashing (C-Ruby only)
 And then execute:
 
     $ bundle
-    
 
 
 Add the following to your environment/production.rb:
