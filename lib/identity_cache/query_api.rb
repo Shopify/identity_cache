@@ -103,6 +103,8 @@ module IdentityCache
 
           coder[:associations].each {|name, value| set_embedded_association(record, name, value) } if coder.has_key?(:associations)
           coder[:normalized_has_many].each {|name, ids| record.instance_variable_set(:"@#{record.class.cached_has_manys[name][:ids_variable_name]}", ids) } if coder.has_key?(:normalized_has_many)
+          coder[:method_caches].each { |name, value| record.instance_variable_set(:"@__#{name}", value) } if coder[:method_caches]
+
           record
         end
       end
@@ -138,6 +140,7 @@ module IdentityCache
           coder = {:class => record.class }
           record.encode_with(coder)
           add_cached_associations_to_coder(record, coder)
+          add_cached_methods_to_coder(record, coder)
           coder
         end
       end
@@ -154,6 +157,18 @@ module IdentityCache
             coder[:normalized_has_many] = cached_has_manys.each_with_object({}) do |(name, options), hash|
               hash[name] = record.instance_variable_get(:"@#{options[:ids_variable_name]}") unless options[:embed] == true
             end
+          end
+        end
+      end
+
+      def add_cached_methods_to_coder(record, coder)
+        klass = record.class
+        return coder unless klass.include?(IdentityCache)
+
+        if klass.cached_methods.present?
+          coder[:method_caches] = klass.cached_methods.each_with_object({}) do |name, hash|
+            origin_method = "#{name}_without_method_cache".to_sym
+            hash[name] = record.send(origin_method)
           end
         end
       end

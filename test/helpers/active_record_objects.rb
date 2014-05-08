@@ -15,6 +15,20 @@ module SwitchNamespace
   end
 end
 
+module MethodReturn
+  def method_return
+    return 'ok'
+  end
+
+  def method_return_foo
+    return 'ok'
+  end
+
+  def method_return_wrapper(value, options)
+    return value + options[:append]
+  end
+end
+
 module ActiveRecordObjects
 
   def setup_models(base = ActiveRecord::Base)
@@ -48,6 +62,7 @@ module ActiveRecordObjects
 
     Object.send :const_set, 'Item', Class.new(base) {
       include IdentityCache
+      include MethodReturn
       belongs_to :item
       has_many :associated_records, inverse_of: :item
       has_many :normalized_associated_records
@@ -55,6 +70,7 @@ module ActiveRecordObjects
       has_many :polymorphic_records, :as => 'owner'
       has_one :polymorphic_record, :as => 'owner'
       has_one :associated, :class_name => 'AssociatedRecord'
+      has_one :self, :class_name => 'Item'
     }
 
     Object.send :const_set, 'KeyedRecord', Class.new(base) {
