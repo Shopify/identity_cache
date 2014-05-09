@@ -4,7 +4,9 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
   def setup
     super
     Item.cache_has_one :associated
+    Item.cache_has_one :self, :embed => :self
     Item.cache_index :title, :unique => true
+
     @record = Item.new(:title => 'foo')
     @record.associated = AssociatedRecord.new(:name => 'bar')
     @record.save
@@ -21,6 +23,16 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     assert_equal @record, record_from_cache_miss
     assert_not_nil @record.fetch_associated
     assert_equal @record.associated, record_from_cache_miss.fetch_associated
+  end
+
+  def test_on_cache_embed_with_self_class
+    record = Item.new(:title => 'bar')
+    record.save
+
+    @record.self = record
+    @record.save
+
+    assert_equal @record.self.id, record.id
   end
 
   def test_on_cache_miss_record_should_embed_nil_object

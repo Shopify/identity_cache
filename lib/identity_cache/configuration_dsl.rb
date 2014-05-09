@@ -7,12 +7,16 @@ module IdentityCache
       base.class_attribute :cache_attributes
       base.class_attribute :cached_has_manys
       base.class_attribute :cached_has_ones
+      base.class_attribute :cached_methods
+      base.class_attribute :cached_method_sign
       base.class_attribute :primary_cache_index_enabled
 
       base.cached_has_manys = {}
       base.cached_has_ones = {}
       base.cache_attributes = []
       base.cache_indexes = []
+      base.cached_methods = []
+      base.cached_method_sign = ''
       base.primary_cache_index_enabled = true
     end
 
@@ -110,6 +114,42 @@ module IdentityCache
         end
       end
 
+      def cache_method_return(method_name, options = {})
+        raise NotImplementedError unless options[:sign]
+
+        self.cached_methods << method_name
+
+        sign = OpenSSL::Digest.new('md5', self.cached_method_sign)
+        sign.update(options[:sign])
+        self.cached_method_sign = sign.hexdigest
+
+        if options[:wrapper]
+          self.class_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
+            def #{method_name}_with_method_cache(*args)
+              unless @__#{method_name}.present?
+                return #{method_name}_without_method_cache(*args)
+              end
+
+              self.#{options[:wrapper]}(@__#{method_name}, *args)
+            end
+
+            alias_method_chain :#{method_name}, :method_cache
+          CODE
+        else
+          self.class_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
+            def #{method_name}_with_method_cache
+              unless @__#{method_name}.present?
+                return #{method_name}_without_method_cache
+              end
+
+              @__#{method_name}
+            end
+
+            alias_method_chain :#{method_name}, :method_cache
+          CODE
+        end
+      end
+
       # Will cache an association to the class including IdentityCache.
       # IdentityCache will keep the association values in the same cache entry
       # as the parent.
@@ -137,7 +177,7 @@ module IdentityCache
         raise InverseAssociationError unless self.reflect_on_association(association)
         self.cached_has_ones[association] = options
 
-        if options[:embed] == true
+        if options[:embed] == true || options[:embed] == :self
           build_recursive_association_cache(association, options)
         else
           raise NotImplementedError

@@ -9,16 +9,24 @@ module IdentityCache
 
     def self.denormalized_schema_hash(klass)
       schema_string = schema_to_string(klass.columns)
+
       if klass.include?(IdentityCache)
         klass.send(:all_cached_associations).sort.each do |name, options|
           case options[:embed]
+          when :self
+            schema_string << ",#{name}:self"
           when true
             schema_string << ",#{name}:(#{denormalized_schema_hash(options[:association_class])})"
           when :ids
             schema_string << ",#{name}:ids"
           end
         end
+
+        if klass.cached_method_sign.present?
+          schema_string << ",method_caches:#{klass.cached_method_sign}"
+        end
       end
+
       IdentityCache.memcache_hash(schema_string)
     end
 
