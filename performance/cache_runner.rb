@@ -6,13 +6,8 @@ require 'identity_cache'
 require 'memcached_store'
 require 'active_support/cache/memcached_store'
 
-if ENV['BOXEN_HOME'].present?
-  $memcached_port = 21211
-  $mysql_port = 13306
-else
-  $memcached_port = 11211
-  $mysql_port = 3306
-end
+$memcached_port = 11211
+$mysql_port = 3306
 
 require File.dirname(__FILE__) + '/../test/helpers/active_record_objects'
 require File.dirname(__FILE__) + '/../test/helpers/database_connection'

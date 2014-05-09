@@ -10,13 +10,8 @@ require 'active_support/cache/memcached_store'
 
 require File.dirname(__FILE__) + '/../lib/identity_cache'
 
-if ENV['BOXEN_HOME'].present?
-  $memcached_port = 21211
-  $mysql_port = 13306
-else
-  $memcached_port = 11211
-  $mysql_port = 3306
-end
+$memcached_port = 11211
+$mysql_port = 3306
 
 DatabaseConnection.setup
 ActiveSupport::Cache::Store.instrument = true
