@@ -8,6 +8,7 @@ module IdentityCache
       base.class_attribute :cached_has_manys
       base.class_attribute :cached_has_ones
       base.class_attribute :cached_methods
+      base.class_attribute :cached_method_sign
       base.class_attribute :primary_cache_index_enabled
 
       base.cached_has_manys = {}
@@ -15,6 +16,7 @@ module IdentityCache
       base.cache_attributes = []
       base.cache_indexes = []
       base.cached_methods = []
+      base.cached_method_sign = ''
       base.primary_cache_index_enabled = true
     end
 
@@ -112,17 +114,23 @@ module IdentityCache
         end
       end
 
-      def cache_method_return(method_name, wrapper_method = nil)
+      def cache_method_return(method_name, options = {})
+        raise NotImplementedError unless options[:sign]
+
         self.cached_methods << method_name
 
-        if wrapper_method
+        sign = OpenSSL::Digest.new('md5', self.cached_method_sign)
+        sign.update(options[:sign])
+        self.cached_method_sign = sign.hexdigest
+
+        if options[:wrapper]
           self.class_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
             def #{method_name}_with_method_cache(*args)
               unless @__#{method_name}.present?
                 return #{method_name}_without_method_cache(*args)
               end
 
-              self.#{wrapper_method}(@__#{method_name}, *args)
+              self.#{options[:wrapper]}(@__#{method_name}, *args)
             end
 
             alias_method_chain :#{method_name}, :method_cache

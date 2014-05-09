@@ -6,7 +6,6 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     Item.cache_has_one :associated
     Item.cache_has_one :self, :embed => :self
     Item.cache_index :title, :unique => true
-    Item.cache_method_return :method_return
 
     @record = Item.new(:title => 'foo')
     @record.associated = AssociatedRecord.new(:name => 'bar')

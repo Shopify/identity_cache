@@ -7,8 +7,9 @@ class FetchTest < IdentityCache::TestCase
     super
     Item.cache_index :title, :unique => true
     Item.cache_index :id, :title, :unique => true
-    Item.cache_method_return :method_return
-    Item.cache_method_return :method_return_foo, :method_return_wrapper
+    Item.cache_method_return :method_return, sign: 'version 1'
+    Item.cache_method_return :method_return_foo, wrapper: :method_return_wrapper, sign: 'version 2'
+
 
     @record = Item.new
     @record.id = 1
@@ -22,7 +23,7 @@ class FetchTest < IdentityCache::TestCase
     }
 
     @record.encode_with(@cached_value)
-    @blob_key = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:1"
+    @blob_key = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime,method_caches:#{Item.cached_method_sign}")}:1"
     @index_key = "#{NAMESPACE}index:Item:title:#{cache_hash('bob')}"
   end
 
