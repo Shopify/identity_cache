@@ -41,7 +41,7 @@ class IndexCacheTest < IdentityCache::TestCase
     Item.cache_index :title, :unique => true
     IdentityCache.cache.write(@cache_key, IdentityCache::CACHED_NIL)
     @record.save!
-    assert_equal nil, IdentityCache.cache.read(@cache_key)
+    assert_equal IdentityCache::DELETED, IdentityCache.cache.read(@cache_key)
   end
 
   def test_unique_index_filled_on_fetch_by
@@ -60,8 +60,8 @@ class IndexCacheTest < IdentityCache::TestCase
     new_cache_key = "#{NAMESPACE}index:Item:title:#{cache_hash(@record.title)}"
     IdentityCache.cache.write(new_cache_key, IdentityCache::CACHED_NIL)
     @record.save!
-    assert_equal nil, IdentityCache.cache.read(@cache_key)
-    assert_equal nil, IdentityCache.cache.read(new_cache_key)
+    assert_equal IdentityCache::DELETED, IdentityCache.cache.read(@cache_key)
+    assert_equal IdentityCache::DELETED, IdentityCache.cache.read(new_cache_key)
   end
 
   def test_non_unique_index_caches_empty_result
@@ -74,7 +74,7 @@ class IndexCacheTest < IdentityCache::TestCase
     Item.cache_index :title
     IdentityCache.cache.write(@cache_key, [])
     @record.save!
-    assert_equal nil, IdentityCache.cache.read(@cache_key)
+    assert_equal IdentityCache::DELETED, IdentityCache.cache.read(@cache_key)
   end
 
   def test_non_unique_index_filled_on_fetch_by
@@ -102,8 +102,8 @@ class IndexCacheTest < IdentityCache::TestCase
     new_cache_key = "#{NAMESPACE}index:Item:title:#{cache_hash(@record.title)}"
     IdentityCache.cache.write(new_cache_key, [])
     @record.save!
-    assert_equal nil, IdentityCache.cache.read(@cache_key)
-    assert_equal nil, IdentityCache.cache.read(new_cache_key)
+    assert_equal IdentityCache::DELETED, IdentityCache.cache.read(@cache_key)
+    assert_equal IdentityCache::DELETED, IdentityCache.cache.read(new_cache_key)
   end
 
   def test_non_unique_index_expired_by_destroying_record
@@ -111,7 +111,7 @@ class IndexCacheTest < IdentityCache::TestCase
     @record.save!
     IdentityCache.cache.write(@cache_key, [@record.id])
     @record.destroy
-    assert_equal nil, IdentityCache.cache.read(@cache_key)
+    assert_equal IdentityCache::DELETED, IdentityCache.cache.read(@cache_key)
   end
 
   def test_set_table_name_cache_fetch

@@ -2,7 +2,7 @@
 require File.expand_path('../lib/identity_cache/version', __FILE__)
 
 Gem::Specification.new do |gem|
-  gem.authors       = ["Camilo Lopez", "Tom Burns", "Harry Brundage", "Dylan Smith", "Tobias Lutke", "Arthur Neves"]
+  gem.authors       = ["Camilo Lopez", "Tom Burns", "Harry Brundage", "Dylan Smith", "Tobias Lutke", "Arthur Neves", "Francis Bogsanyi"]
   gem.email         = ["harry.brundage@shopify.com"]
   gem.description   = %q{Opt in read through ActiveRecord caching.}
   gem.summary       = %q{IdentityCache lets you specify how you want to cache your model objects, at the model level, and adds a number of convenience methods for accessing those objects through the cache. Memcached is used as the backend cache store, and the database is only hit when a copy of the object cannot be found in Memcached.}
@@ -17,13 +17,15 @@ Gem::Specification.new do |gem|
 
   gem.add_dependency('ar_transaction_changes', '~> 1.0')
   gem.add_dependency('activerecord', '>= 3.2')
+  gem.add_dependency('memcached', '~> 1.8.0')
 
-  gem.add_development_dependency('memcached_store', '~> 0.11.2')
+  gem.add_development_dependency('memcached_store', '~> 0.12.0')
   gem.add_development_dependency('rake')
   gem.add_development_dependency('mocha', '0.14.0')
   gem.add_development_dependency('spy')
 
   if RUBY_PLATFORM == 'java'
+    raise NotImplementedError
     gem.add_development_dependency 'jruby-openssl'
     gem.add_development_dependency 'activerecord-jdbcmysql-adapter'
     gem.add_development_dependency 'jdbc-mysql'

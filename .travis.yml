@@ -3,7 +3,6 @@ rvm:
   - 1.9.3
   - 2.0.0
   - 2.1.1
-  - jruby
 gemfile:
   - Gemfile32
   - Gemfile
@@ -11,8 +10,5 @@ gemfile:
 services:
   - memcache
   - mysql
-matrix:
-  allow_failures:
-    - rvm: jruby
 before_script:
   - mysql -e 'create database identity_cache_test'

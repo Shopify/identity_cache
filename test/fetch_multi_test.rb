@@ -25,7 +25,7 @@ class FetchMultiTest < IdentityCache::TestCase
     cache_response[bob_blob_key] = cache_response_for(@bob)
     cache_response[joe_blob_key] = cache_response_for(@joe)
     cache_response[fred_blob_key] = cache_response_for(@fred)
-    IdentityCache.cache.expects(:read_multi).with(bob_blob_key, joe_blob_key, fred_blob_key).returns(cache_response)
+    IdentityCache.cache.expects(:fetch_multi).with(bob_blob_key, joe_blob_key, fred_blob_key).returns(cache_response)
     assert_equal [@bob, @joe, @fred], Item.fetch_multi(@bob.id, @joe.id, @fred.id)
   end
 
@@ -34,7 +34,7 @@ class FetchMultiTest < IdentityCache::TestCase
     cache_response[@bob_blob_key] = cache_response_for(@bob)
     cache_response[@joe_blob_key] = cache_response_for(@joe)
     cache_response[@fred_blob_key] = cache_response_for(@fred)
-    IdentityCache.cache.expects(:read_multi).with(@bob_blob_key, @joe_blob_key, @fred_blob_key).returns(cache_response)
+    IdentityCache.cache.expects(:fetch_multi).with(@bob_blob_key, @joe_blob_key, @fred_blob_key).returns(cache_response)
     assert_equal [@bob, @joe, @fred], Item.fetch_multi(@bob.id, @joe.id, @fred.id)
   end
 
@@ -43,8 +43,9 @@ class FetchMultiTest < IdentityCache::TestCase
     cache_response[@bob_blob_key] = nil
     cache_response[@joe_blob_key] = nil
     cache_response[@fred_blob_key] = nil
-    IdentityCache.cache.expects(:read_multi).with(@bob_blob_key, @joe_blob_key, @fred_blob_key).returns(cache_response)
+    fetch_multi = fetch_multi_stub(cache_response)
     assert_equal [@bob, @joe, @fred], Item.fetch_multi(@bob.id, @joe.id, @fred.id)
+    assert fetch_multi.has_been_called_with?(@bob_blob_key, @joe_blob_key, @fred_blob_key)
   end
 
   def test_fetch_multi_with_mixed_hits_and_misses
@@ -52,8 +53,9 @@ class FetchMultiTest < IdentityCache::TestCase
     cache_response[@bob_blob_key] = cache_response_for(@bob)
     cache_response[@joe_blob_key] = nil
     cache_response[@fred_blob_key] = cache_response_for(@fred)
-    IdentityCache.cache.expects(:read_multi).with(@bob_blob_key, @joe_blob_key, @fred_blob_key).returns(cache_response)
+    fetch_multi = fetch_multi_stub(cache_response)
     assert_equal [@bob, @joe, @fred], Item.fetch_multi(@bob.id, @joe.id, @fred.id)
+    assert fetch_multi.has_been_called_with?(@bob_blob_key, @joe_blob_key, @fred_blob_key)
   end
 
   def test_fetch_multi_with_mixed_hits_and_misses_and_responses_in_the_wrong_order
@@ -61,22 +63,25 @@ class FetchMultiTest < IdentityCache::TestCase
     cache_response[@bob_blob_key] = nil
     cache_response[@joe_blob_key] = nil
     cache_response[@fred_blob_key] = cache_response_for(@fred)
-    IdentityCache.cache.expects(:read_multi).with(@bob_blob_key, @fred_blob_key, @joe_blob_key).returns(cache_response)
+    fetch_multi = fetch_multi_stub(cache_response)
     assert_equal [@bob, @fred, @joe], Item.fetch_multi(@bob.id, @fred.id, @joe.id)
+    assert fetch_multi.has_been_called_with?(@bob_blob_key, @fred_blob_key, @joe_blob_key)
   end
 
   def test_fetch_multi_with_mixed_hits_and_misses_and_non_existant_keys_1
     populate_only_fred
 
-    IdentityCache.cache.expects(:read_multi).with(@tenth_blob_key, @bob_blob_key, @joe_blob_key, @fred_blob_key).returns(@cache_response)
+    fetch_multi = fetch_multi_stub(@cache_response)
     assert_equal [@bob, @joe, @fred], Item.fetch_multi(10, @bob.id, @joe.id, @fred.id)
+    assert fetch_multi.has_been_called_with?(@tenth_blob_key, @bob_blob_key, @joe_blob_key, @fred_blob_key)
   end
 
   def test_fetch_multi_with_mixed_hits_and_misses_and_non_existant_keys_2
     populate_only_fred
 
-    IdentityCache.cache.expects(:read_multi).with(@fred_blob_key, @bob_blob_key, @tenth_blob_key, @joe_blob_key).returns(@cache_response)
+    fetch_multi = fetch_multi_stub(@cache_response)
     assert_equal [@fred, @bob, @joe], Item.fetch_multi(@fred.id, @bob.id, 10, @joe.id)
+    assert fetch_multi.has_been_called_with?(@fred_blob_key, @bob_blob_key, @tenth_blob_key, @joe_blob_key)
   end
 
 
@@ -84,9 +89,9 @@ class FetchMultiTest < IdentityCache::TestCase
     cache_result = {1 => IdentityCache::CACHED_NIL, 2 => IdentityCache::CACHED_NIL}
     fetch_result = {1 => nil, 2 => nil}
 
-    IdentityCache.cache.expects(:read_multi).with(1,2).times(2).returns({1 => nil, 2 => nil}, cache_result)
-    IdentityCache.cache.expects(:write).with(1, IdentityCache::CACHED_NIL).once
-    IdentityCache.cache.expects(:write).with(2, IdentityCache::CACHED_NIL).once
+    IdentityCache.cache.expects(:cas_multi).with([1, 2]).twice.returns(nil, cache_result)
+    IdentityCache.cache.expects(:add).with(1, IdentityCache::CACHED_NIL).once
+    IdentityCache.cache.expects(:add).with(2, IdentityCache::CACHED_NIL).once
 
     results = IdentityCache.fetch_multi(1,2) do |keys|
       [nil, nil]
@@ -103,7 +108,7 @@ class FetchMultiTest < IdentityCache::TestCase
   def test_fetch_multi_works_with_blanks
     cache_result = {1 => false, 2 => '   '}
 
-    IdentityCache.cache.expects(:read_multi).with(1,2).returns(cache_result)
+    IdentityCache.cache.expects(:fetch_multi).with(1,2).returns(cache_result)
 
     results = IdentityCache.fetch_multi(1,2) do |keys|
       flunk "Contents should have been fetched from cache successfully"
@@ -118,7 +123,7 @@ class FetchMultiTest < IdentityCache::TestCase
 
   def test_fetch_multi_with_open_transactions_hits_the_database
     Item.connection.expects(:open_transactions).at_least_once.returns(1)
-    IdentityCache.cache.expects(:read_multi).never
+    IdentityCache.cache.expects(:fetch_multi).never
     assert_equal [@bob, @joe, @fred], Item.fetch_multi(@bob.id, @joe.id, @fred.id)
   end
 
@@ -165,15 +170,15 @@ class FetchMultiTest < IdentityCache::TestCase
     cache_response[@joe_blob_key] = cache_response_for(@joe)
 
     with_batch_size 1 do
-      IdentityCache.cache.expects(:read_multi).with(@bob_blob_key).returns(cache_response).once
-      IdentityCache.cache.expects(:read_multi).with(@joe_blob_key).returns(cache_response).once
+      IdentityCache.cache.expects(:fetch_multi).with(@bob_blob_key).returns(cache_response).once
+      IdentityCache.cache.expects(:fetch_multi).with(@joe_blob_key).returns(cache_response).once
       assert_equal [@bob, @joe], Item.fetch_multi(@bob.id, @joe.id)
     end
   end
 
   def test_fetch_multi_max_stack_level
     cache_response = { @fred_blob_key => cache_response_for(@fred) }
-    IdentityCache.cache.stubs(:read_multi).returns(cache_response)
+    IdentityCache.cache.stubs(:fetch_multi).returns(cache_response)
     assert_nothing_raised { Item.fetch_multi([@fred.id] * 200_000) }
   end
 
@@ -206,5 +211,12 @@ class FetchMultiTest < IdentityCache::TestCase
   ensure
     IdentityCache.send(:remove_const, :BATCH_SIZE)
     IdentityCache.const_set(:BATCH_SIZE, previous_batch_size)
+  end
+
+  def fetch_multi_stub(cache_response)
+    Spy.on(IdentityCache.cache, :fetch_multi).and_return do |*args, &block|
+      nil_keys = cache_response.select {|_, v| v.nil? }.keys
+      cache_response.merge(nil_keys.zip(block.call(nil_keys)).to_h)
+    end
   end
 end

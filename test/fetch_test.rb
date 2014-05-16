@@ -26,7 +26,7 @@ class FetchTest < IdentityCache::TestCase
   end
 
   def test_fetch_cache_hit
-    IdentityCache.cache.expects(:read).with(@blob_key).returns(@cached_value)
+    IdentityCache.cache.expects(:fetch).with(@blob_key).returns(@cached_value)
 
     assert_equal @record, Item.fetch(1)
   end
@@ -36,7 +36,7 @@ class FetchTest < IdentityCache::TestCase
     IdentityCache.cache_namespace = proc { |model| "#{model.table_name}:#{old_ns}" }
 
     new_blob_key = "items:#{@blob_key}"
-    IdentityCache.cache.expects(:read).with(new_blob_key).returns(@cached_value)
+    IdentityCache.cache.expects(:fetch).with(new_blob_key).returns(@cached_value)
 
     assert_equal @record, Item.fetch(1)
   ensure
@@ -44,32 +44,36 @@ class FetchTest < IdentityCache::TestCase
   end
 
   def test_exists_with_identity_cache_when_cache_hit
-    IdentityCache.cache.expects(:read).with(@blob_key).returns(@cached_value)
+    IdentityCache.cache.expects(:fetch).with(@blob_key).returns(@cached_value)
 
     assert Item.exists_with_identity_cache?(1)
   end
 
   def test_exists_with_identity_cache_when_cache_miss_and_in_db
-    IdentityCache.cache.expects(:read).with(@blob_key).returns(nil)
+    fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
     Item.expects(:resolve_cache_miss).with(1).once.returns(@record)
 
     assert Item.exists_with_identity_cache?(1)
+    assert fetch.has_been_called_with?(@blob_key)
   end
 
   def test_exists_with_identity_cache_when_cache_miss_and_not_in_db
-    IdentityCache.cache.expects(:read).with(@blob_key).returns(nil)
+    fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
     Item.expects(:resolve_cache_miss).with(1).once.returns(nil)
 
     assert !Item.exists_with_identity_cache?(1)
+    assert fetch.has_been_called_with?(@blob_key)
   end
 
   def test_fetch_miss
     Item.expects(:resolve_cache_miss).with(1).once.returns(@record)
 
-    IdentityCache.cache.expects(:read).with(@blob_key).returns(nil)
-    IdentityCache.cache.expects(:write).with(@blob_key, @cached_value)
+    results = []
+    fetch = Spy.on(IdentityCache.cache, :fetch).and_return {|_, &block| block.call.tap {|result| results << result}}
 
     assert_equal @record, Item.fetch(1)
+    assert fetch.has_been_called_with?(@blob_key)
+    assert_equal [@cached_value], results
   end
 
   def test_fetch_miss_with_non_id_primary_key
@@ -80,14 +84,14 @@ class FetchTest < IdentityCache::TestCase
 
   def test_fetch_by_id_not_found_should_return_nil
     nonexistent_record_id = 10
-    IdentityCache.cache.expects(:write).with(@blob_key + '0', IdentityCache::CACHED_NIL)
+    IdentityCache.cache.expects(:add).with(@blob_key + '0', IdentityCache::CACHED_NIL)
 
     assert_equal nil, Item.fetch_by_id(nonexistent_record_id)
   end
 
   def test_fetch_not_found_should_raise
     nonexistent_record_id = 10
-    IdentityCache.cache.expects(:write).with(@blob_key + '0', IdentityCache::CACHED_NIL)
+    IdentityCache.cache.expects(:add).with(@blob_key + '0', IdentityCache::CACHED_NIL)
 
     assert_raises(ActiveRecord::RecordNotFound) { Item.fetch(nonexistent_record_id) }
   end
@@ -99,41 +103,48 @@ class FetchTest < IdentityCache::TestCase
     assert_equal IdentityCache::CACHED_NIL, IdentityCache.cache.read(key)
 
     @record.save!
-    assert_nil IdentityCache.cache.read(key)
+    assert_equal IdentityCache::DELETED, IdentityCache.cache.read(key)
   end
 
   def test_fetch_by_title_hit
-    # Read record with title bob
-    IdentityCache.cache.expects(:read).with(@index_key).returns(nil)
+    values = []
+    fetch = Spy.on(IdentityCache.cache, :fetch).and_return do |key, &block|
+      case key
+      # Read record with title bob
+      when @index_key then block.call.tap {|val| values << val}
+      # got id, do memcache lookup on that, hit -> done
+      when @blob_key then @cached_value
+      end
+    end
 
-    # - not found, use sql, SELECT id FROM records WHERE title = '...' LIMIT 1"
+    # Id not found, use sql, SELECT id FROM records WHERE title = '...' LIMIT 1"
     Item.connection.expects(:exec_query).returns(ActiveRecord::Result.new(['id'], [[1]]))
 
-    # cache sql result
-    IdentityCache.cache.expects(:write).with(@index_key, 1)
-
-    # got id, do memcache lookup on that, hit -> done
-    IdentityCache.cache.expects(:read).with(@blob_key).returns(@cached_value)
-
     assert_equal @record, Item.fetch_by_title('bob')
+    assert_equal [1], values
+    assert fetch.has_been_called_with?(@index_key)
+    assert fetch.has_been_called_with?(@blob_key)
   end
 
   def test_fetch_by_title_cache_namespace
     Item.send(:include, SwitchNamespace)
-    IdentityCache.cache.expects(:read).with("ns:#{@index_key}").returns(1)
-    IdentityCache.cache.expects(:read).with("ns:#{@blob_key}").returns(@cached_value)
+    IdentityCache.cache.expects(:fetch).with("ns:#{@index_key}").returns(1)
+    IdentityCache.cache.expects(:fetch).with("ns:#{@blob_key}").returns(@cached_value)
 
     assert_equal @record, Item.fetch_by_title('bob')
   end
 
   def test_fetch_by_title_stores_idcnil
     Item.connection.expects(:exec_query).once.returns(ActiveRecord::Result.new([], []))
-    IdentityCache.cache.expects(:write).with(@index_key, IdentityCache::CACHED_NIL)
-    IdentityCache.cache.expects(:read).with(@index_key).times(3).returns(nil, IdentityCache::CACHED_NIL, IdentityCache::CACHED_NIL)
+    add = Spy.on(IdentityCache.cache, :add).and_call_through
+    fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
     assert_equal nil, Item.fetch_by_title('bob') # exec_query => nil
 
     assert_equal nil, Item.fetch_by_title('bob') # returns cached nil
     assert_equal nil, Item.fetch_by_title('bob') # returns cached nil
+
+    assert add.has_been_called_with?(@index_key, IdentityCache::CACHED_NIL)
+    assert_equal 3, fetch.calls.length
   end
 
   def test_fetch_by_bang_method
@@ -144,8 +155,8 @@ class FetchTest < IdentityCache::TestCase
   end
 
   def test_fetch_does_not_communicate_to_cache_with_nil_id
-    IdentityCache.cache.expects(:read).never
-    IdentityCache.cache.expects(:write).never
+    IdentityCache.cache.expects(:fetch).never
+    IdentityCache.cache.expects(:add).never
     assert_raises(ActiveRecord::RecordNotFound) { Item.fetch(nil) }
   end
 end
