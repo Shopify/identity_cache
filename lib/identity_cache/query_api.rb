@@ -103,7 +103,7 @@ module IdentityCache
 
           coder[:associations].each {|name, value| set_embedded_association(record, name, value) } if coder.has_key?(:associations)
           coder[:normalized_has_many].each {|name, ids| record.instance_variable_set(:"@#{record.class.cached_has_manys[name][:ids_variable_name]}", ids) } if coder.has_key?(:normalized_has_many)
-          record
+          record.reload
         end
       end
 
