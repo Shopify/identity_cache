@@ -1,0 +1,15 @@
+dependencies:
+  override:
+    - bundle install --path=./data/bundler
+
+deploy:
+  override:
+    - |
+      BUILD=`bundle exec rake build`
+      if [ $? != 0 ]; then
+        echo $BUILD;
+        exit 1;
+      fi
+      PKG=`echo $BUILD | cut -d" " -f5 | sed -e s/\.$//`;
+      VERSION=`echo $BUILD | cut -d" " -f2`;
+      gem push $PKG
