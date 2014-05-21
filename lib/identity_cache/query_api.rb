@@ -80,9 +80,9 @@ module IdentityCache
       def record_from_coder(coder) #:nodoc:
         if coder.present? && coder.has_key?(:class)
           record = coder[:class].allocate
-          unless coder[:class].serialized_attributes.empty?
-            coder = coder.dup
-            coder['attributes'] = coder['attributes'].dup
+          coder[:class].serialized_attributes.each do |key, value|
+            obj_value = coder['attributes'][key]
+            coder['attributes'][key] = value.dump(obj_value) if obj_value && !obj_value.is_a?(String)
           end
           if record.class._initialize_callbacks.empty?
             record.instance_eval do
