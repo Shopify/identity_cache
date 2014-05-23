@@ -106,10 +106,29 @@ end
 module DeletedRunner
   def prepare
     super
-    run
-    (1..@count).each do |i|
-      ::Item.fetch(i).send(:expire_cache)
+    (1..@count).each {|i| ::Item.find(i).send(:expire_cache) }
+  end
+end
+
+module ConflictRunner
+  def prepare
+    super
+    records = (1..@count).map {|id| ::Item.find(id) }
+    orig_resolve_cache_miss = ::Item.method(:resolve_cache_miss)
+
+    ::Item.define_singleton_method(:resolve_cache_miss) do |id|
+      records[id-1].send(:expire_cache)
+      orig_resolve_cache_miss.call(id)
     end
+    IdentityCache.cache.clear
+  end
+end
+
+module DeletedConflictRunner
+  include ConflictRunner
+  def prepare
+    super
+    (1..@count).each {|i| ::Item.find(i).send(:expire_cache) }
   end
 end
 
@@ -145,6 +164,16 @@ class FetchEmbedDeletedRunner < EmbedRunner
 end
 CACHE_RUNNERS << FetchEmbedDeletedRunner
 
+class FetchEmbedConflictRunner < EmbedRunner
+  include ConflictRunner
+end
+CACHE_RUNNERS << FetchEmbedConflictRunner
+
+class FetchEmbedDeletedConflictRunner < EmbedRunner
+  include DeletedConflictRunner
+end
+CACHE_RUNNERS << FetchEmbedDeletedConflictRunner
+
 class NormalizedRunner < CacheRunner
   def setup_models
     super
@@ -178,3 +207,13 @@ class FetchNormalizedDeletedRunner < NormalizedRunner
   include DeletedRunner
 end
 CACHE_RUNNERS << FetchNormalizedDeletedRunner
+
+class FetchNormalizedConflictRunner < EmbedRunner
+  include ConflictRunner
+end
+CACHE_RUNNERS << FetchNormalizedConflictRunner
+
+class FetchNormalizedDeletedConflictRunner < EmbedRunner
+  include DeletedConflictRunner
+end
+CACHE_RUNNERS << FetchNormalizedDeletedConflictRunner
