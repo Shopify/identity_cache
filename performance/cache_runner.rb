@@ -103,6 +103,16 @@ module HitRunner
   end
 end
 
+module DeletedRunner
+  def prepare
+    super
+    run
+    (1..@count).each do |i|
+      ::Item.fetch(i).send(:expire_cache)
+    end
+  end
+end
+
 class EmbedRunner < CacheRunner
   def setup_models
     super
@@ -130,6 +140,10 @@ class FetchEmbedHitRunner < EmbedRunner
 end
 CACHE_RUNNERS << FetchEmbedHitRunner
 
+class FetchEmbedDeletedRunner < EmbedRunner
+  include DeletedRunner
+end
+CACHE_RUNNERS << FetchEmbedDeletedRunner
 
 class NormalizedRunner < CacheRunner
   def setup_models
@@ -159,3 +173,8 @@ class FetchNormalizedHitRunner < NormalizedRunner
   include HitRunner
 end
 CACHE_RUNNERS << FetchNormalizedHitRunner
+
+class FetchNormalizedDeletedRunner < NormalizedRunner
+  include DeletedRunner
+end
+CACHE_RUNNERS << FetchNormalizedDeletedRunner

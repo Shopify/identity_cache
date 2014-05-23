@@ -82,6 +82,35 @@ class FetchTest < IdentityCache::TestCase
     assert_equal fixture, KeyedRecord.fetch(hashed_key)
   end
 
+  def test_fetch_conflict
+    resolve_cache_miss = Spy.on(Item, :resolve_cache_miss).and_return do
+      @record.send(:expire_cache)
+      @record
+    end
+    add = Spy.on(IdentityCache.cache, :add).and_call_through
+
+    assert_equal @record, Item.fetch(1)
+    assert resolve_cache_miss.has_been_called_with?(1)
+    assert add.has_been_called_with?(@blob_key, @cached_value)
+    assert_equal IdentityCache::DELETED, IdentityCache.cache.read(@record.primary_cache_index_key)
+  end
+
+  def test_fetch_conflict_after_delete
+    @record.send(:expire_cache)
+    assert_equal IdentityCache::DELETED, IdentityCache.cache.read(@record.primary_cache_index_key)
+
+    resolve_cache_miss = Spy.on(Item, :resolve_cache_miss).and_return do
+      @record.send(:expire_cache)
+      @record
+    end
+    add = Spy.on(IdentityCache.cache, :add).and_call_through
+
+    assert_equal @record, Item.fetch(1)
+    assert resolve_cache_miss.has_been_called_with?(1)
+    refute add.has_been_called?
+    assert_equal IdentityCache::DELETED, IdentityCache.cache.read(@record.primary_cache_index_key)
+  end
+
   def test_fetch_by_id_not_found_should_return_nil
     nonexistent_record_id = 10
     IdentityCache.cache.expects(:add).with(@blob_key + '0', IdentityCache::CACHED_NIL)
