@@ -39,12 +39,12 @@ class AttributeCacheTest < IdentityCache::TestCase
       .returns(ActiveRecord::Result.new(['name'], [['foo']]))
 
     # And write it back to the cache
-    add = Spy.on(IdentityCache.cache, :add).and_call_through
+    add = Spy.on(fetcher, :add).and_call_through
 
     assert_equal 'foo', AssociatedRecord.fetch_name_by_id(1)
     assert fetch.has_been_called_with?(@name_attribute_key)
     assert add.has_been_called_with?(@name_attribute_key, 'foo')
-    assert_equal 'foo', IdentityCache.cache.read(@name_attribute_key)
+    assert_equal 'foo', IdentityCache.cache.fetch(@name_attribute_key)
   end
 
   def test_nil_is_stored_in_the_cache_on_cache_misses
@@ -57,7 +57,7 @@ class AttributeCacheTest < IdentityCache::TestCase
       .returns(ActiveRecord::Result.new(['name'], []))
 
     # And write it back to the cache
-    add = Spy.on(IdentityCache.cache, :add).and_call_through
+    add = Spy.on(fetcher, :add).and_call_through
 
     assert_equal nil, AssociatedRecord.fetch_name_by_id(1)
     assert fetch.has_been_called_with?(@name_attribute_key)

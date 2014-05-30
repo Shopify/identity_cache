@@ -87,40 +87,40 @@ class FetchTest < IdentityCache::TestCase
       @record.send(:expire_cache)
       @record
     end
-    add = Spy.on(IdentityCache.cache, :add).and_call_through
+    add = Spy.on(fetcher, :add).and_call_through
 
     assert_equal @record, Item.fetch(1)
     assert resolve_cache_miss.has_been_called_with?(1)
     assert add.has_been_called_with?(@blob_key, @cached_value)
-    assert_equal IdentityCache::DELETED, IdentityCache.cache.read(@record.primary_cache_index_key)
+    assert_equal IdentityCache::DELETED, backend.read(@record.primary_cache_index_key)
   end
 
   def test_fetch_conflict_after_delete
     @record.send(:expire_cache)
-    assert_equal IdentityCache::DELETED, IdentityCache.cache.read(@record.primary_cache_index_key)
+    assert_equal IdentityCache::DELETED, backend.read(@record.primary_cache_index_key)
 
     resolve_cache_miss = Spy.on(Item, :resolve_cache_miss).and_return do
       @record.send(:expire_cache)
       @record
     end
-    add = Spy.on(IdentityCache.cache, :add).and_call_through
+    add = Spy.on(IdentityCache.cache.cache_fetcher, :add).and_call_through
 
     assert_equal @record, Item.fetch(1)
     assert resolve_cache_miss.has_been_called_with?(1)
     refute add.has_been_called?
-    assert_equal IdentityCache::DELETED, IdentityCache.cache.read(@record.primary_cache_index_key)
+    assert_equal IdentityCache::DELETED, backend.read(@record.primary_cache_index_key)
   end
 
   def test_fetch_by_id_not_found_should_return_nil
     nonexistent_record_id = 10
-    IdentityCache.cache.expects(:add).with(@blob_key + '0', IdentityCache::CACHED_NIL)
+    fetcher.expects(:add).with(@blob_key + '0', IdentityCache::CACHED_NIL)
 
     assert_equal nil, Item.fetch_by_id(nonexistent_record_id)
   end
 
   def test_fetch_not_found_should_raise
     nonexistent_record_id = 10
-    IdentityCache.cache.expects(:add).with(@blob_key + '0', IdentityCache::CACHED_NIL)
+    fetcher.expects(:add).with(@blob_key + '0', IdentityCache::CACHED_NIL)
 
     assert_raises(ActiveRecord::RecordNotFound) { Item.fetch(nonexistent_record_id) }
   end
@@ -129,10 +129,10 @@ class FetchTest < IdentityCache::TestCase
     key = @record.primary_cache_index_key
 
     assert_equal nil, Item.fetch_by_id(@record.id)
-    assert_equal IdentityCache::CACHED_NIL, IdentityCache.cache.read(key)
+    assert_equal IdentityCache::CACHED_NIL, backend.read(key)
 
     @record.save!
-    assert_equal IdentityCache::DELETED, IdentityCache.cache.read(key)
+    assert_equal IdentityCache::DELETED, backend.read(key)
   end
 
   def test_fetch_by_title_hit
@@ -165,8 +165,8 @@ class FetchTest < IdentityCache::TestCase
 
   def test_fetch_by_title_stores_idcnil
     Item.connection.expects(:exec_query).once.returns(ActiveRecord::Result.new([], []))
-    add = Spy.on(IdentityCache.cache, :add).and_call_through
-    fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
+    add = Spy.on(fetcher, :add).and_call_through
+    fetch = Spy.on(fetcher, :fetch).and_call_through
     assert_equal nil, Item.fetch_by_title('bob') # exec_query => nil
 
     assert_equal nil, Item.fetch_by_title('bob') # returns cached nil
@@ -184,8 +184,8 @@ class FetchTest < IdentityCache::TestCase
   end
 
   def test_fetch_does_not_communicate_to_cache_with_nil_id
-    IdentityCache.cache.expects(:fetch).never
-    IdentityCache.cache.expects(:add).never
+    fetcher.expects(:fetch).never
+    fetcher.expects(:add).never
     assert_raises(ActiveRecord::RecordNotFound) { Item.fetch(nil) }
   end
 end

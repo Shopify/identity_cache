@@ -85,7 +85,7 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
   def test_changes_in_associated_record_should_expire_the_parents_cache
     Item.fetch_by_title('foo')
     key = @record.primary_cache_index_key
-    assert_not_nil IdentityCache.cache.read(key)
+    assert_not_nil IdentityCache.cache.fetch(key)
 
     IdentityCache.cache.expects(:delete).at_least(1).with(key)
     IdentityCache.cache.expects(:delete).with(@record.associated.primary_cache_index_key)
