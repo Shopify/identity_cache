@@ -18,22 +18,24 @@ module IdentityCache
       @cache_backend.clear
     end
 
-    def fetch_multi(keys)
-      results = cas_multi(keys) {|missed_keys| yield missed_keys }
-      results = add_multi(keys) {|missed_keys| yield missed_keys } if results.nil?
+    def fetch_multi(keys, &block)
+      results = cas_multi(keys, &block)
+      results = add_multi(keys, &block) if results.nil?
       results
     end
 
     def fetch(key)
       result = nil
+      yielded = false
       @cache_backend.cas(key) do |value|
+        yielded = true
         unless IdentityCache::DELETED == value
           result = value
           break
         end
         result = yield
       end
-      if result.nil?
+      unless yielded
         result = yield
         add(key, result)
       end
@@ -54,16 +56,13 @@ module IdentityCache
         unless missed_keys.empty?
           missed_vals = yield missed_keys
           missed_keys.zip(missed_vals) do |k, v|
-            if v.nil?
-              # do nothing
-            elsif deleted.include?(k)
+            result[k] = v
+            if deleted.include?(k)
               updates[k] = v
             else
-              result[k] = v
               add(k, v)
             end
           end
-          result.merge!(updates)
         end
 
         break if updates.empty?
@@ -73,15 +72,9 @@ module IdentityCache
     end
 
     def add_multi(keys)
-      result = {}
       values = yield keys
-      keys.zip(values) do |k, v|
-        unless v.nil?
-          result[k] = v
-          add(k, v)
-        end
-      end
-      result
+      result = Hash[keys.zip(values)]
+      result.each {|k, v| add(k, v) }
     end
 
     def add(key, value)

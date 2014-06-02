@@ -86,7 +86,7 @@ module IdentityCache
             missed_keys.concat(missing_keys) if IdentityCache.logger.debug?
             yield missing_keys
           end
-          results.each {|k, v| mkv[k] = v }
+          mkv.merge! results
           hash.merge! results
         end
         hash

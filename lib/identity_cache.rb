@@ -111,7 +111,7 @@ module IdentityCache
         end
       else
         results = yield keys
-        keys.zip(results).to_h
+        Hash[keys.zip(results)]
       end
 
       result.each do |key, value|

@@ -187,6 +187,18 @@ class FetchMultiTest < IdentityCache::TestCase
     assert_equal [fixture], KeyedRecord.fetch_multi(123, 456)
   end
 
+  def test_fetch_multi_after_expiring_a_record
+    Item.fetch_multi(@joe.id, @fred.id)
+    @bob.send(:expire_cache)
+    assert_equal IdentityCache::DELETED, backend.read(@bob.primary_cache_index_key)
+
+    add = Spy.on(IdentityCache.cache.cache_fetcher, :add).and_call_through
+
+    assert_equal [@bob, @joe, @fred], Item.fetch_multi(@bob.id, @joe.id, @fred.id)
+    refute add.has_been_called?
+    assert_equal cache_response_for(Item.find(@bob.id)), backend.read(@bob.primary_cache_index_key)
+  end
+
   private
 
   def populate_only_fred
