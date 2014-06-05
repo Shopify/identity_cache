@@ -11,10 +11,13 @@ require 'identity_cache/parent_model_expiration'
 require 'identity_cache/query_api'
 require "identity_cache/cache_hash"
 require "identity_cache/cache_invalidation"
+require "identity_cache/cache_fetcher"
 
 module IdentityCache
   CACHED_NIL = :idc_cached_nil
   BATCH_SIZE = 1000
+  DELETED = :idc_cached_deleted
+  DELETED_TTL = 1000
 
   class AlreadyIncludedError < StandardError; end
   class InverseAssociationError < StandardError
@@ -77,20 +80,11 @@ module IdentityCache
     # +key+ A cache key string
     #
     def fetch(key)
-      result = cache.read(key) if should_cache?
-
-      if result.nil?
-        if block_given?
-          result = yield
-          result = map_cached_nil_for(result)
-
-          if should_cache?
-            cache.write(key, result)
-          end
-        end
+      if should_cache?
+        unmap_cached_nil_for(cache.fetch(key) { map_cached_nil_for yield })
+      else
+        yield
       end
-
-      unmap_cached_nil_for(result)
     end
 
     def map_cached_nil_for(value)
@@ -109,27 +103,16 @@ module IdentityCache
     def fetch_multi(*keys)
       keys.flatten!(1)
       return {} if keys.size == 0
-      result = {}
-      result = read_in_batches(keys) if should_cache?
 
-      hit_keys = result.reject {|key, value| value == nil }.keys
-      missed_keys = keys - hit_keys
-
-      if missed_keys.size > 0
-        if block_given?
-          replacement_results = nil
-          replacement_results = yield missed_keys
-          missed_keys.zip(replacement_results) do |(key, replacement_result)|
-            if should_cache?
-              replacement_result  = map_cached_nil_for(replacement_result )
-              cache.write(key, replacement_result)
-              logger.debug { "[IdentityCache] cache miss for #{key} (multi)" }
-            end
-            result[key] = replacement_result
-          end
+      result = if should_cache?
+        fetch_in_batches(keys) do |missed_keys|
+          results = yield missed_keys
+          results.map {|e| map_cached_nil_for e }
         end
+      else
+        results = yield keys
+        Hash[keys.zip(results)]
       end
-
 
       result.each do |key, value|
         result[key] = unmap_cached_nil_for(value)
@@ -140,9 +123,9 @@ module IdentityCache
 
     private
 
-    def read_in_batches(keys)
+    def fetch_in_batches(keys)
       keys.each_slice(BATCH_SIZE).each_with_object Hash.new do |slice, result|
-        result.merge! cache.read_multi(*slice)
+        result.merge! cache.fetch_multi(*slice) {|missed_keys| yield missed_keys }
       end
     end
   end

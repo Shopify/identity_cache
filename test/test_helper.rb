@@ -4,7 +4,7 @@ require 'mocha/setup'
 require 'active_record'
 require 'helpers/database_connection'
 require 'helpers/active_record_objects'
-require 'spy'
+require 'spy/integration'
 require 'memcached_store'
 require 'active_support/cache/memcached_store'
 
@@ -29,13 +29,15 @@ end
 
 class IdentityCache::TestCase < MiniTest::Unit::TestCase
   include ActiveRecordObjects
+  attr_reader :backend, :fetcher
 
   def setup
     DatabaseConnection.drop_tables
     DatabaseConnection.create_tables
 
     IdentityCache.logger = Logger.new(nil)
-    IdentityCache.cache_backend = ActiveSupport::Cache::MemcachedStore.new("localhost:#{$memcached_port}")
+    IdentityCache.cache_backend = @backend = ActiveSupport::Cache::MemcachedStore.new("localhost:#{$memcached_port}", :support_cas => true)
+    @fetcher = IdentityCache.cache.cache_fetcher
 
     setup_models
   end
@@ -124,6 +126,6 @@ class CacheCounter
   end
 
   def call(name, start, finish, message_id, values)
-    self.log << (values[:keys].try(:join, ', ') || values[:key])
+    self.log << "#{name} #{(values[:keys].try(:join, ', ') || values[:key])}"
   end
 end

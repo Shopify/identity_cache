@@ -13,14 +13,15 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
   end
 
   def test_on_cache_miss_record_should_embed_associated_object
-    IdentityCache.cache.expects(:read).with(@record.secondary_cache_index_key_for_current_values([:title]))
-    IdentityCache.cache.expects(:read).with(@record.primary_cache_index_key)
+    fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
 
     record_from_cache_miss = Item.fetch_by_title('foo')
 
     assert_equal @record, record_from_cache_miss
     assert_not_nil @record.fetch_associated
     assert_equal @record.associated, record_from_cache_miss.fetch_associated
+    assert fetch.has_been_called_with?(@record.secondary_cache_index_key_for_current_values([:title]))
+    assert fetch.has_been_called_with?(@record.primary_cache_index_key)
   end
 
   def test_on_cache_miss_record_should_embed_nil_object
@@ -31,8 +32,7 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     @record.send(:populate_association_caches)
     Item.expects(:resolve_cache_miss).with(@record.id).once.returns(@record)
 
-    IdentityCache.cache.expects(:read).with(@record.secondary_cache_index_key_for_current_values([:title]))
-    IdentityCache.cache.expects(:read).with(@record.primary_cache_index_key)
+    fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
 
     record_from_cache_miss = Item.fetch_by_title('foo')
     record_from_cache_miss.expects(:associated).never
@@ -41,6 +41,8 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     5.times do
       assert_nil record_from_cache_miss.fetch_associated
     end
+    assert fetch.has_been_called_with?(@record.secondary_cache_index_key_for_current_values([:title]))
+    assert fetch.has_been_called_with?(@record.primary_cache_index_key)
   end
 
   def test_on_record_from_the_db_will_use_normal_association
@@ -83,7 +85,7 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
   def test_changes_in_associated_record_should_expire_the_parents_cache
     Item.fetch_by_title('foo')
     key = @record.primary_cache_index_key
-    assert_not_nil IdentityCache.cache.read(key)
+    assert_not_nil IdentityCache.cache.fetch(key)
 
     IdentityCache.cache.expects(:delete).at_least(1).with(key)
     IdentityCache.cache.expects(:delete).with(@record.associated.primary_cache_index_key)

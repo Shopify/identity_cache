@@ -13,7 +13,7 @@ require File.dirname(__FILE__) + '/../test/helpers/active_record_objects'
 require File.dirname(__FILE__) + '/../test/helpers/database_connection'
 
 IdentityCache.logger = Logger.new(nil)
-IdentityCache.cache_backend = ActiveSupport::Cache::MemcachedStore.new("localhost:#{$memcached_port}")
+IdentityCache.cache_backend = ActiveSupport::Cache::MemcachedStore.new("localhost:#{$memcached_port}", :support_cas => true)
 
 
 def create_record(id)
@@ -103,6 +103,35 @@ module HitRunner
   end
 end
 
+module DeletedRunner
+  def prepare
+    super
+    (1..@count).each {|i| ::Item.find(i).send(:expire_cache) }
+  end
+end
+
+module ConflictRunner
+  def prepare
+    super
+    records = (1..@count).map {|id| ::Item.find(id) }
+    orig_resolve_cache_miss = ::Item.method(:resolve_cache_miss)
+
+    ::Item.define_singleton_method(:resolve_cache_miss) do |id|
+      records[id-1].send(:expire_cache)
+      orig_resolve_cache_miss.call(id)
+    end
+    IdentityCache.cache.clear
+  end
+end
+
+module DeletedConflictRunner
+  include ConflictRunner
+  def prepare
+    super
+    (1..@count).each {|i| ::Item.find(i).send(:expire_cache) }
+  end
+end
+
 class EmbedRunner < CacheRunner
   def setup_models
     super
@@ -130,6 +159,20 @@ class FetchEmbedHitRunner < EmbedRunner
 end
 CACHE_RUNNERS << FetchEmbedHitRunner
 
+class FetchEmbedDeletedRunner < EmbedRunner
+  include DeletedRunner
+end
+CACHE_RUNNERS << FetchEmbedDeletedRunner
+
+class FetchEmbedConflictRunner < EmbedRunner
+  include ConflictRunner
+end
+CACHE_RUNNERS << FetchEmbedConflictRunner
+
+class FetchEmbedDeletedConflictRunner < EmbedRunner
+  include DeletedConflictRunner
+end
+CACHE_RUNNERS << FetchEmbedDeletedConflictRunner
 
 class NormalizedRunner < CacheRunner
   def setup_models
@@ -159,3 +202,18 @@ class FetchNormalizedHitRunner < NormalizedRunner
   include HitRunner
 end
 CACHE_RUNNERS << FetchNormalizedHitRunner
+
+class FetchNormalizedDeletedRunner < NormalizedRunner
+  include DeletedRunner
+end
+CACHE_RUNNERS << FetchNormalizedDeletedRunner
+
+class FetchNormalizedConflictRunner < EmbedRunner
+  include ConflictRunner
+end
+CACHE_RUNNERS << FetchNormalizedConflictRunner
+
+class FetchNormalizedDeletedConflictRunner < EmbedRunner
+  include DeletedConflictRunner
+end
+CACHE_RUNNERS << FetchNormalizedDeletedConflictRunner

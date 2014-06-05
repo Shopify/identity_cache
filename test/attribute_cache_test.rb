@@ -11,25 +11,27 @@ class AttributeCacheTest < IdentityCache::TestCase
     @record = @parent.associated_records.create!(:name => 'foo')
     @name_attribute_key = "#{NAMESPACE}attribute:AssociatedRecord:name:id:#{cache_hash(@record.id.to_s)}"
     @blob_key = "#{NAMESPACE}blob:AssociatedRecord:#{cache_hash("id:integer,item_id:integer,name:string")}:1"
+    IdentityCache.cache.clear
   end
 
   def test_attribute_values_are_returned_on_cache_hits
-    IdentityCache.cache.expects(:read).with(@name_attribute_key).returns('foo')
+    IdentityCache.cache.expects(:fetch).with(@name_attribute_key).returns('foo')
     assert_equal 'foo', AssociatedRecord.fetch_name_by_id(1)
   end
 
   def test_attribute_values_are_fetched_and_returned_on_cache_misses
-    IdentityCache.cache.expects(:read).with(@name_attribute_key).returns(nil)
+    fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
     Item.connection.expects(:exec_query)
       .with('SELECT  `associated_records`.`name` FROM `associated_records`  WHERE `associated_records`.`id` = 1 LIMIT 1', anything)
       .returns(ActiveRecord::Result.new(['name'], [['foo']]))
 
     assert_equal 'foo', AssociatedRecord.fetch_name_by_id(1)
+    assert fetch.has_been_called_with?(@name_attribute_key)
   end
 
   def test_attribute_values_are_stored_in_the_cache_on_cache_misses
     # Cache miss, so
-    IdentityCache.cache.expects(:read).with(@name_attribute_key).returns(nil)
+    fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
 
     # Grab the value of the attribute from the DB
     Item.connection.expects(:exec_query)
@@ -37,14 +39,17 @@ class AttributeCacheTest < IdentityCache::TestCase
       .returns(ActiveRecord::Result.new(['name'], [['foo']]))
 
     # And write it back to the cache
-    IdentityCache.cache.expects(:write).with(@name_attribute_key, 'foo').returns(nil)
+    add = Spy.on(fetcher, :add).and_call_through
 
     assert_equal 'foo', AssociatedRecord.fetch_name_by_id(1)
+    assert fetch.has_been_called_with?(@name_attribute_key)
+    assert add.has_been_called_with?(@name_attribute_key, 'foo')
+    assert_equal 'foo', IdentityCache.cache.fetch(@name_attribute_key)
   end
 
   def test_nil_is_stored_in_the_cache_on_cache_misses
     # Cache miss, so
-    IdentityCache.cache.expects(:read).with(@name_attribute_key).returns(nil)
+    fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
 
     # Grab the value of the attribute from the DB
     Item.connection.expects(:exec_query)
@@ -52,9 +57,11 @@ class AttributeCacheTest < IdentityCache::TestCase
       .returns(ActiveRecord::Result.new(['name'], []))
 
     # And write it back to the cache
-    IdentityCache.cache.expects(:write).with(@name_attribute_key, IdentityCache::CACHED_NIL).returns(nil)
+    add = Spy.on(fetcher, :add).and_call_through
 
     assert_equal nil, AssociatedRecord.fetch_name_by_id(1)
+    assert fetch.has_been_called_with?(@name_attribute_key)
+    assert add.has_been_called_with?(@name_attribute_key, IdentityCache::CACHED_NIL)
   end
 
   def test_cached_attribute_values_are_expired_from_the_cache_when_an_existing_record_is_saved
