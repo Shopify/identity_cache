@@ -7,6 +7,15 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
     assert_equal 'bar', IdentityCache.cache.fetch('foo')
   end
 
+  def test_fetch_multi_with_memory_store
+    IdentityCache.cache_backend = backend = ActiveSupport::Cache::MemoryStore.new
+    IdentityCache.cache.write('foo', 'bar')
+    backend.expects(:write).with('bar', 'baz')
+    yielded = nil
+    assert_equal({'foo' => 'bar', 'bar' => 'baz'}, IdentityCache.cache.fetch_multi('foo', 'bar') {|_| yielded = ['baz'] })
+    assert_equal ['baz'], yielded
+  end
+
   def test_fetch_should_short_circuit_on_memoized_values
     fetcher.expects(:fetch).never
 

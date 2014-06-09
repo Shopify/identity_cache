@@ -19,9 +19,8 @@ module IdentityCache
     end
 
     def fetch_multi(keys, &block)
-      results = @cache_backend.read_multi(keys)
-      hit_keys = results.reject {|key, value| value == nil }.keys
-      missed_keys = keys - hit_keys
+      results = @cache_backend.read_multi(*keys)
+      missed_keys = keys - results.keys
       unless missed_keys.empty?
         replacement_results = yield missed_keys
         missed_keys.zip(replacement_results) do |key, replacement_result|
