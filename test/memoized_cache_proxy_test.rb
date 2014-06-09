@@ -4,7 +4,7 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
   def test_changing_default_cache
     IdentityCache.cache_backend = ActiveSupport::Cache::MemoryStore.new
     IdentityCache.cache.write('foo', 'bar')
-    assert_raises(NoMethodError) { IdentityCache.cache.fetch('foo') }
+    assert_equal 'bar', IdentityCache.cache.fetch('foo')
   end
 
   def test_fetch_should_short_circuit_on_memoized_values

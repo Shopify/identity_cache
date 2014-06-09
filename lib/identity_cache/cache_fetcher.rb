@@ -2,8 +2,8 @@ module IdentityCache
   class CacheFetcher
     attr_accessor :cache_backend
 
-    def initialize(cache_backend = nil)
-      @cache_backend = cache_backend || Rails.cache
+    def initialize(cache_backend)
+      @cache_backend = cache_backend
     end
 
     def write(key, value)

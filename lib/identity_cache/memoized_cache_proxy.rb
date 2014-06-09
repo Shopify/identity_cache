@@ -5,12 +5,16 @@ module IdentityCache
     attr_reader :cache_fetcher
 
     def initialize(cache_adaptor = nil)
-      @cache_fetcher = CacheFetcher.new(cache_adaptor)
+      self.cache_backend = cache_adaptor || Rails.cache
       @key_value_maps = Hash.new {|h, k| h[k] = {} }
     end
 
     def cache_backend=(cache_adaptor)
-      @cache_fetcher.cache_backend = cache_adaptor
+      if cache_adaptor.respond_to?(:cas) && cache_adaptor.respond_to?(:cas_multi)
+        @cache_fetcher = CacheFetcher.new(cache_adaptor)
+      else
+        @cache_fetcher = MemoryFetcher.new(cache_adaptor)
+      end
     end
 
     def memoized_key_values
