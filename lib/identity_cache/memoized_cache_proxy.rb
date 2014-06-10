@@ -13,7 +13,7 @@ module IdentityCache
       if cache_adaptor.respond_to?(:cas) && cache_adaptor.respond_to?(:cas_multi)
         @cache_fetcher = CacheFetcher.new(cache_adaptor)
       else
-        @cache_fetcher = MemoryFetcher.new(cache_adaptor)
+        @cache_fetcher = FallbackFetcher.new(cache_adaptor)
       end
     end
 

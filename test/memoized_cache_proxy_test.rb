@@ -7,7 +7,7 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
     assert_equal 'bar', IdentityCache.cache.fetch('foo')
   end
 
-  def test_fetch_multi_with_memory_store
+  def test_fetch_multi_with_fallback_fetcher
     IdentityCache.cache_backend = backend = ActiveSupport::Cache::MemoryStore.new
     IdentityCache.cache.write('foo', 'bar')
     backend.expects(:write).with('bar', 'baz')

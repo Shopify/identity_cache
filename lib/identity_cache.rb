@@ -12,7 +12,7 @@ require 'identity_cache/query_api'
 require "identity_cache/cache_hash"
 require "identity_cache/cache_invalidation"
 require "identity_cache/cache_fetcher"
-require "identity_cache/memory_fetcher"
+require "identity_cache/fallback_fetcher"
 
 module IdentityCache
   CACHED_NIL = :idc_cached_nil

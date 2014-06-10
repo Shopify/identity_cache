@@ -1,5 +1,5 @@
 module IdentityCache
-  class MemoryFetcher
+  class FallbackFetcher
     attr_accessor :cache_backend
 
     def initialize(cache_backend)
