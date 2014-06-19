@@ -1,3 +1,7 @@
+---
+layout: index
+---
+
 # IdentityCache
 [![Build Status](https://travis-ci.org/Shopify/identity_cache.svg?branch=master)](https://travis-ci.org/Shopify/identity_cache)
 
