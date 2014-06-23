@@ -13,10 +13,10 @@ IdentityCache keeps track of the objects that have cached indexes and uses an 'a
 
 Add this line to your application's Gemfile:
 
-  ruby
-  gem 'identity_cache'
-  gem 'cityhash'        # optional, for faster hashing (C-Ruby only)
+    ruby
+    gem 'identity_cache'
+    gem 'cityhash'        # optional, for faster hashing (C-Ruby only)
 
 And then execute:
 
-$ bundle
+    $ bundle
