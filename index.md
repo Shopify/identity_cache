@@ -7,7 +7,7 @@ layout: index
 
 Opt in read through ActiveRecord caching used in production and extracted from Shopify. IdentityCache lets you specify how you want to cache your model objects, at the model level, and adds a number of convenience methods for accessing those objects through the cache. Memcached is used as the backend cache store, and the database is only hit when a copy of the object cannot be found in Memcached.
 
-IdentityCache keeps track of the objects that have cached indexes and uses an 'after_commit' hook to expire those objects, and any up the tree, when they are changed.
+IdentityCache keeps track of the objects that have cached indexes and uses an `after_commit` hook to expire those objects, and any up the tree, when they are changed.
 
 ## Installation
 
@@ -54,7 +54,7 @@ Note: You must include the IdentityCache module into the classes where you want 
 
 ### Secondary Indexes
 
-IdentifyCache lets you lookup records by fields other than 'id'. You can have multiple of these indexes with any other combination of fields:
+IdentifyCache lets you lookup records by fields other than `id`. You can have multiple of these indexes with any other combination of fields:
 
     ruby
     class Product < ActiveRecord::Base
@@ -111,11 +111,11 @@ IdentityCache can easily embed objects into the parents' cache entry. This means
     @product = Product.fetch(id)
     @product.fetch_images
 
-With this code, on cache miss, the product and its associated images will be loaded from the db. All this data will be stored into the single cache key for the product. Later requests will load the entire blob of data; '@product.fetch_images' will not need to hit the db since the images are loaded with the product from the cache.
+With this code, on cache miss, the product and its associated images will be loaded from the db. All this data will be stored into the single cache key for the product. Later requests will load the entire blob of data; `@product.fetch_images` will not need to hit the db since the images are loaded with the product from the cache.
 
 ### Caching Polymorphic Associations
 
-IdentityCache tries to figure out both sides of an association whenever it can so it can set those up when rebuilding the object from the cache. In some cases this is hard to determine so you can tell IdentityCache what the association should be. This is most often the case when embedding polymorphic associations. The 'inverse_name' option on 'cache_has_many' and 'cache_has_one' lets you specify the inverse name of the association.
+IdentityCache tries to figure out both sides of an association whenever it can so it can set those up when rebuilding the object from the cache. In some cases this is hard to determine so you can tell IdentityCache what the association should be. This is most often the case when embedding polymorphic associations. The 'inverse_name' option on `cache_has_many` and `cache_has_one` lets you specify the inverse name of the association.
 
     ruby
     class Metafield < ActiveRecord::Base
@@ -128,12 +128,12 @@ IdentityCache tries to figure out both sides of an association whenever it can s
       cache_has_many :metafields, :inverse_name => :owner
     end
 
-The ':inverse_name => :owner' option tells IdentityCache what the association on the other side is named so that it can correctly set the assocation when loading the metafields from the cache.
+The `:inverse_name => :owner` option tells IdentityCache what the association on the other side is named so that it can correctly set the assocation when loading the metafields from the cache.
 
 
 ### Caching Attributes
 
-For cases where you may not need the entire object to be cached, just an attribute from record, 'cache_attribute' can be used. This will cache the single attribute by the key specified.
+For cases where you may not need the entire object to be cached, just an attribute from record, `cache_attribute` can be used. This will cache the single attribute by the key specified.
 
     ruby
     class Redirect < ActiveRecord::Base
@@ -143,7 +143,6 @@ For cases where you may not need the entire object to be cached, just an attribu
     Redirect.fetch_target_by_shop_id_and_path(shop_id, path)
 
 This will read the attribute from the cache or query the database for the attribute and store it in the cache.
-
 
 ## Methods Added to ActiveRecord::Base
 
@@ -185,7 +184,7 @@ Example:
 
 ## Memoized Cache Proxy
 
-Cache reads and writes can be memoized for a block of code to serve duplicate identity cache requests from memory. This can be done for an http request by adding this around filter in your 'ApplicationController'.
+Cache reads and writes can be memoized for a block of code to serve duplicate identity cache requests from memory. This can be done for an http request by adding this around filter in your `ApplicationController`.
 
     ruby
     class ApplicationController < ActionController::Base
@@ -198,15 +197,15 @@ Cache reads and writes can be memoized for a block of code to serve duplicate id
 
 ## Versioning
 
-Cache keys include a version number by default, specified in 'IdentityCache::CACHE_VERSION'. This version number is updated whenever the storage format for cache values is modified. If you modify the cache value format, you must run 'rake update_serialization_format' in order to pass the unit tests, and include the modified 'test/fixtures/serialized_record' file in your pull request.
+Cache keys include a version number by default, specified in `IdentityCache::CACHE_VERSION`. This version number is updated whenever the storage format for cache values is modified. If you modify the cache value format, you must run `rake update_serialization_format` in order to pass the unit tests, and include the modified `test/fixtures/serialized_record` file in your pull request.
 
 ## Caveats
 
-A word of warning. Some versions of rails will silently rescue all exceptions in 'after_commit' hooks. If an 'after_commit' fails before the cache expiry 'after_commit' the cache will not be expired and you will be left with stale data.
+A word of warning. Some versions of rails will silently rescue all exceptions in `after_commit` hooks. If an `after_commit` fails before the cache expiry `after_commit` the cache will not be expired and you will be left with stale data.
 
 Since everything is being marshalled and unmarshalled from Memcached changing Ruby or Rails versions could mean your objects cannot be unmarshalled from Memcached. There are a number of ways to get around this such as namespacing keys when you upgrade or rescuing marshal load errors and treating it as a cache miss. Just something to be aware of if you are using IdentityCache and upgrade Ruby or Rails.
 
-IdentityCache is also very much _opt-in_ by deliberate design. This means IdentityCache does not mess with the way normal Rails associations work, and including it in a model won't change any clients of that model until you switch them to use 'fetch' instead of 'find'. This is because there is no way IdentityCache is ever going to be 100% consistent. Processes die, execeptions happen, and network blips occur, which means there is a chance that some database transaction might commit but the corresponding memcached DEL operation does not make it. This means that you need to think carefully about when you use 'fetch' and when you use 'find'. For example, at Shopify, we never use any `fetch`ers on the path which moves money around, because IdentityCache could simply be wrong, and we want to charge people the right amount of money. We do however use the fetchers on performance critical paths where absolute correctness isn't the most important thing, and this is what IdentityCache is intended for.
+IdentityCache is also very much _opt-in_ by deliberate design. This means IdentityCache does not mess with the way normal Rails associations work, and including it in a model won't change any clients of that model until you switch them to use `fetch` instead of `find`. This is because there is no way IdentityCache is ever going to be 100% consistent. Processes die, execeptions happen, and network blips occur, which means there is a chance that some database transaction might commit but the corresponding memcached DEL operation does not make it. This means that you need to think carefully about when you use `fetch` and when you use `find`. For example, at Shopify, we never use any `fetch`ers on the path which moves money around, because IdentityCache could simply be wrong, and we want to charge people the right amount of money. We do however use the fetchers on performance critical paths where absolute correctness isn't the most important thing, and this is what IdentityCache is intended for.
 
 ## Note
 
@@ -225,9 +224,9 @@ Types of contributions we are looking for:
 ### How To Contribute
 
 1. Fork it
-2. Create your feature branch (git checkout -b my-new-feature)
-3. Commit your changes (git commit -am 'Added some feature')
-4. Push to the branch ('git push origin my-new-feature')
+2. Create your feature branch (`git checkout -b my-new-feature`)
+3. Commit your changes (`git commit -am 'Added some feature'`)
+4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
 
 ## Contributors
