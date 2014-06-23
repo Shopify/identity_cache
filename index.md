@@ -13,24 +13,10 @@ IdentityCache keeps track of the objects that have cached indexes and uses an 'a
 
 Add this line to your application's Gemfile:
 
-  ruby
-  gem 'identity_cache'
-  gem 'cityhash'        # optional, for faster hashing (C-Ruby only)
+ruby
+gem 'identity_cache'
+gem 'cityhash'        # optional, for faster hashing (C-Ruby only)
 
 And then execute:
 
-  $ bundle
-
-Add the following to your environment/production.rb:
-
-  ruby
-  config.identity_cache_store = :mem_cache_store, Memcached::Rails.new(:servers => ["mem1.server.com"])
-
-Add an initializer with this code:
-
-  ruby
-  IdentityCache.cache_backend = ActiveSupport::Cache.lookup_store(*Rails.configuration.identity_cache_store)
-
-## Usage
-
-### Basic Usage
+$ bundle
