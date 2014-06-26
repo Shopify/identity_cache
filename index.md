@@ -2,7 +2,6 @@
 layout: index
 ---
 
-# IdentityCache
 [![Build Status](https://travis-ci.org/Shopify/identity_cache.svg?branch=master)](https://travis-ci.org/Shopify/identity_cache)
 
 Opt in read through ActiveRecord caching used in production and extracted from Shopify. IdentityCache lets you specify how you want to cache your model objects, at the model level, and adds a number of convenience methods for accessing those objects through the cache. Memcached is used as the backend cache store, and the database is only hit when a copy of the object cannot be found in Memcached.
@@ -146,7 +145,7 @@ This will read the attribute from the cache or query the database for the attrib
 
 ## Methods Added to ActiveRecord::Base
 
-#### cache_index
+### cache_index
 
 Options:  
 _[:unique]_ Allows you to say that an index is unique (only one object stored at the index) or not unique, which allows there to be multiple objects matching the index key. The default value is false.
@@ -154,7 +153,7 @@ _[:unique]_ Allows you to say that an index is unique (only one object stored at
 Example:  
 `cache_index :handle`
 
-#### cache_has_many
+### cache_has_many
 
 Options:  
 _[:embed]_ When true, specifies that the association should be included with the parent when caching. This means the associated objects will be loaded already when the parent is loaded from the cache and will not need to be fetched on their own. When :ids, only the id of the associated records will be included with the parent when caching.
@@ -164,7 +163,7 @@ _[:inverse_name]_ Specifies the name of parent object used by the association. T
 Example:  
 `cache_has_many :metafields, :inverse_name => :owner, :embed => true`
 
-#### cache_has_one
+### cache_has_one
 
 Options:  
 _[:embed]_ When true, specifies that the association should be included with the parent when caching. This means the associated objects will be loaded already when the parent is loaded from the cache and will not need to be fetched on their own. No other values are currently implemented.
@@ -174,7 +173,7 @@ _[:inverse_name]_ Specifies the name of parent object used by the association. T
 Example:
 `cache_has_one :configuration, :embed => true`
 
-#### cache_attribute
+### cache_attribute
 
 Options:  
 _[:by]_ Specifies what key(s) you want the attribute cached by. Defaults to :id.
@@ -229,13 +228,17 @@ Types of contributions we are looking for:
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
 
-## Contributors
+### Contributors
 
-Camilo Lopez (@camilo)  
-Tom Burns (@boourns)  
-Harry Brundage (@hornairs)  
-Dylan Smith (@dylanahsmith)  
-Tobias Lütke (@tobi)  
-John Duff (@jduff)  
-Francis Bogsanyi (@fbogsany)
-Arthur Neves (@arthurnn)
+* Arthur Neves, [@arthurnn](https://twitter.com/arthurnn)
+* [Camilo Lopez](http://camilolopez.com), [@camilo](https://twitter.com/camilolopez)
+* Dylan Smith 
+* [Francis Bogsanyi](http://fbogsany.calepin.co/), [@fbogsany](https://twitter.com/fbogsany)
+* [Harry Brundage](http://harry.me), [@hornairs](https://twitter.com/harrybrundage)
+* [John Duff](https://twitter.com/johnduff)
+* [Tobias Lütke](http://about.me/tobiaslutke), [@tobi](https://twitter.com/tobi)
+* Tom Burns, [@boourns](https://twitter.com/Boourns)
+
+## License
+
+Unless otherwise noted, all code is released under the [MIT-LICENSE](http://opensource.org/licenses/MIT).
