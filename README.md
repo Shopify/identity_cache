@@ -55,7 +55,7 @@ Note: You must include the IdentityCache module into the classes where you want 
 
 ### Secondary Indexes
 
-IdentifyCache lets you lookup records by fields other than `id`. You can have multiple of these indexes with any other combination of fields:
+IdentityCache lets you lookup records by fields other than `id`. You can have multiple of these indexes with any other combination of fields:
 
 ``` ruby
 class Product < ActiveRecord::Base
