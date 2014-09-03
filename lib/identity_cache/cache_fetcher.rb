@@ -65,8 +65,7 @@ module IdentityCache
           end
         end
 
-        break if updates.empty?
-        updates
+        {}
       end
       result
     end
@@ -78,7 +77,7 @@ module IdentityCache
     end
 
     def add(key, value)
-      @cache_backend.write(key, value, :unless_exist => true)
+      # @cache_backend.write(key, value, :unless_exist => true)
     end
   end
 end
