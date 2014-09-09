@@ -26,7 +26,7 @@ module IdentityCache
       def build_normalized_belongs_to_cache(association, options)
         self.class_eval(<<-CODE, __FILE__, __LINE__ + 1)
           def #{options[:cached_accessor_name]}
-            if IdentityCache.should_cache? && #{options[:foreign_key]}.present? && !association(:#{association}).loaded?
+            if IdentityCache.should_use_cache? && #{options[:foreign_key]}.present? && !association(:#{association}).loaded?
               self.#{association} = #{options[:association_class]}.fetch_by_id(#{options[:foreign_key]})
             else
               #{association}
