@@ -18,14 +18,14 @@ class ReadonlyTest < IdentityCache::TestCase
     super
   end
 
-  def test_write
+  def test_write_should_not_update_cache
     assert_memcache_operations(0) do
       fetcher.write(@key, @value)
     end
     assert_nil backend.read(@key)
   end
 
-  def test_delete
+  def test_delete_should_not_update_cache
     backend.write(@key, @value)
     assert_memcache_operations(0) do
       fetcher.delete(@key)
@@ -33,7 +33,7 @@ class ReadonlyTest < IdentityCache::TestCase
     assert_equal @value, backend.read(@key)
   end
 
-  def test_clear
+  def test_clear_should_not_update_cache
     backend.write(@key, @value)
     assert_memcache_operations(0) do
       fetcher.clear
@@ -41,7 +41,7 @@ class ReadonlyTest < IdentityCache::TestCase
     assert_equal @value, backend.read(@key)
   end
 
-  def test_fetch
+  def test_fetch_should_not_update_cache
     fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
     Item.expects(:resolve_cache_miss).with(1).once.returns(@record)
 
@@ -52,7 +52,7 @@ class ReadonlyTest < IdentityCache::TestCase
     assert fetch.has_been_called_with?(@record.primary_cache_index_key)
   end
 
-  def test_fetch_multi
+  def test_fetch_multi_should_not_update_cache
     fetch_multi = Spy.on(IdentityCache.cache, :fetch_multi).and_call_through
 
     assert_readonly_fetch_multi do
