@@ -1,8 +1,6 @@
 require "test_helper"
 
 class ReadonlyTest < IdentityCache::TestCase
-  NAMESPACE = IdentityCache::CacheKeyGeneration::DEFAULT_NAMESPACE
-
   def setup
     super
     IdentityCache.readonly = true
