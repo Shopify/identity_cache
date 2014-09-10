@@ -22,7 +22,7 @@ module IdentityCache
       def fetch_by_id(id)
         return unless id
         raise NotImplementedError, "fetching needs the primary index enabled" unless primary_cache_index_enabled
-        if IdentityCache.should_cache?
+        if IdentityCache.should_use_cache?
 
           require_if_necessary do
             object = nil
@@ -50,7 +50,7 @@ module IdentityCache
         raise NotImplementedError, "fetching needs the primary index enabled" unless primary_cache_index_enabled
         options = ids.extract_options!
         ids.flatten!(1)
-        records = if IdentityCache.should_cache?
+        records = if IdentityCache.should_use_cache?
           require_if_necessary do
             cache_keys = ids.map {|id| rails_cache_key(id) }
             key_to_id_map = Hash[ cache_keys.zip(ids) ]
@@ -313,7 +313,7 @@ module IdentityCache
 
     def fetch_recursively_cached_association(ivar_name, association_name) # :nodoc:
       ivar_full_name = :"@#{ivar_name}"
-      if IdentityCache.should_cache?
+      if IdentityCache.should_use_cache?
         populate_recursively_cached_association(ivar_name, association_name)
         assoc = IdentityCache.unmap_cached_nil_for(instance_variable_get(ivar_full_name))
         assoc.is_a?(ActiveRecord::Associations::CollectionAssociation) ? assoc.reader : assoc

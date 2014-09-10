@@ -7,15 +7,15 @@ module IdentityCache
     end
 
     def write(key, value)
-      @cache_backend.write(key, value)
+      @cache_backend.write(key, value) if IdentityCache.should_update_cache?
     end
 
     def delete(key)
-      @cache_backend.delete(key)
+      @cache_backend.delete(key) if IdentityCache.should_update_cache?
     end
 
     def clear
-      @cache_backend.clear
+      @cache_backend.clear if IdentityCache.should_update_cache?
     end
 
     def fetch_multi(keys, &block)
@@ -24,7 +24,7 @@ module IdentityCache
       unless missed_keys.empty?
         replacement_results = yield missed_keys
         missed_keys.zip(replacement_results) do |key, replacement_result|
-          @cache_backend.write(key, replacement_result)
+          @cache_backend.write(key, replacement_result) if IdentityCache.should_update_cache?
           results[key] = replacement_result
         end
       end
@@ -35,7 +35,7 @@ module IdentityCache
       result = @cache_backend.read(key)
       if result.nil?
         result = yield
-        @cache_backend.write(key, result)
+        @cache_backend.write(key, result) if IdentityCache.should_update_cache?
       end
       result
     end
