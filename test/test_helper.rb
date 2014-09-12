@@ -5,9 +5,8 @@ require 'active_record'
 require 'helpers/database_connection'
 require 'helpers/active_record_objects'
 require 'spy/integration'
-#require 'memcached_store'
-#require 'active_support/cache/memcached_store'
-
+require 'memcached_store'
+require 'active_support/cache/memcached_store'
 require 'snappy_pack'
 
 require File.dirname(__FILE__) + '/../lib/identity_cache'
@@ -19,15 +18,15 @@ DatabaseConnection.setup
 ActiveSupport::Cache::Store.instrument = true
 
 # This patches AR::MemcacheStore to notify AS::Notifications upon read_multis like the rest of rails does
-#class ActiveSupport::Cache::MemcachedStore
-#  def read_multi_with_instrumentation(*args, &block)
-#    instrument("read_multi", "MULTI", {:keys => args}) do
-#      read_multi_without_instrumentation(*args, &block)
-#    end
-#  end
+class ActiveSupport::Cache::MemcachedStore
+  def read_multi_with_instrumentation(*args, &block)
+    instrument("read_multi", "MULTI", {:keys => args}) do
+      read_multi_without_instrumentation(*args, &block)
+    end
+  end
 
-#  alias_method_chain :read_multi, :instrumentation
-#end
+  alias_method_chain :read_multi, :instrumentation
+end
 
 # Patch snappy_pack to include a read operations
 module SnappyPack
@@ -53,10 +52,10 @@ class IdentityCache::TestCase < MiniTest::Unit::TestCase
 
     IdentityCache.logger = Logger.new(nil)
 
-    IdentityCache.cache_backend = @backend = SnappyPack::Adapter.new("localhost:#{$memcached_port}", :support_cas => true)
+    IdentityCache.cache_backend = @backend = ActiveSupport::Cache::MemcachedStore.new("localhost:#{$memcached_port}", :support_cas => true)
     @fetcher = IdentityCache.cache.cache_fetcher
-    #IdentityCache.cache_backend = @backend = ActiveSupport::Cache::MemcachedStore.new("localhost:#{$memcached_port}", :support_cas => true)
-    #@fetcher = IdentityCache.cache.cache_fetcher
+
+    use_snappy_pack
 
     setup_models
   end
@@ -108,6 +107,11 @@ class IdentityCache::TestCase < MiniTest::Unit::TestCase
 
   def cache_hash(key)
     IdentityCache.memcache_hash(key)
+  end
+
+  def use_snappy_pack
+    IdentityCache.cache_backend = @backend = SnappyPack::Adapter.new("localhost:#{$memcached_port}")
+    @fetcher = IdentityCache.cache.cache_fetcher
   end
 end
 
