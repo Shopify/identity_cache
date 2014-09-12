@@ -210,7 +210,7 @@ class FetchMultiTest < IdentityCache::TestCase
   end
 
   def cache_response_for(record)
-    coder = {:class => record.class.name}
+    coder = {'class' => record.class.name}
     record.encode_with(coder)
     coder
   end

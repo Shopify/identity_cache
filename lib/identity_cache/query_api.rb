@@ -78,8 +78,8 @@ module IdentityCache
       private
 
       def record_from_coder(coder) #:nodoc:
-        if coder.present? && coder.has_key?(:class)
-          clazz = coder[:class].constantize
+        if coder.present? && coder.has_key?('class')
+          clazz = coder['class'].constantize
           record = clazz.allocate
           unless clazz.serialized_attributes.empty?
             coder = coder.dup
@@ -87,8 +87,8 @@ module IdentityCache
           end
           record.init_with(coder)
 
-          coder[:associations].each {|name, value| set_embedded_association(record, name, value) } if coder.has_key?(:associations)
-          coder[:normalized_has_many].each {|name, ids| record.instance_variable_set(:"@#{record.class.cached_has_manys[name][:ids_variable_name]}", ids) } if coder.has_key?(:normalized_has_many)
+          coder['associations'].each {|name, value| set_embedded_association(record, name, value) } if coder.has_key?('associations')
+          coder['normalized_has_many'].each {|name, ids| record.instance_variable_set(:"@#{record.class.cached_has_manys[name.to_sym][:ids_variable_name]}", ids) } if coder.has_key?('normalized_has_many')
           record
         end
       end
@@ -96,7 +96,7 @@ module IdentityCache
       def set_embedded_association(record, association_name, coder_or_array) #:nodoc:
         value = if IdentityCache.unmap_cached_nil_for(coder_or_array).nil?
           nil
-        elsif (reflection = record.class.reflect_on_association(association_name)).collection?
+        elsif (reflection = record.class.reflect_on_association(association_name.to_sym)).collection?
           association = reflection.association_class.new(record, reflection)
           association.target = coder_or_array.map {|e| record_from_coder(e) }
           association.target.each {|e| association.set_inverse_instance(e) }
@@ -104,7 +104,7 @@ module IdentityCache
         else
           record_from_coder(coder_or_array)
         end
-        variable_name = record.class.send(:recursively_embedded_associations)[association_name][:records_variable_name]
+        variable_name = record.class.send(:recursively_embedded_associations)[association_name.to_sym][:records_variable_name]
         record.instance_variable_set(:"@#{variable_name}", IdentityCache.map_cached_nil_for(value))
       end
 
@@ -121,7 +121,7 @@ module IdentityCache
 
       def coder_from_record(record) #:nodoc:
         unless record.nil?
-          coder = {:class => record.class.name }
+          coder = {'class' => record.class.name }
           record.encode_with(coder)
           add_cached_associations_to_coder(record, coder)
           coder
@@ -132,12 +132,12 @@ module IdentityCache
         klass = record.class
         if klass.include?(IdentityCache)
           if (recursively_embedded_associations = klass.send(:recursively_embedded_associations)).present?
-            coder[:associations] = recursively_embedded_associations.each_with_object({}) do |(name, options), hash|
+            coder['associations'] = recursively_embedded_associations.each_with_object({}) do |(name, options), hash|
               hash[name] = IdentityCache.map_cached_nil_for(get_embedded_association(record, name, options))
             end
           end
           if (cached_has_manys = klass.cached_has_manys).present?
-            coder[:normalized_has_many] = cached_has_manys.each_with_object({}) do |(name, options), hash|
+            coder['normalized_has_many'] = cached_has_manys.each_with_object({}) do |(name, options), hash|
               hash[name] = record.instance_variable_get(:"@#{options[:ids_variable_name]}") unless options[:embed] == true
             end
           end
