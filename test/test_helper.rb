@@ -36,11 +36,16 @@ module SnappyPack
     rescue Memcached::NotFound
       nil
     end
+    alias_method :fetch, :read
 
     def read_multi(*keys)
       memcached.get(keys)
     rescue Memcached::NotFound
       {}
+    end
+
+    def delete(key)
+      memcached.delete(key)
     end
   end
 end
