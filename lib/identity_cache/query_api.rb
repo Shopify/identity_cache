@@ -79,8 +79,9 @@ module IdentityCache
 
       def record_from_coder(coder) #:nodoc:
         if coder.present? && coder.has_key?(:class)
-          record = coder[:class].allocate
-          unless coder[:class].serialized_attributes.empty?
+          clazz = coder[:class].constantize
+          record = clazz.allocate
+          unless clazz.serialized_attributes.empty?
             coder = coder.dup
             coder['attributes'] = coder['attributes'].dup
           end
@@ -120,7 +121,7 @@ module IdentityCache
 
       def coder_from_record(record) #:nodoc:
         unless record.nil?
-          coder = {:class => record.class }
+          coder = {:class => record.class.name }
           record.encode_with(coder)
           add_cached_associations_to_coder(record, coder)
           coder
