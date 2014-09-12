@@ -29,6 +29,20 @@ ActiveSupport::Cache::Store.instrument = true
 #  alias_method_chain :read_multi, :instrumentation
 #end
 
+# Patch snappy_pack to include a read operations
+module SnappyPack
+  class Adapter
+    def read(key)
+      memcached.get(key)
+    end
+
+    def read_multi(*keys)
+      memcached.get(keys)
+    end
+  end
+end
+
+
 class IdentityCache::TestCase < MiniTest::Unit::TestCase
   include ActiveRecordObjects
   attr_reader :backend, :fetcher
