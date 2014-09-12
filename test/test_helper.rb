@@ -33,10 +33,14 @@ module SnappyPack
   class Adapter
     def read(key)
       memcached.get(key)
+    rescue Memcached::NotFound
+      nil
     end
 
     def read_multi(*keys)
       memcached.get(keys)
+    rescue Memcached::NotFound
+      {}
     end
   end
 end
