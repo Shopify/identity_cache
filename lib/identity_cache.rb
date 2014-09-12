@@ -15,9 +15,9 @@ require "identity_cache/cache_fetcher"
 require "identity_cache/fallback_fetcher"
 
 module IdentityCache
-  CACHED_NIL = :idc_cached_nil
+  CACHED_NIL = "idc_cached_nil".freeze
   BATCH_SIZE = 1000
-  DELETED = :idc_cached_deleted
+  DELETED = "idc_cached_deleted".freeze
   DELETED_TTL = 1000
 
   class AlreadyIncludedError < StandardError; end
