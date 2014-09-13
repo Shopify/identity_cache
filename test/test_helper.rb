@@ -10,7 +10,6 @@ require 'active_support/cache/memcached_store'
 require 'snappy_pack'
 
 require File.dirname(__FILE__) + '/../lib/identity_cache'
-
 $memcached_port = 11211
 $mysql_port = 3306
 
@@ -28,7 +27,7 @@ class ActiveSupport::Cache::MemcachedStore
   alias_method_chain :read_multi, :instrumentation
 end
 
-# Patch snappy_pack to include a read operations
+# Patch snappy_pack to include read, delete operations
 module SnappyPack
   class Adapter
     def read(key)
@@ -53,7 +52,8 @@ end
 
 class IdentityCache::TestCase < MiniTest::Unit::TestCase
   include ActiveRecordObjects
-  attr_reader :backend, :fetcher
+  attr_reader :backend, :fetcher 
+  attr_accessor :snappy_pack
 
   def setup
     DatabaseConnection.drop_tables
@@ -65,7 +65,7 @@ class IdentityCache::TestCase < MiniTest::Unit::TestCase
     @fetcher = IdentityCache.cache.cache_fetcher
 
     use_snappy_pack
-
+    
     setup_models
   end
 
@@ -119,8 +119,10 @@ class IdentityCache::TestCase < MiniTest::Unit::TestCase
   end
 
   def use_snappy_pack
-    IdentityCache.cache_backend = @backend = SnappyPack::Adapter.new("localhost:#{$memcached_port}")
-    @fetcher = IdentityCache.cache.cache_fetcher
+    if snappy_pack
+      IdentityCache.cache_backend = @backend = SnappyPack::Adapter.new("localhost:#{$memcached_port}")
+      @fetcher = IdentityCache.cache.cache_fetcher
+    end
   end
 end
 

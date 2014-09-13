@@ -50,3 +50,11 @@ class CacheInvalidationTest < IdentityCache::TestCase
     assert_equal [@bar], @record.fetch_associated_records
   end
 end
+
+class CacheInvalidationSnappyPackTest < CacheInvalidationTest
+  def setup
+    @snappy_pack = true
+    super
+  end
+end
+

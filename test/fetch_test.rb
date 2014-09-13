@@ -189,3 +189,10 @@ class FetchTest < IdentityCache::TestCase
     assert_raises(ActiveRecord::RecordNotFound) { Item.fetch(nil) }
   end
 end
+
+class FetchSnappyPackTest < FetchTest
+  def setup
+    @snappy_pack = true
+    super
+  end
+end

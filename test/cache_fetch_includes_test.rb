@@ -43,3 +43,10 @@ class CacheFetchIncludesTest < IdentityCache::TestCase
     ],  Item.send(:cache_fetch_includes)
   end
 end
+
+class CacheFetchIncludesSnappyPackTest < CacheFetchIncludesTest
+  def setup
+    @snappy_pack = true
+    super
+  end
+end

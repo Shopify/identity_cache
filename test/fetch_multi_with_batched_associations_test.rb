@@ -214,3 +214,10 @@ class FetchMultiWithBatchedAssociationsTest < IdentityCache::TestCase
     grandchildren
   end
 end
+
+class FetchMultiWithBatchedAssociationsSnappyPackTest < FetchMultiWithBatchedAssociationsTest
+  def setup
+    @snappy_pack = true
+    super
+  end
+end

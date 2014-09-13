@@ -111,3 +111,11 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     end
   end
 end
+
+class DenormalizedHasOneSnappyPackTest < DenormalizedHasOneTest 
+  def setup
+    @snappy_pack = true
+    super
+  end
+end
+

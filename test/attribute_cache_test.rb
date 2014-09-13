@@ -110,3 +110,10 @@ class AttributeCacheTest < IdentityCache::TestCase
     assert_equal "Jim", AssociatedRecord.fetch_name_by_id(2)
   end
 end
+
+class AttributeCacheSnappyPackTest < AttributeCacheTest
+  def setup
+    @snappy_pack = true
+    super
+  end
+end

@@ -89,3 +89,10 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     child.save!
   end
 end
+
+class DenormalizedHasManySnappyPackTest < DenormalizedHasManyTest 
+  def setup
+    @snappy_pack = true
+    super
+  end
+end
