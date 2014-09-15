@@ -14,3 +14,11 @@ class SerializationFormatChangeTest < IdentityCache::TestCase
     assert(false, MESSAGE)
   end
 end
+
+class SerializationFormatChangeSnappyPackTest < SerializationFormatChangeTest
+  def setup
+    @snappy_pack = true
+    super
+  end
+end
+

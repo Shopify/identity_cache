@@ -102,3 +102,10 @@ class FallbackReadonlyTest < ReadonlyTest
     refute write.has_been_called?
   end
 end
+
+class ReadonlySnappyPackTest < ReadonlyTest
+  def setup
+    @snappy_pack = true
+    super
+  end
+end

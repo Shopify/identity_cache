@@ -105,3 +105,10 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
     assert_equal 'bar', @backend.fetch('foo')
   end
 end
+
+class MemoizedCacheProxySnappyPackTest < MemoizedCacheProxyTest
+  def setup
+    @snappy_pack = true
+    super
+  end
+end 

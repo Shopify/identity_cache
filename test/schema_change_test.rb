@@ -105,3 +105,11 @@ class SchemaChangeTest < IdentityCache::TestCase
     record = Item.fetch(@record.id)
   end
 end
+
+class SchemaChangeSnappyPackTest < SchemaChangeTest
+  def setup
+    @snappy_pack = true
+    super
+  end
+end
+

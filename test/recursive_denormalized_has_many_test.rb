@@ -113,3 +113,10 @@ class DisabledPrimaryIndexTest < RecursiveDenormalizedHasManyTest
     AssociatedRecord.disable_primary_cache_index
   end
 end
+
+class RecursiveDenormalizedHasManySnappyPackTest < RecursiveDenormalizedHasManyTest
+  def setup
+    @snappy_pack = true
+    super
+  end
+end

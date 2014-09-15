@@ -64,3 +64,10 @@ class SaveTest < IdentityCache::TestCase
     @record.touch
   end
 end
+
+class SaveSnappyPackTest < SaveTest
+  def setup
+    @snappy_pack = true
+    super
+  end
+end

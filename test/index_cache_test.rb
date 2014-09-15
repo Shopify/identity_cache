@@ -122,3 +122,11 @@ class IndexCacheTest < IdentityCache::TestCase
     assert_equal [@record.id], backend.read(@cache_key)
   end
 end
+
+class IndexCacheSnappyPackTest < IndexCacheTest
+  def setup
+    @snappy_pack = true
+    super
+  end
+end
+

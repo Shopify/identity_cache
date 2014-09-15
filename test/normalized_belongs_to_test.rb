@@ -46,3 +46,10 @@ class NormalizedBelongsToTest < IdentityCache::TestCase
     assert_equal nil, @record.fetch_item
   end
 end
+
+class NormalizedBelongsToSnappyPackTest < NormalizedBelongsToTest 
+  def setup
+    @snappy_pack = true 
+    super
+  end
+end
