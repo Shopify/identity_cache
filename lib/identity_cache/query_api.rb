@@ -28,7 +28,9 @@ module IdentityCache
             object = nil
             coder = IdentityCache.fetch(rails_cache_key(id)){ coder_from_record(object = resolve_cache_miss(id)) }
             object ||= record_from_coder(coder)
-            IdentityCache.logger.error "[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{object.id} for #{object.inspect[(0..100)]} " if object && object.id != id.to_i
+            if object && object.class.primary_key == "id" && object.id != id.to_i
+              IdentityCache.logger.error "[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{object.id} for #{object.inspect[(0..100)]} "
+            end
             object
           end
 
