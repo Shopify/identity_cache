@@ -5,3 +5,5 @@ gemspec
 
 gem 'activerecord', '~> 4.1.0'
 gem 'activesupport', '~> 4.1.0'
+
+gem 'snappy_pack', :git => "git@github.com:Shopify/snappy_pack"
