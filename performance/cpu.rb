@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'benchmark'
+require 'snappy_pack'
 
 require_relative 'cache_runner'
 
@@ -40,4 +41,8 @@ end
 
 create_database(RUNS)
 
+bmbm(CACHE_RUNNERS)
+
+puts 'With SnappyPack:'
+IdentityCache.cache_backend = SnappyPack::Adapter.new("localhost:#{$memcached_port}")
 bmbm(CACHE_RUNNERS)
