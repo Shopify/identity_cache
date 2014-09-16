@@ -9,9 +9,6 @@ class NormalizedHasOneTest < IdentityCache::TestCase
 end
 
 class NormalizedHasOneSnappyPackTest < NormalizedHasOneTest
-  def setup
-    @snappy_pack = true
-    super
-  end
+  include IdentityCache::SnappyPackTestCase
 end
 

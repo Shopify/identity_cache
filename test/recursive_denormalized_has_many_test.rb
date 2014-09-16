@@ -115,8 +115,13 @@ class DisabledPrimaryIndexTest < RecursiveDenormalizedHasManyTest
 end
 
 class RecursiveDenormalizedHasManySnappyPackTest < RecursiveDenormalizedHasManyTest
-  def setup
-    @snappy_pack = true
-    super
-  end
+  include IdentityCache::SnappyPackTestCase
+end
+
+class RecursiveNormalizedHasManySnappyPackTest < RecursiveNormalizedHasManyTest
+  include IdentityCache::SnappyPackTestCase
+end
+
+class DisabledPrimaryIndexSnappyPackTest < DisabledPrimaryIndexTest
+  include IdentityCache::SnappyPackTestCase
 end

@@ -66,8 +66,5 @@ class SaveTest < IdentityCache::TestCase
 end
 
 class SaveSnappyPackTest < SaveTest
-  def setup
-    @snappy_pack = true
-    super
-  end
+  include IdentityCache::SnappyPackTestCase
 end

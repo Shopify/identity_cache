@@ -16,9 +16,6 @@ class SerializationFormatChangeTest < IdentityCache::TestCase
 end
 
 class SerializationFormatChangeSnappyPackTest < SerializationFormatChangeTest
-  def setup
-    @snappy_pack = true
-    super
-  end
+  include IdentityCache::SnappyPackTestCase
 end
 

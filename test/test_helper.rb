@@ -53,7 +53,6 @@ end
 class IdentityCache::TestCase < MiniTest::Unit::TestCase
   include ActiveRecordObjects
   attr_reader :backend, :fetcher 
-  attr_accessor :snappy_pack
 
   def setup
     DatabaseConnection.drop_tables
@@ -61,11 +60,7 @@ class IdentityCache::TestCase < MiniTest::Unit::TestCase
 
     IdentityCache.logger = Logger.new(nil)
 
-    IdentityCache.cache_backend = @backend = ActiveSupport::Cache::MemcachedStore.new("localhost:#{$memcached_port}", :support_cas => true)
-    @fetcher = IdentityCache.cache.cache_fetcher
-
-    use_snappy_pack
-    
+    setup_cache
     setup_models
   end
 
@@ -118,11 +113,16 @@ class IdentityCache::TestCase < MiniTest::Unit::TestCase
     IdentityCache.memcache_hash(key)
   end
 
-  def use_snappy_pack
-    if snappy_pack
-      IdentityCache.cache_backend = @backend = SnappyPack::Adapter.new("localhost:#{$memcached_port}")
-      @fetcher = IdentityCache.cache.cache_fetcher
-    end
+  def setup_cache
+    IdentityCache.cache_backend = @backend = ActiveSupport::Cache::MemcachedStore.new("localhost:#{$memcached_port}", :support_cas => true)
+    @fetcher = IdentityCache.cache.cache_fetcher
+  end
+end
+
+module IdentityCache::SnappyPackTestCase
+  def setup_cache
+    IdentityCache.cache_backend = @backend = SnappyPack::Adapter.new("localhost:#{$memcached_port}")
+    @fetcher = IdentityCache.cache.cache_fetcher
   end
 end
 

@@ -234,8 +234,5 @@ class FetchMultiTest < IdentityCache::TestCase
 end
 
 class FetchMultiSnappyPackTest < FetchMultiTest
-  def setup
-    @snappy_pack = true
-    super
-  end
+  include IdentityCache::SnappyPackTestCase
 end

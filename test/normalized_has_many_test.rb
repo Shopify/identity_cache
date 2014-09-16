@@ -153,8 +153,5 @@ class NormalizedHasManyTest < IdentityCache::TestCase
 end
 
 class NormalizedHasManySnappyPackTest < NormalizedHasManyTest
-  def setup
-    @snappy_pack = true
-    super
-  end
+  include IdentityCache::SnappyPackTestCase
 end

@@ -45,8 +45,5 @@ class CacheFetchIncludesTest < IdentityCache::TestCase
 end
 
 class CacheFetchIncludesSnappyPackTest < CacheFetchIncludesTest
-  def setup
-    @snappy_pack = true
-    super
-  end
+  include IdentityCache::SnappyPackTestCase
 end

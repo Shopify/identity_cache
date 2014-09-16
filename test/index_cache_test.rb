@@ -124,9 +124,6 @@ class IndexCacheTest < IdentityCache::TestCase
 end
 
 class IndexCacheSnappyPackTest < IndexCacheTest
-  def setup
-    @snappy_pack = true
-    super
-  end
+  include IdentityCache::SnappyPackTestCase
 end
 

@@ -107,8 +107,5 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
 end
 
 class MemoizedCacheProxySnappyPackTest < MemoizedCacheProxyTest
-  def setup
-    @snappy_pack = true
-    super
-  end
+  include IdentityCache::SnappyPackTestCase
 end 

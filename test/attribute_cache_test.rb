@@ -112,8 +112,5 @@ class AttributeCacheTest < IdentityCache::TestCase
 end
 
 class AttributeCacheSnappyPackTest < AttributeCacheTest
-  def setup
-    @snappy_pack = true
-    super
-  end
+  include IdentityCache::SnappyPackTestCase
 end

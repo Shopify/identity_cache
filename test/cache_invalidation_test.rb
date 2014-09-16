@@ -52,9 +52,6 @@ class CacheInvalidationTest < IdentityCache::TestCase
 end
 
 class CacheInvalidationSnappyPackTest < CacheInvalidationTest
-  def setup
-    @snappy_pack = true
-    super
-  end
+  include IdentityCache::SnappyPackTestCase
 end
 

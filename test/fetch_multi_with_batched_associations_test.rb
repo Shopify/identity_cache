@@ -216,8 +216,5 @@ class FetchMultiWithBatchedAssociationsTest < IdentityCache::TestCase
 end
 
 class FetchMultiWithBatchedAssociationsSnappyPackTest < FetchMultiWithBatchedAssociationsTest
-  def setup
-    @snappy_pack = true
-    super
-  end
+  include IdentityCache::SnappyPackTestCase
 end

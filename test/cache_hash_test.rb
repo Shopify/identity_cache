@@ -16,9 +16,6 @@ class CacheHashTest < IdentityCache::TestCase
 end
 
 class CacheHashSnappyPackTest < CacheHashTest
-  def setup
-    @snappy_pack = true
-    super
-  end
+  include IdentityCache::SnappyPackTestCase
 end
 

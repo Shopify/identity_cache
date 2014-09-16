@@ -48,8 +48,5 @@ class NormalizedBelongsToTest < IdentityCache::TestCase
 end
 
 class NormalizedBelongsToSnappyPackTest < NormalizedBelongsToTest 
-  def setup
-    @snappy_pack = true 
-    super
-  end
+  include IdentityCache::SnappyPackTestCase
 end

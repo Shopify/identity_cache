@@ -107,9 +107,6 @@ class SchemaChangeTest < IdentityCache::TestCase
 end
 
 class SchemaChangeSnappyPackTest < SchemaChangeTest
-  def setup
-    @snappy_pack = true
-    super
-  end
+  include IdentityCache::SnappyPackTestCase
 end
 

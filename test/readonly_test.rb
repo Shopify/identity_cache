@@ -104,8 +104,5 @@ class FallbackReadonlyTest < ReadonlyTest
 end
 
 class ReadonlySnappyPackTest < ReadonlyTest
-  def setup
-    @snappy_pack = true
-    super
-  end
+  include IdentityCache::SnappyPackTestCase
 end
