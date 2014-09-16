@@ -14,8 +14,3 @@ class SerializationFormatChangeTest < IdentityCache::TestCase
     assert(false, MESSAGE)
   end
 end
-
-class SerializationFormatChangeSnappyPackTest < SerializationFormatChangeTest
-  include IdentityCache::SnappyPackTestCase
-end
-
