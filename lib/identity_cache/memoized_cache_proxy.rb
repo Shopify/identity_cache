@@ -41,6 +41,21 @@ module IdentityCache
       result
     end
 
+    def exists?(key)
+      result = !!IdentityCache.unmap_cached_nil_for(memoized_key_values[key]) if memoizing?
+      result || @cache_fetcher.exists?(key)
+    end
+
+    def read(key)
+      value = memoized_key_values[key] if memoizing?
+      used_cache_backend = !value
+      value ||= @cache_fetcher.read(key)
+      missed = !value
+      memoized_key_values[key] = value if used_cache_backend && value
+      log_result(key, used_cache_backend, missed) if IdentityCache.logger.debug?
+      value
+    end
+
     def fetch(key)
       used_cache_backend = true
       missed = false
@@ -60,11 +75,7 @@ module IdentityCache
         end
       end
 
-      if missed
-        IdentityCache.logger.debug { "[IdentityCache] cache miss for #{key}" }
-      else
-        IdentityCache.logger.debug { "[IdentityCache] #{ used_cache_backend ? '(cache_backend)' : '(memoized)' } cache hit for #{key}" }
-      end
+      log_result(key, used_cache_backend, missed) if IdentityCache.logger.debug?
 
       value
     end
@@ -125,6 +136,14 @@ module IdentityCache
       memoized_keys.each {|k| IdentityCache.logger.debug "[IdentityCache] (memoized) cache hit for #{k} (multi)" }
       backend_keys.each {|k| IdentityCache.logger.debug "[IdentityCache] (backend) cache hit for #{k} (multi)" }
       missed_keys.each {|k| IdentityCache.logger.debug "[IdentityCache] cache miss for #{k} (multi)" }
+    end
+
+    def log_result(key, used_cache_backend, missed)
+      if missed
+        IdentityCache.logger.debug "[IdentityCache] cache miss for #{key}"
+      else
+        IdentityCache.logger.debug "[IdentityCache] #{ used_cache_backend ? '(cache_backend)' : '(memoized)' } cache hit for #{key}"
+      end
     end
   end
 end

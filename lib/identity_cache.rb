@@ -77,6 +77,14 @@ module IdentityCache
       ActiveRecord::Base.connection.open_transactions == 0
     end
 
+    def exists?(key)
+      should_use_cache? && cache.exists?(key)
+    end
+
+    def read(key)
+      unmap_cached_nil_for(cache.read(key)) if should_use_cache?
+    end
+
     # Cache retrieval and miss resolver primitive; given a key it will try to
     # retrieve the associated value from the cache otherwise it will return the
     # value of the execution of the block.

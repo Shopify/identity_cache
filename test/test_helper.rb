@@ -68,9 +68,13 @@ class IdentityCache::TestCase < MiniTest::Unit::TestCase
     assert_equal num, counter.log.size, "#{counter.log.size} instead of #{num} queries were executed.#{counter.log.size == 0 ? '' : "\nQueries:\n#{counter.log.join("\n")}"}" unless exception
   end
 
-  def assert_memcache_operations(num)
+  def assert_memcache_operations(num, operation=nil)
     counter = CacheCounter.new
-    subscriber = ActiveSupport::Notifications.subscribe(/cache_.*\.active_support/, counter)
+    subscriber = if operation
+                   ActiveSupport::Notifications.subscribe("cache_#{operation}.active_support", counter)
+                 else
+                   ActiveSupport::Notifications.subscribe(/cache_.*\.active_support/, counter)
+                 end
     exception = false
     yield
   rescue => e
