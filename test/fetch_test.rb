@@ -188,4 +188,15 @@ class FetchTest < IdentityCache::TestCase
     fetcher.expects(:add).never
     assert_raises(ActiveRecord::RecordNotFound) { Item.fetch(nil) }
   end
+
+  def test_fetch_cache_hit_does_not_checkout_database_connection
+    @record.save!
+    record = Item.fetch(@record.id)
+
+    ActiveRecord::Base.clear_active_connections!
+
+    assert_equal record, Item.fetch(@record.id)
+
+    assert_equal false, ActiveRecord::Base.connection_handler.active_connections?
+  end
 end
