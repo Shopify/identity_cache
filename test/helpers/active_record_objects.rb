@@ -27,6 +27,7 @@ module ActiveRecordObjects
     Object.send :const_set, 'AssociatedRecord', Class.new(base) {
       include IdentityCache
       belongs_to :item, inverse_of: :associated_records
+      belongs_to :item_two, inverse_of: :associated_records
       has_many :deeply_associated_records
       default_scope { order('id DESC') }
     }
@@ -57,6 +58,12 @@ module ActiveRecordObjects
       has_one :associated, :class_name => 'AssociatedRecord'
     }
 
+    Object.send :const_set, 'ItemTwo', Class.new(base) {
+      include IdentityCache
+      has_many :associated_records, inverse_of: :item_two, foreign_key: :item_two_id
+      self.table_name = 'items2'
+    }
+
     Object.send :const_set, 'KeyedRecord', Class.new(base) {
       include IdentityCache
       self.primary_key = "hashed_key"
@@ -72,6 +79,7 @@ module ActiveRecordObjects
     Object.send :remove_const, 'AssociatedRecord'
     Object.send :remove_const, 'NotCachedRecord'
     Object.send :remove_const, 'Item'
+    Object.send :remove_const, 'ItemTwo'
     Object.send :remove_const, 'KeyedRecord'
   end
 end
