@@ -9,6 +9,7 @@ Unreleased
 * Fix: Avoid unused preload on fetch_multi with :includes option for cache miss
 * Change :embed option value from false to :ids for cache_has_many for clarity
 * Fix: reload will invalidate the local instance cache
+* Fix: Fix invalid parent cache invalidation if object embed in different parents
 
 0.0.7
 * Fix: Not implemented error for cache_has_one with embed: false
