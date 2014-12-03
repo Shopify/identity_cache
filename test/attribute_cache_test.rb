@@ -21,7 +21,7 @@ class AttributeCacheTest < IdentityCache::TestCase
   def test_attribute_values_are_fetched_and_returned_on_cache_misses
     fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
     Item.connection.expects(:exec_query)
-      .with('SELECT  `associated_records`.`name` FROM `associated_records`  WHERE `associated_records`.`id` = 1 LIMIT 1', anything)
+      .with(AssociatedRecord.unscoped.select(quoted_table_column(AssociatedRecord, :name)).where(id: 1).limit(1).to_sql, any_parameters)
       .returns(ActiveRecord::Result.new(['name'], [['foo']]))
 
     assert_equal 'foo', AssociatedRecord.fetch_name_by_id(1)
@@ -34,7 +34,7 @@ class AttributeCacheTest < IdentityCache::TestCase
 
     # Grab the value of the attribute from the DB
     Item.connection.expects(:exec_query)
-      .with('SELECT  `associated_records`.`name` FROM `associated_records`  WHERE `associated_records`.`id` = 1 LIMIT 1', anything)
+      .with(AssociatedRecord.unscoped.select(quoted_table_column(AssociatedRecord, :name)).where(id: 1).limit(1).to_sql, any_parameters)
       .returns(ActiveRecord::Result.new(['name'], [['foo']]))
 
     # And write it back to the cache
@@ -52,7 +52,7 @@ class AttributeCacheTest < IdentityCache::TestCase
 
     # Grab the value of the attribute from the DB
     Item.connection.expects(:exec_query)
-      .with('SELECT  `associated_records`.`name` FROM `associated_records`  WHERE `associated_records`.`id` = 1 LIMIT 1', anything)
+      .with(AssociatedRecord.unscoped.select(quoted_table_column(AssociatedRecord, :name)).where(id: 1).limit(1).to_sql, any_parameters)
       .returns(ActiveRecord::Result.new(['name'], []))
 
     # And write it back to the cache
@@ -95,7 +95,7 @@ class AttributeCacheTest < IdentityCache::TestCase
     IdentityCache.cache.expects(:read).with(@name_attribute_key).never
 
     Item.connection.expects(:exec_query)
-      .with('SELECT  `associated_records`.`name` FROM `associated_records`  WHERE `associated_records`.`id` = 1 LIMIT 1', anything)
+      .with(AssociatedRecord.unscoped.select(quoted_table_column(AssociatedRecord, :name)).where(id: 1).limit(1).to_sql, any_parameters)
       .returns(ActiveRecord::Result.new(['name'], [['foo']]))
 
     @record.transaction do
@@ -114,5 +114,9 @@ class AttributeCacheTest < IdentityCache::TestCase
   def blob_key_for_associated_record(id)
     cache_hash = cache_hash('id:integer,item_id:integer,item_two_id:integer,name:string')
     "#{NAMESPACE}blob:AssociatedRecord:#{cache_hash}:#{id}"
+  end
+
+  def quoted_table_column(model, column_name)
+    "#{model.quoted_table_name}.#{model.connection.quote_column_name(column_name)}"
   end
 end
