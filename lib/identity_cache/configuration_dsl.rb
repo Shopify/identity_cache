@@ -273,12 +273,11 @@ module IdentityCache
         child_association = child_class.reflect_on_association(options[:inverse_name])
         raise InverseAssociationError unless child_association
         foreign_key = child_association.association_foreign_key
-        parent_class ||= self.name
 
         child_class.send(:include, ArTransactionChanges) unless child_class.include?(ArTransactionChanges)
         child_class.send(:include, ParentModelExpiration) unless child_class.include?(ParentModelExpiration)
 
-        after_action_name = "expire_parent_cache_#{parent_class.underscore}__#{options[:inverse_name]}"
+        after_action_name = "expire_parent_cache_#{self.name.underscore}"
 
         child_class.class_eval(<<-CODE, __FILE__, __LINE__ + 1)
         
@@ -287,7 +286,7 @@ module IdentityCache
           add_parent_expiration_entry :#{after_action_name}
 
           def #{after_action_name}
-            expire_parent_cache_on_changes(:#{options[:inverse_name]}, '#{foreign_key}', #{parent_class}, #{options[:only_on_foreign_key_change]})
+            expire_parent_cache_on_changes(:#{options[:inverse_name]}, '#{foreign_key}', #{self.name}, #{options[:only_on_foreign_key_change]})
           end
         CODE
       end
