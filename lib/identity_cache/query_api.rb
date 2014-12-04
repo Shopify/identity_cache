@@ -204,7 +204,7 @@ module IdentityCache
 
       def find_batch(ids)
         @id_column ||= columns.detect {|c| c.name == primary_key}
-        ids = ids.map{ |id| @id_column.type_cast(id) }
+        ids = ids.map{ |id| connection.type_cast(id, @id_column) }
         records = where(primary_key => ids).includes(cache_fetch_includes).to_a
         records_by_id = records.index_by(&:id)
         ids.map{ |id| records_by_id[id] }
