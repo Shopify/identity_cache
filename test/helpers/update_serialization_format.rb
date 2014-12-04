@@ -9,9 +9,6 @@ require_relative 'database_connection'
 require_relative 'active_record_objects'
 require 'identity_cache'
 
-$memcached_port = 11211
-$mysql_port = 3306
-
 include SerializationFormat
 include ActiveRecordObjects
 
@@ -19,7 +16,7 @@ DatabaseConnection.setup
 DatabaseConnection.drop_tables
 DatabaseConnection.create_tables
 IdentityCache.logger = Logger.new(nil)
-IdentityCache.cache_backend = ActiveSupport::Cache::MemcachedStore.new("localhost:#{$memcached_port}", :support_cas => true)
+IdentityCache.cache_backend = ActiveSupport::Cache::MemcachedStore.new("localhost:11211", :support_cas => true)
 setup_models
 File.open(serialized_record_file, 'w') {|file| serialize(serialized_record, file) }
 puts "Serialized record to #{serialized_record_file}"
