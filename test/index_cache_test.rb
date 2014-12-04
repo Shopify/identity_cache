@@ -87,7 +87,7 @@ class IndexCacheTest < IdentityCache::TestCase
   def test_non_unique_index_fetches_multiple_records
     Item.cache_index :title
     @record.save!
-    record2 = Item.create(:id => 2, :title => 'bob')
+    record2 = Item.create(:title => 'bob') { |item| item.id = 2 }
 
     assert_equal [@record, record2], Item.fetch_by_title('bob')
     assert_equal [1, 2], backend.read(@cache_key)

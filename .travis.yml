@@ -10,6 +10,10 @@ gemfile:
   - Gemfile
   - Gemfile.rails41
 
+env:
+  - DB=mysql2
+  - DB=postgresql
+
 services:
   - memcache
   - mysql
@@ -18,3 +22,4 @@ sudo: false
 
 before_script:
   - mysql -e 'create database identity_cache_test'
+  - psql -c 'create database identity_cache_test;' -U postgres

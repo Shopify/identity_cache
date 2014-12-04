@@ -1,12 +1,15 @@
 module DatabaseConnection
   def self.setup
-    DATABASE_CONFIG['port'] ||= $mysql_port
-    ActiveRecord::Base.establish_connection(DATABASE_CONFIG)
-    ActiveRecord::Base.connection
-  rescue
-    ActiveRecord::Base.establish_connection(DATABASE_CONFIG.merge('database' => nil))
-    ActiveRecord::Base.connection.create_database(DATABASE_CONFIG['database'])
-    ActiveRecord::Base.establish_connection(DATABASE_CONFIG)
+    db_config = ENV['DATABASE_URL'] || DEFAULT_CONFIG[ENV.fetch('DB', 'mysql2')]
+    begin
+      ActiveRecord::Base.establish_connection(db_config)
+      ActiveRecord::Base.connection
+    rescue
+      raise unless db_config.is_a?(Hash)
+      ActiveRecord::Base.establish_connection(db_config.merge('database' => nil))
+      ActiveRecord::Base.connection.create_database(db_config['database'])
+      ActiveRecord::Base.establish_connection(db_config)
+    end
   end
 
   def self.drop_tables
@@ -38,10 +41,18 @@ module DatabaseConnection
     :keyed_records                 => [[:string, :value], :primary_key => "hashed_key"],
   }
 
-  DATABASE_CONFIG = {
-    'adapter'  => 'mysql2',
-    'database' => 'identity_cache_test',
-    'host'     => '127.0.0.1',
-    'username' => 'root'
+  DEFAULT_CONFIG = {
+    'mysql2' => {
+      'adapter'  => 'mysql2',
+      'database' => 'identity_cache_test',
+      'host'     => '127.0.0.1',
+      'username' => 'root'
+    },
+    'postgresql' => {
+      'adapter'  => 'postgresql',
+      'database' => 'identity_cache_test',
+      'host'     => '127.0.0.1',
+      'username' => 'postgres'
+    }
   }
 end
