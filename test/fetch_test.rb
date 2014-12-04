@@ -19,7 +19,7 @@ class FetchTest < IdentityCache::TestCase
 
   def test_fetch_with_garbage_input
     Item.connection.expects(:exec_query)
-      .with('SELECT  `items`.* FROM `items`  WHERE `items`.`id` = 0 LIMIT 1', anything)
+      .with(Item.where(id: 0).limit(1).to_sql, any_parameters)
       .returns(ActiveRecord::Result.new([], []))
 
     assert_equal nil, Item.fetch_by_id('garbage')

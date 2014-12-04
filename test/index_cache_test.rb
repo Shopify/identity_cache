@@ -15,7 +15,7 @@ class IndexCacheTest < IdentityCache::TestCase
     Item.cache_index :title, :id
 
     Item.connection.expects(:exec_query)
-      .with(regexp_matches(/ WHERE `items`\.`title` = 'garbage' AND `items`\.`id` = 0\z/i), anything)
+      .with(Item.select(:id).where(title: 'garbage', id: 0).to_sql, any_parameters)
       .returns(ActiveRecord::Result.new([], []))
 
     assert_equal [], Item.fetch_by_title_and_id('garbage', 'garbage')
@@ -25,7 +25,7 @@ class IndexCacheTest < IdentityCache::TestCase
     Item.cache_index :title, :id, :unique => true
 
     Item.connection.expects(:exec_query)
-      .with(regexp_matches(/ LIMIT 1\Z/i), anything)
+      .with(regexp_matches(/ LIMIT 1\Z/i), any_parameters)
       .returns(ActiveRecord::Result.new([], []))
 
     assert_equal nil, Item.fetch_by_title_and_id('title', '2')
