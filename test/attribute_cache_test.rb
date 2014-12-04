@@ -20,9 +20,7 @@ class AttributeCacheTest < IdentityCache::TestCase
 
   def test_attribute_values_are_fetched_and_returned_on_cache_misses
     fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
-    Item.connection.expects(:exec_query)
-      .with(AssociatedRecord.unscoped.select(quoted_table_column(AssociatedRecord, :name)).where(id: 1).limit(1).to_sql, any_parameters)
-      .returns(ActiveRecord::Result.new(['name'], [['foo']]))
+    expects_fetch_associated_record_name_by_id(1, returns: 'foo')
 
     assert_equal 'foo', AssociatedRecord.fetch_name_by_id(1)
     assert fetch.has_been_called_with?(@name_attribute_key)
@@ -33,9 +31,7 @@ class AttributeCacheTest < IdentityCache::TestCase
     fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
 
     # Grab the value of the attribute from the DB
-    Item.connection.expects(:exec_query)
-      .with(AssociatedRecord.unscoped.select(quoted_table_column(AssociatedRecord, :name)).where(id: 1).limit(1).to_sql, any_parameters)
-      .returns(ActiveRecord::Result.new(['name'], [['foo']]))
+    expects_fetch_associated_record_name_by_id(1, returns: 'foo')
 
     # And write it back to the cache
     add = Spy.on(fetcher, :add).and_call_through
@@ -51,9 +47,7 @@ class AttributeCacheTest < IdentityCache::TestCase
     fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
 
     # Grab the value of the attribute from the DB
-    Item.connection.expects(:exec_query)
-      .with(AssociatedRecord.unscoped.select(quoted_table_column(AssociatedRecord, :name)).where(id: 1).limit(1).to_sql, any_parameters)
-      .returns(ActiveRecord::Result.new(['name'], []))
+    expects_fetch_associated_record_name_by_id(1, returns: nil)
 
     # And write it back to the cache
     add = Spy.on(fetcher, :add).and_call_through
@@ -94,9 +88,7 @@ class AttributeCacheTest < IdentityCache::TestCase
   def test_fetching_by_attribute_delegates_to_block_if_transactions_are_open
     IdentityCache.cache.expects(:read).with(@name_attribute_key).never
 
-    Item.connection.expects(:exec_query)
-      .with(AssociatedRecord.unscoped.select(quoted_table_column(AssociatedRecord, :name)).where(id: 1).limit(1).to_sql, any_parameters)
-      .returns(ActiveRecord::Result.new(['name'], [['foo']]))
+    expects_fetch_associated_record_name_by_id(1, returns: 'foo')
 
     @record.transaction do
       assert_equal 'foo', AssociatedRecord.fetch_name_by_id(1)
@@ -118,5 +110,12 @@ class AttributeCacheTest < IdentityCache::TestCase
 
   def quoted_table_column(model, column_name)
     "#{model.quoted_table_name}.#{model.connection.quote_column_name(column_name)}"
+  end
+
+  def expects_fetch_associated_record_name_by_id(id, options={})
+    result = options[:returns] ? [options[:returns]] : []
+    Item.connection.expects(:exec_query)
+      .with(AssociatedRecord.unscoped.select(quoted_table_column(AssociatedRecord, :name)).where(id: id).limit(1).to_sql, any_parameters)
+      .returns(ActiveRecord::Result.new(['name'], [result]))
   end
 end
