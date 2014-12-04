@@ -96,7 +96,7 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
   def test_cached_associations_after_commit_hook_will_not_fail_on_undefined_parent_association
     ar = AssociatedRecord.new
     ar.save
-    assert_nothing_raised { ar.expire_parent_cache }
+    assert_nothing_raised { ar.expire_parent_caches }
   end
 
   def test_cache_without_guessable_inverse_name_raises

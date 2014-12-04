@@ -10,7 +10,6 @@ class AttributeCacheTest < IdentityCache::TestCase
     @parent = Item.create!(:title => 'bob')
     @record = @parent.associated_records.create!(:name => 'foo')
     @name_attribute_key = "#{NAMESPACE}attribute:AssociatedRecord:name:id:#{cache_hash(@record.id.to_s)}"
-    @blob_key = "#{NAMESPACE}blob:AssociatedRecord:#{cache_hash("id:integer,item_id:integer,name:string")}:1"
     IdentityCache.cache.clear
   end
 
@@ -66,27 +65,27 @@ class AttributeCacheTest < IdentityCache::TestCase
 
   def test_cached_attribute_values_are_expired_from_the_cache_when_an_existing_record_is_saved
     IdentityCache.cache.expects(:delete).with(@name_attribute_key)
-    IdentityCache.cache.expects(:delete).with(@blob_key)
+    IdentityCache.cache.expects(:delete).with(blob_key_for_associated_record(1))
     @record.save!
   end
 
   def test_cached_attribute_values_are_expired_from_the_cache_when_an_existing_record_with_changed_attributes_is_saved
     IdentityCache.cache.expects(:delete).with(@name_attribute_key)
-    IdentityCache.cache.expects(:delete).with(@blob_key)
+    IdentityCache.cache.expects(:delete).with(blob_key_for_associated_record(1))
     @record.name = 'bar'
     @record.save!
   end
 
   def test_cached_attribute_values_are_expired_from_the_cache_when_an_existing_record_is_destroyed
     IdentityCache.cache.expects(:delete).with(@name_attribute_key)
-    IdentityCache.cache.expects(:delete).with(@blob_key)
+    IdentityCache.cache.expects(:delete).with(blob_key_for_associated_record(1))
     @record.destroy
   end
 
   def test_cached_attribute_values_are_expired_from_the_cache_when_a_new_record_is_saved
     new_id = 2.to_s
     # primary index delete
-    IdentityCache.cache.expects(:delete).with("#{NAMESPACE}blob:AssociatedRecord:#{cache_hash("id:integer,item_id:integer,name:string")}:#{new_id}")
+    IdentityCache.cache.expects(:delete).with(blob_key_for_associated_record(new_id))
     # attribute cache delete
     IdentityCache.cache.expects(:delete).with("#{NAMESPACE}attribute:AssociatedRecord:name:id:#{cache_hash(new_id)}")
     @parent.associated_records.create(:name => 'bar')
@@ -108,5 +107,12 @@ class AttributeCacheTest < IdentityCache::TestCase
     assert_equal nil, AssociatedRecord.fetch_name_by_id(2)
     AssociatedRecord.create(:name => "Jim")
     assert_equal "Jim", AssociatedRecord.fetch_name_by_id(2)
+  end
+
+  private
+
+  def blob_key_for_associated_record(id)
+    cache_hash = cache_hash('id:integer,item_id:integer,item_two_id:integer,name:string')
+    "#{NAMESPACE}blob:AssociatedRecord:#{cache_hash}:#{id}"
   end
 end
