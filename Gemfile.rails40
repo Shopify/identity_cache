@@ -1,0 +1,5 @@
+source 'https://rubygems.org'
+gemspec
+
+gem 'activerecord', '~> 4.0.4'
+gem 'activesupport', '~> 4.0.4'

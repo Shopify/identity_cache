@@ -6,9 +6,10 @@ rvm:
   - 2.1.1
 
 gemfile:
-  - Gemfile32
-  - Gemfile
+  - Gemfile.rails32
+  - Gemfile.rails40
   - Gemfile.rails41
+  - Gemfile.rails42
 
 env:
   - DB=mysql2
@@ -23,3 +24,7 @@ sudo: false
 before_script:
   - mysql -e 'create database identity_cache_test'
   - psql -c 'create database identity_cache_test;' -U postgres
+
+matrix:
+  allow_failures:
+    - gemfile: Gemfile.rails42
