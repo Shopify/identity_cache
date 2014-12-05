@@ -8,6 +8,7 @@ Types of contributions we welcome:
 - Performance improvements
 - Documentation and/or clearer interfaces
 
+
 ### How To Contribute
 
 1. Fork it
@@ -16,9 +17,10 @@ Types of contributions we welcome:
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
 
+Please keep the following in mind:
 
-- Add a short entry to the "unreleased" section in [CHANGELOG.md](./CHANGELOG.md) describing your cahnges
-- Do not change IdentityCache::VERSION; this is done as part of the release process.
+- Add a short entry to the "unreleased" section in [CHANGELOG.md](./CHANGELOG.md) describing your changes.
+- Do not change `IdentityCache::VERSION`; this is done as part of the release process.
 
 
 ## Contributors
