@@ -217,6 +217,8 @@ Since everything is being marshalled and unmarshalled from Memcached changing Ru
 
 IdentityCache is also very much _opt-in_ by deliberate design. This means IdentityCache does not mess with the way normal Rails associations work, and including it in a model won't change any clients of that model until you switch them to use `fetch` instead of `find`. This is because there is no way IdentityCache is ever going to be 100% consistent. Processes die, execeptions happen, and network blips occur, which means there is a chance that some database transaction might commit but the corresponding memcached DEL operation does not make it. This means that you need to think carefully about when you use `fetch` and when you use `find`. For example, at Shopify, we never use any `fetch`ers on the path which moves money around, because IdentityCache could simply be wrong, and we want to charge people the right amount of money. We do however use the fetchers on performance critical paths where absolute correctness isn't the most important thing, and this is what IdentityCache is intended for.
 
-## Note
+## Notes
 
-JRuby will not work with this current version, as we are using the memcached gem internally to interface with memcache.
+- JRuby will not work with this current version, as we are using the memcached gem internally to interface with memcache.
+- See CHANGELOG.md for a list of changes to the library over time.
+- The librray is MIT licensed and we welcome contributions. See CONTRIBUTING.md for more information.
