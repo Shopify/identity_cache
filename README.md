@@ -157,25 +157,25 @@ This will read the attribute from the cache or query the database for the attrib
 
 #### cache_index
 
-Options:  
+Options:
 _[:unique]_ Allows you to say that an index is unique (only one object stored at the index) or not unique, which allows there to be multiple objects matching the index key. The default value is false.
 
-Example:  
+Example:
 `cache_index :handle`
 
 #### cache_has_many
 
-Options:  
+Options:
 _[:embed]_ When true, specifies that the association should be included with the parent when caching. This means the associated objects will be loaded already when the parent is loaded from the cache and will not need to be fetched on their own. When :ids, only the id of the associated records will be included with the parent when caching.
 
 _[:inverse_name]_ Specifies the name of parent object used by the association. This is useful for polymorphic associations when the association is often named something different between the parent and child objects.
 
-Example:  
+Example:
 `cache_has_many :metafields, :inverse_name => :owner, :embed => true`
 
 #### cache_has_one
 
-Options:  
+Options:
 _[:embed]_ When true, specifies that the association should be included with the parent when caching. This means the associated objects will be loaded already when the parent is loaded from the cache and will not need to be fetched on their own. No other values are currently implemented.
 
 _[:inverse_name]_ Specifies the name of parent object used by the association. This is useful for polymorphic associations when the association is often named something different between the parent and child objects.
@@ -185,10 +185,10 @@ Example:
 
 #### cache_attribute
 
-Options:  
+Options:
 _[:by]_ Specifies what key(s) you want the attribute cached by. Defaults to :id.
 
-Example:  
+Example:
 `cache_attribute :target, :by => [:shop_id, :path]`
 
 ## Memoized Cache Proxy
@@ -217,35 +217,8 @@ Since everything is being marshalled and unmarshalled from Memcached changing Ru
 
 IdentityCache is also very much _opt-in_ by deliberate design. This means IdentityCache does not mess with the way normal Rails associations work, and including it in a model won't change any clients of that model until you switch them to use `fetch` instead of `find`. This is because there is no way IdentityCache is ever going to be 100% consistent. Processes die, execeptions happen, and network blips occur, which means there is a chance that some database transaction might commit but the corresponding memcached DEL operation does not make it. This means that you need to think carefully about when you use `fetch` and when you use `find`. For example, at Shopify, we never use any `fetch`ers on the path which moves money around, because IdentityCache could simply be wrong, and we want to charge people the right amount of money. We do however use the fetchers on performance critical paths where absolute correctness isn't the most important thing, and this is what IdentityCache is intended for.
 
-## Note
+## Notes
 
-JRuby will not work with this current version, as we are using the memcached gem internally to interface with memcache.
-
-## Contributing
-
-Caching is hard. Chances are that if some feature was left out, it was left out on purpose because it didn't make sense to cache in that way. This is used in production at Shopify so we are very opinionated about the types of features we're going to add. Please start the discussion early, before even adding code, so that we can talk about the feature you are proposing and decide if it makes sense in IdentityCache.
-
-Types of contributions we are looking for:
-
-- Bug fixes
-- Performance improvements
-- Documentation and/or clearer interfaces
-
-### How To Contribute
-
-1. Fork it
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Added some feature'`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create new Pull Request
-
-## Contributors
-
-Camilo Lopez (@camilo)  
-Tom Burns (@boourns)  
-Harry Brundage (@hornairs)  
-Dylan Smith (@dylanahsmith)  
-Tobias Lütke (@tobi)  
-John Duff (@jduff)  
-Francis Bogsanyi (@fbogsany)
-Arthur Neves (@arthurnn)
+- JRuby will not work with this current version, as we are using the memcached gem internally to interface with memcache.
+- See CHANGELOG.md for a list of changes to the library over time.
+- The librray is MIT licensed and we welcome contributions. See CONTRIBUTING.md for more information.
