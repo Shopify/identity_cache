@@ -69,8 +69,8 @@ module IdentityCache
       @logger || Rails.logger
     end
 
-    def should_update_cache? # :nodoc:
-      !readonly && should_use_cache?
+    def should_fill_cache? # :nodoc:
+      !readonly
     end
 
     def should_use_cache? # :nodoc:

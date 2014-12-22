@@ -26,7 +26,7 @@ end
 
 class IdentityCache::TestCase < MiniTest::Unit::TestCase
   include ActiveRecordObjects
-  attr_reader :backend, :fetcher
+  attr_reader :backend
 
   def setup
     DatabaseConnection.drop_tables
@@ -34,7 +34,6 @@ class IdentityCache::TestCase < MiniTest::Unit::TestCase
 
     IdentityCache.logger = Logger.new(nil)
     IdentityCache.cache_backend = @backend = ActiveSupport::Cache::MemcachedStore.new("localhost:11211", :support_cas => true)
-    @fetcher = IdentityCache.cache.cache_fetcher
 
     setup_models
   end
@@ -42,6 +41,12 @@ class IdentityCache::TestCase < MiniTest::Unit::TestCase
   def teardown
     IdentityCache.cache.clear
     teardown_models
+  end
+
+  private
+
+  def fetcher
+    IdentityCache.cache.cache_fetcher
   end
 
   def assert_nothing_raised

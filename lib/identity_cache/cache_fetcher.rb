@@ -7,15 +7,15 @@ module IdentityCache
     end
 
     def write(key, value)
-      @cache_backend.write(key, value) if IdentityCache.should_update_cache?
+      @cache_backend.write(key, value) if IdentityCache.should_fill_cache?
     end
 
     def delete(key)
-      @cache_backend.write(key, IdentityCache::DELETED, :expires_in => IdentityCache::DELETED_TTL.seconds) if IdentityCache.should_update_cache?
+      @cache_backend.write(key, IdentityCache::DELETED, :expires_in => IdentityCache::DELETED_TTL.seconds)
     end
 
     def clear
-      @cache_backend.clear if IdentityCache.should_update_cache?
+      @cache_backend.clear
     end
 
     def fetch_multi(keys, &block)
@@ -34,7 +34,7 @@ module IdentityCache
           break
         end
         result = yield
-        break unless IdentityCache.should_update_cache?
+        break unless IdentityCache.should_fill_cache?
         result
       end
       unless yielded
@@ -68,7 +68,7 @@ module IdentityCache
         end
 
         break if updates.empty?
-        break unless IdentityCache.should_update_cache?
+        break unless IdentityCache.should_fill_cache?
         updates
       end
       result
@@ -81,7 +81,7 @@ module IdentityCache
     end
 
     def add(key, value)
-      @cache_backend.write(key, value, :unless_exist => true) if IdentityCache.should_update_cache?
+      @cache_backend.write(key, value, :unless_exist => true) if IdentityCache.should_fill_cache?
     end
   end
 end
