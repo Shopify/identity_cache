@@ -147,7 +147,8 @@ class NormalizedHasManyTest < IdentityCache::TestCase
 
   def test_saving_child_with_touch_true_on_parent_expires_parent
     IdentityCache.cache.expects(:delete).with(@record.primary_cache_index_key).once
-    @not_cached.save
+    @not_cached.name = 'Changed'
+    @not_cached.save!
   end
 
 end
