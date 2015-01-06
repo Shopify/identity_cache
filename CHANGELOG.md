@@ -1,6 +1,6 @@
 # IdentityCache changelog
 
-#### Unreleased
+#### 0.2.3
 
 - PostgreSQL support
 - Rails 4.2 compatibility
