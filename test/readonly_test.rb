@@ -3,7 +3,6 @@ require "test_helper"
 class ReadonlyTest < IdentityCache::TestCase
   def setup
     super
-    IdentityCache.readonly = true
     @key, @value = 'foo', 'bar'
     @record = Item.new
     @record.id = 1
@@ -11,6 +10,8 @@ class ReadonlyTest < IdentityCache::TestCase
     @bob = Item.create!(:title => 'bob')
     @joe = Item.create!(:title => 'joe')
     @fred = Item.create!(:title => 'fred')
+    IdentityCache.cache.clear
+    IdentityCache.readonly = true
   end
 
   def teardown
@@ -25,20 +26,16 @@ class ReadonlyTest < IdentityCache::TestCase
     assert_nil backend.read(@key)
   end
 
-  def test_delete_should_not_update_cache
+  def test_delete_should_update_cache
     backend.write(@key, @value)
-    assert_memcache_operations(0) do
-      fetcher.delete(@key)
-    end
-    assert_equal @value, backend.read(@key)
+    fetcher.delete(@key)
+    assert_equal deleted_value, backend.read(@key)
   end
 
-  def test_clear_should_not_update_cache
+  def test_clear_should_update_cache
     backend.write(@key, @value)
-    assert_memcache_operations(0) do
-      fetcher.clear
-    end
-    assert_equal @value, backend.read(@key)
+    fetcher.clear
+    assert_equal nil, backend.read(@key)
   end
 
   def test_fetch_should_not_update_cache
@@ -76,6 +73,10 @@ class ReadonlyTest < IdentityCache::TestCase
     yield
     assert cas_multi.has_been_called?
   end
+
+  def deleted_value
+    IdentityCache::DELETED
+  end
 end
 
 class FallbackReadonlyTest < ReadonlyTest
@@ -100,5 +101,9 @@ class FallbackReadonlyTest < ReadonlyTest
     yield
     assert read_multi.has_been_called?
     refute write.has_been_called?
+  end
+
+  def deleted_value
+    nil
   end
 end
