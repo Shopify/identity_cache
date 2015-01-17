@@ -20,6 +20,7 @@ module ActiveRecordObjects
   def setup_models(base = ActiveRecord::Base)
     Object.send :const_set, 'DeeplyAssociatedRecord', Class.new(base) {
       include IdentityCache
+      belongs_to :item
       belongs_to :associated_record
       default_scope { order('name DESC') }
     }
@@ -51,6 +52,7 @@ module ActiveRecordObjects
       include IdentityCache
       belongs_to :item
       has_many :associated_records, inverse_of: :item
+      has_many :deeply_associated_records, inverse_of: :item
       has_many :normalized_associated_records
       has_many :not_cached_records
       has_many :polymorphic_records, :as => 'owner'

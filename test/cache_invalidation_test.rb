@@ -120,4 +120,19 @@ class CacheInvalidationTest < IdentityCache::TestCase
       refute IdentityCache.cache.fetch(expected_key) { nil }
     end
   end
+
+  def test_dedup_cache_invalidation_of_records_embedded_twice_through_different_associations
+    Item.cache_has_many :associated_records, embed: true
+    AssociatedRecord.cache_has_many :deeply_associated_records, embed: true
+    Item.cache_has_many :deeply_associated_records, embed: true
+
+    deeply_associated_record = DeeplyAssociatedRecord.new(name: 'deep', item_id: @record.id)
+    @record.associated_records[0].deeply_associated_records << deeply_associated_record
+    deeply_associated_record.reload
+
+    Item.any_instance.expects(:expire_primary_index).once
+
+    deeply_associated_record.name = "deep2"
+    deeply_associated_record.save!
+  end
 end
