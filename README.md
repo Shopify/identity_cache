@@ -221,4 +221,4 @@ IdentityCache is also very much _opt-in_ by deliberate design. This means Identi
 
 - JRuby will not work with this current version, as we are using the memcached gem internally to interface with memcache.
 - See CHANGELOG.md for a list of changes to the library over time.
-- The librray is MIT licensed and we welcome contributions. See CONTRIBUTING.md for more information.
+- The library is MIT licensed and we welcome contributions. See CONTRIBUTING.md for more information.
