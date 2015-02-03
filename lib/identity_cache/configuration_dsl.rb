@@ -98,7 +98,9 @@ module IdentityCache
         options[:embed] = :ids unless options.has_key?(:embed)
         deprecate_embed_option(options, false, :ids)
         options[:inverse_name] ||= self.name.underscore.to_sym
-        raise InverseAssociationError unless self.reflect_on_association(association)
+        unless self.reflect_on_association(association)
+          raise AssociationError, "Association named '#{association}' was not found on #{self.class}"
+        end
         self.cached_has_manys[association] = options
 
         case options[:embed]
@@ -136,7 +138,9 @@ module IdentityCache
         options = options.slice(:embed, :inverse_name)
         options[:embed] = true unless options.has_key?(:embed)
         options[:inverse_name] ||= self.name.underscore.to_sym
-        raise InverseAssociationError unless self.reflect_on_association(association)
+        unless self.reflect_on_association(association)
+          raise AssociationError, "Association named '#{association}' was not found on #{self.class}"
+        end
         self.cached_has_ones[association] = options
 
         if options[:embed] == true

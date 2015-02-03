@@ -21,6 +21,7 @@ module IdentityCache
   DELETED_TTL = 1000
 
   class AlreadyIncludedError < StandardError; end
+  class AssociationError < StandardError; end
   class InverseAssociationError < StandardError
     def initialize
       super "Inverse name for association could not be determined. Please use the :inverse_name option to specify the inverse association name for this cache."
