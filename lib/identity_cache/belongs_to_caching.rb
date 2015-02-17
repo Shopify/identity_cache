@@ -9,18 +9,22 @@ module IdentityCache
 
     module ClassMethods
       def cache_belongs_to(association, options = {})
+        raise NotImplementedError if options[:embed]
+
+        unless association_reflection = reflect_on_association(association)
+          raise AssociationError, "Association named '#{association}' was not found on #{self.class}"
+        end
+
+        options = {}
         self.cached_belongs_tos[association] = options
 
-        options[:embed] ||= false
-        options[:cached_accessor_name]    ||= "fetch_#{association}"
-        options[:foreign_key]             ||= reflect_on_association(association).foreign_key
-        options[:association_class]       ||= reflect_on_association(association).klass
-        options[:prepopulate_method_name] ||= "prepopulate_fetched_#{association}"
-        if options[:embed]
-          raise NotImplementedError
-        else
-          build_normalized_belongs_to_cache(association, options)
-        end
+        options[:embed]                   = false
+        options[:cached_accessor_name]    = "fetch_#{association}"
+        options[:foreign_key]             = association_reflection.foreign_key
+        options[:association_class]       = association_reflection.klass
+        options[:prepopulate_method_name] = "prepopulate_fetched_#{association}"
+
+        build_normalized_belongs_to_cache(association, options)
       end
 
       def build_normalized_belongs_to_cache(association, options)

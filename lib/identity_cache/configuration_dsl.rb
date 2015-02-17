@@ -94,10 +94,13 @@ module IdentityCache
       # * inverse_name: The name of the parent in the association if the name is
       #   not the lowercase pluralization of the parent object's class
       def cache_has_many(association, options = {})
+        options = options.slice(:embed, :inverse_name)
         options[:embed] = :ids unless options.has_key?(:embed)
         deprecate_embed_option(options, false, :ids)
         options[:inverse_name] ||= self.name.underscore.to_sym
-        raise InverseAssociationError unless self.reflect_on_association(association)
+        unless self.reflect_on_association(association)
+          raise AssociationError, "Association named '#{association}' was not found on #{self.class}"
+        end
         self.cached_has_manys[association] = options
 
         case options[:embed]
@@ -132,9 +135,12 @@ module IdentityCache
       #   necessary if the name is not the lowercase pluralization of the
       #   parent object's class)
       def cache_has_one(association, options = {})
+        options = options.slice(:embed, :inverse_name)
         options[:embed] = true unless options.has_key?(:embed)
         options[:inverse_name] ||= self.name.underscore.to_sym
-        raise InverseAssociationError unless self.reflect_on_association(association)
+        unless self.reflect_on_association(association)
+          raise AssociationError, "Association named '#{association}' was not found on #{self.class}"
+        end
         self.cached_has_ones[association] = options
 
         if options[:embed] == true
@@ -201,10 +207,10 @@ module IdentityCache
       end
 
       def build_recursive_association_cache(association, options) #:nodoc:
-        options[:association_class]      ||= reflect_on_association(association).klass
-        options[:cached_accessor_name]   ||= "fetch_#{association}"
-        options[:records_variable_name]  ||= "cached_#{association}"
-        options[:population_method_name] ||= "populate_#{association}_cache"
+        options[:association_class]      = reflect_on_association(association).klass
+        options[:cached_accessor_name]   = "fetch_#{association}"
+        options[:records_variable_name]  = "cached_#{association}"
+        options[:population_method_name] = "populate_#{association}_cache"
 
 
         unless instance_methods.include?(options[:cached_accessor_name].to_sym)
@@ -218,20 +224,21 @@ module IdentityCache
             end
           CODE
 
-          add_parent_expiry_hook(options.merge(:only_on_foreign_key_change => false))
+          options[:only_on_foreign_key_change] = false
+          add_parent_expiry_hook(options)
         end
       end
 
       def build_id_embedded_has_many_cache(association, options) #:nodoc:
         singular_association = association.to_s.singularize
-        options[:association_class]       ||= reflect_on_association(association).klass
-        options[:cached_accessor_name]    ||= "fetch_#{association}"
-        options[:ids_name]                ||= "#{singular_association}_ids"
-        options[:cached_ids_name]         ||= "fetch_#{options[:ids_name]}"
-        options[:ids_variable_name]       ||= "cached_#{options[:ids_name]}"
-        options[:records_variable_name]   ||= "cached_#{association}"
-        options[:population_method_name]  ||= "populate_#{association}_cache"
-        options[:prepopulate_method_name] ||= "prepopulate_fetched_#{association}"
+        options[:association_class]       = reflect_on_association(association).klass
+        options[:cached_accessor_name]    = "fetch_#{association}"
+        options[:ids_name]                = "#{singular_association}_ids"
+        options[:cached_ids_name]         = "fetch_#{options[:ids_name]}"
+        options[:ids_variable_name]       = "cached_#{options[:ids_name]}"
+        options[:records_variable_name]   = "cached_#{association}"
+        options[:population_method_name]  = "populate_#{association}_cache"
+        options[:prepopulate_method_name] = "prepopulate_fetched_#{association}"
 
         self.class_eval(<<-CODE, __FILE__, __LINE__ + 1)
           attr_reader :#{options[:ids_variable_name]}
@@ -260,7 +267,8 @@ module IdentityCache
           end
         CODE
 
-        add_parent_expiry_hook(options.merge(:only_on_foreign_key_change => true))
+        options[:only_on_foreign_key_change] = true
+        add_parent_expiry_hook(options)
       end
 
       def attribute_dynamic_fetcher(attribute, fields, values) #:nodoc:
