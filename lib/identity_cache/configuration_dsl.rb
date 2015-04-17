@@ -97,8 +97,7 @@ module IdentityCache
         options = options.slice(:embed, :inverse_name)
         options[:embed] = :ids unless options.has_key?(:embed)
         deprecate_embed_option(options, false, :ids)
-        options[:inverse_name] ||= normalize_attribute_name(self.name).to_sym
-
+        options[:inverse_name] ||= self.name.underscore.to_sym
         unless self.reflect_on_association(association)
           raise AssociationError, "Association named '#{association}' was not found on #{self.class}"
         end
@@ -139,7 +138,7 @@ module IdentityCache
       def cache_has_one(association, options = {})
         options = options.slice(:embed, :inverse_name)
         options[:embed] = true unless options.has_key?(:embed)
-        options[:inverse_name] ||= normalize_attribute_name(self.name).to_sym
+        options[:inverse_name] ||= self.name.underscore.to_sym
         unless self.reflect_on_association(association)
           raise AssociationError, "Association named '#{association}' was not found on #{self.class}"
         end
@@ -293,7 +292,6 @@ module IdentityCache
         child_class.send(:include, ParentModelExpiration) unless child_class.include?(ParentModelExpiration)
 
         child_class.class_eval(<<-CODE, __FILE__, __LINE__ + 1)
-
           after_commit :#{after_action_name}
           after_touch  :#{after_action_name}
           add_parent_expiration_entry :#{after_action_name}
