@@ -48,6 +48,12 @@ module ActiveRecordObjects
       belongs_to :owner, :polymorphic => true
     }
 
+    Object.send :const_set, 'Deeply', Module.new
+    Deeply.send :const_set, 'Nested', Module.new
+    Deeply::Nested.send :const_set, 'AssociatedRecord', Class.new(base) {
+      include IdentityCache
+    }
+
     Object.send :const_set, 'Item', Class.new(base) {
       include IdentityCache
       belongs_to :item
@@ -83,5 +89,8 @@ module ActiveRecordObjects
     Object.send :remove_const, 'Item'
     Object.send :remove_const, 'ItemTwo'
     Object.send :remove_const, 'KeyedRecord'
+    Deeply::Nested.send :remove_const, 'AssociatedRecord'
+    Deeply.send :remove_const, 'Nested'
+    Object.send :remove_const, 'Deeply'
   end
 end
