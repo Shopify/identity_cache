@@ -97,10 +97,12 @@ module IdentityCache
         options = options.slice(:embed, :inverse_name)
         options[:embed] = :ids unless options.has_key?(:embed)
         deprecate_embed_option(options, false, :ids)
-        options[:inverse_name] ||= self.name.underscore.to_sym
+
+        options[:inverse_name] ||= normalize_attribute_name(self.name)
         unless self.reflect_on_association(association)
           raise AssociationError, "Association named '#{association}' was not found on #{self.class}"
         end
+
         self.cached_has_manys[association] = options
 
         case options[:embed]
@@ -137,10 +139,12 @@ module IdentityCache
       def cache_has_one(association, options = {})
         options = options.slice(:embed, :inverse_name)
         options[:embed] = true unless options.has_key?(:embed)
-        options[:inverse_name] ||= self.name.underscore.to_sym
+
+        options[:inverse_name] ||= normalize_attribute_name(self.name)
         unless self.reflect_on_association(association)
           raise AssociationError, "Association named '#{association}' was not found on #{self.class}"
         end
+
         self.cached_has_ones[association] = options
 
         if options[:embed] == true
@@ -277,7 +281,7 @@ module IdentityCache
       end
 
       def after_action_name
-        @after_action_name ||= "expire_parent_cache_#{self.name.parameterize.underscore}"
+        @after_action_name ||= "expire_parent_cache_#{normalize_attribute_name(self.name)}"
       end
 
       def add_parent_expiry_hook(options)
@@ -310,6 +314,10 @@ module IdentityCache
           options[:embed] = new_value
           ActiveSupport::Deprecation.warn("`embed: #{old_value.inspect}` was renamed to `embed: #{new_value.inspect}` for clarity", caller(2))
         end
+      end
+
+      def normalize_attribute_name(attribute_name)
+        attribute_name.underscore.parameterize.underscore
       end
     end
   end
