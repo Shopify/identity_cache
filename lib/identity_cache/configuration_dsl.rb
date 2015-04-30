@@ -97,7 +97,7 @@ module IdentityCache
         options = options.slice(:embed, :inverse_name)
         options[:embed] = :ids unless options.has_key?(:embed)
         deprecate_embed_option(options, false, :ids)
-        options[:inverse_name] ||= normalize_attribute_name(self.name)
+        options[:inverse_name] ||= normalize_attribute_name_as_symbol(self.name)
         unless self.reflect_on_association(association)
           raise AssociationError, "Association named '#{association}' was not found on #{self.class}"
         end
@@ -138,7 +138,7 @@ module IdentityCache
       def cache_has_one(association, options = {})
         options = options.slice(:embed, :inverse_name)
         options[:embed] = true unless options.has_key?(:embed)
-        options[:inverse_name] ||= normalize_attribute_name(self.name)
+        options[:inverse_name] ||= normalize_attribute_name_as_symbol(self.name)
         unless self.reflect_on_association(association)
           raise AssociationError, "Association named '#{association}' was not found on #{self.class}"
         end
@@ -315,6 +315,10 @@ module IdentityCache
 
       def normalize_attribute_name(attribute_name)
         attribute_name.underscore.parameterize.underscore
+      end
+
+      def normalize_attribute_name_as_symbol(attribute_name)
+        normalize_attribute_name(attribute_name).to_sym
       end
     end
   end
