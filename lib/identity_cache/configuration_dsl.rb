@@ -278,23 +278,19 @@ module IdentityCache
 
       def add_parent_expiry_hook(options)
         child_class = options[:association_class]
-        child_association = child_class.reflect_on_association(options[:inverse_name])
-        raise InverseAssociationError unless child_association
-        foreign_key = child_association.association_foreign_key
+        raise InverseAssociationError unless child_class.reflect_on_association(options[:inverse_name])
 
         child_class.send(:include, ArTransactionChanges) unless child_class.include?(ArTransactionChanges)
         child_class.send(:include, ParentModelExpiration) unless child_class.include?(ParentModelExpiration)
 
         after_action_name = "expire_parent_cache_#{self.name.underscore}"
 
-        child_class.class_eval(<<-CODE, __FILE__, __LINE__ + 1)
-        
-          after_commit :#{after_action_name}
-          after_touch  :#{after_action_name}
-          add_parent_expiration_entry :#{after_action_name}
+        child_class.parent_expiration_entries[options[:inverse_name]] << [self, options[:only_on_foreign_key_change]]
 
-          def #{after_action_name}
-            expire_parent_cache_on_changes(:#{options[:inverse_name]}, '#{foreign_key}', #{self.name}, #{options[:only_on_foreign_key_change]})
+        child_class.class_eval(<<-CODE, __FILE__, __LINE__ + 1)
+          after_commit :expire_parent_caches
+          if Gem::Version.new(ActiveRecord::VERSION::STRING) < Gem::Version.new("4.0.4")
+            after_touch :expire_parent_caches
           end
         CODE
       end
