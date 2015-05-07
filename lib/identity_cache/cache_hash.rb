@@ -33,7 +33,7 @@ module IdentityCache
         CityHash.hash64(key)
       end
 
-    elsif defined?(XXHash)
+    elsif defined?(XXhash)
 
       def memcache_hash(key) #:nodoc:
         XXhash.xxh64(key)
