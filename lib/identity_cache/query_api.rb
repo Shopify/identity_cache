@@ -80,7 +80,13 @@ module IdentityCache
       def record_from_coder(coder) #:nodoc:
         if coder.present? && coder.has_key?(:class)
           record = coder[:class].allocate
-          unless coder[:class].serialized_attributes.empty?
+          empty_serialized_attrs =
+            if defined?(ActiveRecord::Type::Serialized)
+              coder[:class].columns.find { |t| t.cast_type.is_a?(ActiveRecord::Type::Serialized) }.nil?
+            else
+              coder[:class].serialized_attributes.empty?
+            end
+          unless empty_serialized_attrs
             coder = coder.dup
             coder['attributes'] = coder['attributes'].dup
           end
