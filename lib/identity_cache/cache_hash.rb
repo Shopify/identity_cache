@@ -1,5 +1,5 @@
 # Use a hashing library for fast hashing if it is available; use Digest::MD5 otherwise
-AVAILABLE_HASHING_GEMS = %w{xxhash murmurhash3 cityhash}
+AVAILABLE_HASHING_GEMS = %w{cityhash xxhash murmurhash3}
 
 hash_loaded = false
 AVAILABLE_HASHING_GEMS.each do |gem|
