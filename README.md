@@ -183,6 +183,20 @@ _[:inverse_name]_ Specifies the name of parent object used by the association. T
 Example:
 `cache_has_one :configuration, :embed => true`
 
+#### cache_belongs_to
+
+Options:  
+_[:cached_accessor_name]_ Specifies the name of the method to fetch the associated object. Defaults to `fetch_#{association}`.
+
+_[:foreign_key]_ Specifies the foreign key to use.
+
+_[:association_class]_ Specifies the association class.
+
+_[:prepopulate_method_name]_ Default: `prepopulate_fetched_#{association}`.
+
+Example:
+`cache_belongs_to :database_server`
+
 #### cache_attribute
 
 Options:
