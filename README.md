@@ -183,6 +183,11 @@ _[:inverse_name]_ Specifies the name of parent object used by the association. T
 Example:
 `cache_has_one :configuration, :embed => true`
 
+#### cache_belongs_to
+
+Example:
+`cache_belongs_to :shop`
+
 #### cache_attribute
 
 Options:
