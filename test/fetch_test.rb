@@ -199,4 +199,16 @@ class FetchTest < IdentityCache::TestCase
 
     assert_equal false, ActiveRecord::Base.connection_handler.active_connections?
   end
+
+  def test_fetch_raises_when_called_on_a_scope
+    assert_raises(IdentityCache::UnsupportedScopeError) do
+      Item.where(updated_at: nil).fetch(1)
+    end
+  end
+
+  def test_fetch_by_raises_when_called_on_a_scope
+    assert_raises(IdentityCache::UnsupportedScopeError) do
+      Item.where(updated_at: nil).fetch_by_id(1)
+    end
+  end
 end

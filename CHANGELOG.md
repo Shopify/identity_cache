@@ -1,5 +1,19 @@
 # IdentityCache changelog
 
+#### 0.2.6 (unreleased)
+
+- Raise if a class method is called on a scope.  Previously the scope was ignored.
+
+#### 0.2.5
+
+- Fixed support for namespaced model classes
+- Added some deduplication for parent cache expiry
+- Fixed some deprecation warnings in rails 4.2
+
+#### 0.2.4
+
+- Refactoring, documentation and test changes
+
 #### 0.2.3
 
 - PostgreSQL support
