@@ -189,6 +189,7 @@ module IdentityCache
       private
 
       def identity_cache_single_value_dynamic_fetcher(fields, values) # :nodoc:
+        raise_if_scoped
         cache_key = rails_cache_index_key_for_fields_and_values(fields, values)
         id = IdentityCache.fetch(cache_key) { identity_cache_conditions(fields, values).limit(1).pluck(primary_key).first }
         unless id.nil?
@@ -200,6 +201,7 @@ module IdentityCache
       end
 
       def identity_cache_multiple_value_dynamic_fetcher(fields, values) # :nodoc
+        raise_if_scoped
         cache_key = rails_cache_index_key_for_fields_and_values(fields, values)
         ids = IdentityCache.fetch(cache_key) { identity_cache_conditions(fields, values).pluck(primary_key) }
 

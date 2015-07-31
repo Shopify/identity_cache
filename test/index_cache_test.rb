@@ -121,4 +121,18 @@ class IndexCacheTest < IdentityCache::TestCase
     assert_equal [@record], Item.fetch_by_title('bob')
     assert_equal [@record.id], backend.read(@cache_key)
   end
+
+  def test_fetch_by_index_raises_when_called_on_a_scope
+    Item.cache_index :title
+    assert_raises(IdentityCache::UnsupportedScopeError) do
+      Item.where(updated_at: nil).fetch_by_title('bob')
+    end
+  end
+
+  def test_fetch_by_unique_index_raises_when_called_on_a_scope
+    Item.cache_index :title, :id, :unique => true
+    assert_raises(IdentityCache::UnsupportedScopeError) do
+      Item.where(updated_at: nil).fetch_by_title_and_id('bob', 2)
+    end
+  end
 end

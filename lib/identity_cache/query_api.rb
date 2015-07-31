@@ -20,6 +20,7 @@ module IdentityCache
       # Default fetcher added to the model on inclusion, it behaves like
       # ActiveRecord::Base.where(id: id).first
       def fetch_by_id(id)
+        raise_if_scoped
         return unless id
         raise NotImplementedError, "fetching needs the primary index enabled" unless primary_cache_index_enabled
         if IdentityCache.should_use_cache?
@@ -47,6 +48,7 @@ module IdentityCache
       # Default fetcher added to the model on inclusion, if behaves like
       # ActiveRecord::Base.find_all_by_id
       def fetch_multi(*ids)
+        raise_if_scoped
         raise NotImplementedError, "fetching needs the primary index enabled" unless primary_cache_index_enabled
         options = ids.extract_options!
         ids.flatten!(1)
@@ -76,6 +78,12 @@ module IdentityCache
       end
 
       private
+
+      def raise_if_scoped
+        if current_scope
+          raise UnsupportedScopeError, "IdentityCache doesn't support rails scopes"
+        end
+      end
 
       def record_from_coder(coder) #:nodoc:
         if coder.present? && coder.has_key?(:class)
