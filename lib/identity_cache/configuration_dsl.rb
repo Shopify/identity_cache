@@ -209,7 +209,7 @@ module IdentityCache
       end
 
       def build_recursive_association_cache(association, options) #:nodoc:
-        options[:association_class]      = reflect_on_association(association).klass
+        options[:association_class]      = reflect_on_association(association)
         options[:cached_accessor_name]   = "fetch_#{association}"
         options[:records_variable_name]  = "cached_#{association}"
         options[:population_method_name] = "populate_#{association}_cache"
@@ -233,7 +233,7 @@ module IdentityCache
 
       def build_id_embedded_has_many_cache(association, options) #:nodoc:
         singular_association = association.to_s.singularize
-        options[:association_class]       = reflect_on_association(association).klass
+        options[:association_class]       = reflect_on_association(association)
         options[:cached_accessor_name]    = "fetch_#{association}"
         options[:ids_name]                = "#{singular_association}_ids"
         options[:cached_ids_name]         = "fetch_#{options[:ids_name]}"
@@ -258,7 +258,7 @@ module IdentityCache
           def #{options[:cached_accessor_name]}
             if IdentityCache.should_use_cache? || #{association}.loaded?
               #{options[:population_method_name]} unless @#{options[:ids_variable_name]} || @#{options[:records_variable_name]}
-              @#{options[:records_variable_name]} ||= #{options[:association_class]}.fetch_multi(@#{options[:ids_variable_name]})
+              @#{options[:records_variable_name]} ||= #{options[:association_class].klass}.fetch_multi(@#{options[:ids_variable_name]})
             else
               #{association}
             end
@@ -279,7 +279,7 @@ module IdentityCache
       end
 
       def add_parent_expiry_hook(options)
-        child_class = options[:association_class]
+        child_class = options[:association_class].klass
         raise InverseAssociationError unless child_class.reflect_on_association(options[:inverse_name])
 
         child_class.send(:include, ArTransactionChanges) unless child_class.include?(ArTransactionChanges)
