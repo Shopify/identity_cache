@@ -2,6 +2,7 @@
 
 #### 0.2.6 (unreleased)
 
+- Raise when trying to cache a through association. Previously it wouldn't be invalidated properly.
 - Raise if a class method is called on a scope.  Previously the scope was ignored.
 
 #### 0.2.5

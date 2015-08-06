@@ -93,4 +93,11 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     IdentityCache.cache.expects(:delete).with(@record.primary_cache_index_key)
     child.save!
   end
+
+  def test_unsupported_through_assocation
+    assert_raises IdentityCache::UnsupportedAssociationError, "caching through associations isn't supported" do
+      Item.has_many :deeply_through_associated_records, :through => :associated_records, foreign_key: 'associated_record_id', inverse_of: :item, :class_name => 'DeeplyAssociatedRecord'
+      Item.cache_has_many :deeply_through_associated_records, :embed => true
+    end
+  end
 end
