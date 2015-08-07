@@ -78,9 +78,13 @@ module IdentityCache
       #
       # == Example:
       #   class Product
-      #    cached_has_many :options, :embed => false
-      #    cached_has_many :orders
-      #    cached_has_many :buyers, :inverse_name => 'line_item'
+      #     include IdentityCache
+      #     has_many :options
+      #     has_many :orders
+      #     has_many :buyers
+      #     cache_has_many :options, embed: :ids
+      #     cache_has_many :orders
+      #     cache_has_many :buyers, inverse_name: 'line_item'
       #   end
       #
       # == Parameters
@@ -119,8 +123,8 @@ module IdentityCache
       #
       # == Example:
       #   class Product
-      #    cached_has_one :store, :embed => true
-      #    cached_has_one :vendor
+      #     cache_has_one :store, embed: true
+      #     cache_has_one :vendor
       #   end
       #
       # == Parameters
@@ -155,8 +159,9 @@ module IdentityCache
       #
       # == Example:
       #   class Product
-      #    cache_attribute :quantity, :by => :name
-      #    cache_attribute :quantity  :by => [:name, :vendor]
+      #     include IdentityCache
+      #     cache_attribute :quantity, by: :name
+      #     cache_attribute :quantity, by: [:name, :vendor]
       #   end
       #
       # == Parameters
