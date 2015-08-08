@@ -13,7 +13,7 @@ module IdentityCache
         klass.send(:all_cached_associations).sort.each do |name, options|
           case options[:embed]
           when true
-            schema_string << ",#{name}:(#{denormalized_schema_hash(options[:association_class])})"
+            schema_string << ",#{name}:(#{denormalized_schema_hash(options[:association_class].klass)})"
           when :ids
             schema_string << ",#{name}:ids"
           end
