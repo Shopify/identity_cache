@@ -82,6 +82,11 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     end
   end
 
+  def test_cache_uses_inverse_of_on_association
+    Item.has_many :invertable_association, :inverse_of => :owner, :class_name => 'PolymorphicRecord', :as => "owner", :inverse_of => :owner
+    Item.cache_has_many :invertable_association, :embed => true
+  end
+
   def test_saving_associated_records_should_expire_itself_and_the_parents_cache
     child = @record.associated_records.first
     IdentityCache.cache.expects(:delete).with(child.primary_cache_index_key).once

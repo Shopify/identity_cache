@@ -101,10 +101,7 @@ module IdentityCache
         options = options.slice(:embed, :inverse_name)
         options[:embed] = :ids unless options.has_key?(:embed)
         deprecate_embed_option(options, false, :ids)
-        options[:inverse_name] ||= self.name.underscore.to_sym
-        unless self.reflect_on_association(association)
-          raise AssociationError, "Association named '#{association}' was not found on #{self.class}"
-        end
+        ensure_cacheable_association(association, options)
         self.cached_has_manys[association] = options
 
         case options[:embed]
@@ -141,10 +138,7 @@ module IdentityCache
       def cache_has_one(association, options = {})
         options = options.slice(:embed, :inverse_name)
         options[:embed] = true unless options.has_key?(:embed)
-        options[:inverse_name] ||= self.name.underscore.to_sym
-        unless self.reflect_on_association(association)
-          raise AssociationError, "Association named '#{association}' was not found on #{self.class}"
-        end
+        ensure_cacheable_association(association, options)
         self.cached_has_ones[association] = options
 
         if options[:embed] == true
@@ -285,7 +279,6 @@ module IdentityCache
 
       def add_parent_expiry_hook(options)
         child_class = options[:association_class]
-        raise InverseAssociationError unless child_class.reflect_on_association(options[:inverse_name])
 
         child_class.send(:include, ArTransactionChanges) unless child_class.include?(ArTransactionChanges)
         child_class.send(:include, ParentModelExpiration) unless child_class.include?(ParentModelExpiration)
@@ -309,6 +302,16 @@ module IdentityCache
           options[:embed] = new_value
           ActiveSupport::Deprecation.warn("`embed: #{old_value.inspect}` was renamed to `embed: #{new_value.inspect}` for clarity", caller(2))
         end
+      end
+
+      def ensure_cacheable_association(association, options)
+        unless association_reflection = self.reflect_on_association(association)
+          raise AssociationError, "Association named '#{association}' was not found on #{self.class}"
+        end
+        options[:inverse_name] ||= association_reflection.inverse_of.name if association_reflection.inverse_of
+        options[:inverse_name] ||= self.name.underscore.to_sym
+        child_class = association_reflection.klass
+        raise InverseAssociationError unless child_class.reflect_on_association(options[:inverse_name])
       end
     end
   end
