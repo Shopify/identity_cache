@@ -3,6 +3,7 @@
 #### 0.2.6 (unreleased)
 
 - Raise if a class method is called on a scope.  Previously the scope was ignored.
+- fetched has many associations returns an Array rather than a relation.
 
 #### 0.2.5
 
