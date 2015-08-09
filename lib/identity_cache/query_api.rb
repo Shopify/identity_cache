@@ -24,22 +24,15 @@ module IdentityCache
         return unless id
         raise NotImplementedError, "fetching needs the primary index enabled" unless primary_cache_index_enabled
         if IdentityCache.should_use_cache?
-
           require_if_necessary do
-            record = nil
-            coder = IdentityCache.fetch(rails_cache_key(id)) do
-              record = resolve_cache_miss(id)
-              coder_from_record(record)
-            end
-
-            record ||= record_from_coder(coder)
-            IdentityCache.logger.error "[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{record.id} for #{record.inspect[(0..100)]} " if record && record.id != id.to_i
-            record
+            object = nil
+            coder = IdentityCache.fetch(rails_cache_key(id)){ coder_from_record(object = resolve_cache_miss(id)) }
+            object ||= record_from_coder(coder)
+            IdentityCache.logger.error "[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{object.id} for #{object.inspect[(0..100)]} " if object && object.id != id.to_i
+            object
           end
         else
-          record = self.reorder(nil).where(primary_key => id).first
-          record.readonly! if record.present?
-          record
+          self.readonly.reorder(nil).where(primary_key => id).first
         end
       end
 
@@ -182,10 +175,8 @@ module IdentityCache
       end
 
       def resolve_cache_miss(id)
-        if object = self.includes(cache_fetch_includes).reorder(nil).where(primary_key => id).try(:first)
-          object.send(:populate_association_caches)
-          object.readonly!
-        end
+        object = self.includes(cache_fetch_includes).readonly.reorder(nil).where(primary_key => id).try(:first)
+        object.send(:populate_association_caches) if object
         object
       end
 
@@ -227,8 +218,7 @@ module IdentityCache
       def find_batch(ids)
         @id_column ||= columns.detect {|c| c.name == primary_key}
         ids = ids.map{ |id| connection.type_cast(id, @id_column) }
-        records = where(primary_key => ids).includes(cache_fetch_includes).to_a
-        records.map(&:readonly!)
+        records = readonly.where(primary_key => ids).includes(cache_fetch_includes).to_a
         records_by_id = records.index_by(&:id)
         ids.map{ |id| records_by_id[id] }
       end
@@ -334,6 +324,18 @@ module IdentityCache
       end
     end
 
+    def load_association_readonly(association_name)
+      record_or_records = send(association_name)
+      if self.class.reflect_on_association(association_name).collection?
+        record_or_records.each do |child_record|
+          child_record.readonly!
+        end
+      else
+        record_or_records.readonly! if record_or_records
+      end
+      record_or_records
+    end
+
     def fetch_recursively_cached_association(ivar_name, association_name) # :nodoc:
       ivar_full_name = :"@#{ivar_name}"
       if IdentityCache.should_use_cache?
@@ -341,7 +343,7 @@ module IdentityCache
         assoc = IdentityCache.unmap_cached_nil_for(instance_variable_get(ivar_full_name))
         assoc.is_a?(ActiveRecord::Associations::CollectionAssociation) ? assoc.reader : assoc
       else
-        load_and_readonlyify(association_name)
+        load_association_readonly(association_name)
       end
     end
 
@@ -351,7 +353,7 @@ module IdentityCache
       value = instance_variable_get(ivar_full_name)
       return value unless value.nil?
 
-      loaded_association = load_and_readonlyify(association_name)
+      loaded_association = load_association_readonly(association_name)
 
       instance_variable_set(ivar_full_name, IdentityCache.map_cached_nil_for(loaded_association))
     end

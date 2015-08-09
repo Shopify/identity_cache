@@ -176,14 +176,6 @@ class FetchMultiWithBatchedAssociationsTest < IdentityCache::TestCase
     end
   end
 
-  def test_find_batch_coerces_ids_to_primary_key_type
-    mock_relation = mock("ActiveRecord::Relation")
-    Item.expects(:where).returns(mock_relation)
-    mock_relation.expects(:includes).returns(stub(:to_a => [@bob, @joe, @fred]))
-
-    Item.send(:find_batch, [@bob, @joe, @fred].map(&:id).map(&:to_s))
-  end
-
   private
 
   def setup_has_many_children_and_grandchildren(*parents)

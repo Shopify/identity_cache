@@ -143,9 +143,7 @@ class FetchMultiTest < IdentityCache::TestCase
   end
 
   def test_find_batch_coerces_ids_to_primary_key_type
-    mock_relation = mock("ActiveRecord::Relation")
-    Item.expects(:where).returns(mock_relation)
-    mock_relation.expects(:includes).returns(stub(:to_a => [@bob, @joe, @fred]))
+    Item.expects(:readonly).returns(stub(where: stub(includes: stub(to_a: [@bob, @joe, @fred]))))
 
     Item.send(:find_batch, [@bob, @joe, @fred].map(&:id).map(&:to_s))
   end
@@ -206,22 +204,19 @@ class FetchMultiTest < IdentityCache::TestCase
   end
 
   def test_fetch_multi_with_mixed_hits_and_misses_returns_only_readonly_records
-    cache_response = {}
-    cache_response[@bob_blob_key] = cache_response_for(@bob)
-    cache_response[@joe_blob_key] = nil
-    cache_response[@fred_blob_key] = cache_response_for(@fred)
-    IdentityCache.cache.expects(:fetch_multi).with(@bob_blob_key, @joe_blob_key, @fred_blob_key).returns(cache_response)
-
+    Item.fetch_multi(@bob.id, @fred.id).each do |record|
+      assert record.readonly?, "Item #{record} wasn't readonly"
+    end
     Item.fetch_multi(@bob.id, @joe.id, @fred.id).each do |record|
       assert record.readonly?, "Item #{record} wasn't readonly"
     end
   end
 
   def test_fetch_multi_with_open_transactions_returns_only_readonly_records
-    Item.connection.expects(:open_transactions).at_least_once.returns(1)
-    IdentityCache.cache.expects(:fetch_multi).never
-    Item.fetch_multi(@bob.id, @joe.id, @fred.id).each do |record|
-      assert record.readonly?, "Item #{record} wasn't readonly"
+    Item.transaction do
+      Item.fetch_multi(@bob.id, @joe.id, @fred.id).each do |record|
+        assert record.readonly?, "Item #{record} wasn't readonly"
+      end
     end
   end
 
