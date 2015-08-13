@@ -21,8 +21,7 @@ module IdentityCache
 
         options[:embed]                   = false
         options[:cached_accessor_name]    = "fetch_#{association}"
-        options[:foreign_key]             = association_reflection.foreign_key
-        options[:association_class]       = association_reflection.klass
+        options[:association_reflection]  = association_reflection
         options[:prepopulate_method_name] = "prepopulate_fetched_#{association}"
 
         build_normalized_belongs_to_cache(association, options)
@@ -31,10 +30,11 @@ module IdentityCache
       private
 
       def build_normalized_belongs_to_cache(association, options)
+        foreign_key = options[:association_reflection].foreign_key
         self.class_eval(<<-CODE, __FILE__, __LINE__ + 1)
           def #{options[:cached_accessor_name]}
-            if IdentityCache.should_use_cache? && #{options[:foreign_key]}.present? && !association(:#{association}).loaded?
-              self.#{association} = #{options[:association_class]}.fetch_by_id(#{options[:foreign_key]})
+            if IdentityCache.should_use_cache? && #{foreign_key}.present? && !association(:#{association}).loaded?
+              self.#{association} = association(:#{association}).klass.fetch_by_id(#{foreign_key})
             else
               #{association}
             end
