@@ -259,7 +259,7 @@ module IdentityCache
               #{options[:population_method_name]} unless @#{options[:ids_variable_name]} || @#{options[:records_variable_name]}
               @#{options[:records_variable_name]} ||= #{options[:association_class]}.fetch_multi(@#{options[:ids_variable_name]})
             else
-              #{association}
+              association(:#{association}).load_target
             end
           end
 

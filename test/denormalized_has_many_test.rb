@@ -13,13 +13,14 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
   end
 
   def test_uncached_record_from_the_db_will_use_normal_association
-    expected = @record.associated_records
+    expected = @record.associated_records.to_a
     record_from_db = Item.find(@record.id)
 
-    Item.any_instance.expects(:associated_records).returns(expected)
-
-    assert_equal @record, record_from_db
-    assert_equal expected, record_from_db.fetch_associated_records
+    assert_queries(1) do
+      assert_memcache_operations(0) do
+        assert_equal expected, record_from_db.fetch_associated_records
+      end
+    end
   end
 
   def test_on_cache_hit_record_should_come_back_with_cached_association
@@ -28,9 +29,12 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     record_from_cache_hit = Item.fetch(@record.id)
     assert_equal @record, record_from_cache_hit
 
-    expected = @record.associated_records
-    Item.any_instance.expects(:associated_records).never
-    assert_equal expected, record_from_cache_hit.fetch_associated_records
+    expected = @record.associated_records.to_a
+    assert_queries(0) do
+      assert_memcache_operations(0) do
+        assert_equal expected, record_from_cache_hit.fetch_associated_records
+      end
+    end
   end
 
   def test_on_cache_miss_record_should_embed_associated_objects_and_return
@@ -92,5 +96,11 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     IdentityCache.cache.expects(:delete).with(child.primary_cache_index_key).once
     IdentityCache.cache.expects(:delete).with(@record.primary_cache_index_key)
     child.save!
+  end
+
+  def test_fetch_association_does_not_allow_chaining
+    check = proc { assert_equal false, Item.fetch(@record.id).fetch_associated_records.respond_to?(:where) }
+    2.times { check.call } # for miss and hit
+    Item.transaction { check.call }
   end
 end

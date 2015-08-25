@@ -113,7 +113,7 @@ module IdentityCache
           association = reflection.association_class.new(record, reflection)
           association.target = coder_or_array.map {|e| record_from_coder(e) }
           association.target.each {|e| association.set_inverse_instance(e) }
-          association
+          association.target
         else
           record_from_coder(coder_or_array)
         end
@@ -125,7 +125,7 @@ module IdentityCache
         embedded_variable = record.instance_variable_get(:"@#{options[:records_variable_name]}")
         if IdentityCache.unmap_cached_nil_for(embedded_variable).nil?
           nil
-        elsif record.class.reflect_on_association(association).collection?
+        elsif embedded_variable.is_a?(Array)
           embedded_variable.map {|e| coder_from_record(e) }
         else
           coder_from_record(embedded_variable)
@@ -330,10 +330,9 @@ module IdentityCache
       ivar_full_name = :"@#{ivar_name}"
       if IdentityCache.should_use_cache?
         populate_recursively_cached_association(ivar_name, association_name)
-        assoc = IdentityCache.unmap_cached_nil_for(instance_variable_get(ivar_full_name))
-        assoc.is_a?(ActiveRecord::Associations::CollectionAssociation) ? assoc.reader : assoc
+        IdentityCache.unmap_cached_nil_for(instance_variable_get(ivar_full_name))
       else
-        send(association_name.to_sym)
+        association(association_name).load_target
       end
     end
 
@@ -343,7 +342,7 @@ module IdentityCache
       value = instance_variable_get(ivar_full_name)
       return value unless value.nil?
 
-      loaded_association = send(association_name)
+      loaded_association = association(association_name).load_target
 
       instance_variable_set(ivar_full_name, IdentityCache.map_cached_nil_for(loaded_association))
     end

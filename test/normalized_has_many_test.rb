@@ -151,4 +151,9 @@ class NormalizedHasManyTest < IdentityCache::TestCase
     @not_cached.save!
   end
 
+  def test_fetch_association_does_not_allow_chaining
+    check = proc { assert_equal false, Item.fetch(@record.id).fetch_associated_records.respond_to?(:where) }
+    2.times { check.call } # for miss and hit
+    Item.transaction { check.call }
+  end
 end
