@@ -110,4 +110,11 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
       Item.cache_has_one :polymorphic_record, :inverse_name => :owner, :embed => true
     end
   end
+
+  def test_unsupported_through_assocation
+    assert_raises IdentityCache::UnsupportedAssociationError, "caching through associations isn't supported" do
+      Item.has_one :deeply_associated, :through => :associated, :class_name => 'DeeplyAssociatedRecord'
+      Item.cache_has_one :deeply_associated, :embed => true
+    end
+  end
 end

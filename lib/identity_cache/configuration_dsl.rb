@@ -308,6 +308,9 @@ module IdentityCache
         unless association_reflection = self.reflect_on_association(association)
           raise AssociationError, "Association named '#{association}' was not found on #{self.class}"
         end
+        if association_reflection.options[:through]
+          raise UnsupportedAssociationError, "caching through associations isn't supported"
+        end
         options[:inverse_name] ||= association_reflection.inverse_of.name if association_reflection.inverse_of
         options[:inverse_name] ||= self.name.underscore.to_sym
         child_class = association_reflection.klass
