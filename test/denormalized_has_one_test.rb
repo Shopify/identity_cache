@@ -117,4 +117,10 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
       Item.cache_has_one :deeply_associated, :embed => true
     end
   end
+
+  def test_cache_has_one_on_derived_model_raises
+    assert_raises(IdentityCache::DerivedModelError) do
+      StiRecordTypeA.cache_has_one :polymorphic_record, :inverse_name => :owner, :embed => true
+    end
+  end
 end

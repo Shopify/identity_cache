@@ -205,6 +205,12 @@ class FetchMultiTest < IdentityCache::TestCase
     end
   end
 
+  def test_fetch_multi_on_derived_model_raises
+    assert_raises(IdentityCache::DerivedModelError) do
+      StiRecordTypeA.fetch_multi(1, 2)
+    end
+  end
+
   private
 
   def populate_only_fred

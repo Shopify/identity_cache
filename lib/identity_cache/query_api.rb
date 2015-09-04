@@ -20,6 +20,7 @@ module IdentityCache
       # Default fetcher added to the model on inclusion, it behaves like
       # ActiveRecord::Base.where(id: id).first
       def fetch_by_id(id)
+        ensure_base_model
         raise_if_scoped
         return unless id
         raise NotImplementedError, "fetching needs the primary index enabled" unless primary_cache_index_enabled
@@ -48,6 +49,7 @@ module IdentityCache
       # Default fetcher added to the model on inclusion, if behaves like
       # ActiveRecord::Base.find_all_by_id
       def fetch_multi(*ids)
+        ensure_base_model
         raise_if_scoped
         raise NotImplementedError, "fetching needs the primary index enabled" unless primary_cache_index_enabled
         options = ids.extract_options!

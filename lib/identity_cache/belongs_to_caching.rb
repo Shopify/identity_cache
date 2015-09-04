@@ -9,6 +9,7 @@ module IdentityCache
 
     module ClassMethods
       def cache_belongs_to(association, options = {})
+        ensure_base_model
         raise NotImplementedError if options[:embed]
 
         unless association_reflection = reflect_on_association(association)
@@ -26,6 +27,8 @@ module IdentityCache
 
         build_normalized_belongs_to_cache(association, options)
       end
+
+      private
 
       def build_normalized_belongs_to_cache(association, options)
         self.class_eval(<<-CODE, __FILE__, __LINE__ + 1)

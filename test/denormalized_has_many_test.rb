@@ -100,4 +100,10 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
       Item.cache_has_many :deeply_through_associated_records, :embed => true
     end
   end
+
+  def test_cache_has_many_on_derived_model_raises
+    assert_raises(IdentityCache::DerivedModelError) do
+      StiRecordTypeA.cache_has_many :polymorphic_records, :inverse_name => :owner, :embed => true
+    end
+  end
 end

@@ -76,6 +76,14 @@ module ActiveRecordObjects
       include IdentityCache
       self.primary_key = "hashed_key"
     }
+
+    Object.send :const_set, 'StiRecord', Class.new(base) {
+      include IdentityCache
+      has_many :polymorphic_records, :as => 'owner'
+    }
+
+    Object.send :const_set, 'StiRecordTypeA', Class.new(StiRecord) {
+    }
   end
 
   def teardown_models
@@ -89,6 +97,8 @@ module ActiveRecordObjects
     Object.send :remove_const, 'Item'
     Object.send :remove_const, 'ItemTwo'
     Object.send :remove_const, 'KeyedRecord'
+    Object.send :remove_const, 'StiRecord'
+    Object.send :remove_const, 'StiRecordTypeA'
     Deeply::Nested.send :remove_const, 'AssociatedRecord'
     Deeply.send :remove_const, 'Nested'
     Object.send :remove_const, 'Deeply'

@@ -45,4 +45,10 @@ class NormalizedBelongsToTest < IdentityCache::TestCase
     Item.expects(:fetch_by_id).with(@parent_record.id).returns(nil)
     assert_equal nil, @record.fetch_item
   end
+
+  def test_cache_belongs_to_on_derived_model_raises
+    assert_raises(IdentityCache::DerivedModelError) do
+      StiRecordTypeA.cache_belongs_to :item, :embed => false
+    end
+  end
 end
