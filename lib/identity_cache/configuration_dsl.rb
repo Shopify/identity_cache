@@ -315,6 +315,9 @@ module IdentityCache
         options[:inverse_name] ||= self.name.underscore.to_sym
         child_class = association_reflection.klass
         raise InverseAssociationError unless child_class.reflect_on_association(options[:inverse_name])
+        unless options[:embed] == true || child_class.include?(IdentityCache)
+          raise UnsupportedAssociationError, "associated class #{child_class} must include IdentityCache to be cached without full embedding"
+        end
       end
     end
   end
