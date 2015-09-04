@@ -135,4 +135,10 @@ class IndexCacheTest < IdentityCache::TestCase
       Item.where(updated_at: nil).fetch_by_title_and_id('bob', 2)
     end
   end
+
+  def test_cache_index_on_derived_model_raises
+    assert_raises(IdentityCache::DerivedModelError) do
+      StiRecordTypeA.cache_index :name, :id
+    end
+  end
 end

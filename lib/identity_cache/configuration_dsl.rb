@@ -3,12 +3,14 @@ module IdentityCache
     extend ActiveSupport::Concern
 
     included do |base|
+      base.class_attribute :cached_model
       base.class_attribute :cache_indexes
       base.class_attribute :cache_attributes
       base.class_attribute :cached_has_manys
       base.class_attribute :cached_has_ones
       base.class_attribute :primary_cache_index_enabled
 
+      base.cached_model = base
       base.cached_has_manys = {}
       base.cached_has_ones = {}
       base.cache_attributes = []
@@ -40,6 +42,7 @@ module IdentityCache
       # * unique: if the index would only have unique values
       #
       def cache_index(*fields)
+        ensure_base_model
         raise NotImplementedError, "Cache indexes need an enabled primary index" unless primary_cache_index_enabled
         options = fields.extract_options!
         self.cache_indexes.push fields
@@ -98,6 +101,7 @@ module IdentityCache
       # * inverse_name: The name of the parent in the association if the name is
       #   not the lowercase pluralization of the parent object's class
       def cache_has_many(association, options = {})
+        ensure_base_model
         options = options.slice(:embed, :inverse_name)
         options[:embed] = :ids unless options.has_key?(:embed)
         deprecate_embed_option(options, false, :ids)
@@ -136,6 +140,7 @@ module IdentityCache
       #   necessary if the name is not the lowercase pluralization of the
       #   parent object's class)
       def cache_has_one(association, options = {})
+        ensure_base_model
         options = options.slice(:embed, :inverse_name)
         options[:embed] = true unless options.has_key?(:embed)
         ensure_cacheable_association(association, options)
@@ -165,6 +170,7 @@ module IdentityCache
       #
       # * by: Other attribute or attributes in the model to keep values indexed. Default is :id
       def cache_attribute(attribute, options = {})
+        ensure_base_model
         options[:by] ||= :id
         fields = Array(options[:by])
 
@@ -181,6 +187,7 @@ module IdentityCache
       end
 
       def disable_primary_cache_index
+        ensure_base_model
         raise NotImplementedError, "Secondary indexes rely on the primary index to function. You must either remove the secondary indexes or don't disable the primary" if self.cache_indexes.size > 0
         self.primary_cache_index_enabled = false
       end
@@ -301,6 +308,12 @@ module IdentityCache
         if options[:embed] == old_value
           options[:embed] = new_value
           ActiveSupport::Deprecation.warn("`embed: #{old_value.inspect}` was renamed to `embed: #{new_value.inspect}` for clarity", caller(2))
+        end
+      end
+
+      def ensure_base_model
+        if self != cached_model
+          raise DerivedModelError, "IdentityCache class methods must be called on the same model that includes IdentityCache"
         end
       end
 

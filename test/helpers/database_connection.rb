@@ -39,6 +39,7 @@ module DatabaseConnection
     :items                         => [[:integer, :item_id], [:string, :title], [:timestamps, null: true]],
     :items2                        => [[:integer, :item_id], [:string, :title], [:timestamps, null: true]],
     :keyed_records                 => [[:string, :value], :primary_key => "hashed_key"],
+    :sti_records                   => [[:string, :type], [:string, :name]],
   }
 
   DEFAULT_CONFIG = {

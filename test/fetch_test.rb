@@ -211,4 +211,10 @@ class FetchTest < IdentityCache::TestCase
       Item.where(updated_at: nil).fetch_by_id(1)
     end
   end
+
+  def test_fetch_on_derived_model_raises
+    assert_raises(IdentityCache::DerivedModelError) do
+      StiRecordTypeA.fetch(1)
+    end
+  end
 end

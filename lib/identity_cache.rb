@@ -29,6 +29,7 @@ module IdentityCache
   end
   class UnsupportedScopeError < StandardError; end
   class UnsupportedAssociationError < StandardError; end
+  class DerivedModelError < StandardError; end
 
   class << self
     include IdentityCache::CacheHash

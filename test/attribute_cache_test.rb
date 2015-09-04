@@ -101,6 +101,12 @@ class AttributeCacheTest < IdentityCache::TestCase
     assert_equal "Jim", AssociatedRecord.fetch_name_by_id(2)
   end
 
+  def test_cache_attribute_on_derived_model_raises
+    assert_raises(IdentityCache::DerivedModelError) do
+      StiRecordTypeA.cache_attribute :name
+    end
+  end
+
   private
 
   def blob_key_for_associated_record(id)
