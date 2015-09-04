@@ -125,7 +125,9 @@ IdentityCache tries to figure out both sides of an association whenever it can s
 
 ``` ruby
 class Metafield < ActiveRecord::Base
+  include IdentityCache
   belongs_to :owner, :polymorphic => true
+  cache_belongs_to :owner
 end
 
 class Product < ActiveRecord::Base
