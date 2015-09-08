@@ -3,3 +3,4 @@ gemspec
 
 gem 'activerecord', '~> 3.2.16'
 gem 'activesupport', '~> 3.2.16'
+gem 'mysql2', '~> 0.3.13'
