@@ -51,4 +51,12 @@ class NormalizedBelongsToTest < IdentityCache::TestCase
       StiRecordTypeA.cache_belongs_to :item, :embed => false
     end
   end
+
+  def test_fetching_polymorphic_belongs_to_association
+    PolymorphicRecord.include IdentityCache
+    PolymorphicRecord.cache_belongs_to :owner
+    PolymorphicRecord.create!(owner: @parent_record)
+
+    assert_equal @parent_record, PolymorphicRecord.first.fetch_owner
+  end
 end

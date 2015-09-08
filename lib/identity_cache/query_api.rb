@@ -245,7 +245,7 @@ module IdentityCache
               end
 
               parent_record_to_child_records = Hash.new { |h, k| h[k] = [] }
-              child_records = details[:association_class].fetch_multi(*ids_to_parent_record.keys)
+              child_records = details[:association_reflection].klass.fetch_multi(*ids_to_parent_record.keys)
               child_records.each do |child_record|
                 parent_record = ids_to_parent_record[child_record.id]
                 parent_record_to_child_records[parent_record] << child_record
@@ -262,11 +262,16 @@ module IdentityCache
             if details[:embed] == true
               raise ArgumentError.new("Embedded belongs_to associations do not support prefetching yet.")
             else
+              reflection = details[:association_reflection]
+              if reflection.options[:polymorphic]
+                raise ArgumentError.new("Polymorphic belongs_to associations do not support prefetching yet.")
+              end
+
               ids_to_child_record = records.each_with_object({}) do |child_record, hash|
-                parent_id = child_record.send(details[:foreign_key])
+                parent_id = child_record.send(reflection.foreign_key)
                 hash[parent_id] = child_record if parent_id.present?
               end
-              parent_records = details[:association_class].fetch_multi(ids_to_child_record.keys)
+              parent_records = reflection.klass.fetch_multi(ids_to_child_record.keys)
               parent_records.each do |parent_record|
                 child_record = ids_to_child_record[parent_record.id]
                 child_record.send(details[:prepopulate_method_name], parent_record)
@@ -288,8 +293,8 @@ module IdentityCache
             raise ArgumentError.new("Unknown cached association #{association} listed for prefetching")
           end
 
-          if details && details[:association_class].respond_to?(:prefetch_associations, true)
-            details[:association_class].send(:prefetch_associations, sub_associations, next_level_records)
+          if details && details[:association_reflection].klass.respond_to?(:prefetch_associations, true)
+            details[:association_reflection].klass.send(:prefetch_associations, sub_associations, next_level_records)
           end
         end
       end
