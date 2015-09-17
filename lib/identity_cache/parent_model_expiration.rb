@@ -39,8 +39,9 @@ module IdentityCache
       if transaction_changed_attributes[foreign_key].present?
         begin
           if parent_association.polymorphic?
-            klass = transaction_changed_attributes[parent_association.association_foreign_key].try(:constantize)
-            klass ||= new_parent.class
+            parent_class_name = transaction_changed_attributes[parent_association.foreign_type]
+            parent_class_name ||= read_attribute(parent_association.foreign_type)
+            klass = parent_class_name.try!(:safe_constantize)
           else
             klass = parent_association.klass
           end
