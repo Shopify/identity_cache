@@ -263,7 +263,7 @@ module IdentityCache
               raise ArgumentError.new("Embedded belongs_to associations do not support prefetching yet.")
             else
               reflection = details[:association_reflection]
-              if reflection.options[:polymorphic]
+              if reflection.polymorphic?
                 raise ArgumentError.new("Polymorphic belongs_to associations do not support prefetching yet.")
               end
 
