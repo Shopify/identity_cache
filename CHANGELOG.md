@@ -6,6 +6,7 @@
 - Raise if a class method is called on a scope.  Previously the scope was ignored.
 - Raise if a class method is called on a subclass of one that included IdentityCache. This never worked properly.
 - Fix cache_belongs_to on polymorphic assocations.
+- Fetching a cache_belongs_to association no longer loads the belongs_to association
 
 #### 0.2.5
 

@@ -34,16 +34,17 @@ class NormalizedBelongsToTest < IdentityCache::TestCase
     assert_equal @parent_record, @record.fetch_item
   end
 
-  def test_fetching_the_association_should_assign_the_result_to_the_association_so_that_successive_accesses_are_cached
+  def test_fetching_the_association_should_assign_the_result_to_an_instance_variable_so_that_successive_accesses_are_cached
     Item.expects(:fetch_by_id).with(@parent_record.id).returns(@parent_record)
-    @record.fetch_item
-    assert @record.association(:item).loaded?
-    assert_equal @parent_record, @record.item
+    assert_equal @parent_record, @record.fetch_item
+    assert_equal false, @record.association(:item).loaded?
+    assert_equal @parent_record, @record.fetch_item
   end
 
-  def test_fetching_the_association_shouldnt_raise_if_the_record_cant_be_found
+  def test_fetching_the_association_should_cache_nil_and_not_raise_if_the_record_cant_be_found
     Item.expects(:fetch_by_id).with(@parent_record.id).returns(nil)
-    assert_equal nil, @record.fetch_item
+    assert_equal nil, @record.fetch_item # miss
+    assert_equal nil, @record.fetch_item # hit
   end
 
   def test_cache_belongs_to_on_derived_model_raises
