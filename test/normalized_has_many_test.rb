@@ -61,6 +61,9 @@ class NormalizedHasManyTest < IdentityCache::TestCase
 
   def test_fetching_associated_ids_will_populate_the_value_if_the_record_isnt_from_the_cache
     assert_equal [2, 1], @record.fetch_associated_record_ids
+    assert_no_queries do
+      assert_equal [2, 1], @record.fetch_associated_record_ids
+    end
   end
 
   def test_fetching_associated_ids_will_use_the_cached_value_if_the_record_is_from_the_cache
@@ -76,6 +79,14 @@ class NormalizedHasManyTest < IdentityCache::TestCase
 
   def test_fetching_the_association_should_fetch_each_record_by_id
     assert_equal [@baz, @bar], @record.fetch_associated_records
+  end
+
+  def test_record_from_the_db_will_fetch_associations_from_cache_on_hit
+    Item.fetch(@record.id)
+    record_from_db = Item.find(@record.id)
+    assert_no_queries do
+      assert_equal [2, 1], record_from_db.fetch_associated_record_ids
+    end
   end
 
   def test_fetching_the_association_from_a_record_on_a_cache_hit_should_not_issue_any_queries

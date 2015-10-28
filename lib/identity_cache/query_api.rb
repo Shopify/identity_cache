@@ -346,8 +346,12 @@ module IdentityCache
         ivar_full_name = :"@#{ivar_name}"
 
         unless ivar_value = instance_variable_get(ivar_full_name)
-          ivar_value = IdentityCache.map_cached_nil_for(send(association_name))
-          instance_variable_set(ivar_full_name, ivar_value)
+          if association(association_name).loaded? || !fetch_embedded_associations
+            ivar_value = IdentityCache.map_cached_nil_for(send(association_name))
+            instance_variable_set(ivar_full_name, ivar_value)
+          else
+            ivar_value = instance_variable_get(ivar_full_name)
+          end
         end
 
         assoc = IdentityCache.unmap_cached_nil_for(ivar_value)
@@ -355,6 +359,25 @@ module IdentityCache
       else
         send(association_name.to_sym)
       end
+    end
+
+    def fetch_embedded_associations
+      embedded_associations = self.class.send(:embedded_associations)
+      return true if embedded_associations.empty?
+
+      cached_record = self.class.cached_model.fetch_by_id(id)
+      return false unless cached_record
+
+      embedded_associations.each_value do |options|
+        if options[:embed] == :ids
+          cached_association = cached_record.public_send(options.fetch(:cached_ids_name))
+          instance_variable_set(:"@#{options.fetch(:ids_variable_name)}", cached_association)
+        else
+          cached_association = cached_record.public_send(options.fetch(:cached_accessor_name))
+          instance_variable_set(:"@#{options.fetch(:records_variable_name)}", IdentityCache.map_cached_nil_for(cached_association))
+        end
+      end
+      true
     end
 
     def expire_primary_index # :nodoc:

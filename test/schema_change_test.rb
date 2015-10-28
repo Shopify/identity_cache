@@ -56,8 +56,9 @@ class SchemaChangeTest < IdentityCache::TestCase
     AddColumnToChild.new.up
     read_new_schema
 
-    Item.expects(:resolve_cache_miss).returns(@record)
-    record = Item.fetch(@record.id)
+    resolve_cache_miss = Spy.on(Item, :resolve_cache_miss).and_call_through
+    Item.fetch(@record.id)
+    assert_equal 1, resolve_cache_miss.calls.size
   end
 
   def test_schema_changes_on_deeply_embedded_association_should_cause_cache_miss_for_old_cached_objects
@@ -68,8 +69,9 @@ class SchemaChangeTest < IdentityCache::TestCase
     AddColumnToDeepChild.new.up
     read_new_schema
 
-    Item.expects(:resolve_cache_miss).returns(@record)
-    record = Item.fetch(@record.id)
+    resolve_cache_miss = Spy.on(Item, :resolve_cache_miss).and_call_through
+    Item.fetch(@record.id)
+    assert_equal 1, resolve_cache_miss.calls.size
   end
 
   def test_schema_changes_on_new_cached_child_association
@@ -78,8 +80,9 @@ class SchemaChangeTest < IdentityCache::TestCase
     Item.cache_has_many :polymorphic_records, :inverse_name => :owner, :embed => true
     read_new_schema
 
-    Item.expects(:resolve_cache_miss).returns(@record)
-    record = Item.fetch(@record.id)
+    resolve_cache_miss = Spy.on(Item, :resolve_cache_miss).and_call_through
+    Item.fetch(@record.id)
+    assert_equal 1, resolve_cache_miss.calls.size
   end
 
   def test_embed_existing_cache_has_many
@@ -92,8 +95,9 @@ class SchemaChangeTest < IdentityCache::TestCase
     Item.cache_has_many :polymorphic_records, :inverse_name => :owner, :embed => true
     read_new_schema
 
-    Item.expects(:resolve_cache_miss).returns(@record)
-    record = Item.fetch(@record.id)
+    resolve_cache_miss = Spy.on(Item, :resolve_cache_miss).and_call_through
+    Item.fetch(@record.id)
+    assert_equal 1, resolve_cache_miss.calls.size
   end
 
   def test_add_non_embedded_cache_has_many
@@ -103,7 +107,8 @@ class SchemaChangeTest < IdentityCache::TestCase
     Item.cache_has_many :polymorphic_records, :inverse_name => :owner, :embed => :ids
     read_new_schema
 
-    Item.expects(:resolve_cache_miss).returns(@record)
-    record = Item.fetch(@record.id)
+    resolve_cache_miss = Spy.on(Item, :resolve_cache_miss).and_call_through
+    Item.fetch(@record.id)
+    assert_equal 1, resolve_cache_miss.calls.size
   end
 end

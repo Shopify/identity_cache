@@ -12,14 +12,26 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     @record.reload
   end
 
-  def test_uncached_record_from_the_db_will_use_normal_association
-    expected = @record.associated_records
+  def test_record_from_the_db_will_use_normal_association_on_cache_miss
     record_from_db = Item.find(@record.id)
+    expected = @record.associated_records.to_a
 
-    Item.any_instance.expects(:associated_records).returns(expected)
+    fetched_records = assert_queries(2) do
+      record_from_db.fetch_associated_records
+    end
+    assert_no_queries do
+      assert_equal expected, record_from_db.fetch_associated_records
+    end
+  end
 
-    assert_equal @record, record_from_db
-    assert_equal expected, record_from_db.fetch_associated_records
+  def test_record_from_the_db_will_fetch_associations_from_cache_on_hit
+    Item.fetch(@record.id)
+    record_from_db = Item.find(@record.id)
+    expected = @record.associated_records.to_a
+
+    assert_no_queries do
+      assert_equal expected, record_from_db.fetch_associated_records
+    end
   end
 
   def test_on_cache_hit_record_should_come_back_with_cached_association

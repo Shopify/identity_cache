@@ -29,8 +29,7 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     @record.associated = nil
     @record.save!
     @record.reload
-    Item.expects(:resolve_cache_miss).with(@record.id).once.returns(@record)
-
+    resolve_cache_miss = Spy.on(Item, :resolve_cache_miss).and_call_through
     fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
 
     record_from_cache_miss = Item.fetch_by_title('foo')
@@ -42,17 +41,33 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     end
     assert fetch.has_been_called_with?(@record.secondary_cache_index_key_for_current_values([:title]))
     assert fetch.has_been_called_with?(@record.primary_cache_index_key)
+    assert resolve_cache_miss.calls.one? { |call| call.args == [@record.id] }
   end
 
-  def test_on_record_from_the_db_will_use_normal_association
-    record_from_db = Item.find_by_title('foo')
+  def test_record_from_the_db_will_use_normal_association_on_cache_miss
+    record_from_db = Item.find(@record.id)
+    expected = @record.associated
 
-    assert_equal @record, record_from_db
-    assert_not_nil record_from_db.fetch_associated
+    assert_queries(2) do
+      record_from_db.fetch_associated
+    end
+    assert_no_queries do
+      assert_equal @record.associated, record_from_db.fetch_associated
+    end
+  end
+
+  def test_record_from_the_db_will_fetch_associations_from_cache_on_hit
+    Item.fetch(@record.id)
+    record_from_db = Item.find(@record.id)
+    expected = @record.associated
+
+    assert_no_queries do
+      assert_equal expected, record_from_db.fetch_associated
+    end
   end
 
   def test_on_cache_hit_record_should_come_back_with_cached_association
-    Item.expects(:resolve_cache_miss).with(1).once.returns(@record)
+    resolve_cache_miss = Spy.on(Item, :resolve_cache_miss).and_call_through
     Item.fetch_by_title('foo')
 
     record_from_cache_hit = Item.fetch_by_title('foo')
@@ -60,6 +75,7 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
 
     assert_equal @record, record_from_cache_hit
     assert_equal expected, record_from_cache_hit.fetch_associated
+    assert resolve_cache_miss.calls.one? { |call| call.args == [1] }
   end
 
   def test_on_cache_hit_record_should_come_back_with_cached_nil_association
@@ -67,7 +83,7 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     @record.save!
     @record.reload
 
-    Item.expects(:resolve_cache_miss).with(1).once.returns(@record)
+    resolve_cache_miss = Spy.on(Item, :resolve_cache_miss).and_call_through
     Item.fetch_by_title('foo')
 
     record_from_cache_hit = Item.fetch_by_title('foo')
@@ -77,6 +93,7 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     5.times do
       assert_nil record_from_cache_hit.fetch_associated
     end
+    assert resolve_cache_miss.calls.one? { |call| call.args == [1] }
   end
 
   def test_changes_in_associated_record_should_expire_the_parents_cache

@@ -26,10 +26,24 @@ class RecursiveDenormalizedHasManyTest < IdentityCache::TestCase
     assert_equal [{:associated_records => [:deeply_associated_records]}, :associated => [:deeply_associated_records]], Item.send(:cache_fetch_includes)
   end
 
-  def test_uncached_record_from_the_db_will_use_normal_association_for_deeply_associated_records
-    expected = @associated_record.deeply_associated_records
+  def test_record_from_the_db_will_use_normal_association_for_deeply_associated_records_on_cache_miss
+    expected = @associated_record.deeply_associated_records.to_a
     record_from_db = Item.find(@record.id)
-    assert_equal expected, record_from_db.fetch_associated_records[0].fetch_deeply_associated_records
+    assert_queries(5) do
+      record_from_db.fetch_associated_records
+    end
+    assert_no_queries do
+      assert_equal expected, record_from_db.fetch_associated_records[0].fetch_deeply_associated_records
+    end
+  end
+
+  def test_record_from_the_db_will_fetch_associations_from_cache_for_deeply_associated_records_on_cache_hit
+    Item.fetch(@record.id)
+    expected = @associated_record.deeply_associated_records.to_a
+    record_from_db = Item.find(@record.id)
+    assert_no_queries do
+      assert_equal expected, record_from_db.fetch_associated_records[0].fetch_deeply_associated_records
+    end
   end
 
   def test_on_cache_miss_record_should_embed_associated_objects_and_return
