@@ -74,6 +74,32 @@ module IdentityCache
         records
       end
 
+      def prefetch_associations(associations, records)
+        return if records.empty?
+
+        case associations
+        when nil
+        when Symbol
+          prefetch_one_association(associations, records)
+        when Array
+          associations.each do |association|
+            prefetch_associations(association, records)
+          end
+        when Hash
+          associations.each do |association, sub_associations|
+            next_level_records = prefetch_one_association(association, records)
+
+            associated_class = reflect_on_association(association).klass
+            if associated_class.respond_to?(:prefetch_associations)
+              associated_class.prefetch_associations(sub_associations, next_level_records)
+            end
+          end
+        else
+          raise TypeError, "Invalid associations class #{associations.class}"
+        end
+        nil
+      end
+
       private
 
       def raise_if_scoped
@@ -209,7 +235,7 @@ module IdentityCache
       end
 
       def all_cached_associations
-        (cached_has_manys || {}).merge(cached_has_ones || {}).merge(cached_belongs_tos || {})
+        cached_has_manys.merge(cached_has_ones).merge(cached_belongs_tos)
       end
 
       def embedded_associations
@@ -246,96 +272,102 @@ module IdentityCache
         ids.map{ |id| records_by_id[id] }
       end
 
-      def prefetch_associations(associations, records)
-        associations = hashify_includes_structure(associations)
+      def fetch_embedded_associations(records)
+        associations = embedded_associations
+        return true if associations.empty?
 
-        associations.each do |association, sub_associations|
-          case
-          when details = cached_has_manys[association]
+        return false unless primary_cache_index_enabled
 
-            if details[:embed] == true
-              child_records = records.map(&details[:cached_accessor_name].to_sym).flatten
+        records_by_id = records.index_by(&:id)
+        cached_records = fetch_multi(records.map(&:id))
+
+        associations.each_value do |options|
+          cached_records.each do |cached_record|
+            record = records_by_id.fetch(cached_record.id)
+            if options[:embed] == :ids
+              cached_association = cached_record.public_send(options.fetch(:cached_ids_name))
+              record.instance_variable_set(:"@#{options.fetch(:ids_variable_name)}", cached_association)
             else
-              ids_to_parent_record = records.each_with_object({}) do |record, hash|
-                child_ids = record.send(details[:cached_ids_name])
-                child_ids.each do |child_id|
-                  hash[child_id] = record
-                end
-              end
-
-              parent_record_to_child_records = Hash.new { |h, k| h[k] = [] }
-              child_records = details[:association_reflection].klass.fetch_multi(*ids_to_parent_record.keys)
-              child_records.each do |child_record|
-                parent_record = ids_to_parent_record[child_record.id]
-                parent_record_to_child_records[parent_record] << child_record
-              end
-
-              parent_record_to_child_records.each do |parent_record, child_records|
-                parent_record.send(details[:prepopulate_method_name], child_records)
-              end
+              cached_association = cached_record.public_send(options.fetch(:cached_accessor_name))
+              record.instance_variable_set(:"@#{options.fetch(:records_variable_name)}", IdentityCache.map_cached_nil_for(cached_association))
             end
-
-            next_level_records = child_records
-
-          when details = cached_belongs_tos[association]
-            if details[:embed] == true
-              raise ArgumentError.new("Embedded belongs_to associations do not support prefetching yet.")
-            else
-              reflection = details[:association_reflection]
-              if reflection.polymorphic?
-                raise ArgumentError.new("Polymorphic belongs_to associations do not support prefetching yet.")
-              end
-
-              ids_to_child_record = records.each_with_object({}) do |child_record, hash|
-                parent_id = child_record.send(reflection.foreign_key)
-                hash[parent_id] = child_record if parent_id.present?
-              end
-              parent_records = reflection.klass.fetch_multi(ids_to_child_record.keys)
-              parent_records.each do |parent_record|
-                child_record = ids_to_child_record[parent_record.id]
-                child_record.send(details[:prepopulate_method_name], parent_record)
-              end
-            end
-
-            next_level_records = parent_records
-
-          when details = cached_has_ones[association]
-            if details[:embed] == true
-              parent_records = records.map(&details[:cached_accessor_name].to_sym)
-            else
-              raise ArgumentError.new("Non-embedded has_one associations do not support prefetching yet.")
-            end
-
-            next_level_records = parent_records
-
-          else
-            raise ArgumentError.new("Unknown cached association #{association} listed for prefetching")
-          end
-
-          if details && details[:association_reflection].klass.respond_to?(:prefetch_associations, true)
-            details[:association_reflection].klass.send(:prefetch_associations, sub_associations, next_level_records)
           end
         end
+        true
       end
 
-      def hashify_includes_structure(structure)
-        case structure
-        when nil
-          {}
-        when Symbol
-          {structure => []}
-        when Hash
-          structure.clone
-        when Array
-          structure.each_with_object({}) do |member, hash|
-            case member
-            when Hash
-              hash.merge!(member)
-            when Symbol
-              hash[member] = []
+      def prefetch_embedded_association(records, association, details)
+        first_record = records.first
+        return if first_record.association(association).loaded?
+        iv_name_key = details[:embed] == true ? :records_variable_name : :ids_variable_name
+        return if first_record.instance_variable_get(:"@#{details[iv_name_key]}")
+        fetch_embedded_associations(records)
+      end
+
+      def prefetch_one_association(association, records)
+        case
+        when details = cached_has_manys[association]
+          prefetch_embedded_association(records, association, details)
+          if details[:embed] == true
+            child_records = records.flat_map(&details[:cached_accessor_name].to_sym)
+          else
+            ids_to_parent_record = records.each_with_object({}) do |record, hash|
+              child_ids = record.send(details[:cached_ids_name])
+              child_ids.each do |child_id|
+                hash[child_id] = record
+              end
+            end
+
+            parent_record_to_child_records = Hash.new { |h, k| h[k] = [] }
+            child_records = details[:association_reflection].klass.fetch_multi(*ids_to_parent_record.keys)
+            child_records.each do |child_record|
+              parent_record = ids_to_parent_record[child_record.id]
+              parent_record_to_child_records[parent_record] << child_record
+            end
+
+            parent_record_to_child_records.each do |parent_record, child_records|
+              parent_record.send(details[:prepopulate_method_name], child_records)
             end
           end
+
+          next_level_records = child_records
+
+        when details = cached_belongs_tos[association]
+          if details[:embed] == true
+            raise ArgumentError.new("Embedded belongs_to associations do not support prefetching yet.")
+          else
+            reflection = details[:association_reflection]
+            if reflection.polymorphic?
+              raise ArgumentError.new("Polymorphic belongs_to associations do not support prefetching yet.")
+            end
+
+            ids_to_child_record = records.each_with_object({}) do |child_record, hash|
+              parent_id = child_record.send(reflection.foreign_key)
+              hash[parent_id] = child_record if parent_id.present?
+            end
+            parent_records = reflection.klass.fetch_multi(ids_to_child_record.keys)
+            parent_records.each do |parent_record|
+              child_record = ids_to_child_record[parent_record.id]
+              child_record.send(details[:prepopulate_method_name], parent_record)
+            end
+          end
+
+          next_level_records = parent_records
+
+        when details = cached_has_ones[association]
+          if details[:embed] == true
+            prefetch_embedded_association(records, association, details)
+            parent_records = records.map(&details[:cached_accessor_name].to_sym)
+          else
+            raise ArgumentError.new("Non-embedded has_one associations do not support prefetching yet.")
+          end
+
+          next_level_records = parent_records
+
+        else
+          raise ArgumentError.new("Unknown cached association #{association} listed for prefetching")
         end
+        next_level_records
       end
     end
 
