@@ -292,12 +292,7 @@ module IdentityCache
 
         child_class.parent_expiration_entries[options[:inverse_name]] << [self, options[:only_on_foreign_key_change]]
 
-        child_class.class_eval(<<-CODE, __FILE__, __LINE__ + 1)
-          after_commit :expire_parent_caches
-          if Gem::Version.new(ActiveRecord::VERSION::STRING) < Gem::Version.new("4.0.4")
-            after_touch :expire_parent_caches
-          end
-        CODE
+        child_class.after_commit :expire_parent_caches
       end
 
       def identity_cache_conditions(fields, values)

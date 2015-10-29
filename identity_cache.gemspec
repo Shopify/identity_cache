@@ -16,7 +16,7 @@ Gem::Specification.new do |gem|
   gem.version       = IdentityCache::VERSION
 
   gem.add_dependency('ar_transaction_changes', '~> 1.0')
-  gem.add_dependency('activerecord', '>= 3.2')
+  gem.add_dependency('activerecord', '>= 4.0.4')
   gem.add_development_dependency('memcached', '~> 1.8.0')
 
   gem.add_development_dependency('memcached_store', '~> 0.12.6')

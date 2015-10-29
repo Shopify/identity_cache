@@ -4,9 +4,6 @@ module IdentityCache
 
     included do |base|
       base.after_commit :expire_cache
-      if Gem::Version.new(ActiveRecord::VERSION::STRING) < Gem::Version.new("4.0.4")
-        base.after_touch :expire_cache
-      end
     end
 
     module ClassMethods
