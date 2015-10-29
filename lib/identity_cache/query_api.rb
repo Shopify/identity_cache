@@ -63,9 +63,7 @@ module IdentityCache
             coders_by_key = IdentityCache.fetch_multi(cache_keys) do |unresolved_keys|
               ids = unresolved_keys.map {|key| key_to_id_map[key] }
               records = find_batch(ids)
-              found_records = records.compact
-              found_records.each{ |record| record.send(:populate_association_caches) }
-              key_to_record_map = found_records.index_by{ |record| rails_cache_key(record.id) }
+              key_to_record_map = records.compact.index_by{ |record| rails_cache_key(record.id) }
               records.map {|record| coder_from_record(record) }
             end
 
@@ -124,10 +122,8 @@ module IdentityCache
       end
 
       def get_embedded_association(record, association, options) #:nodoc:
-        embedded_variable = record.instance_variable_get(:"@#{options[:records_variable_name]}")
-        if IdentityCache.unmap_cached_nil_for(embedded_variable).nil?
-          nil
-        elsif record.class.reflect_on_association(association).collection?
+        embedded_variable = record.public_send(options.fetch(:cached_accessor_name))
+        if record.class.reflect_on_association(association).collection?
           embedded_variable.map {|e| coder_from_record(e) }
         else
           coder_from_record(embedded_variable)
@@ -179,9 +175,43 @@ module IdentityCache
       end
 
       def resolve_cache_miss(id)
-        object = self.includes(cache_fetch_includes).reorder(nil).where(primary_key => id).first
-        object.send(:populate_association_caches) if object
-        object
+        record = self.includes(cache_fetch_includes).reorder(nil).where(primary_key => id).first
+        preload_id_embedded_associations([record]) if record
+        record
+      end
+
+      def preload_id_embedded_associations(records)
+        return if records.empty?
+        each_id_embedded_association do |name, options|
+          reflection = options.fetch(:association_reflection)
+          child_model = reflection.klass
+          scope = child_model.all
+          scope = scope.instance_exec(nil, &reflection.scope) if reflection.scope
+
+          pairs = scope.where(reflection.foreign_key => records.map(&:id)).pluck(reflection.foreign_key, reflection.active_record_primary_key)
+          ids_by_parent = {}
+          pairs.each do |parent_id, child_id|
+            (ids_by_parent[parent_id] ||= []) << child_id
+          end
+
+          records.each do |parent|
+            child_ids = ids_by_parent[parent.id] || []
+            parent.instance_variable_set(:"@#{options.fetch(:ids_variable_name)}", child_ids)
+          end
+        end
+        recursively_embedded_associations.each do |name, options|
+          child_model = options.fetch(:association_reflection).klass
+          if child_model.respond_to?(:preload_id_embedded_associations)
+            child_records = records.flat_map(&options.fetch(:cached_accessor_name).to_sym)
+            child_model.preload_id_embedded_associations(child_records)
+          end
+        end
+      end
+
+      def each_id_embedded_association
+        cached_has_manys.each do |name, options|
+          yield name, options if options.fetch(:embed) == :ids
+        end
       end
 
       def recursively_embedded_associations
@@ -223,6 +253,7 @@ module IdentityCache
         @id_column ||= columns.detect {|c| c.name == primary_key}
         ids = ids.map{ |id| connection.type_cast(id, @id_column) }
         records = where(primary_key => ids).includes(cache_fetch_includes).to_a
+        preload_id_embedded_associations(records)
         records_by_id = records.index_by(&:id)
         ids.map{ |id| records_by_id[id] }
       end
@@ -322,37 +353,20 @@ module IdentityCache
 
     private
 
-    def populate_association_caches # :nodoc:
-      self.class.send(:embedded_associations).each do |cached_association, options|
-        send(options[:population_method_name])
-        reflection = options[:embed] == true && self.class.reflect_on_association(cached_association)
-        if reflection && reflection.klass.respond_to?(:cached_has_manys)
-          child_objects = Array.wrap(send(options[:cached_accessor_name]))
-          child_objects.each{ |child| child.send(:populate_association_caches) }
-        end
-      end
-    end
-
     def fetch_recursively_cached_association(ivar_name, association_name) # :nodoc:
-      ivar_full_name = :"@#{ivar_name}"
       if IdentityCache.should_use_cache?
-        populate_recursively_cached_association(ivar_name, association_name)
-        assoc = IdentityCache.unmap_cached_nil_for(instance_variable_get(ivar_full_name))
+        ivar_full_name = :"@#{ivar_name}"
+
+        unless ivar_value = instance_variable_get(ivar_full_name)
+          ivar_value = IdentityCache.map_cached_nil_for(send(association_name))
+          instance_variable_set(ivar_full_name, ivar_value)
+        end
+
+        assoc = IdentityCache.unmap_cached_nil_for(ivar_value)
         assoc.is_a?(ActiveRecord::Associations::CollectionAssociation) ? assoc.reader : assoc
       else
         send(association_name.to_sym)
       end
-    end
-
-    def populate_recursively_cached_association(ivar_name, association_name) # :nodoc:
-      ivar_full_name = :"@#{ivar_name}"
-
-      value = instance_variable_get(ivar_full_name)
-      return value unless value.nil?
-
-      loaded_association = send(association_name)
-
-      instance_variable_set(ivar_full_name, IdentityCache.map_cached_nil_for(loaded_association))
     end
 
     def expire_primary_index # :nodoc:

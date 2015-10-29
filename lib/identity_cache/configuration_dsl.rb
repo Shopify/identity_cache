@@ -218,17 +218,12 @@ module IdentityCache
         options[:association_reflection] = reflect_on_association(association)
         options[:cached_accessor_name]   = "fetch_#{association}"
         options[:records_variable_name]  = "cached_#{association}"
-        options[:population_method_name] = "populate_#{association}_cache"
 
 
         unless instance_methods.include?(options[:cached_accessor_name].to_sym)
           self.class_eval(<<-CODE, __FILE__, __LINE__ + 1)
             def #{options[:cached_accessor_name]}
               fetch_recursively_cached_association('#{options[:records_variable_name]}', :#{association})
-            end
-
-            def #{options[:population_method_name]}
-              populate_recursively_cached_association('#{options[:records_variable_name]}', :#{association})
             end
           CODE
 
@@ -245,26 +240,18 @@ module IdentityCache
         options[:cached_ids_name]         = "fetch_#{options[:ids_name]}"
         options[:ids_variable_name]       = "cached_#{options[:ids_name]}"
         options[:records_variable_name]   = "cached_#{association}"
-        options[:population_method_name]  = "populate_#{association}_cache"
         options[:prepopulate_method_name] = "prepopulate_fetched_#{association}"
 
         self.class_eval(<<-CODE, __FILE__, __LINE__ + 1)
           attr_reader :#{options[:ids_variable_name]}
 
           def #{options[:cached_ids_name]}
-            #{options[:population_method_name]} unless @#{options[:ids_variable_name]}
-            @#{options[:ids_variable_name]}
-          end
-
-          def #{options[:population_method_name]}
-            @#{options[:ids_variable_name]} = #{options[:ids_name]}
-            association_cache.delete(:#{association})
+            @#{options[:ids_variable_name]} ||= #{options[:ids_name]}
           end
 
           def #{options[:cached_accessor_name]}
             if IdentityCache.should_use_cache? || #{association}.loaded?
-              #{options[:population_method_name]} unless @#{options[:ids_variable_name]} || @#{options[:records_variable_name]}
-              @#{options[:records_variable_name]} ||= #{options[:association_reflection].klass}.fetch_multi(@#{options[:ids_variable_name]})
+              @#{options[:records_variable_name]} ||= #{options[:association_reflection].klass}.fetch_multi(#{options[:cached_ids_name]})
             else
               #{association}
             end

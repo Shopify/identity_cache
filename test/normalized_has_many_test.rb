@@ -29,6 +29,19 @@ class NormalizedHasManyTest < IdentityCache::TestCase
     assert_equal false, fetched_record.associated_records.loaded?
   end
 
+  def test_batch_fetching_of_association_for_multiple_parent_records
+    record2 = Item.new(:title => 'two')
+    record2.associated_records << AssociatedRecord.new(:name => 'a')
+    record2.associated_records << AssociatedRecord.new(:name => 'b')
+    record2.save!
+
+    fetched_records = assert_queries(2) do
+      Item.fetch_multi(@record.id, record2.id)
+    end
+    assert_equal [[2, 1], [4, 3]], fetched_records.map(&:cached_associated_record_ids)
+    assert_equal false, fetched_records.any?{ |record| record.associated_records.loaded? }
+  end
+
   def test_fetching_associated_ids_will_populate_the_value_if_the_record_isnt_from_the_cache
     assert_equal [2, 1], @record.fetch_associated_record_ids
   end

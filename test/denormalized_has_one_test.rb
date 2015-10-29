@@ -29,7 +29,6 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     @record.associated = nil
     @record.save!
     @record.reload
-    @record.send(:populate_association_caches)
     Item.expects(:resolve_cache_miss).with(@record.id).once.returns(@record)
 
     fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
@@ -53,7 +52,6 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
   end
 
   def test_on_cache_hit_record_should_come_back_with_cached_association
-    @record.send(:populate_association_caches)
     Item.expects(:resolve_cache_miss).with(1).once.returns(@record)
     Item.fetch_by_title('foo')
 
@@ -69,7 +67,6 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     @record.save!
     @record.reload
 
-    @record.send(:populate_association_caches)
     Item.expects(:resolve_cache_miss).with(1).once.returns(@record)
     Item.fetch_by_title('foo')
 
