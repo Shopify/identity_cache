@@ -222,7 +222,7 @@ class FetchMultiTest < IdentityCache::TestCase
   end
 
   def cache_response_for(record)
-    {:class => record.class, 'attributes' => record.attributes_before_type_cast}
+    {class: record.class, attributes: record.attributes_before_type_cast}
   end
 
   def with_batch_size(size)
