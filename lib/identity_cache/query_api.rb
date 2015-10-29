@@ -85,22 +85,12 @@ module IdentityCache
       end
 
       def record_from_coder(coder) #:nodoc:
-        if coder.present? && coder.has_key?(:class)
-          record = coder[:class].allocate
-          empty_serialized_attrs =
-            if defined?(ActiveRecord::Type::Serialized)
-              coder[:class].columns.find { |t| t.cast_type.is_a?(ActiveRecord::Type::Serialized) }.nil?
-            else
-              coder[:class].serialized_attributes.empty?
-            end
-          unless empty_serialized_attrs
-            coder = coder.dup
-            coder['attributes'] = coder['attributes'].dup
-          end
-          record.init_with(coder)
+        if coder
+          klass = coder[:class]
+          record = klass.instantiate(coder[:attributes].dup)
 
           coder[:associations].each {|name, value| set_embedded_association(record, name, value) } if coder.has_key?(:associations)
-          coder[:normalized_has_many].each {|name, ids| record.instance_variable_set(:"@#{record.class.cached_has_manys[name][:ids_variable_name]}", ids) } if coder.has_key?(:normalized_has_many)
+          coder[:association_ids].each {|name, ids| record.instance_variable_set(:"@#{record.class.cached_has_manys[name][:ids_variable_name]}", ids) } if coder.has_key?(:association_ids)
           record
         end
       end
@@ -133,9 +123,10 @@ module IdentityCache
 
       def coder_from_record(record) #:nodoc:
         unless record.nil?
-          coder = {}
-          record.encode_with(coder)
-          coder[:class] = record.class
+          coder = {
+            attributes: record.attributes_before_type_cast,
+            class: record.class,
+          }
           add_cached_associations_to_coder(record, coder)
           coder
         end
@@ -150,7 +141,7 @@ module IdentityCache
             end
           end
           if (cached_has_manys = klass.cached_has_manys).present?
-            coder[:normalized_has_many] = cached_has_manys.each_with_object({}) do |(name, options), hash|
+            coder[:association_ids] = cached_has_manys.each_with_object({}) do |(name, options), hash|
               hash[name] = record.instance_variable_get(:"@#{options[:ids_variable_name]}") unless options[:embed] == true
             end
           end
