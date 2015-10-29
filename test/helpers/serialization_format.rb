@@ -24,7 +24,7 @@ module SerializationFormat
   end
 
   def serialized_record_file
-    File.expand_path("../../fixtures/serialized_record", __FILE__)
+    File.expand_path("../../fixtures/serialized_record.#{DatabaseConnection.db_name}", __FILE__)
   end
 
   def serialize(record, anIO = nil)
