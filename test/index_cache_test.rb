@@ -11,14 +11,12 @@ class IndexCacheTest < IdentityCache::TestCase
     @cache_key = "#{NAMESPACE}index:Item:title:#{cache_hash(@record.title)}"
   end
 
-  def test_fetch_with_garbage_input_should_use_properly_typed_sql
+  def test_fetch_with_garbage_input
     Item.cache_index :title, :id
 
-    Item.connection.expects(:exec_query)
-      .with(Item.select(:id).where(title: 'garbage', id: 0).to_sql, any_parameters)
-      .returns(ActiveRecord::Result.new([], []))
-
-    assert_equal [], Item.fetch_by_title_and_id('garbage', 'garbage')
+    assert_queries(1) do
+      assert_equal [], Item.fetch_by_title_and_id('garbage', 'garbage')
+    end
   end
 
   def test_fetch_with_unique_adds_limit_clause
