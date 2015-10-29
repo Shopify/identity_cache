@@ -182,24 +182,24 @@ module IdentityCache
 
       def preload_id_embedded_associations(records)
         return if records.empty?
-        each_id_embedded_association do |name, options|
+        each_id_embedded_association do |options|
           reflection = options.fetch(:association_reflection)
           child_model = reflection.klass
           scope = child_model.all
           scope = scope.instance_exec(nil, &reflection.scope) if reflection.scope
 
           pairs = scope.where(reflection.foreign_key => records.map(&:id)).pluck(reflection.foreign_key, reflection.active_record_primary_key)
-          ids_by_parent = {}
+          ids_by_parent = Hash.new{ |hash, key| hash[key] = [] }
           pairs.each do |parent_id, child_id|
-            (ids_by_parent[parent_id] ||= []) << child_id
+            ids_by_parent[parent_id] << child_id
           end
 
           records.each do |parent|
-            child_ids = ids_by_parent[parent.id] || []
+            child_ids = ids_by_parent[parent.id]
             parent.instance_variable_set(:"@#{options.fetch(:ids_variable_name)}", child_ids)
           end
         end
-        recursively_embedded_associations.each do |name, options|
+        recursively_embedded_associations.each_value do |options|
           child_model = options.fetch(:association_reflection).klass
           if child_model.respond_to?(:preload_id_embedded_associations)
             child_records = records.flat_map(&options.fetch(:cached_accessor_name).to_sym)
@@ -209,8 +209,8 @@ module IdentityCache
       end
 
       def each_id_embedded_association
-        cached_has_manys.each do |name, options|
-          yield name, options if options.fetch(:embed) == :ids
+        cached_has_manys.each_value do |options|
+          yield options if options.fetch(:embed) == :ids
         end
       end
 
