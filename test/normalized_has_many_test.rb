@@ -42,6 +42,23 @@ class NormalizedHasManyTest < IdentityCache::TestCase
     assert_equal false, fetched_records.any?{ |record| record.associated_records.loaded? }
   end
 
+  def test_batch_fetching_of_deeply_associated_records
+    Item.has_many :denormalized_associated_records, class_name: 'AssociatedRecord'
+    Item.cache_has_many :denormalized_associated_records, embed: true
+    AssociatedRecord.cache_has_many :deeply_associated_records, embed: :ids
+    @record.associated_records[0].deeply_associated_records << DeeplyAssociatedRecord.new(:name => 'deep1')
+    @record.associated_records[1].deeply_associated_records << DeeplyAssociatedRecord.new(:name => 'deep2')
+    @record.associated_records.each(&:save!)
+
+    fetched_records = assert_queries(4) do
+      Item.fetch(@record.id)
+    end
+    assert_no_queries do
+      assert_equal [[1], [2]], fetched_records.fetch_denormalized_associated_records.map(&:cached_deeply_associated_record_ids)
+      assert_equal false, fetched_records.fetch_denormalized_associated_records.any?{ |record| record.deeply_associated_records.loaded? }
+    end
+  end
+
   def test_fetching_associated_ids_will_populate_the_value_if_the_record_isnt_from_the_cache
     assert_equal [2, 1], @record.fetch_associated_record_ids
   end

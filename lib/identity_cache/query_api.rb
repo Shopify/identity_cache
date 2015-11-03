@@ -189,9 +189,9 @@ module IdentityCache
         end
         recursively_embedded_associations.each_value do |options|
           child_model = options.fetch(:association_reflection).klass
-          if child_model.respond_to?(:preload_id_embedded_associations)
+          if child_model.include?(IdentityCache)
             child_records = records.flat_map(&options.fetch(:cached_accessor_name).to_sym)
-            child_model.preload_id_embedded_associations(child_records)
+            child_model.send(:preload_id_embedded_associations, child_records)
           end
         end
       end
