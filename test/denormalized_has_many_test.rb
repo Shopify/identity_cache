@@ -83,7 +83,7 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
   end
 
   def test_cache_uses_inverse_of_on_association
-    Item.has_many :invertable_association, :inverse_of => :owner, :class_name => 'PolymorphicRecord', :as => "owner", :inverse_of => :owner
+    Item.has_many :invertable_association, :inverse_of => :owner, :class_name => 'PolymorphicRecord', :as => "owner"
     Item.cache_has_many :invertable_association, :embed => true
   end
 
