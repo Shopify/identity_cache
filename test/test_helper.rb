@@ -59,7 +59,7 @@ class IdentityCache::TestCase < Minitest::Test
   end
 
   def assert_not_nil(*args)
-    assert *args
+    assert(*args)
   end
 
   def assert_queries(num = 1)
@@ -67,7 +67,7 @@ class IdentityCache::TestCase < Minitest::Test
     subscriber = ActiveSupport::Notifications.subscribe('sql.active_record', counter)
     exception = false
     yield
-  rescue => e
+  rescue
     exception = true
     raise
   ensure
@@ -80,7 +80,7 @@ class IdentityCache::TestCase < Minitest::Test
     subscriber = ActiveSupport::Notifications.subscribe(/cache_.*\.active_support/, counter)
     exception = false
     yield
-  rescue => e
+  rescue
     exception = true
     raise
   ensure
