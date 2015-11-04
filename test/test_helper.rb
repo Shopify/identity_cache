@@ -24,16 +24,16 @@ class ActiveSupport::Cache::MemcachedStore
   alias_method_chain :read_multi, :instrumentation
 end
 
+if ActiveRecord::Base.respond_to?(:raise_in_transactional_callbacks=) && ActiveRecord::VERSION::STRING < '5'
+  ActiveRecord::Base.raise_in_transactional_callbacks = true
+end
+
 MiniTest::Test = MiniTest::Unit::TestCase unless defined?(MiniTest::Test)
 class IdentityCache::TestCase < Minitest::Test
   include ActiveRecordObjects
   attr_reader :backend
 
   def setup
-    if ActiveRecord::Base.respond_to?(:raise_in_transactional_callbacks=)
-      ActiveRecord::Base.raise_in_transactional_callbacks = true
-    end
-
     DatabaseConnection.drop_tables
     DatabaseConnection.create_tables
 
