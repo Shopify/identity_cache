@@ -8,6 +8,7 @@ gemfile:
   - Gemfile.rails40
   - Gemfile.rails41
   - Gemfile.rails42
+  - Gemfile.rails5
 
 env:
   - DB=mysql2
@@ -16,6 +17,11 @@ env:
 services:
   - memcache
   - mysql
+
+matrix:
+  exclude:
+    - rvm: 2.1
+      gemfile: Gemfile.rails5
 
 sudo: false
 

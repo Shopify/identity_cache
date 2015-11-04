@@ -1,0 +1,7 @@
+source 'https://rubygems.org'
+gemspec
+
+gem 'activerecord', github: 'rails/rails'
+gem 'arel', github: 'rails/arel'
+gem 'activesupport', github: 'rails/rails'
+gem 'mysql2', '~> 0.4'
