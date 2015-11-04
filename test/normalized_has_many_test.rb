@@ -59,6 +59,20 @@ class NormalizedHasManyTest < IdentityCache::TestCase
     end
   end
 
+  def test_batch_fetching_stops_with_nil_parent
+    Item.cache_has_one :associated, embed: true
+    AssociatedRecord.cache_has_many :deeply_associated_records, embed: :ids
+    AssociatedRecord.delete_all
+
+    fetched_records = assert_queries(3) do
+      Item.fetch(@record.id)
+    end
+    assert_no_queries do
+      assert_equal @record, fetched_records
+      assert_nil fetched_records.fetch_associated
+    end
+  end
+
   def test_fetching_associated_ids_will_populate_the_value_if_the_record_isnt_from_the_cache
     assert_equal [2, 1], @record.fetch_associated_record_ids
   end
