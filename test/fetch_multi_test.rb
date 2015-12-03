@@ -121,6 +121,18 @@ class FetchMultiTest < IdentityCache::TestCase
     assert_equal [@joe, @bob, @joe], Item.fetch_multi(@joe.id, @bob.id, @joe.id)
   end
 
+  def test_fetch_multi_with_duplicate_ids_hits_backend_once_per_id
+    cache_response = {
+      @joe_blob_key => cache_response_for(@joe),
+      @bob_blob_key => cache_response_for(@bob),
+    }
+
+    fetcher.expects(:fetch_multi).with([@joe_blob_key, @bob_blob_key]).returns(cache_response)
+    result = Item.fetch_multi(@joe.id, @bob.id, @joe.id)
+
+    assert_equal [@joe, @bob, @joe], result
+  end
+
   def test_fetch_multi_with_open_transactions_hits_the_database
     Item.connection.expects(:open_transactions).at_least_once.returns(1)
     fetcher.expects(:fetch_multi).never

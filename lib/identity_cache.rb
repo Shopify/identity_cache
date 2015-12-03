@@ -115,7 +115,7 @@ module IdentityCache
       return {} if keys.size == 0
 
       result = if should_use_cache?
-        fetch_in_batches(keys) do |missed_keys|
+        fetch_in_batches(keys.uniq) do |missed_keys|
           results = yield missed_keys
           results.map {|e| map_cached_nil_for e }
         end
