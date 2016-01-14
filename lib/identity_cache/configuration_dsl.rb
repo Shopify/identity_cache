@@ -199,7 +199,7 @@ module IdentityCache
         cache_key = rails_cache_index_key_for_fields_and_values(fields, values)
         id = IdentityCache.fetch(cache_key) { identity_cache_conditions(fields, values).limit(1).pluck(primary_key).first }
         unless id.nil?
-          record = fetch_by_id(id)
+          record = fetch_by_id(id.is_a?(Array) ? id.first : id)
           IdentityCache.cache.delete(cache_key) unless record
         end
 
