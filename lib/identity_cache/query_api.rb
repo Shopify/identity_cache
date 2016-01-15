@@ -19,10 +19,9 @@ module IdentityCache
       def fetch_by_id(id)
         ensure_base_model
         raise_if_scoped
-        return unless id
         raise NotImplementedError, "fetching needs the primary index enabled" unless primary_cache_index_enabled
+        return unless id
         if IdentityCache.should_use_cache?
-
           require_if_necessary do
             object = nil
             coder = IdentityCache.fetch(rails_cache_key(id)){ coder_from_record(object = resolve_cache_miss(id)) }
@@ -30,9 +29,8 @@ module IdentityCache
             IdentityCache.logger.error "[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{object.id} for #{object.inspect[(0..100)]} " if object && object.id != id.to_i
             object
           end
-
         else
-          self.reorder(nil).where(primary_key => id).first
+          resolve_cache_miss(id)
         end
       end
 
