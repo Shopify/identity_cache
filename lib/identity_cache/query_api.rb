@@ -16,12 +16,12 @@ module IdentityCache
 
       # Default fetcher added to the model on inclusion, it behaves like
       # ActiveRecord::Base.where(id: id).first
-      def fetch_by_id(id)
+      def fetch_by_id(id, options={})
         ensure_base_model
         raise_if_scoped
         raise NotImplementedError, "fetching needs the primary index enabled" unless primary_cache_index_enabled
         return unless id
-        if IdentityCache.should_use_cache?
+        record = if IdentityCache.should_use_cache?
           require_if_necessary do
             object = nil
             coder = IdentityCache.fetch(rails_cache_key(id)){ coder_from_record(object = resolve_cache_miss(id)) }
@@ -32,13 +32,15 @@ module IdentityCache
         else
           resolve_cache_miss(id)
         end
+        prefetch_associations(options[:includes], [record]) if record && options[:includes]
+        record
       end
 
       # Default fetcher added to the model on inclusion, it behaves like
       # ActiveRecord::Base.find, will raise ActiveRecord::RecordNotFound exception
       # if id is not in the cache or the db.
-      def fetch(id)
-        fetch_by_id(id) or raise(ActiveRecord::RecordNotFound, "Couldn't find #{self.name} with ID=#{id}")
+      def fetch(id, options={})
+        fetch_by_id(id, options) or raise(ActiveRecord::RecordNotFound, "Couldn't find #{self.name} with ID=#{id}")
       end
 
       # Default fetcher added to the model on inclusion, if behaves like

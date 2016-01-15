@@ -1,6 +1,6 @@
 require "test_helper"
 
-class FetchMultiWithBatchedAssociationsTest < IdentityCache::TestCase
+class PrefetchNormalizedAssociationsTest < IdentityCache::TestCase
   NAMESPACE = IdentityCache.cache_namespace
 
   def setup
@@ -12,6 +12,18 @@ class FetchMultiWithBatchedAssociationsTest < IdentityCache::TestCase
     @joe_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:2"
     @fred_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:3"
     @tenth_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:10"
+  end
+
+  def test_fetch_with_includes_option_preloads_associations
+    Item.send(:cache_belongs_to, :item)
+    john = Item.create!(title: 'john')
+    @bob.update_column(:item_id, john)
+
+    spy = Spy.on(Item, :fetch_multi).and_call_through
+
+    items = Item.fetch(@bob.id, includes: :item)
+
+    assert spy.calls.one?{ |call| call.args == [[john.id]] }
   end
 
   def test_fetch_multi_with_includes_option_preloads_associations
