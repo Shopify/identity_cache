@@ -35,12 +35,12 @@ module IdentityCache
         "#{rails_cache_key_namespace}blob:#{base_class.name}:#{rails_cache_key_prefix}:"
       end
 
-      def rails_cache_index_key_for_fields_and_values(fields, values)
-        "#{rails_cache_key_namespace}index:#{base_class.name}:#{rails_cache_string_for_fields_and_values(fields, values)}"
-      end
-
-      def rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, values)
-        "#{rails_cache_key_namespace}attribute:#{base_class.name}:#{attribute}:#{rails_cache_string_for_fields_and_values(fields, values)}"
+      def rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, values, unique)
+        "#{rails_cache_key_namespace}" \
+          "attr#{unique ? '' : 's' }" \
+          ":#{base_class.name}" \
+          ":#{attribute}" \
+          ":#{rails_cache_string_for_fields_and_values(fields, values)}"
       end
 
       def rails_cache_key_namespace
@@ -58,20 +58,12 @@ module IdentityCache
       self.class.rails_cache_key(id)
     end
 
-    def secondary_cache_index_key_for_current_values(fields) # :nodoc:
-      self.class.rails_cache_index_key_for_fields_and_values(fields, current_values_for_fields(fields))
+    def attribute_cache_key_for_attribute_and_current_values(attribute, fields, unique) # :nodoc:
+      self.class.rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, current_values_for_fields(fields), unique)
     end
 
-    def secondary_cache_index_key_for_previous_values(fields) # :nodoc:
-      self.class.rails_cache_index_key_for_fields_and_values(fields, old_values_for_fields(fields))
-    end
-
-    def attribute_cache_key_for_attribute_and_current_values(attribute, fields) # :nodoc:
-      self.class.rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, current_values_for_fields(fields))
-    end
-
-    def attribute_cache_key_for_attribute_and_previous_values(attribute, fields) # :nodoc:
-      self.class.rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, old_values_for_fields(fields))
+    def attribute_cache_key_for_attribute_and_previous_values(attribute, fields, unique) # :nodoc:
+      self.class.rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, old_values_for_fields(fields), unique)
     end
 
     def current_values_for_fields(fields) # :nodoc:

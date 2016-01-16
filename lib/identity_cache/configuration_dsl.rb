@@ -4,7 +4,6 @@ module IdentityCache
 
     included do |base|
       base.class_attribute :cached_model
-      base.class_attribute :cache_indexes
       base.class_attribute :cache_attributes
       base.class_attribute :cached_has_manys
       base.class_attribute :cached_has_ones
@@ -14,7 +13,6 @@ module IdentityCache
       base.cached_has_manys = {}
       base.cached_has_ones = {}
       base.cache_attributes = []
-      base.cache_indexes = []
       base.primary_cache_index_enabled = true
     end
 
@@ -42,18 +40,19 @@ module IdentityCache
       # * unique: if the index would only have unique values
       #
       def cache_index(*fields)
-        ensure_base_model
         raise NotImplementedError, "Cache indexes need an enabled primary index" unless primary_cache_index_enabled
         options = fields.extract_options!
-        self.cache_indexes.push fields
+        unique = options[:unique] || false
+        cache_attribute primary_key, by: fields, unique: unique
 
         field_list = fields.join("_and_")
         arg_list = (0...fields.size).collect { |i| "arg#{i}" }.join(',')
 
-        if options[:unique]
+        if unique
           self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
             def fetch_by_#{field_list}(#{arg_list}, options={})
-              identity_cache_single_value_dynamic_fetcher(#{fields.inspect}, [#{arg_list}], options)
+              id = fetch_id_by_#{field_list}(#{arg_list})
+              id && fetch_by_id(id, options)
             end
 
             # exception throwing variant
@@ -64,7 +63,8 @@ module IdentityCache
         else
           self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
             def fetch_by_#{field_list}(#{arg_list}, options={})
-              identity_cache_multiple_value_dynamic_fetcher(#{fields.inspect}, [#{arg_list}], options)
+              ids = fetch_id_by_#{field_list}(#{arg_list})
+              ids.empty? ? ids : fetch_multi(ids, options)
             end
           CODE
         end
@@ -169,50 +169,31 @@ module IdentityCache
       # == Options
       #
       # * by: Other attribute or attributes in the model to keep values indexed. Default is :id
+      # * unique: if the index would only have unique values. Default is true
       def cache_attribute(attribute, options = {})
         ensure_base_model
         options[:by] ||= :id
+        unique = options[:unique].nil? ? true : !!options[:unique]
         fields = Array(options[:by])
 
-        self.cache_attributes.push [attribute, fields]
+        self.cache_attributes.push [attribute, fields, unique]
 
         field_list = fields.join("_and_")
         arg_list = (0...fields.size).collect { |i| "arg#{i}" }.join(',')
 
         self.instance_eval(<<-CODE, __FILE__, __LINE__ + 1)
           def fetch_#{attribute}_by_#{field_list}(#{arg_list})
-            attribute_dynamic_fetcher(#{attribute.inspect}, #{fields.inspect}, [#{arg_list}])
+            attribute_dynamic_fetcher(#{attribute.inspect}, #{fields.inspect}, [#{arg_list}], #{unique})
           end
         CODE
       end
 
       def disable_primary_cache_index
         ensure_base_model
-        raise NotImplementedError, "Secondary indexes rely on the primary index to function. You must either remove the secondary indexes or don't disable the primary" if self.cache_indexes.size > 0
         self.primary_cache_index_enabled = false
       end
 
       private
-
-      def identity_cache_single_value_dynamic_fetcher(fields, values, options) # :nodoc:
-        raise_if_scoped
-        cache_key = rails_cache_index_key_for_fields_and_values(fields, values)
-        id = IdentityCache.fetch(cache_key) { identity_cache_conditions(fields, values).limit(1).pluck(primary_key).first }
-        unless id.nil?
-          record = fetch_by_id(id, options)
-          IdentityCache.cache.delete(cache_key) unless record
-        end
-
-        record
-      end
-
-      def identity_cache_multiple_value_dynamic_fetcher(fields, values, options) # :nodoc
-        raise_if_scoped
-        cache_key = rails_cache_index_key_for_fields_and_values(fields, values)
-        ids = IdentityCache.fetch(cache_key) { identity_cache_conditions(fields, values).pluck(primary_key) }
-
-        ids.empty? ? [] : fetch_multi(ids, options)
-      end
 
       def build_recursive_association_cache(association, options) #:nodoc:
         options[:association_reflection] = reflect_on_association(association)
@@ -266,9 +247,15 @@ module IdentityCache
         add_parent_expiry_hook(options)
       end
 
-      def attribute_dynamic_fetcher(attribute, fields, values) #:nodoc:
-        cache_key = rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, values)
-        IdentityCache.fetch(cache_key) { identity_cache_conditions(fields, values).limit(1).pluck(attribute).first }
+      def attribute_dynamic_fetcher(attribute, fields, values, unique_index) #:nodoc:
+        raise_if_scoped
+        cache_key = rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, values, unique_index)
+        IdentityCache.fetch(cache_key) do
+          query = reorder(nil).where(Hash[fields.zip(values)])
+          query = query.limit(1) if unique_index
+          results = query.pluck(attribute)
+          unique_index ? results.first : results
+        end
       end
 
       def add_parent_expiry_hook(options)
@@ -280,10 +267,6 @@ module IdentityCache
         child_class.parent_expiration_entries[options[:inverse_name]] << [self, options[:only_on_foreign_key_change]]
 
         child_class.after_commit :expire_parent_caches
-      end
-
-      def identity_cache_conditions(fields, values)
-        reorder(nil).where(Hash[fields.zip(values)])
       end
 
       def deprecate_embed_option(options, old_value, new_value)
