@@ -13,7 +13,7 @@ class FetchTest < IdentityCache::TestCase
     @record.title = 'bob'
     @cached_value = {class: @record.class, attributes: @record.attributes_before_type_cast}
     @blob_key = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:1"
-    @index_key = "#{NAMESPACE}index:Item:title:#{cache_hash('bob')}"
+    @index_key = "#{NAMESPACE}attr:Item:id:title:#{cache_hash('bob')}"
   end
 
   def test_fetch_with_garbage_input

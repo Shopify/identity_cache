@@ -41,7 +41,7 @@ module IdentityCache
     self.cache_namespace = "IDC:#{CACHE_VERSION}:".freeze
 
     def included(base) #:nodoc:
-      raise AlreadyIncludedError if base.respond_to? :cache_indexes
+      raise AlreadyIncludedError if base.include?(IdentityCache::ConfigurationDSL)
 
       base.send(:include, ArTransactionChanges) unless base.include?(ArTransactionChanges)
       base.send(:include, IdentityCache::BelongsToCaching)

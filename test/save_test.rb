@@ -16,21 +16,21 @@ class SaveTest < IdentityCache::TestCase
     @record = Item.new
     @record.title = 'bob'
 
-    expect_cache_delete("#{NAMESPACE}index:Item:id/title:#{cache_hash('2/bob')}")
-    expect_cache_delete("#{NAMESPACE}index:Item:title:#{cache_hash('bob')}")
+    expect_cache_delete("#{NAMESPACE}attr:Item:id:id/title:#{cache_hash('2/bob')}")
+    expect_cache_delete("#{NAMESPACE}attr:Item:id:title:#{cache_hash('bob')}")
     expect_cache_delete("#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:2").once
     @record.save
   end
 
   def test_update
     # Regular flow, write index id, write index id/tile, delete data blob since Record has changed
-    expect_cache_delete("#{NAMESPACE}index:Item:id/title:#{cache_hash('1/fred')}")
-    expect_cache_delete("#{NAMESPACE}index:Item:title:#{cache_hash('fred')}")
+    expect_cache_delete("#{NAMESPACE}attr:Item:id:id/title:#{cache_hash('1/fred')}")
+    expect_cache_delete("#{NAMESPACE}attr:Item:id:title:#{cache_hash('fred')}")
     expect_cache_delete(@blob_key)
 
     # Delete index id, delete index id/title
-    expect_cache_delete("#{NAMESPACE}index:Item:id/title:#{cache_hash('1/bob')}")
-    expect_cache_delete("#{NAMESPACE}index:Item:title:#{cache_hash('bob')}")
+    expect_cache_delete("#{NAMESPACE}attr:Item:id:id/title:#{cache_hash('1/bob')}")
+    expect_cache_delete("#{NAMESPACE}attr:Item:id:title:#{cache_hash('bob')}")
 
     @record.title = 'fred'
     @record.save
@@ -38,8 +38,8 @@ class SaveTest < IdentityCache::TestCase
 
   def test_destroy
     # Regular flow: delete data blob, delete index id, delete index id/tile
-    expect_cache_delete("#{NAMESPACE}index:Item:id/title:#{cache_hash('1/bob')}")
-    expect_cache_delete("#{NAMESPACE}index:Item:title:#{cache_hash('bob')}")
+    expect_cache_delete("#{NAMESPACE}attr:Item:id:id/title:#{cache_hash('1/bob')}")
+    expect_cache_delete("#{NAMESPACE}attr:Item:id:title:#{cache_hash('bob')}")
     expect_cache_delete(@blob_key)
 
     @record.destroy
@@ -47,8 +47,8 @@ class SaveTest < IdentityCache::TestCase
 
   def test_destroy_with_changed_attributes
     # Make sure to delete the old cache index key, since the new title never ended up in an index
-    expect_cache_delete("#{NAMESPACE}index:Item:id/title:#{cache_hash('1/bob')}")
-    expect_cache_delete("#{NAMESPACE}index:Item:title:#{cache_hash('bob')}")
+    expect_cache_delete("#{NAMESPACE}attr:Item:id:id/title:#{cache_hash('1/bob')}")
+    expect_cache_delete("#{NAMESPACE}attr:Item:id:title:#{cache_hash('bob')}")
     expect_cache_delete(@blob_key)
 
     @record.title = 'fred'
@@ -57,16 +57,16 @@ class SaveTest < IdentityCache::TestCase
 
   def test_touch_will_expire_the_caches
     # Regular flow: delete data blob, delete index id, delete index id/tile
-    expect_cache_delete("#{NAMESPACE}index:Item:id/title:#{cache_hash('1/bob')}")
-    expect_cache_delete("#{NAMESPACE}index:Item:title:#{cache_hash('bob')}")
+    expect_cache_delete("#{NAMESPACE}attr:Item:id:id/title:#{cache_hash('1/bob')}")
+    expect_cache_delete("#{NAMESPACE}attr:Item:id:title:#{cache_hash('bob')}")
     expect_cache_delete(@blob_key)
 
     @record.touch
   end
 
   def test_expire_cache_works_in_a_transaction
-    expect_cache_delete("#{NAMESPACE}index:Item:id/title:#{cache_hash('1/bob')}")
-    expect_cache_delete("#{NAMESPACE}index:Item:title:#{cache_hash('bob')}")
+    expect_cache_delete("#{NAMESPACE}attr:Item:id:id/title:#{cache_hash('1/bob')}")
+    expect_cache_delete("#{NAMESPACE}attr:Item:id:title:#{cache_hash('bob')}")
     expect_cache_delete(@blob_key)
 
     ActiveRecord::Base.transaction do
