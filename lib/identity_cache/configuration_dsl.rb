@@ -4,7 +4,7 @@ module IdentityCache
 
     included do |base|
       base.class_attribute :cached_model
-      base.class_attribute :cache_attributes
+      base.class_attribute :cache_indexes
       base.class_attribute :cached_has_manys
       base.class_attribute :cached_has_ones
       base.class_attribute :primary_cache_index_enabled
@@ -12,7 +12,7 @@ module IdentityCache
       base.cached_model = base
       base.cached_has_manys = {}
       base.cached_has_ones = {}
-      base.cache_attributes = []
+      base.cache_indexes = []
       base.primary_cache_index_enabled = true
     end
 
@@ -51,7 +51,7 @@ module IdentityCache
         if unique
           self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
             def fetch_by_#{field_list}(#{arg_list}, options={})
-              id = fetch_id_by_#{field_list}(#{arg_list})
+              id = fetch_#{primary_key}_by_#{field_list}(#{arg_list})
               id && fetch_by_id(id, options)
             end
 
@@ -63,7 +63,7 @@ module IdentityCache
         else
           self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
             def fetch_by_#{field_list}(#{arg_list}, options={})
-              ids = fetch_id_by_#{field_list}(#{arg_list})
+              ids = fetch_#{primary_key}_by_#{field_list}(#{arg_list})
               ids.empty? ? ids : fetch_multi(ids, options)
             end
           CODE
@@ -173,10 +173,11 @@ module IdentityCache
       def cache_attribute(attribute, options = {})
         ensure_base_model
         options[:by] ||= :id
+        attribute = attribute.to_sym
         unique = options[:unique].nil? ? true : !!options[:unique]
         fields = Array(options[:by])
 
-        self.cache_attributes.push [attribute, fields, unique]
+        self.cache_indexes.push [attribute, fields, unique]
 
         field_list = fields.join("_and_")
         arg_list = (0...fields.size).collect { |i| "arg#{i}" }.join(',')
