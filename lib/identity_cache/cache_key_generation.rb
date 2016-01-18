@@ -36,8 +36,9 @@ module IdentityCache
       end
 
       def rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, values, unique)
+        unique_indicator = unique ? '' : 's' 
         "#{rails_cache_key_namespace}" \
-          "attr#{unique ? '' : 's' }" \
+          "attr#{unique_indicator}" \
           ":#{base_class.name}" \
           ":#{attribute}" \
           ":#{rails_cache_string_for_fields_and_values(fields, values)}"
