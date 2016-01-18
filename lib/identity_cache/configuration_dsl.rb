@@ -52,19 +52,19 @@ module IdentityCache
 
         if options[:unique]
           self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
-            def fetch_by_#{field_list}(#{arg_list})
-              identity_cache_single_value_dynamic_fetcher(#{fields.inspect}, [#{arg_list}])
+            def fetch_by_#{field_list}(#{arg_list}, options={})
+              identity_cache_single_value_dynamic_fetcher(#{fields.inspect}, [#{arg_list}], options)
             end
 
             # exception throwing variant
-            def fetch_by_#{field_list}!(#{arg_list})
-              fetch_by_#{field_list}(#{arg_list}) or raise ActiveRecord::RecordNotFound
+            def fetch_by_#{field_list}!(#{arg_list}, options={})
+              fetch_by_#{field_list}(#{arg_list}, options) or raise ActiveRecord::RecordNotFound
             end
           CODE
         else
           self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
-            def fetch_by_#{field_list}(#{arg_list})
-              identity_cache_multiple_value_dynamic_fetcher(#{fields.inspect}, [#{arg_list}])
+            def fetch_by_#{field_list}(#{arg_list}, options={})
+              identity_cache_multiple_value_dynamic_fetcher(#{fields.inspect}, [#{arg_list}], options)
             end
           CODE
         end
@@ -194,24 +194,24 @@ module IdentityCache
 
       private
 
-      def identity_cache_single_value_dynamic_fetcher(fields, values) # :nodoc:
+      def identity_cache_single_value_dynamic_fetcher(fields, values, options) # :nodoc:
         raise_if_scoped
         cache_key = rails_cache_index_key_for_fields_and_values(fields, values)
         id = IdentityCache.fetch(cache_key) { identity_cache_conditions(fields, values).limit(1).pluck(primary_key).first }
         unless id.nil?
-          record = fetch_by_id(id)
+          record = fetch_by_id(id, options)
           IdentityCache.cache.delete(cache_key) unless record
         end
 
         record
       end
 
-      def identity_cache_multiple_value_dynamic_fetcher(fields, values) # :nodoc
+      def identity_cache_multiple_value_dynamic_fetcher(fields, values, options) # :nodoc
         raise_if_scoped
         cache_key = rails_cache_index_key_for_fields_and_values(fields, values)
         ids = IdentityCache.fetch(cache_key) { identity_cache_conditions(fields, values).pluck(primary_key) }
 
-        ids.empty? ? [] : fetch_multi(ids)
+        ids.empty? ? [] : fetch_multi(ids, options)
       end
 
       def build_recursive_association_cache(association, options) #:nodoc:

@@ -1,6 +1,6 @@
 require "test_helper"
 
-class FetchMultiWithBatchedAssociationsTest < IdentityCache::TestCase
+class PrefetchNormalizedAssociationsTest < IdentityCache::TestCase
   NAMESPACE = IdentityCache.cache_namespace
 
   def setup
@@ -14,7 +14,19 @@ class FetchMultiWithBatchedAssociationsTest < IdentityCache::TestCase
     @tenth_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:10"
   end
 
-  def test_fetch_multi_with_includes_option_preloads_associations
+  def test_fetch_with_includes_option
+    Item.send(:cache_belongs_to, :item)
+    john = Item.create!(title: 'john')
+    @bob.update_column(:item_id, john)
+
+    spy = Spy.on(Item, :fetch_multi).and_call_through
+
+    assert_equal @bob, Item.fetch(@bob.id, includes: :item)
+
+    assert spy.calls.one?{ |call| call.args == [[john.id]] }
+  end
+
+  def test_fetch_multi_with_includes_option
     Item.send(:cache_belongs_to, :item)
     john = Item.create!(:title => 'john')
     jim = Item.create!(:title => 'jim')
@@ -23,7 +35,7 @@ class FetchMultiWithBatchedAssociationsTest < IdentityCache::TestCase
 
     spy = Spy.on(Item, :fetch_multi).and_call_through
 
-    items = Item.fetch_multi(@bob.id, @joe.id, @fred.id, :includes => :item)
+    assert_equal [@bob, @joe, @fred], Item.fetch_multi(@bob.id, @joe.id, @fred.id, :includes => :item)
 
     assert spy.calls.one?{ |call| call.args == [[john.id, jim.id]] }
   end
@@ -182,6 +194,32 @@ class FetchMultiWithBatchedAssociationsTest < IdentityCache::TestCase
     mock_relation.expects(:includes).returns(stub(:to_a => [@bob, @joe, @fred]))
 
     Item.send(:find_batch, [@bob, @joe, @fred].map(&:id).map(&:to_s))
+  end
+
+  def test_fetch_by_index_with_includes_option
+    Item.send(:cache_belongs_to, :item)
+    Item.cache_index :title
+    john = Item.create!(title: 'john')
+    @bob.update_column(:item_id, john)
+
+    spy = Spy.on(Item, :fetch_multi).and_call_through
+
+    assert_equal [@bob], Item.fetch_by_title('bob', includes: :item)
+
+    assert spy.calls.one?{ |call| call.args == [[john.id]] }
+  end
+
+  def test_fetch_by_unique_index_with_includes_option
+    Item.send(:cache_belongs_to, :item)
+    Item.cache_index :title, :unique => true
+    john = Item.create!(title: 'john')
+    @bob.update_column(:item_id, john)
+
+    spy = Spy.on(Item, :fetch_multi).and_call_through
+
+    assert_equal @bob, Item.fetch_by_title('bob', includes: :item)
+
+    assert spy.calls.one?{ |call| call.args == [[john.id]] }
   end
 
   private
