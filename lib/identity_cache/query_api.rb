@@ -376,7 +376,7 @@ module IdentityCache
     end
 
     def expire_attribute_indexes # :nodoc:
-      cache_attributes.each do |(attribute, fields, unique)|
+      cache_indexes.each do |(attribute, fields, unique)|
         unless was_new_record?
           old_cache_attribute_key = attribute_cache_key_for_attribute_and_previous_values(attribute, fields, unique)
           IdentityCache.cache.delete(old_cache_attribute_key)
