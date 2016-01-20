@@ -275,16 +275,15 @@ module IdentityCache
 
       def fetch_embedded_associations(records)
         associations = embedded_associations
-        return true if associations.empty?
+        return if associations.empty?
 
-        return false unless primary_cache_index_enabled
+        return unless primary_cache_index_enabled
 
-        records_by_id = records.index_by(&:id)
-        cached_records = fetch_multi(records.map(&:id))
+        cached_records_by_id = fetch_multi(records.map(&:id)).index_by(&:id)
 
         associations.each_value do |options|
-          cached_records.each do |cached_record|
-            record = records_by_id.fetch(cached_record.id)
+          records.each do |record|
+            next unless cached_record = cached_records_by_id[record.id]
             if options[:embed] == :ids
               cached_association = cached_record.public_send(options.fetch(:cached_ids_name))
               record.instance_variable_set(:"@#{options.fetch(:ids_variable_name)}", cached_association)
@@ -294,7 +293,6 @@ module IdentityCache
             end
           end
         end
-        true
       end
 
       def prefetch_embedded_association(records, association, details)
