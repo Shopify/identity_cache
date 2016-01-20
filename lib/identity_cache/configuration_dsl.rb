@@ -51,7 +51,7 @@ module IdentityCache
         if unique
           self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
             def fetch_by_#{field_list}(#{arg_list}, options={})
-              id = fetch_#{primary_key}_by_#{field_list}(#{arg_list})
+              id = fetch_id_by_#{field_list}(#{arg_list})
               id && fetch_by_id(id, options)
             end
 
@@ -63,7 +63,7 @@ module IdentityCache
         else
           self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
             def fetch_by_#{field_list}(#{arg_list}, options={})
-              ids = fetch_#{primary_key}_by_#{field_list}(#{arg_list})
+              ids = fetch_id_by_#{field_list}(#{arg_list})
               ids.empty? ? ids : fetch_multi(ids, options)
             end
           CODE
