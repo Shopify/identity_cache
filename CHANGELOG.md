@@ -1,7 +1,11 @@
 # IdentityCache changelog
 
 #### 0.2.6 (unreleased)
-
+- Add support for includes option on cache_index and fetch_by_id
+- Use ActiveRecord instantiate
+- Add association pre-fetching support for fetch_by_id
+- Remove support for 3.2
+- Fix N+1 from fetching embedded ids on a cache miss
 - Raise when trying to cache a through association. Previously it wouldn't be invalidated properly.
 - Raise if a class method is called on a scope.  Previously the scope was ignored.
 - Raise if a class method is called on a subclass of one that included IdentityCache. This never worked properly.
