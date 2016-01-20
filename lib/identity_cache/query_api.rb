@@ -297,6 +297,9 @@ module IdentityCache
       end
 
       def prefetch_embedded_association(records, association, details)
+        # Make the same assumption as ActiveRecord::Associations::Preloader, which is
+        # that all the records have the same associations loaded, so we can just check
+        # the first record to see if an association is loaded.
         first_record = records.first
         return if first_record.association(association).loaded?
         iv_name_key = details[:embed] == true ? :records_variable_name : :ids_variable_name
