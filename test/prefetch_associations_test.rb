@@ -1,6 +1,6 @@
 require "test_helper"
 
-class PrefetchNormalizedAssociationsTest < IdentityCache::TestCase
+class PrefetchAssociationsTest < IdentityCache::TestCase
   NAMESPACE = IdentityCache.cache_namespace
 
   def setup
@@ -12,6 +12,45 @@ class PrefetchNormalizedAssociationsTest < IdentityCache::TestCase
     @joe_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:2"
     @fred_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:3"
     @tenth_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:10"
+  end
+
+  def test_prefetch_associations_on_fetched_records
+    Item.send(:cache_belongs_to, :item)
+    john = Item.create!(:title => 'john')
+    jim = Item.create!(:title => 'jim')
+    @bob.update_column(:item_id, john)
+    @joe.update_column(:item_id, jim)
+    items = Item.fetch_multi(@bob.id, @joe.id, @fred.id)
+
+    spy = Spy.on(Item, :fetch_multi).and_call_through
+
+    Item.prefetch_associations(:item, items)
+
+    assert spy.calls.one?{ |call| call.args == [[john.id, jim.id]] }
+  end
+
+  def test_prefetch_associations_on_db_records
+    Item.send(:cache_has_many, :associated_records, :embed => true)
+    AssociatedRecord.send(:cache_has_many, :deeply_associated_records, :embed => :ids)
+
+    child_records, grandchildren = setup_has_many_children_and_grandchildren(@bob)
+
+    item = Item.find(@bob.id)
+
+    assert_no_queries do
+      assert_memcache_operations(1) do
+        Item.prefetch_associations(:associated_records, [item])
+      end
+      assert_memcache_operations(0) do
+        item.fetch_associated_records.each(&:fetch_deeply_associated_record_ids)
+      end
+      assert_memcache_operations(1) do
+        Item.prefetch_associations({associated_records: :deeply_associated_records}, [item])
+      end
+      assert_memcache_operations(0) do
+        item.fetch_associated_records.each(&:fetch_deeply_associated_records)
+      end
+    end
   end
 
   def test_fetch_with_includes_option

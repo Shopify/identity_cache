@@ -205,17 +205,14 @@ module IdentityCache
         options[:cached_accessor_name]   = "fetch_#{association}"
         options[:records_variable_name]  = "cached_#{association}"
 
+        self.class_eval(<<-CODE, __FILE__, __LINE__ + 1)
+          def #{options[:cached_accessor_name]}
+            fetch_recursively_cached_association('#{options[:records_variable_name]}', :#{association})
+          end
+        CODE
 
-        unless instance_methods.include?(options[:cached_accessor_name].to_sym)
-          self.class_eval(<<-CODE, __FILE__, __LINE__ + 1)
-            def #{options[:cached_accessor_name]}
-              fetch_recursively_cached_association('#{options[:records_variable_name]}', :#{association})
-            end
-          CODE
-
-          options[:only_on_foreign_key_change] = false
-          add_parent_expiry_hook(options)
-        end
+        options[:only_on_foreign_key_change] = false
+        add_parent_expiry_hook(options)
       end
 
       def build_id_embedded_has_many_cache(association, options) #:nodoc:
