@@ -1,7 +1,8 @@
 # IdentityCache changelog
 
-#### unreleased
+#### 0.3.1
 
+- Fix cache_index for non-id primary key
 
 #### 0.3.0
 
