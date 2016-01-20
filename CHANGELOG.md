@@ -1,6 +1,10 @@
 # IdentityCache changelog
 
-#### 0.2.6 (unreleased)
+#### unreleased
+
+
+#### 0.3.0
+
 - Add support for includes option on cache_index and fetch_by_id
 - Use ActiveRecord instantiate
 - Add association pre-fetching support for fetch_by_id
