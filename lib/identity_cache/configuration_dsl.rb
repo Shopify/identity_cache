@@ -43,7 +43,7 @@ module IdentityCache
         raise NotImplementedError, "Cache indexes need an enabled primary index" unless primary_cache_index_enabled
         options = fields.extract_options!
         unique = options[:unique] || false
-        cache_attribute primary_key, by: fields, unique: unique
+        cache_attribute_by_alias('primary_key', 'id', by: fields, unique: unique)
 
         field_list = fields.join("_and_")
         arg_list = (0...fields.size).collect { |i| "arg#{i}" }.join(',')
@@ -171,22 +171,7 @@ module IdentityCache
       # * by: Other attribute or attributes in the model to keep values indexed. Default is :id
       # * unique: if the index would only have unique values. Default is true
       def cache_attribute(attribute, options = {})
-        ensure_base_model
-        options[:by] ||= :id
-        attribute = attribute.to_sym
-        unique = options[:unique].nil? ? true : !!options[:unique]
-        fields = Array(options[:by])
-
-        self.cache_indexes.push [attribute, fields, unique]
-
-        field_list = fields.join("_and_")
-        arg_list = (0...fields.size).collect { |i| "arg#{i}" }.join(',')
-
-        self.instance_eval(<<-CODE, __FILE__, __LINE__ + 1)
-          def fetch_#{attribute}_by_#{field_list}(#{arg_list})
-            attribute_dynamic_fetcher(#{attribute.inspect}, #{fields.inspect}, [#{arg_list}], #{unique})
-          end
-        CODE
+        cache_attribute_by_alias(attribute.inspect, attribute, options)
       end
 
       def disable_primary_cache_index
@@ -195,6 +180,25 @@ module IdentityCache
       end
 
       private
+
+      def cache_attribute_by_alias(attribute, alias_name, options)
+        ensure_base_model
+        options[:by] ||= :id
+        alias_name = alias_name.to_sym
+        unique = options[:unique].nil? ? true : !!options[:unique]
+        fields = Array(options[:by])
+
+        self.cache_indexes.push [alias_name, fields, unique]
+
+        field_list = fields.join("_and_")
+        arg_list = (0...fields.size).collect { |i| "arg#{i}" }.join(',')
+
+        self.instance_eval(<<-CODE, __FILE__, __LINE__ + 1)
+          def fetch_#{alias_name}_by_#{field_list}(#{arg_list})
+            attribute_dynamic_fetcher(#{attribute}, #{fields.inspect}, [#{arg_list}], #{unique})
+          end
+        CODE
+      end
 
       def build_recursive_association_cache(association, options) #:nodoc:
         options[:association_reflection] = reflect_on_association(association)
