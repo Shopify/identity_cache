@@ -79,6 +79,7 @@ module IdentityCache
 
         case associations
         when nil
+          # do nothing
         when Symbol
           prefetch_one_association(associations, records)
         when Array
