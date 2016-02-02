@@ -233,7 +233,7 @@ module IdentityCache
           end
 
           def #{options[:cached_accessor_name]}
-            if IdentityCache.should_use_cache? || #{association}.loaded?
+            if self.class.should_use_cache? || #{association}.loaded?
               @#{options[:records_variable_name]} ||= #{options[:association_reflection].klass}.fetch_multi(#{options[:cached_ids_name]})
             else
               #{association}
@@ -252,7 +252,7 @@ module IdentityCache
       def attribute_dynamic_fetcher(attribute, fields, values, unique_index) #:nodoc:
         raise_if_scoped
         cache_key = rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, values, unique_index)
-        IdentityCache.fetch(cache_key) do
+        IdentityCache.fetch(cache_key, should_use_cache?) do
           query = reorder(nil).where(Hash[fields.zip(values)])
           query = query.limit(1) if unique_index
           results = query.pluck(attribute)

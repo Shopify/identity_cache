@@ -13,6 +13,7 @@ require "identity_cache/cache_hash"
 require "identity_cache/cache_invalidation"
 require "identity_cache/cache_fetcher"
 require "identity_cache/fallback_fetcher"
+require "identity_cache/configuration"
 
 module IdentityCache
   CACHED_NIL = :idc_cached_nil
@@ -43,6 +44,7 @@ module IdentityCache
     def included(base) #:nodoc:
       raise AlreadyIncludedError if base.include?(IdentityCache::ConfigurationDSL)
 
+      base.send(:include, IdentityCache::Configuration)
       base.send(:include, ArTransactionChanges) unless base.include?(ArTransactionChanges)
       base.send(:include, IdentityCache::BelongsToCaching)
       base.send(:include, IdentityCache::CacheKeyGeneration)
@@ -89,8 +91,8 @@ module IdentityCache
     # == Parameters
     # +key+ A cache key string
     #
-    def fetch(key)
-      if should_use_cache?
+    def fetch(key, use_cache=should_use_cache?)
+      if use_cache
         unmap_cached_nil_for(cache.fetch(key) { map_cached_nil_for yield })
       else
         yield
@@ -110,11 +112,11 @@ module IdentityCache
     #
     # == Parameters
     # +keys+ A collection or array of key strings
-    def fetch_multi(*keys)
+    def fetch_multi(*keys, use_cache: should_use_cache?)
       keys.flatten!(1)
       return {} if keys.size == 0
 
-      result = if should_use_cache?
+      result = if use_cache
         fetch_in_batches(keys.uniq) do |missed_keys|
           results = yield missed_keys
           results.map {|e| map_cached_nil_for e }
