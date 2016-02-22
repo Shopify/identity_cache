@@ -109,6 +109,14 @@ module IdentityCache
         end
       end
 
+      def check_association_scope(association_name)
+        association_reflection = reflect_on_association(association_name)
+        scope = association_reflection.scope
+        if scope && !association_reflection.klass.all.instance_exec(&scope).joins_values.empty?
+          raise UnsupportedAssociationError, "caching association #{self}.#{association_name} scoped with a join isn't supported"
+        end
+      end
+
       def record_from_coder(coder) #:nodoc:
         if coder
           klass = coder[:class]

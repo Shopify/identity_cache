@@ -291,13 +291,9 @@ module IdentityCache
         if association_reflection.options[:through]
           raise UnsupportedAssociationError, "caching through associations isn't supported"
         end
-        child_class = association_reflection.klass
-        scope = association_reflection.scope
-        if scope && !child_class.all.instance_exec(&scope).joins_values.empty?
-          raise UnsupportedAssociationError, "caching association scoped with a join isn't supported"
-        end
         options[:inverse_name] ||= association_reflection.inverse_of.name if association_reflection.inverse_of
         options[:inverse_name] ||= self.name.underscore.to_sym
+        child_class = association_reflection.klass
         raise InverseAssociationError unless child_class.reflect_on_association(options[:inverse_name])
         unless options[:embed] == true || child_class.include?(IdentityCache)
           raise UnsupportedAssociationError, "associated class #{child_class} must include IdentityCache to be cached without full embedding"
