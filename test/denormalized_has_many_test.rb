@@ -94,24 +94,29 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     child.save!
   end
 
-  def test_unsupported_through_assocation
-    assert_raises IdentityCache::UnsupportedAssociationError, "caching through associations isn't supported" do
-      Item.has_many :deeply_through_associated_records, :through => :associated_records, foreign_key: 'associated_record_id', inverse_of: :item, :class_name => 'DeeplyAssociatedRecord'
-      Item.cache_has_many :deeply_through_associated_records, :embed => true
+  class CheckAssociationTest < IdentityCache::TestCase
+    def test_unsupported_through_assocation
+      assert_raises IdentityCache::UnsupportedAssociationError, "caching through associations isn't supported" do
+        Item.has_many :deeply_through_associated_records, :through => :associated_records, foreign_key: 'associated_record_id', inverse_of: :item, :class_name => 'DeeplyAssociatedRecord'
+        Item.cache_has_many :deeply_through_associated_records, :embed => true
+      end
     end
-  end
 
-  def test_unsupported_joins_in_assocation_scope
-    assert_raises IdentityCache::UnsupportedAssociationError, "caching association scoped with a join isn't supported" do
-      scope = -> { joins(:associated_records).where(associated_record: { name: 'contrived example' }) }
-      Item.has_many :deeply_joined_associated_records, scope, class_name: 'DeeplyAssociatedRecord'
+    def test_unsupported_joins_in_assocation_scope
+      scope = -> { joins(:associated_record).where(associated_records: { name: 'contrived example' }) }
+      Item.has_many :deeply_joined_associated_records, scope, inverse_of: :item, class_name: 'DeeplyAssociatedRecord'
       Item.cache_has_many :deeply_joined_associated_records, :embed => true
-    end
-  end
 
-  def test_cache_has_many_on_derived_model_raises
-    assert_raises(IdentityCache::DerivedModelError) do
-      StiRecordTypeA.cache_has_many :polymorphic_records, :inverse_name => :owner, :embed => true
+      message = "caching association Item.deeply_joined_associated_records scoped with a join isn't supported"
+      assert_raises IdentityCache::UnsupportedAssociationError, message do
+        Item.fetch(1)
+      end
+    end
+
+    def test_cache_has_many_on_derived_model_raises
+      assert_raises(IdentityCache::DerivedModelError) do
+        StiRecordTypeA.cache_has_many :polymorphic_records, :inverse_name => :owner, :embed => true
+      end
     end
   end
 end
