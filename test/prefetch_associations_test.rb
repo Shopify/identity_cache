@@ -53,6 +53,39 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
     end
   end
 
+  def test_prefetch_associations_cached_belongs_to
+    Item.send(:cache_belongs_to, :item)
+    @bob.update_attributes!(item_id: @joe.id)
+    @joe.update_attributes!(item_id: @fred.id)
+    @bob.fetch_item
+    @joe.fetch_item
+    items = [@bob, @joe].map(&:reload)
+
+    assert_no_queries do
+      assert_memcache_operations(1) do
+        Item.prefetch_associations(:item, items)
+      end
+      assert_memcache_operations(0) do
+        items.each { |item| item.fetch_item }
+      end
+      assert_memcache_operations(0) do
+        Item.prefetch_associations(:item, items)
+      end
+    end
+  end
+
+  def test_prefetch_associations_with_nil_cached_belongs_to
+    Item.send(:cache_belongs_to, :item)
+    @bob.update_attributes!(item_id: 1234)
+    assert_equal nil, @bob.fetch_item
+
+    assert_no_queries do
+      assert_memcache_operations(0) do
+        Item.prefetch_associations(:item, [@bob])
+      end
+    end
+  end
+
   def test_fetch_with_includes_option
     Item.send(:cache_belongs_to, :item)
     john = Item.create!(title: 'john')
