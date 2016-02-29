@@ -53,6 +53,25 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
     end
   end
 
+  def test_prefetch_associations_without_using_cache
+    Item.send(:cache_has_many, :associated_records, :embed => true)
+
+    associated1 = @bob.associated_records.create!(name: 'foo')
+    associated2 = @joe.associated_records.create!(name: 'bar')
+    items = [@bob, @joe].map(&:reload)
+
+    Item.transaction do
+      assert_memcache_operations(0) do
+        assert_queries(1) do
+          Item.prefetch_associations(:associated_records, items)
+        end
+        assert_no_queries do
+          assert_equal [[associated1], [associated2]], items.map(&:fetch_associated_records)
+        end
+      end
+    end
+  end
+
   def test_fetch_with_includes_option
     Item.send(:cache_belongs_to, :item)
     john = Item.create!(title: 'john')
