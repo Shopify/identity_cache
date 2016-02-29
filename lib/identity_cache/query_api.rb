@@ -75,6 +75,7 @@ module IdentityCache
       end
 
       def prefetch_associations(associations, records)
+        records = records.to_a
         return if records.empty?
 
         case associations
