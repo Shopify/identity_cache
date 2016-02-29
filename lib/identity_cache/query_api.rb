@@ -75,6 +75,7 @@ module IdentityCache
       end
 
       def prefetch_associations(associations, records)
+        records = records.to_a
         return if records.empty?
         unless IdentityCache.should_use_cache?
           if ActiveRecord::VERSION::MAJOR == 4 && ActiveRecord::VERSION::MINOR == 0
