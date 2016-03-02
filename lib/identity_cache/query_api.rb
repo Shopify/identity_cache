@@ -359,9 +359,12 @@ module IdentityCache
               raise ArgumentError.new("Polymorphic belongs_to associations do not support prefetching yet.")
             end
 
+            cached_iv_name = :"@#{details.fetch(:records_variable_name)}"
             ids_to_child_record = records.each_with_object({}) do |child_record, hash|
               parent_id = child_record.send(reflection.foreign_key)
-              hash[parent_id] = child_record if parent_id.present?
+              if parent_id && !child_record.instance_variable_defined?(cached_iv_name)
+                hash[parent_id] = child_record
+              end
             end
             parent_records = reflection.klass.fetch_multi(ids_to_child_record.keys)
             parent_records.each do |parent_record|
