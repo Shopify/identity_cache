@@ -105,6 +105,25 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
     end
   end
 
+  def test_prefetch_associations_on_association
+    AssociatedRecord.send(:cache_has_many, :deeply_associated_records, embed: true)
+
+    child_records, grandchildren = setup_has_many_children_and_grandchildren(@bob)
+
+    associated_records = @bob.associated_records
+
+    assert_queries(1) do
+      assert_memcache_operations(1) do
+        AssociatedRecord.prefetch_associations(:deeply_associated_records, associated_records)
+      end
+    end
+    assert_no_queries do
+      assert_memcache_operations(0) do
+        associated_records.each(&:fetch_deeply_associated_records)
+      end
+    end
+  end
+
   def test_fetch_with_includes_option
     Item.send(:cache_belongs_to, :item)
     john = Item.create!(title: 'john')
