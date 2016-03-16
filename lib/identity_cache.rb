@@ -58,7 +58,7 @@ module IdentityCache
     # +cache_adaptor+ - A ActiveSupport::Cache::Store
     #
     def cache_backend=(cache_adaptor)
-      if @cache
+      if defined?(@cache)
         cache.cache_backend = cache_adaptor
       else
         @cache = MemoizedCacheProxy.new(cache_adaptor)
