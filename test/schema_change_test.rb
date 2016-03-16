@@ -103,7 +103,6 @@ class SchemaChangeTest < IdentityCache::TestCase
     Item.cache_has_many :polymorphic_records, :inverse_name => :owner, :embed => :ids
     read_new_schema
 
-    Item.expects(:resolve_cache_miss).returns(@record)
     record = Item.fetch(@record.id)
   end
 end
