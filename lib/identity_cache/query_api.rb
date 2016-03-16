@@ -319,7 +319,7 @@ module IdentityCache
         first_record = records.first
         return if first_record.association(association).loaded?
         iv_name_key = details[:embed] == true ? :records_variable_name : :ids_variable_name
-        return if first_record.instance_variable_get(:"@#{details[iv_name_key]}")
+        return if first_record.instance_variable_defined?(:"@#{details[iv_name_key]}")
         fetch_embedded_associations(records)
       end
 
