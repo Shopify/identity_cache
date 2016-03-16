@@ -33,7 +33,7 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
     Item.send(:cache_has_many, :associated_records, :embed => true)
     AssociatedRecord.send(:cache_has_many, :deeply_associated_records, :embed => :ids)
 
-    child_records, grandchildren = setup_has_many_children_and_grandchildren(@bob)
+    setup_has_many_children_and_grandchildren(@bob)
 
     item = Item.find(@bob.id)
 
@@ -108,7 +108,7 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
   def test_prefetch_associations_on_association
     AssociatedRecord.send(:cache_has_many, :deeply_associated_records, embed: true)
 
-    child_records, grandchildren = setup_has_many_children_and_grandchildren(@bob)
+    setup_has_many_children_and_grandchildren(@bob)
 
     associated_records = @bob.associated_records
 
@@ -206,7 +206,7 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
     Item.send(:cache_has_many, :associated_records, :embed => :ids)
     AssociatedRecord.send(:cache_has_many, :deeply_associated_records, :embed => :ids)
 
-    child_records, grandchildren = setup_has_many_children_and_grandchildren(@bob, @joe)
+    _child_records, grandchildren = setup_has_many_children_and_grandchildren(@bob, @joe)
 
     assert_memcache_operations(3) do
       @cached_bob, @cached_joe = Item.fetch_multi(@bob.id, @joe.id, :includes => {:associated_records => :deeply_associated_records})
@@ -261,7 +261,7 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
     Item.send(:cache_has_many, :associated_records, :embed => true)
     AssociatedRecord.send(:cache_has_many, :deeply_associated_records, :embed => :ids)
 
-    child_records, grandchildren = setup_has_many_children_and_grandchildren(@bob, @joe)
+    _child_records, grandchildren = setup_has_many_children_and_grandchildren(@bob, @joe)
 
     assert_memcache_operations(2) do
       @cached_bob, @cached_joe = Item.fetch_multi(@bob.id, @joe.id, :includes => {:associated_records => :deeply_associated_records})

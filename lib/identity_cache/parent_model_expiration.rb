@@ -46,7 +46,7 @@ module IdentityCache
             klass = parent_association.klass
           end
           old_parent = klass.find(transaction_changed_attributes[foreign_key])
-        rescue ActiveRecord::RecordNotFound => e
+        rescue ActiveRecord::RecordNotFound
           # suppress errors finding the old parent if its been destroyed since it will have expired itself in that case
         end
       end

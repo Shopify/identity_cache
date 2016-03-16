@@ -143,13 +143,13 @@ class IndexCacheTest < IdentityCache::TestCase
 
   def test_cache_index_with_non_id_primary_key
     KeyedRecord.cache_index :value
-    fixture = KeyedRecord.create!(value: "a") { |r| r.hashed_key = 123 }
+    KeyedRecord.create!(value: "a") { |r| r.hashed_key = 123 }
     assert_equal [123], KeyedRecord.fetch_by_value('a').map(&:id)
   end
 
   def test_unique_cache_index_with_non_id_primary_key
     KeyedRecord.cache_index :value, unique: true
-    fixture = KeyedRecord.create!(value: "a") { |r| r.hashed_key = 123 }
+    KeyedRecord.create!(value: "a") { |r| r.hashed_key = 123 }
     assert_equal 123, KeyedRecord.fetch_by_value('a').id
   end
 

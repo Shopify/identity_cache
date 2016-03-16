@@ -61,7 +61,7 @@ class RecursiveDenormalizedHasManyTest < IdentityCache::TestCase
       # one for the mid level has_one association
       # one for the deep level level has_many on the mid level has_many association
       # one for the deep level level has_many on the mid level has_one association
-      record_from_cache_miss = Item.fetch(@record.id)
+      Item.fetch(@record.id)
     end
   end
 
@@ -103,7 +103,7 @@ class RecursiveNormalizedHasManyTest < IdentityCache::TestCase
 
   def test_cache_repopulation_should_not_fetch_non_embedded_associations
     Item.any_instance.expects(:fetch_associated_records).never
-    record_from_cache_miss = Item.fetch(@record.id)
+    Item.fetch(@record.id) # cache miss
   end
 end
 
