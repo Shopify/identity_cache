@@ -344,8 +344,8 @@ module IdentityCache
               parent_record_to_child_records[parent_record] << child_record
             end
 
-            parent_record_to_child_records.each do |parent_record, child_records|
-              parent_record.send(details[:prepopulate_method_name], child_records)
+            parent_record_to_child_records.each do |parent, children|
+              parent.send(details[:prepopulate_method_name], children)
             end
           end
 
