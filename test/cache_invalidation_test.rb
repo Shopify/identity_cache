@@ -21,7 +21,7 @@ class CacheInvalidationTest < IdentityCache::TestCase
     assert_equal [@baz.id, @bar.id], @record.instance_variable_get(variable_name)
 
     @record.reload
-    assert_equal nil, @record.instance_variable_get(variable_name)
+    assert_equal false, @record.instance_variable_defined?(variable_name)
 
     @record.fetch_associated_record_ids
     assert_equal [@baz.id, @bar.id], @record.instance_variable_get(variable_name)
@@ -36,7 +36,7 @@ class CacheInvalidationTest < IdentityCache::TestCase
     assert_equal [@baz, @bar], @record.instance_variable_get(variable_name)
 
     @record.reload
-    assert_equal nil, @record.instance_variable_get(variable_name)
+    assert_equal false, @record.instance_variable_defined?(variable_name)
 
     @record.fetch_associated_records
     assert_equal [@baz, @bar], @record.instance_variable_get(variable_name)

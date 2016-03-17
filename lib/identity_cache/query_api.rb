@@ -149,7 +149,7 @@ module IdentityCache
           record_from_coder(coder_or_array)
         end
         variable_name = record.class.send(:recursively_embedded_associations)[association_name][:records_variable_name]
-        record.instance_variable_set(:"@#{variable_name}", IdentityCache.map_cached_nil_for(value))
+        record.instance_variable_set(:"@#{variable_name}", value)
       end
 
       def get_embedded_association(record, association, options) #:nodoc:
@@ -306,7 +306,7 @@ module IdentityCache
               record.instance_variable_set(:"@#{options.fetch(:ids_variable_name)}", cached_association)
             else
               cached_association = cached_record.public_send(options.fetch(:cached_accessor_name))
-              record.instance_variable_set(:"@#{options.fetch(:records_variable_name)}", IdentityCache.map_cached_nil_for(cached_association))
+              record.instance_variable_set(:"@#{options.fetch(:records_variable_name)}", cached_association)
             end
           end
         end
@@ -319,7 +319,7 @@ module IdentityCache
         first_record = records.first
         return if first_record.association(association).loaded?
         iv_name_key = details[:embed] == true ? :records_variable_name : :ids_variable_name
-        return if first_record.instance_variable_get(:"@#{details[iv_name_key]}")
+        return if first_record.instance_variable_defined?(:"@#{details[iv_name_key]}")
         fetch_embedded_associations(records)
       end
 
@@ -399,12 +399,12 @@ module IdentityCache
       if IdentityCache.should_use_cache?
         ivar_full_name = :"@#{ivar_name}"
 
-        unless ivar_value = instance_variable_get(ivar_full_name)
-          ivar_value = IdentityCache.map_cached_nil_for(send(association_name))
-          instance_variable_set(ivar_full_name, ivar_value)
+        assoc = if instance_variable_defined?(ivar_full_name)
+          instance_variable_get(ivar_full_name)
+        else
+          instance_variable_set(ivar_full_name, send(association_name))
         end
 
-        assoc = IdentityCache.unmap_cached_nil_for(ivar_value)
         assoc.is_a?(ActiveRecord::Associations::CollectionAssociation) ? assoc.reader : assoc
       else
         send(association_name.to_sym)
