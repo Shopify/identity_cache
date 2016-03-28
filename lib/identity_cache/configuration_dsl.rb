@@ -252,7 +252,7 @@ module IdentityCache
       def attribute_dynamic_fetcher(attribute, fields, values, unique_index) #:nodoc:
         raise_if_scoped
         cache_key = rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, values, unique_index)
-        IdentityCache.fetch(cache_key, should_use_cache?) do
+        IdentityCache.fetch(cache_key, use_cache: should_use_cache?) do
           query = reorder(nil).where(Hash[fields.zip(values)])
           query = query.limit(1) if unique_index
           results = query.pluck(attribute)
