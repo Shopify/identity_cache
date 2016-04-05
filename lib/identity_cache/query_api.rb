@@ -164,7 +164,7 @@ module IdentityCache
       def coder_from_record(record) #:nodoc:
         unless record.nil?
           coder = {
-            attributes: record.attributes_before_type_cast,
+            attributes: record.attributes_before_type_cast.dup,
             class: record.class,
           }
           add_cached_associations_to_coder(record, coder)
