@@ -38,7 +38,9 @@ class IdentityCache::TestCase < Minitest::Test
     DatabaseConnection.create_tables
 
     IdentityCache.logger = Logger.new(nil)
-    IdentityCache.cache_backend = @backend = ActiveSupport::Cache::MemcachedStore.new("localhost:11211", :support_cas => true)
+
+    memcached_host = ENV['MEMCACHED_HOST'] || "127.0.0.1"
+    IdentityCache.cache_backend = @backend = ActiveSupport::Cache::MemcachedStore.new("#{memcached_host}:11211", :support_cas => true)
 
     setup_models
   end
