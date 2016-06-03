@@ -21,6 +21,19 @@ class NormalizedBelongsToTest < IdentityCache::TestCase
     end
   end
 
+  def test_overriding_should_use_cache_on_association
+    Item.instance_eval do
+      def should_use_cache?
+        true
+      end
+    end
+
+    Item.expects(:fetch_by_id).with(@parent_record.id).at_least_once
+    @record.transaction do
+      @record.fetch_item
+    end
+  end
+
   def test_fetching_the_association_should_delegate_to_the_normal_association_fetcher_if_the_normal_association_is_loaded
     # Warm the ActiveRecord association
     @record.item

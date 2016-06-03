@@ -86,6 +86,22 @@ class AttributeCacheTest < IdentityCache::TestCase
     end
   end
 
+  def test_overriding_should_use_cache_when_fetching_by_attribute
+    AssociatedRecord.fetch_name_by_id(1) # Warm cache
+
+    AssociatedRecord.instance_eval do
+      def should_use_cache?
+        true
+      end
+    end
+
+    @record.transaction do
+      assert_queries(0) do
+        AssociatedRecord.fetch_name_by_id(1)
+      end
+    end
+  end
+
   def test_previously_stored_cached_nils_are_busted_by_new_record_saves
     assert_equal nil, AssociatedRecord.fetch_name_by_id(2)
     AssociatedRecord.create(:name => "Jim")

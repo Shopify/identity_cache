@@ -21,10 +21,10 @@ module IdentityCache
         raise_if_scoped
         raise NotImplementedError, "fetching needs the primary index enabled" unless primary_cache_index_enabled
         return unless id
-        record = if IdentityCache.should_use_cache?
+        record = if should_use_cache?
           require_if_necessary do
             object = nil
-            coder = IdentityCache.fetch(rails_cache_key(id)){ coder_from_record(object = resolve_cache_miss(id)) }
+            coder = IdentityCache.fetch(rails_cache_key(id), use_cache: should_use_cache?){ coder_from_record(object = resolve_cache_miss(id)) }
             object ||= record_from_coder(coder)
             if object && object.id.to_s != id.to_s
               IdentityCache.logger.error "[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{object.id} for #{object.inspect[(0..100)]}"
@@ -53,13 +53,13 @@ module IdentityCache
         raise NotImplementedError, "fetching needs the primary index enabled" unless primary_cache_index_enabled
         options = ids.extract_options!
         ids.flatten!(1)
-        records = if IdentityCache.should_use_cache?
+        records = if should_use_cache?
           require_if_necessary do
             cache_keys = ids.map {|id| rails_cache_key(id) }
             key_to_id_map = Hash[ cache_keys.zip(ids) ]
             key_to_record_map = {}
 
-            coders_by_key = IdentityCache.fetch_multi(cache_keys) do |unresolved_keys|
+            coders_by_key = IdentityCache.fetch_multi(cache_keys, use_cache: should_use_cache?) do |unresolved_keys|
               ids = unresolved_keys.map {|key| key_to_id_map[key] }
               records = find_batch(ids)
               key_to_record_map = records.compact.index_by{ |record| rails_cache_key(record.id) }
@@ -398,7 +398,7 @@ module IdentityCache
     private
 
     def fetch_recursively_cached_association(ivar_name, association_name) # :nodoc:
-      if IdentityCache.should_use_cache?
+      if self.class.should_use_cache?
         ivar_full_name = :"@#{ivar_name}"
 
         assoc = if instance_variable_defined?(ivar_full_name)
