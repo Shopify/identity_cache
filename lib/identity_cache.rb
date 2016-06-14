@@ -40,6 +40,9 @@ module IdentityCache
     mattr_accessor :cache_namespace
     self.cache_namespace = "IDC:#{CACHE_VERSION}:".freeze
 
+    mattr_accessor :fetch_returns_relation
+    self.fetch_returns_relation = true
+
     def included(base) #:nodoc:
       raise AlreadyIncludedError if base.include?(IdentityCache::ConfigurationDSL)
 
@@ -129,6 +132,14 @@ module IdentityCache
       end
 
       result
+    end
+
+    def with_fetch_returns_relation(value = true)
+      previous_value = self.fetch_returns_relation
+      self.fetch_returns_relation = value
+      yield
+    ensure
+      self.fetch_returns_relation = previous_value
     end
 
     private

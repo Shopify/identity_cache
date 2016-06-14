@@ -156,7 +156,7 @@ module IdentityCache
 
       def get_embedded_association(record, association, options) #:nodoc:
         embedded_variable = record.public_send(options.fetch(:cached_accessor_name))
-        if record.class.reflect_on_association(association).collection?
+        if embedded_variable.respond_to?(:to_ary)
           embedded_variable.map {|e| coder_from_record(e) }
         else
           coder_from_record(embedded_variable)
@@ -398,7 +398,7 @@ module IdentityCache
     private
 
     def fetch_recursively_cached_association(ivar_name, association_name) # :nodoc:
-      if IdentityCache.should_use_cache?
+      assoc = if IdentityCache.should_use_cache?
         ivar_full_name = :"@#{ivar_name}"
 
         if instance_variable_defined?(ivar_full_name)
@@ -409,6 +409,8 @@ module IdentityCache
       else
         send(association_name.to_sym)
       end
+      assoc = assoc.to_ary if assoc.respond_to?(:to_ary) && !IdentityCache.fetch_returns_relation
+      assoc
     end
 
     def expire_primary_index # :nodoc:

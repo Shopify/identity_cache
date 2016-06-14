@@ -12,6 +12,14 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     @record.reload
   end
 
+  def test_uncached_record_from_the_db_should_come_back_with_association_array_when_fetch_returns_array
+    IdentityCache.with_fetch_returns_relation(false) do    
+      assert_equal IdentityCache.fetch_returns_relation, false
+      record_from_db = Item.find(@record.id)
+      assert_equal Array, record_from_db.fetch_associated_records.class
+    end
+  end
+
   def test_uncached_record_from_the_db_will_use_normal_association
     expected = @record.associated_records
     record_from_db = Item.find(@record.id)
@@ -20,6 +28,17 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
 
     assert_equal @record, record_from_db
     assert_equal expected, record_from_db.fetch_associated_records
+  end
+
+  def test_on_cache_hit_record_should_come_back_with_cached_association_array_when_fetch_returns_array
+    IdentityCache.with_fetch_returns_relation(false) do  
+      assert_equal IdentityCache.fetch_returns_relation, false
+      Item.fetch(@record.id) # warm cache
+
+      record_from_cache_hit = Item.fetch(@record.id)
+      assert_equal @record, record_from_cache_hit
+      assert_equal Array, record_from_cache_hit.fetch_associated_records.class
+    end
   end
 
   def test_on_cache_hit_record_should_come_back_with_cached_association
@@ -93,6 +112,14 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     IdentityCache.cache.expects(:delete).with(@record.primary_cache_index_key)
     child.save!
   end
+
+  def test_fetch_association_does_not_allow_chaining_when_fetch_returns_array
+    IdentityCache.with_fetch_returns_relation(false) do
+      check = proc { assert_equal false, Item.fetch(@record.id).fetch_associated_records.respond_to?(:where) }
+      2.times { check.call } # for miss and hit
+      Item.transaction { check.call }
+    end
+  end  
 
   class CheckAssociationTest < IdentityCache::TestCase
     def test_unsupported_through_assocation
