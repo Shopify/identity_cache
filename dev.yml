@@ -1,4 +1,4 @@
-name: identity_cache
+name: identity-cache
 
 up:
   - homebrew:
