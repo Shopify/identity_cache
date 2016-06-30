@@ -10,10 +10,10 @@ up:
   - bundler
 
 env:
-  RAILGUN_HOST: identity_cache.railgun
-  MYSQL_HOST: identity_cache.railgun
-  POSTGRES_HOST: identity_cache.railgun
-  MEMCACHED_HOST: identity_cache.railgun
+  RAILGUN_HOST: identity-cache.railgun
+  MYSQL_HOST: identity-cache.railgun
+  POSTGRES_HOST: identity-cache.railgun
+  MEMCACHED_HOST: identity-cache.railgun
 
 commands:
   test:
