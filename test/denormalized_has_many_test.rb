@@ -119,7 +119,27 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
       2.times { check.call } # for miss and hit
       Item.transaction { check.call }
     end
-  end  
+  end
+
+  def test_never_set_inverse_association_on_cache_hit
+    Item.fetch(@record.id) # warm cache
+
+    item = IdentityCache.with_never_set_inverse_association do
+      Item.fetch(@record.id)
+    end
+
+    associated_record = item.fetch_associated_records.to_a.first
+    assert item.object_id != associated_record.item.object_id
+  end
+
+  def test_deprecated_set_inverse_association_on_cache_hit
+    Item.fetch(@record.id) # warm cache
+
+    item = Item.fetch(@record.id)
+
+    associated_record = item.fetch_associated_records.to_a.first
+    assert_equal item.object_id, associated_record.item.object_id
+  end
 
   class CheckAssociationTest < IdentityCache::TestCase
     def test_unsupported_through_assocation

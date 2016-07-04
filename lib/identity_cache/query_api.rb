@@ -145,7 +145,20 @@ module IdentityCache
         elsif (reflection = record.class.reflect_on_association(association_name)).collection?
           association = reflection.association_class.new(record, reflection)
           association.target = coder_or_array.map {|e| record_from_coder(e) }
-          association.target.each {|e| association.set_inverse_instance(e) }
+
+          if reflection.klass < IdentityCache
+            inverse_association_name = record.class.cached_has_manys.fetch(association_name).fetch(:inverse_name)
+            cached_inverse_association = reflection.klass.cached_belongs_tos[inverse_association_name]
+            if cached_inverse_association
+              prepopulate_method_name = cached_inverse_association.fetch(:prepopulate_method_name)
+              association.target.each { |child_record| child_record.send(prepopulate_method_name, record) }
+            end
+          end
+
+          unless IdentityCache.never_set_inverse_association
+            association.target.each {|e| association.set_inverse_instance(e) }
+          end
+
           association
         else
           record_from_coder(coder_or_array)
