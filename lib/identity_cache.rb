@@ -40,8 +40,18 @@ module IdentityCache
     mattr_accessor :cache_namespace
     self.cache_namespace = "IDC:#{CACHE_VERSION}:".freeze
 
+    version = Gem::Version.new(IdentityCache::VERSION)
+
+    # fetch_#{association} for a cache_has_many association returns a relation
+    # when fetch_returns_relation is set to true and an array when set to false.
     mattr_accessor :fetch_returns_relation
-    self.fetch_returns_relation = true
+    self.fetch_returns_relation = version < Gem::Version.new("0.4")
+
+    # Inverse active record associations are set when loading embedded
+    # cache_has_many associations from the cache when never_set_inverse_association
+    # is false. When set to true, it will only set the inverse cached association.
+    mattr_accessor :never_set_inverse_association
+    self.never_set_inverse_association = version >= Gem::Version.new("0.4")
 
     def included(base) #:nodoc:
       raise AlreadyIncludedError if base.include?(IdentityCache::ConfigurationDSL)
@@ -140,6 +150,14 @@ module IdentityCache
       yield
     ensure
       self.fetch_returns_relation = previous_value
+    end
+
+    def with_never_set_inverse_association(value = true)
+      old_value = self.never_set_inverse_association
+      self.never_set_inverse_association = value
+      yield
+    ensure
+      self.never_set_inverse_association = old_value
     end
 
     private

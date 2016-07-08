@@ -139,13 +139,31 @@ module IdentityCache
         end
       end
 
+      def set_inverse_of_cached_has_many(record, association_reflection, child_records)
+        associated_class = association_reflection.klass
+        return unless associated_class < IdentityCache
+
+        inverse_name = record.class.cached_has_manys.fetch(association_reflection.name).fetch(:inverse_name)
+        inverse_cached_association = associated_class.cached_belongs_tos[inverse_name]
+        return unless inverse_cached_association
+
+        prepopulate_method_name = inverse_cached_association.fetch(:prepopulate_method_name)
+        child_records.each { |child_record| child_record.send(prepopulate_method_name, record) }
+      end
+
       def set_embedded_association(record, association_name, coder_or_array) #:nodoc:
         value = if IdentityCache.unmap_cached_nil_for(coder_or_array).nil?
           nil
         elsif (reflection = record.class.reflect_on_association(association_name)).collection?
           association = reflection.association_class.new(record, reflection)
           association.target = coder_or_array.map {|e| record_from_coder(e) }
-          association.target.each {|e| association.set_inverse_instance(e) }
+
+          set_inverse_of_cached_has_many(record, reflection, association.target)
+
+          unless IdentityCache.never_set_inverse_association
+            association.target.each {|e| association.set_inverse_instance(e) }
+          end
+
           association
         else
           record_from_coder(coder_or_array)

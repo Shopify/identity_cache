@@ -88,6 +88,22 @@ class RecursiveDenormalizedHasManyTest < IdentityCache::TestCase
     @deeply_associated_record.save!
   end
 
+  def test_set_inverse_associations
+    DeeplyAssociatedRecord.cache_belongs_to :associated_record
+    AssociatedRecord.cache_belongs_to :item
+    Item.fetch(@record.id) # warm cache
+
+    item = Item.fetch(@record.id)
+
+    assert_queries(0) do
+      assert_memcache_operations(0) do
+        associated_record = item.fetch_associated_records.to_a.first
+        deeply_associated_record = associated_record.fetch_deeply_associated_records.first
+        assert_equal item.id, deeply_associated_record.fetch_associated_record.fetch_item.id
+      end
+    end
+  end
+
 end
 
 class RecursiveNormalizedHasManyTest < IdentityCache::TestCase
