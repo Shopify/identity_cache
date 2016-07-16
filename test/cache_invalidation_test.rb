@@ -10,6 +10,7 @@ class CacheInvalidationTest < IdentityCache::TestCase
     @record.save
     @record.reload
     @baz, @bar = @record.associated_records[0], @record.associated_records[1]
+    @record.reload
   end
 
   def test_reload_invalidate_cached_ids

@@ -2,6 +2,7 @@
 
 #### 0.3.2
 
+- Use loaded association first when fetching a cache_has_many id embedded association
 - Deprecate setting the inverse active record association on cache hits. Set IdentityCache.never_set_inverse_association to true to avoid this. (#279)
 - Fetch association returns relation or array depending on the configuration. It was only returning a relation for cache_has_many fetch association methods. (#276)
 - Stop sharing the same attributes hash between the fetched record and the memoized cache, which could interfere with dirty tracking (#267)
