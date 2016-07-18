@@ -462,7 +462,7 @@ module IdentityCache
       ivar_full_name = :"@#{ivar_name}"
       assoc = association(association_name)
 
-      if assoc.klass.should_use_cache?
+      if assoc.klass.should_use_cache? && !assoc.loaded?
         if instance_variable_defined?(ivar_full_name)
           instance_variable_get(ivar_full_name)
         else
