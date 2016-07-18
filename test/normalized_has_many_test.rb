@@ -111,9 +111,10 @@ class NormalizedHasManyTest < IdentityCache::TestCase
   def test_fetching_the_association_should_delegate_to_the_normal_association_fetcher_if_any_transaction_are_open
     @record = Item.fetch(@record.id)
 
-    Item.expects(:fetch_multi).never
-    @record.transaction do
-      assert_equal [@baz, @bar], @record.fetch_associated_records
+    assert_memcache_operations(0) do
+      @record.transaction do
+        assert_equal [@baz, @bar], @record.fetch_associated_records
+      end
     end
   end
 
@@ -121,8 +122,9 @@ class NormalizedHasManyTest < IdentityCache::TestCase
     # Warm the ActiveRecord association
     @record.associated_records.to_a
 
-    Item.expects(:fetch_multi).never
-    assert_equal [@baz, @bar], @record.fetch_associated_records
+    assert_memcache_operations(0) do
+      assert_equal [@baz, @bar], @record.fetch_associated_records
+    end
   end
 
   def test_saving_a_child_record_shouldnt_expire_the_parents_blob_if_the_foreign_key_hasnt_changed
