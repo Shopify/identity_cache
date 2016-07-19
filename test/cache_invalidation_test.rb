@@ -135,4 +135,16 @@ class CacheInvalidationTest < IdentityCache::TestCase
     deeply_associated_record.name = "deep2"
     deeply_associated_record.save!
   end
+
+  def test_entry_should_invalidate_after_expiry
+    require 'byebug'
+    Item.cache_expiry = 1
+
+    assert Item.exists_with_identity_cache?(@record.id)
+
+    sleep 2
+
+    Item.expects(:resolve_cache_miss).once.returns(@record)
+    assert Item.exists_with_identity_cache?(@record.id)
+  end
 end

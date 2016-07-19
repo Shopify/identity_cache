@@ -21,7 +21,7 @@ class FetchTest < IdentityCache::TestCase
   end
 
   def test_fetch_cache_hit
-    IdentityCache.cache.expects(:fetch).with(@blob_key).returns(@cached_value)
+    IdentityCache.cache.expects(:fetch).with(@blob_key, {}).returns(@cached_value)
 
     assert_equal @record, Item.fetch(1)
   end
@@ -31,7 +31,7 @@ class FetchTest < IdentityCache::TestCase
     IdentityCache.cache_namespace = proc { |model| "#{model.table_name}:#{old_ns}" }
 
     new_blob_key = "items:#{@blob_key}"
-    IdentityCache.cache.expects(:fetch).with(new_blob_key).returns(@cached_value)
+    IdentityCache.cache.expects(:fetch).with(new_blob_key, {}).returns(@cached_value)
 
     assert_equal @record, Item.fetch(1)
   ensure
@@ -39,7 +39,7 @@ class FetchTest < IdentityCache::TestCase
   end
 
   def test_exists_with_identity_cache_when_cache_hit
-    IdentityCache.cache.expects(:fetch).with(@blob_key).returns(@cached_value)
+    IdentityCache.cache.expects(:fetch).with(@blob_key, {}).returns(@cached_value)
 
     assert Item.exists_with_identity_cache?(1)
   end
@@ -48,8 +48,8 @@ class FetchTest < IdentityCache::TestCase
     fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
     Item.expects(:resolve_cache_miss).with(1).once.returns(@record)
 
-    assert Item.exists_with_identity_cache?(1)
-    assert fetch.has_been_called_with?(@blob_key)
+    assert Item.exists_with_identity_cache?(0)
+    assert fetch.has_been_called_with?(@blob_key, {})
   end
 
   def test_exists_with_identity_cache_when_cache_miss_and_not_in_db
@@ -57,7 +57,7 @@ class FetchTest < IdentityCache::TestCase
     Item.expects(:resolve_cache_miss).with(1).once.returns(nil)
 
     assert !Item.exists_with_identity_cache?(1)
-    assert fetch.has_been_called_with?(@blob_key)
+    assert fetch.has_been_called_with?(@blob_key, {})
   end
 
   def test_fetch_miss
@@ -67,7 +67,7 @@ class FetchTest < IdentityCache::TestCase
     fetch = Spy.on(IdentityCache.cache, :fetch).and_return {|_, &block| block.call.tap {|result| results << result}}
 
     assert_equal @record, Item.fetch(1)
-    assert fetch.has_been_called_with?(@blob_key)
+    assert fetch.has_been_called_with?(@blob_key, {})
     assert_equal [@cached_value], results
   end
 
@@ -86,7 +86,7 @@ class FetchTest < IdentityCache::TestCase
 
     assert_equal @record, Item.fetch(1)
     assert resolve_cache_miss.has_been_called_with?(1)
-    assert add.has_been_called_with?(@blob_key, @cached_value)
+    assert add.has_been_called_with?(@blob_key, @cached_value, {})
     assert_equal IdentityCache::DELETED, backend.read(@record.primary_cache_index_key)
   end
 
@@ -108,14 +108,14 @@ class FetchTest < IdentityCache::TestCase
 
   def test_fetch_by_id_not_found_should_return_nil
     nonexistent_record_id = 10
-    fetcher.expects(:add).with(@blob_key + '0', IdentityCache::CACHED_NIL)
+    fetcher.expects(:add).with(@blob_key + '0', IdentityCache::CACHED_NIL, {})
 
     assert_equal nil, Item.fetch_by_id(nonexistent_record_id)
   end
 
   def test_fetch_not_found_should_raise
     nonexistent_record_id = 10
-    fetcher.expects(:add).with(@blob_key + '0', IdentityCache::CACHED_NIL)
+    fetcher.expects(:add).with(@blob_key + '0', IdentityCache::CACHED_NIL, {})
 
     assert_raises(ActiveRecord::RecordNotFound) { Item.fetch(nonexistent_record_id) }
   end
@@ -142,18 +142,18 @@ class FetchTest < IdentityCache::TestCase
     end
 
     # Id not found, use sql, SELECT id FROM records WHERE title = '...' LIMIT 1"
-    Item.connection.expects(:exec_query).returns(ActiveRecord::Result.new(['id'], [[1]]))
+    Item.connection.expects(:exec_query).returns(ActiveRecord::Result.new(['id'], [[1]]), {})
 
     assert_equal @record, Item.fetch_by_title('bob')
     assert_equal [1], values
-    assert fetch.has_been_called_with?(@index_key)
-    assert fetch.has_been_called_with?(@blob_key)
+    assert fetch.has_been_called_with?(@index_key, {})
+    assert fetch.has_been_called_with?(@blob_key, {})
   end
 
   def test_fetch_by_title_cache_namespace
     Item.send(:include, SwitchNamespace)
-    IdentityCache.cache.expects(:fetch).with("ns:#{@index_key}").returns(1)
-    IdentityCache.cache.expects(:fetch).with("ns:#{@blob_key}").returns(@cached_value)
+    IdentityCache.cache.expects(:fetch).with("ns:#{@index_key}", {}).returns(1)
+    IdentityCache.cache.expects(:fetch).with("ns:#{@blob_key}", {}).returns(@cached_value)
 
     assert_equal @record, Item.fetch_by_title('bob')
   end
@@ -167,7 +167,7 @@ class FetchTest < IdentityCache::TestCase
     assert_equal nil, Item.fetch_by_title('bob') # returns cached nil
     assert_equal nil, Item.fetch_by_title('bob') # returns cached nil
 
-    assert add.has_been_called_with?(@index_key, IdentityCache::CACHED_NIL)
+    assert add.has_been_called_with?(@index_key, IdentityCache::CACHED_NIL, {})
     assert_equal 3, fetch.calls.length
   end
 
@@ -211,5 +211,12 @@ class FetchTest < IdentityCache::TestCase
     assert_raises(IdentityCache::DerivedModelError) do
       StiRecordTypeA.fetch(1)
     end
+  end
+
+  def test_with_expiry_sets_expiry
+    Item.cache_expiry = 60
+
+    IdentityCache.cache.expects(:fetch).with(@blob_key, {expire_in: 60}).returns(@cached_value)
+    assert_equal @record, Item.fetch(1)
   end
 end

@@ -16,7 +16,7 @@ module IdentityCache
 
       # Default fetcher added to the model on inclusion, it behaves like
       # ActiveRecord::Base.where(id: id).first
-      def fetch_by_id(id, options={})
+      def fetch_by_id(id, options = {})
         ensure_base_model
         raise_if_scoped
         raise NotImplementedError, "fetching needs the primary index enabled" unless primary_cache_index_enabled
@@ -24,7 +24,8 @@ module IdentityCache
         record = if IdentityCache.should_use_cache?
           require_if_necessary do
             object = nil
-            coder = IdentityCache.fetch(rails_cache_key(id)){ coder_from_record(object = resolve_cache_miss(id)) }
+            options[:expires_in] = self.cache_expiry if self.cache_expiry
+            coder = IdentityCache.fetch(rails_cache_key(id), options){ coder_from_record(object = resolve_cache_miss(id)) }
             object ||= record_from_coder(coder)
             if object && object.id.to_s != id.to_s
               IdentityCache.logger.error "[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{object.id} for #{object.inspect[(0..100)]}"

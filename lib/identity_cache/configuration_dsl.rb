@@ -8,12 +8,14 @@ module IdentityCache
       base.class_attribute :cached_has_manys
       base.class_attribute :cached_has_ones
       base.class_attribute :primary_cache_index_enabled
+      base.class_attribute :cache_expiry
 
       base.cached_model = base
       base.cached_has_manys = {}
       base.cached_has_ones = {}
       base.cache_indexes = []
       base.primary_cache_index_enabled = true
+      base.cache_expiry = nil
     end
 
     module ClassMethods
@@ -177,6 +179,10 @@ module IdentityCache
       def disable_primary_cache_index
         ensure_base_model
         self.primary_cache_index_enabled = false
+      end
+
+      def cache_expiry(time)
+        self.cache_expiry = time
       end
 
       private

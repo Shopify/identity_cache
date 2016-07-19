@@ -42,4 +42,9 @@ class CacheFetchIncludesTest < IdentityCache::TestCase
       {:associated => [:deeply_associated_records]}
     ],  Item.send(:cache_fetch_includes)
   end
+
+  def test_set_cache_expiry
+    Item.send(:cache_expiry=, 60)
+    assert_equal 60, Item.send(:cache_expiry)
+  end
 end

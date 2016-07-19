@@ -6,8 +6,8 @@ module IdentityCache
       @cache_backend = cache_backend
     end
 
-    def write(key, value)
-      @cache_backend.write(key, value) if IdentityCache.should_fill_cache?
+    def write(key, value, options = nil)
+      @cache_backend.write(key, value, options) if IdentityCache.should_fill_cache?
     end
 
     def delete(key)
@@ -31,11 +31,11 @@ module IdentityCache
       results
     end
 
-    def fetch(key)
+    def fetch(key, options = nil)
       result = @cache_backend.read(key)
       if result.nil?
         result = yield
-        @cache_backend.write(key, result) if IdentityCache.should_fill_cache?
+        @cache_backend.write(key, result, options) if IdentityCache.should_fill_cache?
       end
       result
     end

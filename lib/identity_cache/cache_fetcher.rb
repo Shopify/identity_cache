@@ -24,10 +24,11 @@ module IdentityCache
       results
     end
 
-    def fetch(key)
+    def fetch(key, options = {})
       result = nil
       yielded = false
-      @cache_backend.cas(key) do |value|
+      # byebug
+      @cache_backend.cas(key, options) do |value|
         yielded = true
         unless IdentityCache::DELETED == value
           result = value
@@ -39,7 +40,7 @@ module IdentityCache
       end
       unless yielded
         result = yield
-        add(key, result)
+        add(key, result, options)
       end
       result
     end
@@ -80,8 +81,8 @@ module IdentityCache
       result.each {|k, v| add(k, v) }
     end
 
-    def add(key, value)
-      @cache_backend.write(key, value, :unless_exist => true) if IdentityCache.should_fill_cache?
+    def add(key, value, options = {})
+      @cache_backend.write(key, value, :unless_exist => true, :expires_in => options[:expires_in]) if IdentityCache.should_fill_cache?
     end
   end
 end

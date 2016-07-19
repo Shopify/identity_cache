@@ -41,20 +41,21 @@ module IdentityCache
       result
     end
 
-    def fetch(key)
+    def fetch(key, options = {})
       used_cache_backend = true
       missed = false
       value = if memoizing?
         used_cache_backend = false
         memoized_key_values.fetch(key) do
           used_cache_backend = true
-          memoized_key_values[key] = @cache_fetcher.fetch(key) do
+          memoized_key_values[key] = @cache_fetcher.fetch(key, options) do
             missed = true
             yield
           end
         end
       else
-        @cache_fetcher.fetch(key) do
+        # byebug
+        @cache_fetcher.fetch(key, options) do
           missed = true
           yield
         end

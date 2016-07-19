@@ -30,10 +30,6 @@ class IdentityCache::TestCase < Minitest::Test
   attr_reader :backend
 
   def setup
-    if ActiveRecord::Base.respond_to?(:raise_in_transactional_callbacks=)
-      ActiveRecord::Base.raise_in_transactional_callbacks = true
-    end
-
     DatabaseConnection.drop_tables
     DatabaseConnection.create_tables
 

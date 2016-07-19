@@ -92,9 +92,9 @@ module IdentityCache
     # == Parameters
     # +key+ A cache key string
     #
-    def fetch(key)
+    def fetch(key, options = {})
       if should_use_cache?
-        unmap_cached_nil_for(cache.fetch(key) { map_cached_nil_for yield })
+        unmap_cached_nil_for(cache.fetch(key, options) { map_cached_nil_for yield })
       else
         yield
       end
