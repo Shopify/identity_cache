@@ -101,6 +101,16 @@ end
 @product.fetch_images
 ```
 
+To read multiple records in batch use `fetch_multi`.
+
+``` ruby
+class Product < ActiveRecord::Base
+  include IdentityCache
+end
+
+@product.fetch_multi([1, 2])
+```
+
 ### Embedding Associations
 
 IdentityCache can easily embed objects into the parents' cache entry. This means loading the parent object will also load the association and add it to the cache along with the parent. Subsequent cache requests will load the parent along with the association in one fetch. This can again mean some duplication in the cache if you want to be able to cache objects on their own as well, so it should be done with care. This works with both `cache_has_many` and `cache_has_one` methods.
