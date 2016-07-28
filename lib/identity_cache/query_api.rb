@@ -80,11 +80,7 @@ module IdentityCache
         records = records.to_a
         return if records.empty?
         unless IdentityCache.should_use_cache?
-          if ActiveRecord::VERSION::MAJOR == 4 && ActiveRecord::VERSION::MINOR == 0
-            ActiveRecord::Associations::Preloader.new(records, associations).run
-          else
-            ActiveRecord::Associations::Preloader.new.preload(records, associations)
-          end
+          ActiveRecord::Associations::Preloader.new.preload(records, associations)
           return
         end
 

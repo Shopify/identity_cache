@@ -5,8 +5,6 @@ rvm:
   - 2.2.3
 
 gemfile:
-  - Gemfile.rails40
-  - Gemfile.rails41
   - Gemfile.rails42
 
 env:
