@@ -18,8 +18,8 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
     Item.send(:cache_belongs_to, :item)
     john = Item.create!(:title => 'john')
     jim = Item.create!(:title => 'jim')
-    @bob.update_column(:item_id, john)
-    @joe.update_column(:item_id, jim)
+    @bob.update_column(:item_id, john.id)
+    @joe.update_column(:item_id, jim.id)
     items = Item.fetch_multi(@bob.id, @joe.id, @fred.id)
 
     spy = Spy.on(Item, :fetch_multi).and_call_through
@@ -127,7 +127,7 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
   def test_fetch_with_includes_option
     Item.send(:cache_belongs_to, :item)
     john = Item.create!(title: 'john')
-    @bob.update_column(:item_id, john)
+    @bob.update_column(:item_id, john.id)
 
     spy = Spy.on(Item, :fetch_multi).and_call_through
 
@@ -140,8 +140,8 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
     Item.send(:cache_belongs_to, :item)
     john = Item.create!(:title => 'john')
     jim = Item.create!(:title => 'jim')
-    @bob.update_column(:item_id, john)
-    @joe.update_column(:item_id, jim)
+    @bob.update_column(:item_id, john.id)
+    @joe.update_column(:item_id, jim.id)
 
     spy = Spy.on(Item, :fetch_multi).and_call_through
 
@@ -309,7 +309,7 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
     Item.send(:cache_belongs_to, :item)
     Item.cache_index :title
     john = Item.create!(title: 'john')
-    @bob.update_column(:item_id, john)
+    @bob.update_column(:item_id, john.id)
 
     spy = Spy.on(Item, :fetch_multi).and_call_through
 
@@ -322,7 +322,7 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
     Item.send(:cache_belongs_to, :item)
     Item.cache_index :title, :unique => true
     john = Item.create!(title: 'john')
-    @bob.update_column(:item_id, john)
+    @bob.update_column(:item_id, john.id)
 
     spy = Spy.on(Item, :fetch_multi).and_call_through
 
