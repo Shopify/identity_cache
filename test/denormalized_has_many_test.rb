@@ -141,6 +141,40 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     assert_equal item.object_id, associated_record.item.object_id
   end
 
+  def test_returned_records_should_be_readonly_on_cache_hit
+    IdentityCache.with_fetch_read_only_records do
+      Item.fetch(@record.id) # warm cache
+      record_from_cache_hit = Item.fetch(@record.id)
+      assert record_from_cache_hit.fetch_associated_records.all?(&:readonly?)
+    end
+  end
+
+  def test_returned_records_should_be_readonly_on_cache_miss
+    IdentityCache.with_fetch_read_only_records do
+      record_from_cache_miss = Item.fetch(@record.id)
+      assert record_from_cache_miss.fetch_associated_records.all?(&:readonly?)
+    end
+  end
+
+  def test_db_returned_records_should_never_be_readonly
+    IdentityCache.with_fetch_read_only_records do
+      record_from_db = Item.find(@record.id)
+      uncached_records = record_from_db.associated_records
+      refute uncached_records.all?(&:readonly?)
+      assert record_from_db.fetch_associated_records.all?(&:readonly?)
+      assert record_from_db.associated_records.none?(&:readonly?)
+    end
+  end
+
+  def test_returned_records_with_open_transactions_should_not_be_readonly
+    IdentityCache.with_fetch_read_only_records do
+      Item.transaction do
+        assert_equal IdentityCache.should_use_cache?, false
+        refute Item.fetch(@record.id).fetch_associated_records.all?(&:readonly?)
+      end
+    end
+  end
+
   class CheckAssociationTest < IdentityCache::TestCase
     def test_unsupported_through_assocation
       assert_raises IdentityCache::UnsupportedAssociationError, "caching through associations isn't supported" do

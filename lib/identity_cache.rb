@@ -53,6 +53,12 @@ module IdentityCache
     mattr_accessor :never_set_inverse_association
     self.never_set_inverse_association = version >= Gem::Version.new("0.4")
 
+    # Fetched records are not read-only and this could sometimes prevent IDC from
+    # reflecting what's truly in the database when fetch_read_only_records is false.
+    # When set to true, it will only return read-only records when cache is used.
+    mattr_accessor :fetch_read_only_records
+    self.fetch_read_only_records = version >= Gem::Version.new("0.4")
+
     def included(base) #:nodoc:
       raise AlreadyIncludedError if base.include?(IdentityCache::ConfigurationDSL)
 
@@ -158,6 +164,15 @@ module IdentityCache
       yield
     ensure
       self.never_set_inverse_association = old_value
+    end
+
+
+    def with_fetch_read_only_records(value = true)
+      old_value = self.fetch_read_only_records
+      self.fetch_read_only_records = value
+      yield
+    ensure
+      self.fetch_read_only_records = old_value
     end
 
     private

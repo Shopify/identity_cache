@@ -223,6 +223,48 @@ class FetchMultiTest < IdentityCache::TestCase
     end
   end
 
+  def test_fetch_multi_with_mixed_hits_and_misses_returns_only_readonly_records
+    IdentityCache.with_fetch_read_only_records do
+      cache_response = {}
+      cache_response[@bob_blob_key] = cache_response_for(@bob)
+      cache_response[@joe_blob_key] = nil
+      cache_response[@fred_blob_key] = cache_response_for(@fred)
+      fetch_multi = fetch_multi_stub(cache_response)
+
+      response = Item.fetch_multi(@bob.id, @joe.id, @fred.id)
+      assert fetch_multi.has_been_called_with?(@bob_blob_key, @joe_blob_key, @fred_blob_key)
+      assert_equal [@bob, @joe, @fred], response
+
+      assert response.all?(&:readonly?)
+    end
+  end
+
+  def test_fetch_multi_with_mixed_hits_and_misses_and_responses_in_the_wrong_order_returns_readonly
+    IdentityCache.with_fetch_read_only_records do
+      cache_response = {}
+      cache_response[@bob_blob_key] = nil
+      cache_response[@joe_blob_key] = nil
+      cache_response[@fred_blob_key] = cache_response_for(@fred)
+      fetch_multi = fetch_multi_stub(cache_response)
+
+      response = Item.fetch_multi(@bob.id, @joe.id, @fred.id)
+      assert fetch_multi.has_been_called_with?(@bob_blob_key, @joe_blob_key, @fred_blob_key)
+      assert_equal [@bob, @joe, @fred], response
+
+      assert response.all?(&:readonly?)
+    end
+  end
+
+  def test_fetch_multi_with_open_transactions_returns_non_readonly_records
+    IdentityCache.with_fetch_read_only_records do
+      Item.transaction do
+        assert_equal IdentityCache.should_use_cache?, false
+        IdentityCache.cache.expects(:fetch_multi).never
+        refute Item.fetch_multi(@bob.id, @joe.id, @fred.id).all?(&:readonly?)
+      end
+    end
+  end
+
   private
 
   def populate_only_fred

@@ -41,7 +41,11 @@ module IdentityCache
                 @#{options[:records_variable_name]} = association(:#{association}).klass.fetch_by_id(#{foreign_key})
               end
             else
-              #{association}
+              if IdentityCache.fetch_read_only_records && IdentityCache.should_use_cache?
+                load_and_readonlyify(:#{association})
+              else
+                #{association}
+              end
             end
           end
 
