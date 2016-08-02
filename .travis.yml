@@ -6,6 +6,14 @@ rvm:
 
 gemfile:
   - Gemfile.rails42
+  - Gemfile.rails50
+
+matrix:
+  exclude:
+    - rvm: 2.1
+      gemfile: Gemfile.rails50
+    - gemfile: Gemfile.rails50
+      env: DB=postgresql
 
 env:
   - DB=mysql2

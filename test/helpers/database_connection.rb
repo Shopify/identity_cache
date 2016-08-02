@@ -57,7 +57,8 @@ module DatabaseConnection
       'adapter'  => 'postgresql',
       'database' => 'identity_cache_test',
       'host'     => ENV['POSTGRES_HOST'] || '127.0.0.1',
-      'username' => 'postgres'
+      'username' => 'postgres',
+      'prepared_statements' => false,
     }
   }
 end
