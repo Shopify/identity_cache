@@ -21,12 +21,25 @@ commands:
       optional:
         argument: file
         optional: args...
+    desc: 'Run tests'
     run: |
       if [[ $# -eq 0 ]]; then
         bundle exec rake test
       else
         bundle exec ruby -I test "$@"
       fi
+
+  benchmark-cpu:
+    desc: 'Run the identity cache CPU benchmark'
+    run: bundle exec rake benchmark:cpu
+
+  profile:
+    desc: 'Profile IDC code'
+    run: bundle exec rake profile:run
+
+  update-serialization-format:
+    desc: 'Update serialization format test fixture'
+    run: bundle exec rake update_serialization_format
 
 railgun:
   image: dev:railgun-common-services-0.2.x

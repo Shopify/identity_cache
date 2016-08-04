@@ -14,7 +14,7 @@ require File.dirname(__FILE__) + '/../test/helpers/database_connection'
 
 IdentityCache.logger = Logger.new(nil)
 IdentityCache.cache_backend = ActiveSupport::Cache::MemcachedStore.new("localhost:#{$memcached_port}", :support_cas => true)
-
+ActiveRecord::Base.raise_in_transactional_callbacks = true
 
 def create_record(id)
   Item.new(id)
