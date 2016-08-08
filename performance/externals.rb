@@ -1,49 +1,38 @@
 require 'rubygems'
 require 'benchmark'
-require 'ruby-prof'
+require File.expand_path '../externals_collector', __FILE__
 
 require_relative 'cache_runner'
 
 RUNS = 1000
-RubyProf.measure_mode = RubyProf::CPU_TIME
-
-EXTERNALS = {"Memcache" => ["MemCache#set", "MemCache#get"],
-             "Database" => ["Mysql2::Client#query"]}
 
 def run(obj)
+  puts "#{obj.class.name}:"
   obj.prepare
-  RubyProf.start
-  obj.run
-  result = RubyProf.stop
-  puts "Results for #{obj.class.name}:"
-  results = StringIO.new
-  printer = RubyProf::FlatPrinter.new(result)
-  printer.print(results)
-  count_externals(results.string)
+  count_events do
+    obj.run
+  end
 end
 
-def count_externals(results)
-  count = {}
-  results.split(/\n/).each do |line|
-    fields = line.split
-    if ext = EXTERNALS.detect { |e| e[1].any? { |method| method == fields[-1] } }
-      count[ext[0]] ||= 0
-      count[ext[0]] += fields[-2].to_i
-    end
-  end
-  EXTERNALS.each do |ext|
-    puts "#{ext[0]}: #{count[ext[0]] || 0}"
-  end
+def count_events(&block)
+  mysql_events = ExternalsCollector.new(&block).events.select { |e| e.first == :mysql }.map { |e| e[1][:name] }
+  memcached_events = ExternalsCollector.new(&block).events.select { |e| e.first == :memcached }.map { |e| e[1][:name] }
+  puts "MySQL: #{mysql_events.count || 0}"
+  puts "Memcached: #{memcached_events.count || 0}"
 end
 
 create_database(RUNS)
 
-run(FindRunner.new(RUNS))
+if runner_name = ENV['RUNNER']
+  if runner = CACHE_RUNNERS.find{ |r| r.name == runner_name }
+    run(runner.new(RUNS))
+  else
+    puts "Couldn't find cache runner #{runner_name.inspect}"
+    exit 1
+  end
+else
+  CACHE_RUNNERS.each do |runner|
+    run(runner.new(RUNS))
+  end
+end
 
-run(FetchHitRunner.new(RUNS))
-
-run(FetchMissRunner.new(RUNS))
-
-run(DoubleFetchHitRunner.new(RUNS))
-
-run(DoubleFetchMissRunner.new(RUNS))

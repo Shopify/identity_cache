@@ -33,6 +33,10 @@ commands:
     desc: 'Run the identity cache CPU benchmark'
     run: bundle exec rake benchmark:cpu
 
+  benchmark-ext:
+    desc: 'Run the identity cache externals benchmark'
+    run: bundle exec rake benchmark:externals
+
   profile:
     desc: 'Profile IDC code'
     run: bundle exec rake profile:run
