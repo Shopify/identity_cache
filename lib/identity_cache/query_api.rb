@@ -131,6 +131,7 @@ module IdentityCache
 
           coder[:associations].each {|name, value| set_embedded_association(record, name, value) } if coder.has_key?(:associations)
           coder[:association_ids].each {|name, ids| record.instance_variable_set(:"@#{record.class.cached_has_manys[name][:ids_variable_name]}", ids) } if coder.has_key?(:association_ids)
+          record.readonly! if IdentityCache.fetch_read_only_records
           record
         end
       end
@@ -224,7 +225,10 @@ module IdentityCache
 
       def resolve_cache_miss(id)
         record = self.includes(cache_fetch_includes).reorder(nil).where(primary_key => id).first
-        preload_id_embedded_associations([record]) if record
+        if record
+          preload_id_embedded_associations([record])
+          record.readonly! if IdentityCache.fetch_read_only_records && IdentityCache.should_use_cache?
+        end
         record
       end
 
@@ -301,6 +305,7 @@ module IdentityCache
         @id_column ||= columns.detect {|c| c.name == primary_key}
         ids = ids.map{ |id| connection.type_cast(id, @id_column) }
         records = where(primary_key => ids).includes(cache_fetch_includes).to_a
+        records.each(&:readonly!) if IdentityCache.fetch_read_only_records && IdentityCache.should_use_cache?
         preload_id_embedded_associations(records)
         records_by_id = records.index_by(&:id)
         ids.map{ |id| records_by_id[id] }
@@ -418,7 +423,12 @@ module IdentityCache
         assoc = if instance_variable_defined?(ivar_full_name)
           instance_variable_get(ivar_full_name)
         else
-          instance_variable_set(ivar_full_name, send(association_name))
+          cached_assoc = if IdentityCache.fetch_read_only_records
+            load_and_readonlyify(association_name)
+          else
+            send(association_name)
+          end
+          instance_variable_set(ivar_full_name, cached_assoc)
         end
 
         assoc.is_a?(ActiveRecord::Associations::CollectionAssociation) ? assoc.reader : assoc
@@ -471,6 +481,16 @@ module IdentityCache
     def was_new_record? # :nodoc:
       pk = self.class.primary_key
       !destroyed? && transaction_changed_attributes.has_key?(pk) && transaction_changed_attributes[pk].nil?
+    end
+
+    def load_and_readonlyify(association_name)
+      record_or_records = send(association_name)
+
+      if self.class.reflect_on_association(association_name).collection?
+        record_or_records.map { |p| p.dup.tap(&:readonly!) }
+      else
+        record_or_records.dup.tap(&:readonly!) if record_or_records
+      end
     end
   end
 end

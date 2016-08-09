@@ -60,4 +60,28 @@ class NormalizedBelongsToTest < IdentityCache::TestCase
 
     assert_equal @parent_record, PolymorphicRecord.first.fetch_owner
   end
+
+  def test_returned_record_should_be_readonly_on_cache_hit
+    IdentityCache.with_fetch_read_only_records do
+      @record.fetch_item # warm cache
+      assert @record.fetch_item.readonly?
+      refute @record.item.readonly?
+    end
+  end
+
+  def test_returned_record_should_be_readonly_on_cache_miss
+    IdentityCache.with_fetch_read_only_records do
+      assert @record.fetch_item.readonly?
+      refute @record.item.readonly?
+    end
+  end
+
+  def test_returned_record_with_open_transactions_should_not_be_readonly
+    IdentityCache.with_fetch_read_only_records do
+      Item.transaction do
+        refute IdentityCache.should_use_cache?
+        refute @record.fetch_item.readonly?
+      end
+    end
+  end
 end

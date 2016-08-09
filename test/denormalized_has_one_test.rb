@@ -120,4 +120,40 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
       StiRecordTypeA.cache_has_one :polymorphic_record, :inverse_name => :owner, :embed => true
     end
   end
+
+  def test_returned_record_should_be_readonly_on_cache_hit
+    IdentityCache.with_fetch_read_only_records do
+      Item.fetch_by_title('foo')
+      record_from_cache_hit = Item.fetch_by_title('foo')
+      assert record_from_cache_hit.fetch_associated.readonly?
+      refute record_from_cache_hit.associated.readonly?
+    end
+  end
+
+  def test_returned_record_should_be_readonly_on_cache_miss
+    IdentityCache.with_fetch_read_only_records do
+      assert IdentityCache.should_use_cache?
+      record_from_cache_miss = Item.fetch_by_title('foo')
+      assert record_from_cache_miss.fetch_associated.readonly?
+    end
+  end
+
+  def test_db_returned_record_should_never_be_readonly
+    IdentityCache.with_fetch_read_only_records do
+      record_from_db = Item.find_by_title('foo')
+      uncached_record = record_from_db.associated
+      refute uncached_record.readonly?
+      record_from_db.fetch_associated
+      refute uncached_record.readonly?
+    end
+  end
+
+  def test_returned_record_with_open_transactions_should_not_be_readonly
+    IdentityCache.with_fetch_read_only_records do
+      Item.transaction do
+        refute IdentityCache.should_use_cache?
+        refute Item.fetch_by_title('foo').fetch_associated.readonly?
+      end
+    end
+  end
 end

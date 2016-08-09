@@ -212,4 +212,36 @@ class FetchTest < IdentityCache::TestCase
       StiRecordTypeA.fetch(1)
     end
   end
+
+  def test_returned_records_are_readonly_on_cache_hit
+    IdentityCache.with_fetch_read_only_records do
+      IdentityCache.cache.expects(:fetch).with(@blob_key).returns(@cached_value)
+      assert Item.fetch(1).readonly?
+    end
+  end
+
+  def test_returned_records_are_readonly_on_cache_miss
+    IdentityCache.with_fetch_read_only_records do
+      fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
+      Item.expects(:resolve_cache_miss).with(1).once.returns(@record)
+
+      assert Item.exists_with_identity_cache?(1)
+      assert fetch.has_been_called_with?(@blob_key)
+      assert Item.fetch(1).readonly?
+    end
+  end
+
+  def test_returned_records_are_not_readonly_with_open_transactions
+    IdentityCache.with_fetch_read_only_records do
+
+      @record.transaction do
+        fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
+        Item.expects(:resolve_cache_miss).with(1).once.returns(@record)
+
+        refute IdentityCache.should_use_cache?
+        refute fetch.has_been_called_with?(@blob_key)
+        refute Item.fetch(1).readonly?, "Fetched item was read-only"
+      end
+    end
+  end
 end
