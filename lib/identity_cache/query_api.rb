@@ -435,7 +435,7 @@ module IdentityCache
       else
         send(association_name.to_sym)
       end
-      assoc = assoc.to_ary if assoc.respond_to?(:to_ary) && !IdentityCache.fetch_returns_relation
+      assoc = assoc.to_ary if assoc.respond_to?(:to_ary)
       assoc
     end
 
