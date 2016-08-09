@@ -160,7 +160,7 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     IdentityCache.with_fetch_read_only_records do
       record_from_db = Item.find(@record.id)
       uncached_records = record_from_db.associated_records
-      refute uncached_records.all?(&:readonly?)
+      assert uncached_records.none?(&:readonly?)
       assert record_from_db.fetch_associated_records.all?(&:readonly?)
       assert record_from_db.associated_records.none?(&:readonly?)
     end
@@ -170,7 +170,7 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     IdentityCache.with_fetch_read_only_records do
       Item.transaction do
         assert_equal IdentityCache.should_use_cache?, false
-        refute Item.fetch(@record.id).fetch_associated_records.all?(&:readonly?)
+        assert Item.fetch(@record.id).fetch_associated_records.none?(&:readonly?)
       end
     end
   end

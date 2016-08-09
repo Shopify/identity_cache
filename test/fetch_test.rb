@@ -237,7 +237,9 @@ class FetchTest < IdentityCache::TestCase
       @record.transaction do
         fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
         Item.expects(:resolve_cache_miss).with(1).once.returns(@record)
+
         refute IdentityCache.should_use_cache?
+        refute fetch.has_been_called_with?(@blob_key)
         refute Item.fetch(1).readonly?, "Fetched item was read-only"
       end
     end

@@ -260,7 +260,7 @@ class FetchMultiTest < IdentityCache::TestCase
       Item.transaction do
         assert_equal IdentityCache.should_use_cache?, false
         IdentityCache.cache.expects(:fetch_multi).never
-        refute Item.fetch_multi(@bob.id, @joe.id, @fred.id).all?(&:readonly?)
+        assert Item.fetch_multi(@bob.id, @joe.id, @fred.id).none?(&:readonly?)
       end
     end
   end
