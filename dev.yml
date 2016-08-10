@@ -52,3 +52,6 @@ railgun:
     postgresql: 5432
     memcached: 11211
 
+packages:
+  - git@github.com:Shopify/dev-shopify.git
+
