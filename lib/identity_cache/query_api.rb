@@ -152,16 +152,17 @@ module IdentityCache
         value = if IdentityCache.unmap_cached_nil_for(coder_or_array).nil?
           nil
         elsif (reflection = record.class.reflect_on_association(association_name)).collection?
-          association = reflection.association_class.new(record, reflection)
-          association.target = coder_or_array.map {|e| record_from_coder(e) }
+          associated_records = coder_or_array.map {|e| record_from_coder(e) }
 
-          set_inverse_of_cached_has_many(record, reflection, association.target)
+          set_inverse_of_cached_has_many(record, reflection, associated_records)
 
           unless IdentityCache.never_set_inverse_association
+            association = reflection.association_class.new(record, reflection)
+            association.target = associated_records
             association.target.each {|e| association.set_inverse_instance(e) }
           end
 
-          association
+          associated_records
         else
           record_from_coder(coder_or_array)
         end
@@ -417,26 +418,21 @@ module IdentityCache
     private
 
     def fetch_recursively_cached_association(ivar_name, association_name) # :nodoc:
-      assoc = if IdentityCache.should_use_cache?
+      if IdentityCache.should_use_cache?
         ivar_full_name = :"@#{ivar_name}"
 
-        assoc = if instance_variable_defined?(ivar_full_name)
+        if instance_variable_defined?(ivar_full_name)
           instance_variable_get(ivar_full_name)
         else
-          cached_assoc = if IdentityCache.fetch_read_only_records
-            load_and_readonlyify(association_name)
-          else
-            send(association_name)
+          cached_assoc = association(association_name).load_target
+          if IdentityCache.fetch_read_only_records
+            cached_assoc = readonly_copy(cached_assoc)
           end
           instance_variable_set(ivar_full_name, cached_assoc)
         end
-
-        assoc.is_a?(ActiveRecord::Associations::CollectionAssociation) ? assoc.reader : assoc
       else
-        send(association_name.to_sym)
+        association(association_name).load_target
       end
-      assoc = assoc.to_ary if assoc.respond_to?(:to_ary)
-      assoc
     end
 
     def expire_primary_index # :nodoc:
@@ -483,13 +479,17 @@ module IdentityCache
       !destroyed? && transaction_changed_attributes.has_key?(pk) && transaction_changed_attributes[pk].nil?
     end
 
-    def load_and_readonlyify(association_name)
-      record_or_records = send(association_name)
+    def readonly_record_copy(record)
+      record = record.dup
+      record.readonly!
+      record
+    end
 
-      if self.class.reflect_on_association(association_name).collection?
-        record_or_records.map { |p| p.dup.tap(&:readonly!) }
-      else
-        record_or_records.dup.tap(&:readonly!) if record_or_records
+    def readonly_copy(record_or_records)
+      if record_or_records.respond_to?(:to_ary)
+        record_or_records.map { |record| readonly_record_copy(record) }
+      elsif record_or_records
+        readonly_record_copy(record_or_records)
       end
     end
   end
