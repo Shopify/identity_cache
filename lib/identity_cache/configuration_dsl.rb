@@ -236,11 +236,7 @@ module IdentityCache
             if IdentityCache.should_use_cache? && !#{association}.loaded?
               @#{options[:records_variable_name]} ||= #{options[:association_reflection].klass}.fetch_multi(#{options[:cached_ids_name]})
             else
-              if IdentityCache.fetch_returns_relation
-                #{association}
-              else
-                #{association}.to_a
-              end
+              #{association}.to_a
             end
           end
 

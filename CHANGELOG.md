@@ -1,5 +1,9 @@
 # IdentityCache changelog
 
+#### 0.4.0
+
+- Return an array from fetched association to prevent chaining. Up to now, a relation was returned by default. (#287)
+
 #### 0.3.2
 
 - Deprecate returning non read-only records when cache is used. Set IdentityCache.fetch_readonly_records to true to avoid this. (#282)
