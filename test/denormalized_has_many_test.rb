@@ -21,7 +21,7 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     expected = @record.associated_records
     record_from_db = Item.find(@record.id)
 
-    Item.any_instance.expects(:associated_records).returns(expected)
+    Item.any_instance.expects(:association).with(:associated_records).returns(expected)
 
     assert_equal @record, record_from_db
     assert_equal expected, record_from_db.fetch_associated_records
@@ -42,7 +42,7 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     assert_equal @record, record_from_cache_hit
 
     expected = @record.associated_records
-    Item.any_instance.expects(:associated_records).never
+    Item.any_instance.expects(:association).with(:associated_records).never
     assert_equal expected, record_from_cache_hit.fetch_associated_records
   end
 
