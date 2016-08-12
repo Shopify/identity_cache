@@ -486,7 +486,7 @@ module IdentityCache
     end
 
     def readonly_copy(record_or_records)
-      if record_or_records.respond_to?(:to_ary)
+      if record_or_records.is_a?(Array)
         record_or_records.map { |record| readonly_record_copy(record) }
       elsif record_or_records
         readonly_record_copy(record_or_records)
