@@ -244,4 +244,15 @@ class FetchTest < IdentityCache::TestCase
       end
     end
   end
+
+  def test_respects_should_use_cache_on_record
+    @record.save
+    Item.stubs(:should_use_cache?).returns(false)
+
+    assert_memcache_operations(0) do
+      assert_queries(1) do
+        Item.fetch_by_id(@record.id)
+      end
+    end
+  end
 end

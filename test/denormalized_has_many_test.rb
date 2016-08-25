@@ -42,7 +42,11 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     assert_equal @record, record_from_cache_hit
 
     expected = @record.associated_records
-    Item.any_instance.expects(:association).with(:associated_records).never
+
+    assoc = mock()
+    assoc.expects(:klass).returns(Item)
+    Item.any_instance.expects(:association).with(:associated_records).returns(assoc).once
+
     assert_equal expected, record_from_cache_hit.fetch_associated_records
   end
 
@@ -163,6 +167,17 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
       Item.transaction do
         assert_equal IdentityCache.should_use_cache?, false
         assert Item.fetch(@record.id).fetch_associated_records.none?(&:readonly?)
+      end
+    end
+  end
+
+  def test_respect_should_use_cache_from_embedded_records
+    Item.fetch(@record.id)
+    AssociatedRecord.stubs(:should_use_cache?).returns(false)
+
+    assert_memcache_operations(1) do
+      assert_queries(1) do
+        Item.fetch(@record.id).fetch_associated_records
       end
     end
   end

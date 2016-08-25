@@ -8,6 +8,7 @@ require 'identity_cache/belongs_to_caching'
 require 'identity_cache/cache_key_generation'
 require 'identity_cache/configuration_dsl'
 require 'identity_cache/parent_model_expiration'
+require 'identity_cache/should_use_cache'
 require 'identity_cache/query_api'
 require "identity_cache/cache_hash"
 require "identity_cache/cache_invalidation"
@@ -63,6 +64,7 @@ module IdentityCache
       base.send(:include, IdentityCache::ConfigurationDSL)
       base.send(:include, IdentityCache::QueryAPI)
       base.send(:include, IdentityCache::CacheInvalidation)
+      base.send(:include, IdentityCache::ShouldUseCache)
     end
 
     # Sets the cache adaptor IdentityCache will be using

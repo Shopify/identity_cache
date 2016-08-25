@@ -21,7 +21,7 @@ module IdentityCache
         raise_if_scoped
         raise NotImplementedError, "fetching needs the primary index enabled" unless primary_cache_index_enabled
         return unless id
-        record = if IdentityCache.should_use_cache?
+        record = if should_use_cache?
           require_if_necessary do
             object = nil
             coder = IdentityCache.fetch(rails_cache_key(id)){ coder_from_record(object = resolve_cache_miss(id)) }
@@ -53,7 +53,7 @@ module IdentityCache
         raise NotImplementedError, "fetching needs the primary index enabled" unless primary_cache_index_enabled
         options = ids.extract_options!
         ids.flatten!(1)
-        records = if IdentityCache.should_use_cache?
+        records = if should_use_cache?
           require_if_necessary do
             cache_keys = ids.map {|id| rails_cache_key(id) }
             key_to_id_map = Hash[ cache_keys.zip(ids) ]
@@ -79,10 +79,6 @@ module IdentityCache
       def prefetch_associations(associations, records)
         records = records.to_a
         return if records.empty?
-        unless IdentityCache.should_use_cache?
-          ActiveRecord::Associations::Preloader.new.preload(records, associations)
-          return
-        end
 
         case associations
         when nil
@@ -228,7 +224,7 @@ module IdentityCache
         record = self.includes(cache_fetch_includes).reorder(nil).where(primary_key => id).first
         if record
           preload_id_embedded_associations([record])
-          record.readonly! if IdentityCache.fetch_read_only_records && IdentityCache.should_use_cache?
+          record.readonly! if IdentityCache.fetch_read_only_records && should_use_cache?
         end
         record
       end
@@ -306,7 +302,7 @@ module IdentityCache
         @id_column ||= columns.detect {|c| c.name == primary_key}
         ids = ids.map{ |id| connection.type_cast(id, @id_column) }
         records = where(primary_key => ids).includes(cache_fetch_includes).to_a
-        records.each(&:readonly!) if IdentityCache.fetch_read_only_records && IdentityCache.should_use_cache?
+        records.each(&:readonly!) if IdentityCache.fetch_read_only_records && should_use_cache?
         preload_id_embedded_associations(records)
         records_by_id = records.index_by(&:id)
         ids.map{ |id| records_by_id[id] }
@@ -346,6 +342,11 @@ module IdentityCache
       end
 
       def prefetch_one_association(association, records)
+        unless records.first.class.should_use_cache?
+          ActiveRecord::Associations::Preloader.new.preload(records, association)
+          return
+        end
+
         case
         when details = cached_has_manys[association]
           prefetch_embedded_association(records, association, details)
@@ -418,20 +419,21 @@ module IdentityCache
     private
 
     def fetch_recursively_cached_association(ivar_name, association_name) # :nodoc:
-      if IdentityCache.should_use_cache?
-        ivar_full_name = :"@#{ivar_name}"
+      ivar_full_name = :"@#{ivar_name}"
+      assoc = association(association_name)
 
+      if assoc.klass.should_use_cache?
         if instance_variable_defined?(ivar_full_name)
           instance_variable_get(ivar_full_name)
         else
-          cached_assoc = association(association_name).load_target
+          cached_assoc = assoc.load_target
           if IdentityCache.fetch_read_only_records
             cached_assoc = readonly_copy(cached_assoc)
           end
           instance_variable_set(ivar_full_name, cached_assoc)
         end
       else
-        association(association_name).load_target
+        assoc.load_target
       end
     end
 

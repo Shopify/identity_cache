@@ -233,7 +233,8 @@ module IdentityCache
           end
 
           def #{options[:cached_accessor_name]}
-            if IdentityCache.should_use_cache? && !#{association}.loaded?
+            association_klass = association(:#{association}).klass
+            if association_klass.should_use_cache? && !#{association}.loaded?
               @#{options[:records_variable_name]} ||= #{options[:association_reflection].klass}.fetch_multi(#{options[:cached_ids_name]})
             else
               #{association}.to_a
@@ -251,13 +252,22 @@ module IdentityCache
 
       def attribute_dynamic_fetcher(attribute, fields, values, unique_index) #:nodoc:
         raise_if_scoped
-        cache_key = rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, values, unique_index)
-        IdentityCache.fetch(cache_key) do
-          query = reorder(nil).where(Hash[fields.zip(values)])
-          query = query.limit(1) if unique_index
-          results = query.pluck(attribute)
-          unique_index ? results.first : results
+
+        if should_use_cache?
+          cache_key = rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, values, unique_index)
+          IdentityCache.fetch(cache_key) do
+            dynamic_attribute_cache_miss(attribute, fields, values, unique_index)
+          end
+        else
+          dynamic_attribute_cache_miss(attribute, fields, values, unique_index)
         end
+      end
+
+      def dynamic_attribute_cache_miss(attribute, fields, values, unique_index)
+        query = reorder(nil).where(Hash[fields.zip(values)])
+        query = query.limit(1) if unique_index
+        results = query.pluck(attribute)
+        unique_index ? results.first : results
       end
 
       def add_parent_expiry_hook(options)
@@ -265,6 +275,7 @@ module IdentityCache
 
         child_class.send(:include, ArTransactionChanges) unless child_class.include?(ArTransactionChanges)
         child_class.send(:include, ParentModelExpiration) unless child_class.include?(ParentModelExpiration)
+        child_class.send(:include, ShouldUseCache) unless child_class.respond_to?(:should_use_cache?)
 
         child_class.parent_expiration_entries[options[:inverse_name]] << [self, options[:only_on_foreign_key_change]]
 
