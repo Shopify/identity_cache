@@ -480,7 +480,7 @@ module IdentityCache
     end
 
     def readonly_record_copy(record)
-      record = record.dup
+      record = record.clone
       record.readonly!
       record
     end
