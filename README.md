@@ -19,7 +19,7 @@ And then execute:
     $ bundle
 
 
-Add the following to your environment/production.rb:
+Add the following to all your environment/*.rb files (production/development/test):
 
 ```ruby
 config.identity_cache_store = :mem_cache_store, Memcached::Rails.new(:servers => ["mem1.server.com"])
