@@ -217,4 +217,15 @@ class NormalizedHasManyTest < IdentityCache::TestCase
       assert record_from_cache_miss.fetch_associated_records.all?(&:readonly?)
     end
   end
+
+  def test_respects_should_use_cache_on_association
+    @record.reload
+    AssociatedRecord.stubs(:should_use_cache?).returns(false)
+
+    assert_queries(1) do
+      assert_memcache_operations(0) do
+        @record.fetch_associated_records
+      end
+    end
+  end
 end

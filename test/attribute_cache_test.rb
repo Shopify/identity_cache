@@ -97,4 +97,14 @@ class AttributeCacheTest < IdentityCache::TestCase
       StiRecordTypeA.cache_attribute :name
     end
   end
+
+  def test_cache_attribute_respects_should_use_cache
+    AssociatedRecord.stubs(:should_use_cache?).returns(false)
+
+    assert_queries(1) do
+      assert_memcache_operations(0) do
+        AssociatedRecord.fetch_name_by_id(@record.id)
+      end
+    end
+  end
 end

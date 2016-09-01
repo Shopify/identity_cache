@@ -84,4 +84,15 @@ class NormalizedBelongsToTest < IdentityCache::TestCase
       end
     end
   end
+
+  def test_respects_should_use_cache_on_parent
+    @record.reload
+    @parent_record.class.stubs(:should_use_cache?).returns(false)
+
+    assert_queries(1) do
+      assert_memcache_operations(0) do
+        @record.fetch_item
+      end
+    end
+  end
 end
