@@ -105,8 +105,9 @@ module IdentityCache
     end
 
     def should_use_cache? # :nodoc:
-      pool = ActiveRecord::Base.connection_pool
-      !pool.active_connection? || pool.connection.open_transactions == 0
+      ActiveRecord::Base.connection_handler.connection_pool_list.all? do |pool|
+        !pool.active_connection? || pool.connection.open_transactions == 0
+      end
     end
 
     # Cache retrieval and miss resolver primitive; given a key it will try to
