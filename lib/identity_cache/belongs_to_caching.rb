@@ -43,7 +43,7 @@ module IdentityCache
               end
             else
               if IdentityCache.fetch_read_only_records && association_klass.should_use_cache?
-                load_and_readonlyify(:#{association})
+                readonly_copy(association(:#{association}).load_target)
               else
                 #{association}
               end

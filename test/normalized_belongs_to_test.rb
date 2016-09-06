@@ -76,6 +76,15 @@ class NormalizedBelongsToTest < IdentityCache::TestCase
     end
   end
 
+  def test_db_returned_record_should_never_be_readonly
+    IdentityCache.with_fetch_read_only_records do
+      uncached_record = @record.item
+      refute uncached_record.readonly?
+      @record.fetch_item
+      refute uncached_record.readonly?
+    end
+  end
+
   def test_returned_record_with_open_transactions_should_not_be_readonly
     IdentityCache.with_fetch_read_only_records do
       Item.transaction do
