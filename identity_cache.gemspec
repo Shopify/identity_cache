@@ -26,9 +26,9 @@ Gem::Specification.new do |gem|
 
   if RUBY_PLATFORM == 'java'
     gem.add_development_dependency('jruby-memcached', '~> 0.5.1')
-    gem.add_development_dependency 'jruby-openssl'
-    gem.add_development_dependency 'activerecord-jdbcmysql-adapter'
-    gem.add_development_dependency 'jdbc-mysql'
+    gem.add_development_dependency('jruby-openssl')
+    gem.add_development_dependency('activerecord-jdbcmysql-adapter')
+    gem.add_development_dependency('jdbc-mysql')
   else
     gem.add_development_dependency('memcached', '~> 1.8.0')
     gem.add_development_dependency('cityhash', '0.6.0')
