@@ -18,7 +18,6 @@ Gem::Specification.new do |gem|
   gem.add_dependency('ar_transaction_changes', '~> 1.0')
   gem.add_dependency('activerecord', '>= 4.2.0')
 
-  gem.add_development_dependency('memcached', '~> 1.8.0')
   gem.add_development_dependency('memcached_store', '~> 0.12.6')
   gem.add_development_dependency('rake')
   gem.add_development_dependency('mocha', '0.14.0')
@@ -26,8 +25,12 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency('minitest', '>= 2.11.0')
 
   if RUBY_PLATFORM == 'java'
-    raise NotImplementedError
+    gem.add_development_dependency('jruby-memcached', '~> 0.5.1')
+    gem.add_development_dependency 'jruby-openssl'
+    gem.add_development_dependency 'activerecord-jdbcmysql-adapter'
+    gem.add_development_dependency 'jdbc-mysql'
   else
+    gem.add_development_dependency('memcached', '~> 1.8.0')
     gem.add_development_dependency('cityhash', '0.6.0')
     gem.add_development_dependency('mysql2')
     gem.add_development_dependency('pg')
