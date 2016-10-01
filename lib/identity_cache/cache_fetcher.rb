@@ -11,7 +11,9 @@ module IdentityCache
     end
 
     def delete(key)
-      @cache_backend.write(key, IdentityCache::DELETED, :expires_in => IdentityCache::DELETED_TTL.seconds)
+      result = @cache_backend.write(key, IdentityCache::DELETED, expires_in: IdentityCache::DELETED_TTL.seconds)
+      IdentityCache.logger.debug { "[IdentityCache] delete #{ result ? 'recorded' : 'failed' } for #{key}" }
+      result
     end
 
     def clear

@@ -11,7 +11,9 @@ module IdentityCache
     end
 
     def delete(key)
-      @cache_backend.delete(key)
+      result = @cache_backend.delete(key)
+      IdentityCache.logger.debug { "[IdentityCache] delete for #{key}" }
+      result
     end
 
     def clear
