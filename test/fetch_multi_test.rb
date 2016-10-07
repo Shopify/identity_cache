@@ -134,24 +134,28 @@ class FetchMultiTest < IdentityCache::TestCase
   end
 
   def test_fetch_multi_with_open_transactions_hits_the_database
-    Item.connection.expects(:open_transactions).at_least_once.returns(1)
-    fetcher.expects(:fetch_multi).never
-    assert_equal [@bob, @joe, @fred], Item.fetch_multi(@bob.id, @joe.id, @fred.id)
+    Item.transaction do
+      fetcher.expects(:fetch_multi).never
+      assert_equal [@bob, @joe, @fred], Item.fetch_multi(@bob.id, @joe.id, @fred.id)
+    end
   end
 
   def test_fetch_multi_with_open_transactions_returns_results_in_the_order_of_the_passed_ids
-    Item.connection.expects(:open_transactions).at_least_once.returns(1)
-    assert_equal [@joe, @bob, @fred], Item.fetch_multi(@joe.id, @bob.id, @fred.id)
+    Item.transaction do
+      assert_equal [@joe, @bob, @fred], Item.fetch_multi(@joe.id, @bob.id, @fred.id)
+    end
   end
 
   def test_fetch_multi_with_open_transactions_should_compacts_returned_array
-    Item.connection.expects(:open_transactions).at_least_once.returns(1)
-    assert_equal [@joe, @fred], Item.fetch_multi(@joe.id, 0, @fred.id)
+    Item.transaction do
+      assert_equal [@joe, @fred], Item.fetch_multi(@joe.id, 0, @fred.id)
+    end
   end
 
   def test_fetch_multi_with_duplicate_ids_in_transaction_returns_results_in_the_order_of_the_passed_ids
-    Item.connection.expects(:open_transactions).at_least_once.returns(1)
-    assert_equal [@joe, @bob, @joe], Item.fetch_multi(@joe.id, @bob.id, @joe.id)
+    Item.transaction do
+      assert_equal [@joe, @bob, @joe], Item.fetch_multi(@joe.id, @bob.id, @joe.id)
+    end
   end
 
   def test_find_batch_coerces_ids_to_primary_key_type
