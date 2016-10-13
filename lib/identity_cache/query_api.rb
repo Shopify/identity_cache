@@ -299,6 +299,8 @@ module IdentityCache
       end
 
       def find_batch(ids)
+        return [] if ids.empty?
+
         @id_column ||= columns.detect {|c| c.name == primary_key}
         ids = ids.map{ |id| connection.type_cast(id, @id_column) }
         records = where(primary_key => ids).includes(cache_fetch_includes).to_a

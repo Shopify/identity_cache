@@ -265,6 +265,16 @@ class FetchMultiTest < IdentityCache::TestCase
     end
   end
 
+  def test_fetch_multi_with_no_keys_does_not_query_when_cache_is_disabled
+    Item.stubs(:should_use_cache?).returns(false)
+
+    assert_queries(0) do
+      assert_memcache_operations(0) do
+        Item.fetch_multi
+      end
+    end
+  end
+
   private
 
   def populate_only_fred
