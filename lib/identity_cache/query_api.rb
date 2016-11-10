@@ -346,7 +346,7 @@ module IdentityCache
       def prefetch_one_association(association, records)
         unless records.first.class.should_use_cache?
           ActiveRecord::Associations::Preloader.new.preload(records, association)
-          return
+          return records.map(&association)
         end
 
         case
