@@ -234,10 +234,14 @@ module IdentityCache
 
           def #{options[:cached_accessor_name]}
             association_klass = association(:#{association}).klass
-            if association_klass.should_use_cache? && !#{association}.loaded?
-              @#{options[:records_variable_name]} ||= #{options[:association_reflection].klass}.fetch_multi(#{options[:cached_ids_name]})
-            else
+            if #{association}.loaded?
               #{association}.to_a
+            elsif instance_variable_defined?(:@#{options[:records_variable_name]})
+              @#{options[:records_variable_name]}
+            elsif association_klass.should_use_cache?
+              @#{options[:records_variable_name]} = #{options[:association_reflection].klass}.fetch_multi(#{options[:cached_ids_name]})
+            else
+               #{association}.to_a
             end
           end
 

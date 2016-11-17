@@ -35,18 +35,19 @@ module IdentityCache
         self.class_eval(<<-CODE, __FILE__, __LINE__ + 1)
           def #{options[:cached_accessor_name]}
             association_klass = association(:#{association}).klass
-            if association_klass.should_use_cache? && #{foreign_key}.present? && !association(:#{association}).loaded?
-              if instance_variable_defined?(:@#{options[:records_variable_name]})
-                @#{options[:records_variable_name]}
-              else
-                @#{options[:records_variable_name]} = association_klass.fetch_by_id(#{foreign_key})
-              end
-            else
-              if IdentityCache.fetch_read_only_records && association_klass.should_use_cache?
+
+            if !#{foreign_key}.present? || association(:#{association}).loaded?
+              if IdentityCache.fetch_read_only_records
                 readonly_copy(association(:#{association}).load_target)
               else
                 #{association}
               end
+            elsif instance_variable_defined?(:@#{options[:records_variable_name]})
+              @#{options[:records_variable_name]}
+            elsif association_klass.should_use_cache?
+              @#{options[:records_variable_name]} = association_klass.fetch_by_id(#{foreign_key})
+            else
+              #{association}
             end
           end
 
