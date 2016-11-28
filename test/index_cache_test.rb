@@ -153,6 +153,13 @@ class IndexCacheTest < IdentityCache::TestCase
     assert_equal 123, KeyedRecord.fetch_by_value('a').id
   end
 
+  def test_cache_index_raises_when_range_error
+    Item.cache_index :title, :id, unique: true
+    assert_raises(ActiveRecord::RecordNotFound) do
+      assert_equal @record.id, Item.fetch_by_title_and_id!("title", "1111111111111111111111111111111")
+    end
+  end
+
   private
 
   def cache_key(unique: false)
