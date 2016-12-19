@@ -14,15 +14,15 @@ DatabaseConnection.setup
 ActiveSupport::Cache::Store.instrument = true if ActiveSupport.version < Gem::Version.new("4.2.0")
 
 # This patches AR::MemcacheStore to notify AS::Notifications upon read_multis like the rest of rails does
-class ActiveSupport::Cache::MemcachedStore
-  def read_multi_with_instrumentation(*args, &block)
-    instrument("read_multi", "MULTI", {:keys => args}) do
-      read_multi_without_instrumentation(*args, &block)
+module MemcachedStoreInstrumentation
+  def read_multi(*args, &block)
+    instrument('read_multi', 'MULTI', keys: args) do
+      super(*args, &block)
     end
   end
-
-  alias_method_chain :read_multi, :instrumentation
 end
+ActiveSupport::Cache::MemcachedStore.prepend(MemcachedStoreInstrumentation)
+
 
 MiniTest::Test = MiniTest::Unit::TestCase unless defined?(MiniTest::Test)
 class IdentityCache::TestCase < Minitest::Test
@@ -30,7 +30,7 @@ class IdentityCache::TestCase < Minitest::Test
   attr_reader :backend
 
   def setup
-    if ActiveRecord::Base.respond_to?(:raise_in_transactional_callbacks=)
+    if ActiveRecord.gem_version < Gem::Version.new('5') && ActiveRecord::Base.respond_to?(:raise_in_transactional_callbacks=)
       ActiveRecord::Base.raise_in_transactional_callbacks = true
     end
 

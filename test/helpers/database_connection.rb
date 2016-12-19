@@ -18,7 +18,15 @@ module DatabaseConnection
 
   def self.drop_tables
     TABLES.keys.each do |table|
-      ActiveRecord::Base.connection.drop_table(table) if ActiveRecord::Base.connection.table_exists?(table)
+      ActiveRecord::Base.connection.drop_table(table) if table_exists?(table)
+    end
+  end
+
+  def self.table_exists?(table)
+    if ActiveRecord::Base.connection.respond_to?(:data_source_exists?)
+      ActiveRecord::Base.connection.data_source_exists?(table)
+    else
+      ActiveRecord::Base.connection.table_exists?(table)
     end
   end
 

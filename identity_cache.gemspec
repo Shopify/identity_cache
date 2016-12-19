@@ -19,7 +19,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency('activerecord', '>= 4.2.0')
 
   gem.add_development_dependency('memcached', '~> 1.8.0')
-  gem.add_development_dependency('memcached_store', '~> 0.12.6')
+  gem.add_development_dependency('memcached_store', '~> 1.0.0')
   gem.add_development_dependency('rake')
   gem.add_development_dependency('mocha', '0.14.0')
   gem.add_development_dependency('spy')

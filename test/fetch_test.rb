@@ -17,7 +17,7 @@ class FetchTest < IdentityCache::TestCase
   end
 
   def test_fetch_with_garbage_input
-    assert_equal nil, Item.fetch_by_id('garbage')
+    assert_nil Item.fetch_by_id('garbage')
   end
 
   def test_fetch_cache_hit
@@ -110,7 +110,7 @@ class FetchTest < IdentityCache::TestCase
     nonexistent_record_id = 10
     fetcher.expects(:add).with(@blob_key + '0', IdentityCache::CACHED_NIL)
 
-    assert_equal nil, Item.fetch_by_id(nonexistent_record_id)
+    assert_nil Item.fetch_by_id(nonexistent_record_id)
   end
 
   def test_fetch_not_found_should_raise
@@ -123,7 +123,7 @@ class FetchTest < IdentityCache::TestCase
   def test_cached_nil_expiry_on_record_creation
     key = @record.primary_cache_index_key
 
-    assert_equal nil, Item.fetch_by_id(@record.id)
+    assert_nil Item.fetch_by_id(@record.id)
     assert_equal IdentityCache::CACHED_NIL, backend.read(key)
 
     @record.save!
@@ -162,10 +162,10 @@ class FetchTest < IdentityCache::TestCase
     Item.connection.expects(:exec_query).once.returns(ActiveRecord::Result.new([], []))
     add = Spy.on(fetcher, :add).and_call_through
     fetch = Spy.on(fetcher, :fetch).and_call_through
-    assert_equal nil, Item.fetch_by_title('bob') # exec_query => nil
+    assert_nil Item.fetch_by_title('bob') # exec_query => nil
 
-    assert_equal nil, Item.fetch_by_title('bob') # returns cached nil
-    assert_equal nil, Item.fetch_by_title('bob') # returns cached nil
+    assert_nil Item.fetch_by_title('bob') # returns cached nil
+    assert_nil Item.fetch_by_title('bob') # returns cached nil
 
     assert add.has_been_called_with?(@index_key, IdentityCache::CACHED_NIL)
     assert_equal 3, fetch.calls.length

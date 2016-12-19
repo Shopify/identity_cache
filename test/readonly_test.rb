@@ -35,7 +35,7 @@ class ReadonlyTest < IdentityCache::TestCase
   def test_clear_should_update_cache
     backend.write(@key, @value)
     fetcher.clear
-    assert_equal nil, backend.read(@key)
+    assert_nil backend.read(@key)
   end
 
   def test_fetch_should_not_update_cache
