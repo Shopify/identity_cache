@@ -56,9 +56,7 @@ module IdentityCache
     self.fetch_read_only_records = version >= Gem::Version.new("0.5")
 
     def included(base) #:nodoc:
-      raise AlreadyIncludedError if base.include?(IdentityCache::ConfigurationDSL)
-
-      base.send(:include, ArTransactionChanges) unless base.include?(ArTransactionChanges)
+      base.send(:include, ArTransactionChanges)
       base.send(:include, IdentityCache::BelongsToCaching)
       base.send(:include, IdentityCache::CacheKeyGeneration)
       base.send(:include, IdentityCache::ConfigurationDSL)

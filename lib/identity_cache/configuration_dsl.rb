@@ -14,6 +14,41 @@ module IdentityCache
       base.cached_has_ones = {}
       base.cache_indexes = []
       base.primary_cache_index_enabled = true
+      ConfigurationDSL.install_parent_expiry_hooks(base)
+    end
+
+    class << self
+      attr_reader :hooks
+    end
+    @hooks = {}
+
+    def self.add_parent_expiry_hook(association_reflection, options)
+      child_class = association_reflection.klass
+
+      raise InverseAssociationError unless options[:inverse_name] || association_reflection.inverse_of
+      options[:inverse_name] ||= association_reflection.inverse_of.name
+      unless options[:embed] == true || child_class.include?(IdentityCache)
+        raise UnsupportedAssociationError, "associated class #{child_class.name} must include IdentityCache to be cached without full embedding"
+      end
+
+      child_class.send(:include, ArTransactionChanges)
+      child_class.send(:include, ParentModelExpiration)
+      child_class.send(:include, ShouldUseCache) unless child_class.respond_to?(:should_use_cache?)
+      child_class.parent_expiration_entries[options[:inverse_name]] << [self, options[:only_on_foreign_key_change]]
+      child_class.after_commit :expire_parent_caches
+    end
+
+    def self.record_parent_expiry_hook(association_reflection, options)
+      class_hooks = hooks[association_reflection.class_name] ||= []
+      class_hooks << [association_reflection, options]
+    end
+
+    def self.install_parent_expiry_hooks(klass)
+      hooks_to_install = hooks.delete(klass.name)
+      return unless hooks_to_install
+      hooks_to_install.each do |association_reflection, options|
+        add_parent_expiry_hook(association_reflection, options)
+      end
     end
 
     module ClassMethods
@@ -271,15 +306,11 @@ module IdentityCache
       end
 
       def add_parent_expiry_hook(options)
-        child_class = options[:association_reflection].klass
-
-        child_class.send(:include, ArTransactionChanges) unless child_class.include?(ArTransactionChanges)
-        child_class.send(:include, ParentModelExpiration) unless child_class.include?(ParentModelExpiration)
-        child_class.send(:include, ShouldUseCache) unless child_class.respond_to?(:should_use_cache?)
-
-        child_class.parent_expiration_entries[options[:inverse_name]] << [self, options[:only_on_foreign_key_change]]
-
-        child_class.after_commit :expire_parent_caches
+        if const_defined?(options[:association_reflection].class_name)
+          ConfigurationDSL.add_parent_expiry_hook(options[:association_reflection], options)
+        else
+          ConfigurationDSL.record_parent_expiry_hook(options[:association_reflection], options)
+        end
       end
 
       def deprecate_embed_option(options, old_value, new_value)
@@ -301,13 +332,6 @@ module IdentityCache
         end
         if association_reflection.options[:through]
           raise UnsupportedAssociationError, "caching through associations isn't supported"
-        end
-        options[:inverse_name] ||= association_reflection.inverse_of.name if association_reflection.inverse_of
-        options[:inverse_name] ||= self.name.underscore.to_sym
-        child_class = association_reflection.klass
-        raise InverseAssociationError unless child_class.reflect_on_association(options[:inverse_name])
-        unless options[:embed] == true || child_class.include?(IdentityCache)
-          raise UnsupportedAssociationError, "associated class #{child_class} must include IdentityCache to be cached without full embedding"
         end
       end
     end
