@@ -15,6 +15,8 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = IdentityCache::VERSION
 
+  gem.required_ruby_version = '>= 2.2.0'
+
   gem.add_dependency('ar_transaction_changes', '~> 1.0')
   gem.add_dependency('activerecord', '>= 4.2.0')
 
