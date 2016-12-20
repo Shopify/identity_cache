@@ -96,7 +96,7 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
   def test_prefetch_associations_with_nil_cached_belongs_to
     Item.send(:cache_belongs_to, :item)
     @bob.update_attributes!(item_id: 1234)
-    assert_equal nil, @bob.fetch_item
+    assert_nil @bob.fetch_item
 
     assert_no_queries do
       assert_memcache_operations(0) do

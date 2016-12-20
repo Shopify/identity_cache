@@ -1,8 +1,8 @@
 language: ruby
 
 rvm:
-  - 2.1
-  - 2.2.3
+  - '2.2.3'
+  - '2.3.1'
 
 gemfile:
   - Gemfile.rails42
@@ -10,8 +10,6 @@ gemfile:
 
 matrix:
   exclude:
-    - rvm: 2.1
-      gemfile: Gemfile.rails50
     - gemfile: Gemfile.rails50
       env: DB=postgresql
 

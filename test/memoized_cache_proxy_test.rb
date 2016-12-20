@@ -30,7 +30,7 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
 
     IdentityCache.cache.with_memoization do
       IdentityCache.cache.write('foo', nil)
-      assert_equal nil, IdentityCache.cache.fetch('foo')
+      assert_nil IdentityCache.cache.fetch('foo')
       IdentityCache.cache.write('bar', false)
       assert_equal false, IdentityCache.cache.fetch('bar')
     end

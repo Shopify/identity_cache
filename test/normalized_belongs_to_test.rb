@@ -43,8 +43,8 @@ class NormalizedBelongsToTest < IdentityCache::TestCase
 
   def test_fetching_the_association_should_cache_nil_and_not_raise_if_the_record_cant_be_found
     Item.expects(:fetch_by_id).with(@parent_record.id).returns(nil)
-    assert_equal nil, @record.fetch_item # miss
-    assert_equal nil, @record.fetch_item # hit
+    assert_nil @record.fetch_item # miss
+    assert_nil @record.fetch_item # hit
   end
 
   def test_cache_belongs_to_on_derived_model_raises

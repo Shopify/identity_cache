@@ -31,10 +31,10 @@ class AttributeCacheTest < IdentityCache::TestCase
   end
 
   def test_nil_is_stored_in_the_cache_on_cache_misses
-    assert_equal nil, AssociatedRecord.fetch_name_by_id(2)
+    assert_nil AssociatedRecord.fetch_name_by_id(2)
 
     assert_queries(0) do
-      assert_equal nil, AssociatedRecord.fetch_name_by_id(2)
+      assert_nil AssociatedRecord.fetch_name_by_id(2)
     end
   end
 
@@ -63,13 +63,13 @@ class AttributeCacheTest < IdentityCache::TestCase
 
     @record.destroy
 
-    assert_queries(1) { assert_equal nil, AssociatedRecord.fetch_name_by_id(1) }
+    assert_queries(1) { assert_nil AssociatedRecord.fetch_name_by_id(1) }
   end
 
   def test_cached_attribute_values_are_expired_from_the_cache_when_a_new_record_is_saved
     new_id = 2
-    assert_queries(1) { assert_equal nil, AssociatedRecord.fetch_name_by_id(new_id) }
-    assert_queries(0) { assert_equal nil, AssociatedRecord.fetch_name_by_id(new_id) }
+    assert_queries(1) { assert_nil AssociatedRecord.fetch_name_by_id(new_id) }
+    assert_queries(0) { assert_nil AssociatedRecord.fetch_name_by_id(new_id) }
 
     @parent.associated_records.create(:name => 'bar')
 
@@ -87,7 +87,7 @@ class AttributeCacheTest < IdentityCache::TestCase
   end
 
   def test_previously_stored_cached_nils_are_busted_by_new_record_saves
-    assert_equal nil, AssociatedRecord.fetch_name_by_id(2)
+    assert_nil AssociatedRecord.fetch_name_by_id(2)
     AssociatedRecord.create(:name => "Jim")
     assert_equal "Jim", AssociatedRecord.fetch_name_by_id(2)
   end

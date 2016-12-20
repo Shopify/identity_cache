@@ -25,12 +25,12 @@ class IndexCacheTest < IdentityCache::TestCase
       .with(regexp_matches(/ LIMIT 1\Z/i), any_parameters)
       .returns(ActiveRecord::Result.new([], []))
 
-    assert_equal nil, Item.fetch_by_title_and_id('title', '2')
+    assert_nil Item.fetch_by_title_and_id('title', '2')
   end
 
   def test_unique_index_caches_nil
     Item.cache_index :title, :unique => true
-    assert_equal nil, Item.fetch_by_title('bob')
+    assert_nil Item.fetch_by_title('bob')
     assert_equal IdentityCache::CACHED_NIL, backend.read(cache_key(unique: true))
   end
 
