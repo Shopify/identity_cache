@@ -24,8 +24,13 @@ module IdentityCache
   class AlreadyIncludedError < StandardError; end
   class AssociationError < StandardError; end
   class InverseAssociationError < StandardError
-    def initialize
-      super "Inverse name for association could not be determined. Please use the :inverse_name option to specify the inverse association name for this cache."
+    def initialize(association_reflection)
+      p [:inverse_name, association_reflection.send(:inverse_name)]
+      super(
+        "Inverse name for association #{association_reflection.active_record.name} #{association_reflection.name} " \
+        "could not be determined. " \
+        "Please use the :inverse_name option to specify the inverse association name for this cache."
+      )
     end
   end
   class UnsupportedScopeError < StandardError; end

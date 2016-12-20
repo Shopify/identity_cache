@@ -25,8 +25,6 @@ module IdentityCache
     def self.add_parent_expiry_hook(association_reflection, options)
       child_class = association_reflection.klass
 
-      raise InverseAssociationError unless options[:inverse_name] || association_reflection.inverse_of
-      options[:inverse_name] ||= association_reflection.inverse_of.name
       unless options[:embed] == true || child_class.include?(IdentityCache)
         raise UnsupportedAssociationError, "associated class #{child_class.name} must include IdentityCache to be cached without full embedding"
       end
@@ -306,6 +304,9 @@ module IdentityCache
       end
 
       def add_parent_expiry_hook(options)
+        options[:inverse_name] ||= options[:association_reflection].send(:inverse_name)
+        options[:inverse_name] ||= options[:association_reflection].active_record.name.underscore.to_sym
+
         if const_defined?(options[:association_reflection].class_name)
           ConfigurationDSL.add_parent_expiry_hook(options[:association_reflection], options)
         else
