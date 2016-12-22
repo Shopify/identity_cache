@@ -33,6 +33,7 @@ module IdentityCache
       )
     end
   end
+  class AmbiguousAssociationError < StandardError; end
   class UnsupportedScopeError < StandardError; end
   class UnsupportedAssociationError < StandardError; end
   class DerivedModelError < StandardError; end

@@ -36,7 +36,7 @@ module IdentityCache
     end
 
     def self.record_parent_expiry_hook(association_reflection, options)
-      class_hooks = hooks[association_reflection.class_name] ||= []
+      class_hooks = hooks[options[:class_name]] ||= []
       class_hooks << [association_reflection, options]
     end
 
@@ -302,11 +302,30 @@ module IdentityCache
         unique_index ? results.first : results
       end
 
+      MODULE_SEPARATOR = '::'.freeze
       def add_parent_expiry_hook(options)
-        options[:inverse_name] ||= options[:association_reflection].send(:inverse_name)
-        options[:inverse_name] ||= options[:association_reflection].active_record.name.underscore.to_sym
+        assoc = options[:association_reflection]
+        options[:inverse_name] ||= assoc.send(:inverse_name)
+        options[:inverse_name] ||= assoc.active_record.name.underscore.to_sym
 
-        if const_defined?(options[:association_reflection].class_name)
+        if !options.key?(:class_name)
+          if self.class.name.include?(MODULE_SEPARATOR) && !assoc.class_name.include?(MODULE_SEPARATOR)
+            namespaces = self.class.name.split(MODULE_SEPARATOR)
+            candidates = []
+            while namespaces.pop
+              candidates << [*namespaces, assoc.class_name].join(MODULE_SEPARATOR)
+            end
+            raise AmbiguousAssociationError, [
+              "#{self.class.name}.#{assoc.name} association is ambiguous.",
+              "It could reference any of the following classes: #{candidates.join(', ')}.",
+              "Please set the :class_name option on the identity cache relation."
+            ].join(' ')
+          else
+            options[:class_name] = assoc.class_name
+          end
+        end
+
+        if Object.const_defined?(options[:class_name])
           ConfigurationDSL.add_parent_expiry_hook(options[:association_reflection], options)
         else
           ConfigurationDSL.record_parent_expiry_hook(options[:association_reflection], options)
