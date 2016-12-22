@@ -89,13 +89,13 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
 
   def test_cache_without_guessable_inverse_name_raises
     assert_raises IdentityCache::InverseAssociationError do
-      Item.cache_has_many :polymorphic_records, :embed => true
+      Item.cache_has_many :unguessable_polymorphic_records, :embed => true
     end
   end
 
   def test_cache_without_guessable_inverse_name_does_not_raise_when_inverse_name_specified
     assert_nothing_raised do
-      Item.cache_has_many :polymorphic_records, :inverse_name => :owner, :embed => true
+      Item.cache_has_many :unguessable_polymorphic_records, :inverse_name => :owner, :embed => true
     end
   end
 

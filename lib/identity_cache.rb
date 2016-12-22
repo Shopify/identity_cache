@@ -3,6 +3,7 @@ require 'active_support/core_ext/module/attribute_accessors'
 require 'ar_transaction_changes'
 
 require "identity_cache/version"
+require 'identity_cache/active_record_extension'
 require 'identity_cache/memoized_cache_proxy'
 require 'identity_cache/belongs_to_caching'
 require 'identity_cache/cache_key_generation'
@@ -24,10 +25,15 @@ module IdentityCache
   class AlreadyIncludedError < StandardError; end
   class AssociationError < StandardError; end
   class InverseAssociationError < StandardError
-    def initialize
-      super "Inverse name for association could not be determined. Please use the :inverse_name option to specify the inverse association name for this cache."
+    def initialize(association_reflection)
+      super(
+        "Inverse name for association #{association_reflection.active_record.name} #{association_reflection.name} " \
+        "could not be determined. " \
+        "Please use the :inverse_name option to specify the inverse association name for this cache."
+      )
     end
   end
+  class AmbiguousAssociationError < StandardError; end
   class UnsupportedScopeError < StandardError; end
   class UnsupportedAssociationError < StandardError; end
   class DerivedModelError < StandardError; end
@@ -56,9 +62,7 @@ module IdentityCache
     self.fetch_read_only_records = version >= Gem::Version.new("0.5")
 
     def included(base) #:nodoc:
-      raise AlreadyIncludedError if base.include?(IdentityCache::ConfigurationDSL)
-
-      base.send(:include, ArTransactionChanges) unless base.include?(ArTransactionChanges)
+      base.send(:include, ArTransactionChanges)
       base.send(:include, IdentityCache::BelongsToCaching)
       base.send(:include, IdentityCache::CacheKeyGeneration)
       base.send(:include, IdentityCache::ConfigurationDSL)

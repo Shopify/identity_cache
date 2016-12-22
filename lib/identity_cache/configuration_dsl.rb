@@ -16,6 +16,38 @@ module IdentityCache
       base.primary_cache_index_enabled = true
     end
 
+    class << self
+      attr_reader :hooks
+    end
+    @hooks = {}
+
+    def self.add_parent_expiry_hook(association_reflection, options)
+      child_class = association_reflection.klass
+
+      unless options[:embed] == true || child_class.include?(IdentityCache)
+        raise UnsupportedAssociationError, "associated class #{child_class.name} must include IdentityCache to be cached without full embedding"
+      end
+
+      child_class.send(:include, ArTransactionChanges)
+      child_class.send(:include, ParentModelExpiration)
+      child_class.send(:include, ShouldUseCache) unless child_class.respond_to?(:should_use_cache?)
+      child_class.parent_expiration_entries[options[:inverse_name]] << [self, options[:only_on_foreign_key_change]]
+      child_class.after_commit :expire_parent_caches
+    end
+
+    def self.record_parent_expiry_hook(association_reflection, options)
+      class_hooks = hooks[options[:class_name]] ||= []
+      class_hooks << [association_reflection, options]
+    end
+
+    def self.install_parent_expiry_hooks(klass)
+      hooks_to_install = hooks.delete(klass.name)
+      return unless hooks_to_install
+      hooks_to_install.each do |association_reflection, options|
+        add_parent_expiry_hook(association_reflection, options)
+      end
+    end
+
     module ClassMethods
       # Declares a new index in the cache for the class where IdentityCache was
       # included.
@@ -270,16 +302,34 @@ module IdentityCache
         unique_index ? results.first : results
       end
 
+      MODULE_SEPARATOR = '::'.freeze
       def add_parent_expiry_hook(options)
-        child_class = options[:association_reflection].klass
+        assoc = options[:association_reflection]
+        options[:inverse_name] ||= assoc.send(:inverse_name)
+        options[:inverse_name] ||= assoc.active_record.name.underscore.to_sym
 
-        child_class.send(:include, ArTransactionChanges) unless child_class.include?(ArTransactionChanges)
-        child_class.send(:include, ParentModelExpiration) unless child_class.include?(ParentModelExpiration)
-        child_class.send(:include, ShouldUseCache) unless child_class.respond_to?(:should_use_cache?)
+        if !options.key?(:class_name)
+          if self.class.name.include?(MODULE_SEPARATOR) && !assoc.class_name.include?(MODULE_SEPARATOR)
+            namespaces = self.class.name.split(MODULE_SEPARATOR)
+            candidates = []
+            while namespaces.pop
+              candidates << [*namespaces, assoc.class_name].join(MODULE_SEPARATOR)
+            end
+            raise AmbiguousAssociationError, [
+              "#{self.class.name}.#{assoc.name} association is ambiguous.",
+              "It could reference any of the following classes: #{candidates.join(', ')}.",
+              "Please set the :class_name option on the identity cache relation."
+            ].join(' ')
+          else
+            options[:class_name] = assoc.class_name
+          end
+        end
 
-        child_class.parent_expiration_entries[options[:inverse_name]] << [self, options[:only_on_foreign_key_change]]
-
-        child_class.after_commit :expire_parent_caches
+        if Object.const_defined?(options[:class_name])
+          ConfigurationDSL.add_parent_expiry_hook(options[:association_reflection], options)
+        else
+          ConfigurationDSL.record_parent_expiry_hook(options[:association_reflection], options)
+        end
       end
 
       def deprecate_embed_option(options, old_value, new_value)
@@ -301,13 +351,6 @@ module IdentityCache
         end
         if association_reflection.options[:through]
           raise UnsupportedAssociationError, "caching through associations isn't supported"
-        end
-        options[:inverse_name] ||= association_reflection.inverse_of.name if association_reflection.inverse_of
-        options[:inverse_name] ||= self.name.underscore.to_sym
-        child_class = association_reflection.klass
-        raise InverseAssociationError unless child_class.reflect_on_association(options[:inverse_name])
-        unless options[:embed] == true || child_class.include?(IdentityCache)
-          raise UnsupportedAssociationError, "associated class #{child_class} must include IdentityCache to be cached without full embedding"
         end
       end
     end
