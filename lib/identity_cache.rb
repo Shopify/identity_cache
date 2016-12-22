@@ -3,6 +3,7 @@ require 'active_support/core_ext/module/attribute_accessors'
 require 'ar_transaction_changes'
 
 require "identity_cache/version"
+require 'identity_cache/active_record_extension'
 require 'identity_cache/memoized_cache_proxy'
 require 'identity_cache/belongs_to_caching'
 require 'identity_cache/cache_key_generation'
@@ -25,7 +26,6 @@ module IdentityCache
   class AssociationError < StandardError; end
   class InverseAssociationError < StandardError
     def initialize(association_reflection)
-      p [:inverse_name, association_reflection.send(:inverse_name)]
       super(
         "Inverse name for association #{association_reflection.active_record.name} #{association_reflection.name} " \
         "could not be determined. " \

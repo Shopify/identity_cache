@@ -14,7 +14,6 @@ module IdentityCache
       base.cached_has_ones = {}
       base.cache_indexes = []
       base.primary_cache_index_enabled = true
-      ConfigurationDSL.install_parent_expiry_hooks(base)
     end
 
     class << self
