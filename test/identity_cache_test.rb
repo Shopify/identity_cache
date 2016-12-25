@@ -2,13 +2,16 @@ require "test_helper"
 
 class IdentityCacheTest < IdentityCache::TestCase
 
-  class BadModel < ActiveRecord::Base
+  class BadModelBase < ActiveRecord::Base
+    include IdentityCache
+  end
+
+  class BadModel < BadModelBase
   end
 
   def test_identity_cache_raises_if_loaded_twice
     assert_raises(IdentityCache::AlreadyIncludedError) do
       BadModel.class_eval do
-        include IdentityCache
         include IdentityCache
       end
     end
