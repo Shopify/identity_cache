@@ -69,6 +69,7 @@ module IdentityCache
       raise AlreadyIncludedError if base.respond_to?(:cached_model)
       base.class_attribute :cached_model
       base.cached_model = base
+      super
     end
 
     # Sets the cache adaptor IdentityCache will be using
