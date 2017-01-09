@@ -2,6 +2,9 @@ module IdentityCache
   module ParentModelExpiration # :nodoc:
     extend ActiveSupport::Concern
 
+    include ArTransactionChanges
+    include IdentityCache::ShouldUseCache
+
     included do |base|
       base.class_attribute :parent_expiration_entries
       base.parent_expiration_entries = Hash.new{ |hash, key| hash[key] = [] }

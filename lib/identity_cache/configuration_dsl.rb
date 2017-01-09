@@ -3,13 +3,11 @@ module IdentityCache
     extend ActiveSupport::Concern
 
     included do |base|
-      base.class_attribute :cached_model
       base.class_attribute :cache_indexes
       base.class_attribute :cached_has_manys
       base.class_attribute :cached_has_ones
       base.class_attribute :primary_cache_index_enabled
 
-      base.cached_model = base
       base.cached_has_manys = {}
       base.cached_has_ones = {}
       base.cache_indexes = []
@@ -273,10 +271,7 @@ module IdentityCache
       def add_parent_expiry_hook(options)
         child_class = options[:association_reflection].klass
 
-        child_class.send(:include, ArTransactionChanges) unless child_class.include?(ArTransactionChanges)
-        child_class.send(:include, ParentModelExpiration) unless child_class.include?(ParentModelExpiration)
-        child_class.send(:include, ShouldUseCache) unless child_class.respond_to?(:should_use_cache?)
-
+        child_class.send(:include, ParentModelExpiration)
         child_class.parent_expiration_entries[options[:inverse_name]] << [self, options[:only_on_foreign_key_change]]
 
         child_class.after_commit :expire_parent_caches

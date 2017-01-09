@@ -7,8 +7,8 @@ require 'identity_cache/memoized_cache_proxy'
 require 'identity_cache/belongs_to_caching'
 require 'identity_cache/cache_key_generation'
 require 'identity_cache/configuration_dsl'
-require 'identity_cache/parent_model_expiration'
 require 'identity_cache/should_use_cache'
+require 'identity_cache/parent_model_expiration'
 require 'identity_cache/query_api'
 require "identity_cache/cache_hash"
 require "identity_cache/cache_invalidation"
@@ -16,6 +16,16 @@ require "identity_cache/cache_fetcher"
 require "identity_cache/fallback_fetcher"
 
 module IdentityCache
+  extend ActiveSupport::Concern
+
+  include ArTransactionChanges
+  include IdentityCache::BelongsToCaching
+  include IdentityCache::CacheKeyGeneration
+  include IdentityCache::ConfigurationDSL
+  include IdentityCache::QueryAPI
+  include IdentityCache::CacheInvalidation
+  include IdentityCache::ShouldUseCache
+
   CACHED_NIL = :idc_cached_nil
   BATCH_SIZE = 1000
   DELETED = :idc_cached_deleted
@@ -56,15 +66,10 @@ module IdentityCache
     self.fetch_read_only_records = version >= Gem::Version.new("0.5")
 
     def included(base) #:nodoc:
-      raise AlreadyIncludedError if base.include?(IdentityCache::ConfigurationDSL)
-
-      base.send(:include, ArTransactionChanges) unless base.include?(ArTransactionChanges)
-      base.send(:include, IdentityCache::BelongsToCaching)
-      base.send(:include, IdentityCache::CacheKeyGeneration)
-      base.send(:include, IdentityCache::ConfigurationDSL)
-      base.send(:include, IdentityCache::QueryAPI)
-      base.send(:include, IdentityCache::CacheInvalidation)
-      base.send(:include, IdentityCache::ShouldUseCache)
+      raise AlreadyIncludedError if base.respond_to?(:cached_model)
+      base.class_attribute :cached_model
+      base.cached_model = base
+      super
     end
 
     # Sets the cache adaptor IdentityCache will be using
