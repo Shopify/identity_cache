@@ -3,6 +3,7 @@ require "test_helper"
 class DenormalizedHasManyTest < IdentityCache::TestCase
   def setup
     super
+    PolymorphicRecord.include(IdentityCache::WithoutPrimaryIndex)
     Item.cache_has_many :associated_records, :embed => true
 
     @record = Item.new(:title => 'foo')

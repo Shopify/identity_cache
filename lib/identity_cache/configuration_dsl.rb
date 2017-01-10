@@ -12,6 +12,8 @@ module IdentityCache
       base.cached_has_ones = {}
       base.cache_indexes = []
       base.primary_cache_index_enabled = true
+
+      base.after_commit :expire_parent_caches
     end
 
     module ClassMethods
@@ -271,11 +273,13 @@ module IdentityCache
 
       def add_parent_expiry_hook(options)
         child_class = options[:association_reflection].klass
-
-        child_class.send(:include, ParentModelExpiration)
+        unless child_class < IdentityCache
+          message = "associated class #{child_class} will need to include IdentityCache or " \
+            "IdentityCache::WithoutPrimaryIndex for embedded associations"
+          ActiveSupport::Deprecation.warn(message, caller(3))
+          child_class.send(:include, IdentityCache::WithoutPrimaryIndex)
+        end
         child_class.parent_expiration_entries[options[:inverse_name]] << [self, options[:only_on_foreign_key_change]]
-
-        child_class.after_commit :expire_parent_caches
       end
 
       def deprecate_embed_option(options, old_value, new_value)

@@ -36,6 +36,10 @@ IdentityCache.cache_backend = ActiveSupport::Cache.lookup_store(*Rails.configura
 ### Basic Usage
 
 ``` ruby
+class Image < ActiveRecord::Base
+  include IdentityCache::WithoutPrimaryIndex
+end
+
 class Product < ActiveRecord::Base
   include IdentityCache
 
@@ -44,10 +48,10 @@ class Product < ActiveRecord::Base
   cache_has_many :images, :embed => true
 end
 
-# Fetch the product by its id, the primary index.
+# Fetch the product by its id using the primary primary index as well as the embedded images association.
 @product = Product.fetch(id)
 
-# Fetch the images for the Product. Images are embedded so the product fetch would have already loaded them.
+# Access the loaded images for the Product.
 @images = @product.fetch_images
 ```
 

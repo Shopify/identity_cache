@@ -3,6 +3,7 @@ require "test_helper"
 class DenormalizedHasOneTest < IdentityCache::TestCase
   def setup
     super
+    PolymorphicRecord.include(IdentityCache::WithoutPrimaryIndex)
     Item.cache_has_one :associated
     Item.cache_index :title, :unique => true
     @record = Item.new(:title => 'foo')
