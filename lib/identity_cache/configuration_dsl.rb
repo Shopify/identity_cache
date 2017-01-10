@@ -173,6 +173,7 @@ module IdentityCache
       end
 
       def disable_primary_cache_index
+        ActiveSupport::Deprecation.warn("disable_primary_cache_index is deprecated, use `include IdentityCache::WithoutPrimaryIndex` instead")
         ensure_base_model
         self.primary_cache_index_enabled = false
       end
