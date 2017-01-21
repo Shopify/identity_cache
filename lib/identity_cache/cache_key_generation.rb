@@ -9,15 +9,14 @@ module IdentityCache
 
     def self.denormalized_schema_hash(klass)
       schema_string = schema_to_string(klass.columns)
-      if klass.include?(IdentityCache)
-        klass.send(:all_cached_associations).sort.each do |name, options|
-          klass.send(:check_association_scope, name)
-          case options[:embed]
-          when true
-            schema_string << ",#{name}:(#{denormalized_schema_hash(options[:association_reflection].klass)})"
-          when :ids
-            schema_string << ",#{name}:ids"
-          end
+      klass.send(:all_cached_associations).sort.each do |name, options|
+        klass.send(:check_association_scope, name)
+        ParentModelExpiration.check_association(options) if options[:embed]
+        case options[:embed]
+        when true
+          schema_string << ",#{name}:(#{denormalized_schema_hash(options[:association_reflection].klass)})"
+        when :ids
+          schema_string << ",#{name}:ids"
         end
       end
       IdentityCache.memcache_hash(schema_string)
