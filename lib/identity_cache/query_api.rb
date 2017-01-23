@@ -93,8 +93,8 @@ module IdentityCache
           associations.each do |association, sub_associations|
             next_level_records = prefetch_one_association(association, records)
 
-            associated_class = reflect_on_association(association).klass
-            if associated_class.respond_to?(:prefetch_associations)
+            if sub_associations.present?
+              associated_class = reflect_on_association(association).klass
               associated_class.prefetch_associations(sub_associations, next_level_records)
             end
           end
