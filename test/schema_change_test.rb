@@ -75,6 +75,7 @@ class SchemaChangeTest < IdentityCache::TestCase
   def test_schema_changes_on_new_cached_child_association
     record = Item.fetch(@record.id)
 
+    PolymorphicRecord.include(IdentityCache::WithoutPrimaryIndex)
     Item.cache_has_many :polymorphic_records, :inverse_name => :owner, :embed => true
     read_new_schema
 
@@ -92,6 +93,7 @@ class SchemaChangeTest < IdentityCache::TestCase
     teardown_models
     setup_models
 
+    PolymorphicRecord.include(IdentityCache::WithoutPrimaryIndex)
     Item.cache_has_many :polymorphic_records, :inverse_name => :owner, :embed => true
     read_new_schema
 

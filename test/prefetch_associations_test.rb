@@ -188,6 +188,7 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
   end
 
   def test_fetch_multi_batch_fetches_first_level_associations_who_dont_include_identity_cache
+    NotCachedRecord.include(IdentityCache::WithoutPrimaryIndex)
     Item.send(:cache_has_many, :not_cached_records, :embed => true)
 
     @bob_child  = @bob.not_cached_records.create!(:name => "bob child")

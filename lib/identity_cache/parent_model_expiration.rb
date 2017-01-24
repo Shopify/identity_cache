@@ -2,9 +2,6 @@ module IdentityCache
   module ParentModelExpiration # :nodoc:
     extend ActiveSupport::Concern
 
-    include ArTransactionChanges
-    include IdentityCache::ShouldUseCache
-
     included do |base|
       base.class_attribute :parent_expiration_entries
       base.parent_expiration_entries = Hash.new{ |hash, key| hash[key] = [] }
@@ -28,7 +25,7 @@ module IdentityCache
       key = record.primary_cache_index_key
       unless parents_to_expire[key]
         parents_to_expire[key] = record
-        record.add_parents_to_cache_expiry_set(parents_to_expire) if record.respond_to?(:add_parents_to_cache_expiry_set, true)
+        record.add_parents_to_cache_expiry_set(parents_to_expire)
       end
     end
 

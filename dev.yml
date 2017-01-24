@@ -3,9 +3,7 @@ name: identity-cache
 up:
   - homebrew:
     - postgresql
-  - ruby:
-      version: 2.2.3p172-shopify
-      package: shopify/shopify/shopify-ruby
+  - ruby: 2.3.3
   - railgun
   - bundler
 

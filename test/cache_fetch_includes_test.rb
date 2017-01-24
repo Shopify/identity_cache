@@ -33,6 +33,7 @@ class CacheFetchIncludesTest < IdentityCache::TestCase
 
   def test_multiple_cached_associations_and_child_associations_are_included_in_includes
     Item.send(:cache_has_many, :associated_records, :embed => true)
+    PolymorphicRecord.send(:include, IdentityCache::WithoutPrimaryIndex)
     Item.send(:cache_has_many, :polymorphic_records, {:inverse_name => :owner, :embed => true})
     Item.send(:cache_has_one, :associated, :embed => true)
     AssociatedRecord.send(:cache_has_many, :deeply_associated_records, :embed => true)

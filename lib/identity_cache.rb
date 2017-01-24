@@ -14,6 +14,7 @@ require "identity_cache/cache_hash"
 require "identity_cache/cache_invalidation"
 require "identity_cache/cache_fetcher"
 require "identity_cache/fallback_fetcher"
+require 'identity_cache/without_primary_index'
 
 module IdentityCache
   extend ActiveSupport::Concern
@@ -25,6 +26,7 @@ module IdentityCache
   include IdentityCache::QueryAPI
   include IdentityCache::CacheInvalidation
   include IdentityCache::ShouldUseCache
+  include IdentityCache::ParentModelExpiration
 
   CACHED_NIL = :idc_cached_nil
   BATCH_SIZE = 1000
