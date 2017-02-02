@@ -14,8 +14,8 @@ matrix:
       env: DB=postgresql
 
 env:
-  - DB=mysql2
-  - DB=postgresql
+  - DB=mysql2 MYSQL_HOST=localhost POSTGRES_HOST=localhost
+  - DB=postgresql MYSQL_HOST=localhost POSTGRES_HOST=localhost
 
 services:
   - memcache
