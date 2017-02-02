@@ -1,8 +1,6 @@
 name: identity-cache
 
 up:
-  - homebrew:
-    - postgresql
   - ruby: 2.3.3
   - railgun
   - bundler
@@ -52,4 +50,3 @@ railgun:
 
 packages:
   - git@github.com:Shopify/dev-shopify.git
-
