@@ -1,5 +1,7 @@
 # IdentityCache changelog
 
+- Fix: Allow use of pre-loaded cache from within a transaction
+
 #### 0.4.0
 
 - Return an array from fetched association to prevent chaining. Up to now, a relation was returned by default. (#287)
