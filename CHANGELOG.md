@@ -1,5 +1,16 @@
 # IdentityCache changelog
 
+#### 0.4.1
+
+- Deprecated embedded associations on models that don't use IDC (#305)
+- Remove a respond_to? check that hides mistakes in includes hash (#307)
+- Drop ruby 2.1 support (#301)
+- Avoid querying when no ids are passed to fetch_multi (#297)
+- Fix fetching already loaded belongs_to association (#294)
+- Move `should_use_cache?` calls to the model-level (#291)
+- Clone instead of dup record when readonlyifying fetched records (#292)
+- Consistently store the array for cached has many associations (#288)
+
 #### 0.4.0
 
 - Return an array from fetched association to prevent chaining. Up to now, a relation was returned by default. (#287)
