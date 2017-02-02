@@ -1,5 +1,9 @@
 # IdentityCache changelog
 
+#### Unreleased
+
+- Store the class name instead of the class itself (#311)
+
 #### 0.4.1
 
 - Deprecated embedded associations on models that don't use IDC (#305)
