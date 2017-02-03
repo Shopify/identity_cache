@@ -58,13 +58,13 @@ module DatabaseConnection
     'mysql2' => {
       'adapter'  => 'mysql2',
       'database' => 'identity_cache_test',
-      'host'     => ENV['MYSQL_HOST'] || '127.0.0.1',
+      'host'     => ENV['MYSQL_HOST'] || 'identity-cache.railgun',
       'username' => 'root'
     },
     'postgresql' => {
       'adapter'  => 'postgresql',
       'database' => 'identity_cache_test',
-      'host'     => ENV['POSTGRES_HOST'] || '127.0.0.1',
+      'host'     => ENV['POSTGRES_HOST'] || 'identity-cache.railgun',
       'username' => 'postgres',
       'prepared_statements' => false,
     }
