@@ -20,7 +20,16 @@ module SerializationFormat
     end
     record.reload
     Item.fetch(record.id)
-    IdentityCache.fetch(record.primary_cache_index_key)
+
+    IdentityCache.fetch(record.primary_cache_index_key) do
+      STDERR.puts(
+        "\e[31m" \
+          "The record could not be retrieved from the cache." \
+          "Did you configure MEMCACHED_HOST?" \
+          "\e[0m",
+      )
+      exit(1)
+    end
   end
 
   def serialized_record_file

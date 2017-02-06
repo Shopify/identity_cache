@@ -122,7 +122,7 @@ module IdentityCache
 
       def record_from_coder(coder) #:nodoc:
         if coder
-          klass = coder[:class]
+          klass = coder[:class].constantize
           record = klass.instantiate(coder[:attributes].dup)
 
           coder[:associations].each {|name, value| set_embedded_association(record, name, value) } if coder.has_key?(:associations)
@@ -179,7 +179,7 @@ module IdentityCache
         unless record.nil?
           coder = {
             attributes: record.attributes_before_type_cast.dup,
-            class: record.class,
+            class: record.class.name,
           }
           add_cached_associations_to_coder(record, coder)
           coder
