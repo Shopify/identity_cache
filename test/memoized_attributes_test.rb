@@ -1,6 +1,16 @@
 require "test_helper"
 
 class MemoizedAttributesTest < IdentityCache::TestCase
+  def setup
+    IdentityCache.fetch_read_only_records = false
+    super
+  end
+
+  def teardown
+    super
+    IdentityCache.fetch_read_only_records = true
+  end
+
   def test_memoization_should_not_break_dirty_tracking_with_empty_cache
     item = Item.create!
 
