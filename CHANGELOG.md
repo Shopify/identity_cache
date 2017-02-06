@@ -1,7 +1,8 @@
 # IdentityCache changelog
 
-#### Unreleased
+#### 0.5.0
 
+- `never_set_inverse_association` and `fetch_read_only_records` are now `true` by default (#315)
 - Store the class name instead of the class itself (#311)
 
 #### 0.4.1

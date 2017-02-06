@@ -130,12 +130,15 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
   end
 
   def test_deprecated_set_inverse_association_on_cache_hit
+    IdentityCache.never_set_inverse_association = false
     Item.fetch(@record.id) # warm cache
 
     item = Item.fetch(@record.id)
 
     associated_record = item.fetch_associated_records.to_a.first
     assert_equal item.object_id, associated_record.item.object_id
+  ensure
+    IdentityCache.never_set_inverse_association = true
   end
 
   def test_returned_records_should_be_readonly_on_cache_hit
