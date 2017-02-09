@@ -401,7 +401,7 @@ module IdentityCache
         when details = cached_has_ones[association]
           if details[:embed] == true
             prefetch_embedded_association(records, association, details)
-            parent_records = records.map(&details[:cached_accessor_name].to_sym)
+            parent_records = records.map(&details[:cached_accessor_name].to_sym).compact
           else
             raise ArgumentError.new("Non-embedded has_one associations do not support prefetching yet.")
           end

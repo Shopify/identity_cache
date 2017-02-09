@@ -1,5 +1,9 @@
 # IdentityCache changelog
 
+#### 0.5.1
+
+- Fix bug in prefetch_associations for cache_has_one associations that may be nil
+
 #### 0.5.0
 
 - `never_set_inverse_association` and `fetch_read_only_records` are now `true` by default (#315)
