@@ -26,7 +26,7 @@ module IdentityCache
   include IdentityCache::QueryAPI
   include IdentityCache::CacheInvalidation
   include IdentityCache::ShouldUseCache
-  include IdentityCache::ParentModelExpiration
+  include ParentModelExpiration
 
   CACHED_NIL = :idc_cached_nil
   BATCH_SIZE = 1000
@@ -35,11 +35,7 @@ module IdentityCache
 
   class AlreadyIncludedError < StandardError; end
   class AssociationError < StandardError; end
-  class InverseAssociationError < StandardError
-    def initialize
-      super "Inverse name for association could not be determined. Please use the :inverse_name option to specify the inverse association name for this cache."
-    end
-  end
+  class InverseAssociationError < StandardError; end
   class UnsupportedScopeError < StandardError; end
   class UnsupportedAssociationError < StandardError; end
   class DerivedModelError < StandardError; end
@@ -64,6 +60,9 @@ module IdentityCache
     # When set to true, it will only return read-only records when cache is used.
     mattr_accessor :fetch_read_only_records
     self.fetch_read_only_records = true
+
+    mattr_accessor :lazy_load_associated_classes
+    self.lazy_load_associated_classes = Gem::Version.new(IdentityCache::VERSION) >= Gem::Version.new("0.6")
 
     def included(base) #:nodoc:
       raise AlreadyIncludedError if base.respond_to?(:cached_model)
@@ -167,6 +166,10 @@ module IdentityCache
       yield
     ensure
       self.fetch_read_only_records = old_value
+    end
+
+    def eager_load!
+      ParentModelExpiration.install_all_pending_parent_expiry_hooks
     end
 
     private

@@ -12,8 +12,6 @@ module IdentityCache
       base.cached_has_ones = {}
       base.cache_indexes = []
       base.primary_cache_index_enabled = true
-
-      base.after_commit :expire_parent_caches
     end
 
     module ClassMethods
@@ -105,7 +103,7 @@ module IdentityCache
         options = options.slice(:embed, :inverse_name)
         options[:embed] = :ids unless options.has_key?(:embed)
         deprecate_embed_option(options, false, :ids)
-        ensure_cacheable_association(association, options)
+        check_association_for_caching(association, options)
         self.cached_has_manys[association] = options
 
         case options[:embed]
@@ -143,7 +141,7 @@ module IdentityCache
         ensure_base_model
         options = options.slice(:embed, :inverse_name)
         options[:embed] = true unless options.has_key?(:embed)
-        ensure_cacheable_association(association, options)
+        check_association_for_caching(association, options)
         self.cached_has_ones[association] = options
 
         if options[:embed] == true
@@ -213,7 +211,7 @@ module IdentityCache
         CODE
 
         options[:only_on_foreign_key_change] = false
-        add_parent_expiry_hook(options)
+        ParentModelExpiration.add_parent_expiry_hook(options)
       end
 
       def build_id_embedded_has_many_cache(association, options) #:nodoc:
@@ -236,7 +234,7 @@ module IdentityCache
           def #{options[:cached_accessor_name]}
             association_klass = association(:#{association}).klass
             if association_klass.should_use_cache? && !#{association}.loaded?
-              @#{options[:records_variable_name]} ||= #{options[:association_reflection].klass}.fetch_multi(#{options[:cached_ids_name]})
+              @#{options[:records_variable_name]} ||= #{options[:association_reflection].class_name}.fetch_multi(#{options[:cached_ids_name]})
             else
               #{association}.to_a
             end
@@ -248,7 +246,7 @@ module IdentityCache
         CODE
 
         options[:only_on_foreign_key_change] = true
-        add_parent_expiry_hook(options)
+        ParentModelExpiration.add_parent_expiry_hook(options)
       end
 
       def attribute_dynamic_fetcher(attribute, fields, values, unique_index) #:nodoc:
@@ -271,17 +269,6 @@ module IdentityCache
         unique_index ? results.first : results
       end
 
-      def add_parent_expiry_hook(options)
-        child_class = options[:association_reflection].klass
-        unless child_class < IdentityCache
-          message = "associated class #{child_class} will need to include IdentityCache or " \
-            "IdentityCache::WithoutPrimaryIndex for embedded associations"
-          ActiveSupport::Deprecation.warn(message, caller(3))
-          child_class.send(:include, IdentityCache::WithoutPrimaryIndex)
-        end
-        child_class.parent_expiration_entries[options[:inverse_name]] << [self, options[:only_on_foreign_key_change]]
-      end
-
       def deprecate_embed_option(options, old_value, new_value)
         if options[:embed] == old_value
           options[:embed] = new_value
@@ -295,19 +282,12 @@ module IdentityCache
         end
       end
 
-      def ensure_cacheable_association(association, options)
+      def check_association_for_caching(association, options)
         unless association_reflection = self.reflect_on_association(association)
           raise AssociationError, "Association named '#{association}' was not found on #{self.class}"
         end
         if association_reflection.options[:through]
           raise UnsupportedAssociationError, "caching through associations isn't supported"
-        end
-        options[:inverse_name] ||= association_reflection.inverse_of.name if association_reflection.inverse_of
-        options[:inverse_name] ||= self.name.underscore.to_sym
-        child_class = association_reflection.klass
-        raise InverseAssociationError unless child_class.reflect_on_association(options[:inverse_name])
-        unless options[:embed] == true || child_class.include?(IdentityCache)
-          raise UnsupportedAssociationError, "associated class #{child_class} must include IdentityCache to be cached without full embedding"
         end
       end
     end

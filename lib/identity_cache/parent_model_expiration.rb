@@ -2,12 +2,92 @@ module IdentityCache
   module ParentModelExpiration # :nodoc:
     extend ActiveSupport::Concern
 
+    class << self
+      def add_parent_expiry_hook(cached_association_hash)
+        association_reflection = cached_association_hash[:association_reflection]
+        name = model_basename(association_reflection.class_name)
+        if IdentityCache.lazy_load_associated_classes
+          lazy_hooks[name] ||= []
+          lazy_hooks[name] << cached_association_hash
+        else
+          child_model = association_reflection.klass
+          unless child_model < IdentityCache
+            message = "associated class #{child_model} will need to include IdentityCache or " \
+              "IdentityCache::WithoutPrimaryIndex for embedded associations"
+            ActiveSupport::Deprecation.warn(message, caller(3))
+            child_model.send(:include, IdentityCache::WithoutPrimaryIndex)
+          end
+          install_hook(cached_association_hash)
+        end
+      end
+
+      def install_all_pending_parent_expiry_hooks
+        until lazy_hooks.empty?
+          lazy_hooks.keys.each do |key|
+            lazy_hooks.delete(key).each do |cached_association_hash|
+              install_hook(cached_association_hash)
+            end
+          end
+        end
+      end
+
+      def install_pending_parent_expiry_hooks(model)
+        name = model_basename(model.name)
+        lazy_hooks.delete(name).try!(:each) do |cached_association_hash|
+          install_hook(cached_association_hash)
+        end
+      end
+
+      def check_association(cached_association_hash)
+        association_reflection = cached_association_hash[:association_reflection]
+        parent_model = association_reflection.active_record
+        child_model = association_reflection.klass
+
+        unless child_model < IdentityCache
+          message = "cached association #{parent_model}\##{association_reflection.name} requires" \
+            " associated class #{child_model} to include IdentityCache"
+          message << " or IdentityCache::WithoutPrimaryIndex" if cached_association_hash[:embed] == true
+          raise UnsupportedAssociationError, message
+        end
+
+        cached_association_hash[:inverse_name] ||= association_reflection.inverse_of.try!(:name) || parent_model.name.underscore.to_sym
+        unless child_model.reflect_on_association(cached_association_hash[:inverse_name])
+          raise InverseAssociationError, "Inverse name for association #{parent_model}\##{association_reflection.name} could not be determined. " \
+            "Please use the :inverse_name option to specify the inverse association name for this cache."
+        end
+      end
+
+      private
+
+      def model_basename(name)
+        name.split("::").last
+      end
+
+      def lazy_hooks
+        @lazy_hooks ||= {}
+      end
+
+      def install_hook(cached_association_hash)
+        check_association(cached_association_hash)
+
+        association_reflection = cached_association_hash[:association_reflection]
+        parent_model = association_reflection.active_record
+        child_model = association_reflection.klass
+
+        parent_expiration_entry = [parent_model, cached_association_hash[:only_on_foreign_key_change]]
+        child_model.parent_expiration_entries[cached_association_hash[:inverse_name]] << parent_expiration_entry
+      end
+    end
+
     included do |base|
       base.class_attribute :parent_expiration_entries
       base.parent_expiration_entries = Hash.new{ |hash, key| hash[key] = [] }
+
+      base.after_commit :expire_parent_caches
     end
 
     def expire_parent_caches
+      ParentModelExpiration.install_pending_parent_expiry_hooks(cached_model)
       parents_to_expire = {}
       add_parents_to_cache_expiry_set(parents_to_expire)
       parents_to_expire.each_value do |parent|
@@ -70,4 +150,5 @@ module IdentityCache
       end
     end
   end
+  private_constant :ParentModelExpiration
 end

@@ -188,16 +188,14 @@ module IdentityCache
 
       def add_cached_associations_to_coder(record, coder)
         klass = record.class
-        if klass.include?(IdentityCache)
-          if (recursively_embedded_associations = klass.send(:recursively_embedded_associations)).present?
-            coder[:associations] = recursively_embedded_associations.each_with_object({}) do |(name, options), hash|
-              hash[name] = IdentityCache.map_cached_nil_for(get_embedded_association(record, name, options))
-            end
+        if (recursively_embedded_associations = klass.send(:recursively_embedded_associations)).present?
+          coder[:associations] = recursively_embedded_associations.each_with_object({}) do |(name, options), hash|
+            hash[name] = IdentityCache.map_cached_nil_for(get_embedded_association(record, name, options))
           end
-          if (cached_has_manys = klass.cached_has_manys).present?
-            coder[:association_ids] = cached_has_manys.each_with_object({}) do |(name, options), hash|
-              hash[name] = record.instance_variable_get(:"@#{options[:ids_variable_name]}") unless options[:embed] == true
-            end
+        end
+        if (cached_has_manys = klass.cached_has_manys).present?
+          coder[:association_ids] = cached_has_manys.each_with_object({}) do |(name, options), hash|
+            hash[name] = record.instance_variable_get(:"@#{options[:ids_variable_name]}") unless options[:embed] == true
           end
         end
       end
