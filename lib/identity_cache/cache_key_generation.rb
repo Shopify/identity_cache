@@ -7,14 +7,17 @@ module IdentityCache
       columns.sort_by(&:name).map{|c| "#{c.name}:#{c.type}"}.join(',')
     end
 
-    def self.denormalized_schema_hash(klass)
+    def self.denormalized_schema_hash(klass, seen_assocs)
       schema_string = schema_to_string(klass.columns)
       klass.send(:all_cached_associations).sort.each do |name, options|
         klass.send(:check_association_scope, name)
         ParentModelExpiration.check_association(options) if options[:embed]
         case options[:embed]
         when true
-          schema_string << ",#{name}:(#{denormalized_schema_hash(options[:association_reflection].klass)})"
+          unless seen_assocs.add?(name)
+              return IdentityCache.memcache_hash(schema_to_string(klass.columns))
+          end
+          schema_string << ",#{name}:(#{denormalized_schema_hash(options[:association_reflection].klass, seen_assocs)})"
         when :ids
           schema_string << ",#{name}:ids"
         end
@@ -28,7 +31,7 @@ module IdentityCache
       end
 
       def rails_cache_key_prefix
-        @rails_cache_key_prefix ||= IdentityCache::CacheKeyGeneration.denormalized_schema_hash(self)
+        @rails_cache_key_prefix ||= IdentityCache::CacheKeyGeneration.denormalized_schema_hash(self, Set.new)
       end
 
       def prefixed_rails_cache_key
@@ -36,7 +39,7 @@ module IdentityCache
       end
 
       def rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, values, unique)
-        unique_indicator = unique ? '' : 's' 
+        unique_indicator = unique ? '' : 's'
         "#{rails_cache_key_namespace}" \
           "attr#{unique_indicator}" \
           ":#{base_class.name}" \
@@ -50,6 +53,7 @@ module IdentityCache
       end
 
       private
+
       def rails_cache_string_for_fields_and_values(fields, values)
         "#{fields.join('/')}:#{IdentityCache.memcache_hash(values.join('/'))}"
       end
