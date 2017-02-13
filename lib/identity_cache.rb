@@ -49,6 +49,11 @@ module IdentityCache
     mattr_accessor :cache_namespace
     self.cache_namespace = "IDC:#{CACHE_VERSION}:".freeze
 
+    # If non-nil, IDC will expire entries on that namespace as well. Use this to
+    # progressively roll out a new cache format.
+    mattr_accessor :alternate_cache_namespace
+    self.alternate_cache_namespace = nil
+
     # Inverse active record associations are set when loading embedded
     # cache_has_many associations from the cache when never_set_inverse_association
     # is false. When set to true, it will only set the inverse cached association.
