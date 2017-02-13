@@ -50,6 +50,8 @@ module DatabaseConnection
     :not_cached_records            => [[:string, :name], [:integer, :item_id], [:timestamps, null: true]],
     :items                         => [[:integer, :item_id], [:string, :title], [:timestamps, null: true]],
     :items2                        => [[:integer, :item_id], [:string, :title], [:timestamps, null: true]],
+    self_items:                       [[:string, :title], [:integer, :parent_item_id], [:integer, :self_item_two_id], [:timestamps, null: true]],
+    self_item_twos:                   [[:string, :title], [:integer, :self_item_id], [:timestamps, null: true]],
     :keyed_records                 => [[:string, :value], :primary_key => "hashed_key"],
     :sti_records                   => [[:string, :type], [:string, :name]],
   }

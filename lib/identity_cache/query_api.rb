@@ -277,11 +277,12 @@ module IdentityCache
         end
       end
 
-      def cache_fetch_includes
+      def cache_fetch_includes(seen_assocs = Set.new)
         associations_for_identity_cache = recursively_embedded_associations.map do |child_association, options|
           child_class = reflect_on_association(child_association).try(:klass)
-
-          child_includes = child_class.send(:cache_fetch_includes)
+          if seen_assocs.add?(child_association)
+            child_includes = child_class.send(:cache_fetch_includes, seen_assocs)
+          end
 
           if child_includes.blank?
             child_association

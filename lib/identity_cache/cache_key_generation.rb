@@ -7,7 +7,7 @@ module IdentityCache
       columns.sort_by(&:name).map{|c| "#{c.name}:#{c.type}"}.join(',')
     end
 
-    def self.denormalized_schema_hash(klass, seen_assocs)
+    def self.denormalized_schema_hash(klass, seen_assocs = Set.new)
       schema_string = schema_to_string(klass.columns)
       klass.send(:all_cached_associations).sort.each do |name, options|
         klass.send(:check_association_scope, name)
@@ -31,7 +31,7 @@ module IdentityCache
       end
 
       def rails_cache_key_prefix
-        @rails_cache_key_prefix ||= IdentityCache::CacheKeyGeneration.denormalized_schema_hash(self, Set.new)
+        @rails_cache_key_prefix ||= IdentityCache::CacheKeyGeneration.denormalized_schema_hash(self)
       end
 
       def prefixed_rails_cache_key
