@@ -1,5 +1,9 @@
 # IdentityCache changelog
 
+#### Unreleased
+
+- Support alternate cache key for smoother upgrades
+
 #### 0.5.1
 
 - Fix bug in prefetch_associations for cache_has_one associations that may be nil
