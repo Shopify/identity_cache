@@ -26,7 +26,6 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency('mocha', '0.14.0')
   gem.add_development_dependency('spy')
   gem.add_development_dependency('minitest', '>= 2.11.0')
-  gem.add_development_dependency('pry-byebug')
 
   if RUBY_PLATFORM == 'java'
     raise NotImplementedError
