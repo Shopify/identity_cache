@@ -1,5 +1,9 @@
 # IdentityCache changelog
 
+#### 0.6.0 Unreleased
+
+- Remove deprecated `never_set_inverse_association` option (#319)
+
 #### 0.5.1
 
 - Fix bug in prefetch_associations for cache_has_one associations that may be nil

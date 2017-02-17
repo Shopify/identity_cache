@@ -149,15 +149,7 @@ module IdentityCache
           nil
         elsif (reflection = record.class.reflect_on_association(association_name)).collection?
           associated_records = coder_or_array.map {|e| record_from_coder(e) }
-
           set_inverse_of_cached_has_many(record, reflection, associated_records)
-
-          unless IdentityCache.never_set_inverse_association
-            association = reflection.association_class.new(record, reflection)
-            association.target = associated_records
-            association.target.each {|e| association.set_inverse_instance(e) }
-          end
-
           associated_records
         else
           record_from_coder(coder_or_array)
