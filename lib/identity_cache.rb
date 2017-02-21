@@ -49,12 +49,6 @@ module IdentityCache
     mattr_accessor :cache_namespace
     self.cache_namespace = "IDC:#{CACHE_VERSION}:".freeze
 
-    # Inverse active record associations are set when loading embedded
-    # cache_has_many associations from the cache when never_set_inverse_association
-    # is false. When set to true, it will only set the inverse cached association.
-    mattr_accessor :never_set_inverse_association
-    self.never_set_inverse_association = true
-
     # Fetched records are not read-only and this could sometimes prevent IDC from
     # reflecting what's truly in the database when fetch_read_only_records is false.
     # When set to true, it will only return read-only records when cache is used.
@@ -150,15 +144,6 @@ module IdentityCache
 
       result
     end
-
-    def with_never_set_inverse_association(value = true)
-      old_value = self.never_set_inverse_association
-      self.never_set_inverse_association = value
-      yield
-    ensure
-      self.never_set_inverse_association = old_value
-    end
-
 
     def with_fetch_read_only_records(value = true)
       old_value = self.fetch_read_only_records
