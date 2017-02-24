@@ -3,6 +3,7 @@ require 'minitest/autorun'
 require 'mocha/setup'
 require 'active_record'
 require 'helpers/database_connection'
+require 'helpers/cache_connection'
 require 'helpers/active_record_objects'
 require 'spy/integration'
 require 'memcached_store'
@@ -11,6 +12,7 @@ require 'active_support/cache/memcached_store'
 require File.dirname(__FILE__) + '/../lib/identity_cache'
 
 DatabaseConnection.setup
+CacheConnection.setup
 ActiveSupport::Cache::Store.instrument = true if ActiveSupport.version < Gem::Version.new("4.2.0")
 
 # This patches AR::MemcacheStore to notify AS::Notifications upon read_multis like the rest of rails does
@@ -39,8 +41,8 @@ class IdentityCache::TestCase < Minitest::Test
 
     IdentityCache.logger = Logger.new(nil)
 
-    memcached_host = ENV['MEMCACHED_HOST'] || "127.0.0.1"
-    IdentityCache.cache_backend = @backend = ActiveSupport::Cache::MemcachedStore.new("#{memcached_host}:11211", :support_cas => true)
+    @backend = CacheConnection.backend
+    IdentityCache.cache_backend = @backend
 
     setup_models
   end

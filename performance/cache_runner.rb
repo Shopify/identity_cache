@@ -6,14 +6,12 @@ require 'identity_cache'
 require 'memcached_store'
 require 'active_support/cache/memcached_store'
 
-$memcached_port = 11211
-$mysql_port = 3306
-
 require File.dirname(__FILE__) + '/../test/helpers/active_record_objects'
 require File.dirname(__FILE__) + '/../test/helpers/database_connection'
+require File.dirname(__FILE__) + '/../test/helpers/cache_connection'
 
 IdentityCache.logger = Logger.new(nil)
-IdentityCache.cache_backend = ActiveSupport::Cache::MemcachedStore.new("localhost:#{$memcached_port}", :support_cas => true)
+CacheConnection.setup
 
 if ActiveRecord.gem_version < Gem::Version.new('5') && ActiveRecord::Base.respond_to?(:raise_in_transactional_callbacks=)
   ActiveRecord::Base.raise_in_transactional_callbacks = true
