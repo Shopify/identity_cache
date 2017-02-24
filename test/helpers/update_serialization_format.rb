@@ -6,6 +6,7 @@ require 'memcached_store'
 require 'active_support/cache/memcached_store'
 require_relative 'serialization_format'
 require_relative 'database_connection'
+require_relative 'cache_connection'
 require_relative 'active_record_objects'
 require 'identity_cache'
 
@@ -16,10 +17,7 @@ DatabaseConnection.setup
 DatabaseConnection.drop_tables
 DatabaseConnection.create_tables
 IdentityCache.logger = Logger.new(nil)
-IdentityCache.cache_backend = ActiveSupport::Cache::MemcachedStore.new(
-  "#{ENV["MEMCACHED_HOST"] || "localhost"}:11211",
-  :support_cas => true,
-)
+CacheConnection.setup
 setup_models
 File.open(serialized_record_file, 'w') {|file| serialize(serialized_record, file) }
 puts "Serialized record to #{serialized_record_file}"
