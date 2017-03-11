@@ -15,6 +15,9 @@ module IdentityCache
         unless association_reflection = reflect_on_association(association)
           raise AssociationError, "Association named '#{association}' was not found on #{self.class}"
         end
+        if association_reflection.scope
+          raise UnsupportedAssociationError, "caching association #{self}.#{association} is scoped which isn't supported"
+        end
 
         options = {}
         self.cached_belongs_tos[association] = options

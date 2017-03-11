@@ -104,4 +104,12 @@ class NormalizedBelongsToTest < IdentityCache::TestCase
       end
     end
   end
+
+  def test_cache_belongs_to_with_scope
+    AssociatedRecord.belongs_to :item_with_scope, -> { where.not(timestamp: nil) },
+      class_name: 'Item', foreign_key: 'item_id'
+    assert_raises(IdentityCache::UnsupportedAssociationError) do
+      AssociatedRecord.cache_belongs_to :item_with_scope
+    end
+  end
 end
