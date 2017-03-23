@@ -126,6 +126,6 @@ end
 class DisabledPrimaryIndexTest < RecursiveDenormalizedHasManyTest
   def setup
     super
-    AssociatedRecord.disable_primary_cache_index
+    AssociatedRecord.primary_cache_index_enabled = false
   end
 end

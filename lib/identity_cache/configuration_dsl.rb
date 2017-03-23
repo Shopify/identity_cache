@@ -172,12 +172,6 @@ module IdentityCache
         cache_attribute_by_alias(attribute.inspect, attribute, options)
       end
 
-      def disable_primary_cache_index
-        ActiveSupport::Deprecation.warn("disable_primary_cache_index is deprecated, use `include IdentityCache::WithoutPrimaryIndex` instead")
-        ensure_base_model
-        self.primary_cache_index_enabled = false
-      end
-
       private
 
       def cache_attribute_by_alias(attribute, alias_name, options)
