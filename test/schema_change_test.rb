@@ -1,13 +1,15 @@
 require "test_helper"
 
 class SchemaChangeTest < IdentityCache::TestCase
-  class AddColumnToChild < ActiveRecord::Migration
+  Migration = ActiveRecord::Migration.try(:[], 4.2) || ActiveRecord::Migration
+
+  class AddColumnToChild < Migration
     def up
       add_column :associated_records, :shiny, :string
     end
   end
 
-  class AddColumnToDeepChild < ActiveRecord::Migration
+  class AddColumnToDeepChild < Migration
     def up
       add_column :deeply_associated_records, :new_column, :string
     end

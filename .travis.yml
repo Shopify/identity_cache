@@ -7,10 +7,13 @@ rvm:
 gemfile:
   - Gemfile.rails42
   - Gemfile.rails50
+  - Gemfile.rails51
 
 matrix:
   exclude:
     - gemfile: Gemfile.rails50
+      env: DB=postgresql
+    - gemfile: Gemfile.rails51
       env: DB=postgresql
 
 env:
