@@ -108,7 +108,7 @@ module IdentityCache
 
       def raise_if_scoped
         if current_scope
-          IdentityCache.logger.error("#{name} has scope: #{current_scope.where_values_hash.inspect}")
+          IdentityCache.logger.error("#{name} has scope: #{current_scope.to_sql} (#{current_scope.values.keys})")
           raise UnsupportedScopeError, "IdentityCache doesn't support rails scopes (#{name})"
         end
       end
