@@ -1,4 +1,7 @@
 module IdentityCache
+  class CorruptedCache < StandardError
+  end
+
   module QueryAPI
     extend ActiveSupport::Concern
 
@@ -27,7 +30,9 @@ module IdentityCache
             coder = IdentityCache.fetch(rails_cache_key(id)){ coder_from_record(object = resolve_cache_miss(id)) }
             object ||= record_from_coder(coder)
             if object && object.id.to_s != id.to_s
-              IdentityCache.logger.error "[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{object.id} for #{object.inspect[(0..100)]}"
+              message = "[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{object.id} for #{object.inspect[(0..100)]}"
+              IdentityCache.logger.error message
+              raise CorruptedCache.new(message) if IdentityCache.raise_on_id_mismatch
             end
             object
           end
