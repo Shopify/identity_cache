@@ -12,6 +12,7 @@ Add this line to your application's Gemfile:
 ```ruby
 gem 'identity_cache'
 gem 'cityhash'        # optional, for faster hashing (C-Ruby only)
+gem 'memcached_store' # for CAS support, needed for cache consistency
 ```
 
 And then execute:
@@ -22,7 +23,12 @@ And then execute:
 Add the following to all your environment/*.rb files (production/development/test):
 
 ```ruby
-config.identity_cache_store = :mem_cache_store, Memcached::Rails.new(:servers => ["mem1.server.com"])
+config.identity_cache_store = :memcached_store,
+  Memcached::Rails.new(servers: ["mem1.server.com"],
+    support_cas: true,
+    auto_eject_hosts: false,  # avoids more cache consistency issues
+    expires_in: 6.hours.to_i, # in case of network errors when sending a delete
+  )
 ```
 
 Add an initializer with this code:
