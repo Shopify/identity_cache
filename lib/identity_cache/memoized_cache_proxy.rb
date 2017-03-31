@@ -13,6 +13,13 @@ module IdentityCache
       if cache_adaptor.respond_to?(:cas) && cache_adaptor.respond_to?(:cas_multi)
         @cache_fetcher = CacheFetcher.new(cache_adaptor)
       else
+        case cache_adaptor
+        when ActiveSupport::Cache::MemoryStore, ActiveSupport::Cache::NullStore
+          # no need for CAS support
+        else
+          warn "[IdentityCache] Missing CAS support in cache backend #{cache_adaptor.class} "\
+               "which is needed for cache consistency"
+        end
         @cache_fetcher = FallbackFetcher.new(cache_adaptor)
       end
     end
