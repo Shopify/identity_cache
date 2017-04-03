@@ -461,6 +461,7 @@ module IdentityCache
     end
 
     def expire_cache # :nodoc:
+      return unless should_use_cache?
       expire_primary_index
       expire_attribute_indexes
       true
