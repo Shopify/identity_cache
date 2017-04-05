@@ -41,7 +41,8 @@ module IdentityCache
         raise NotImplementedError, "Cache indexes need an enabled primary index" unless primary_cache_index_enabled
         options = fields.extract_options!
         unique = options[:unique] || false
-        cache_attribute_by_alias('primary_key', 'id', by: fields, unique: unique)
+        preparators = options[:prepare] || {}
+        cache_attribute_by_alias('primary_key', 'id', by: fields, unique: unique, prepare: preparators)
 
         field_list = fields.join("_and_")
         arg_list = (0...fields.size).collect { |i| "arg#{i}" }.join(',')
@@ -185,12 +186,17 @@ module IdentityCache
         options[:by] ||= :id
         alias_name = alias_name.to_sym
         unique = options[:unique].nil? ? true : !!options[:unique]
+        preparators = options[:prepare] || {}
         fields = Array(options[:by])
 
         self.cache_indexes.push [alias_name, fields, unique]
 
         field_list = fields.join("_and_")
         arg_list = (0...fields.size).collect { |i| "arg#{i}" }.join(',')
+
+        preparators.each do |key, preparator|
+          define_singleton_method("prepare_#{key}", preparator)
+        end
 
         self.instance_eval(<<-CODE, __FILE__, __LINE__ + 1)
           def fetch_#{alias_name}_by_#{field_list}(#{arg_list})
@@ -251,6 +257,7 @@ module IdentityCache
 
       def attribute_dynamic_fetcher(attribute, fields, values, unique_index) #:nodoc:
         raise_if_scoped
+        values = prepare_values(fields, values)
 
         if should_use_cache?
           cache_key = rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, values, unique_index)
@@ -259,6 +266,13 @@ module IdentityCache
           end
         else
           dynamic_attribute_cache_miss(attribute, fields, values, unique_index)
+        end
+      end
+
+      def prepare_values(fields, values)
+        fields.zip(values).map do |field, value|
+          next(value) unless respond_to?("prepare_#{field}")
+          send("prepare_#{field}", value)
         end
       end
 

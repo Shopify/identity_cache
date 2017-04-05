@@ -179,6 +179,12 @@ _[:unique]_ Allows you to say that an index is unique (only one object stored at
 Example:
 `cache_index :handle`
 
+_[:prepare]_ Prepare attribute value for cache key generation. Useful if you want
+to workaround database collation.
+
+Example:
+`cache_index :vendor, :product_type, prepare: { product_type: ->(type) { type.downcase } }`
+
 #### cache_has_many
 
 Options:
