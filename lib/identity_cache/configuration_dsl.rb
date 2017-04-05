@@ -41,7 +41,8 @@ module IdentityCache
         raise NotImplementedError, "Cache indexes need an enabled primary index" unless primary_cache_index_enabled
         options = fields.extract_options!
         unique = options[:unique] || false
-        cache_attribute_by_alias('primary_key', 'id', by: fields, unique: unique)
+        case_insensitive_fields = options[:case_insensitive] || []
+        cache_attribute_by_alias('primary_key', 'id', by: fields, unique: unique, case_insensitive: case_insensitive_fields)
 
         field_list = fields.join("_and_")
         arg_list = (0...fields.size).collect { |i| "arg#{i}" }.join(',')
@@ -185,6 +186,7 @@ module IdentityCache
         options[:by] ||= :id
         alias_name = alias_name.to_sym
         unique = options[:unique].nil? ? true : !!options[:unique]
+        case_insensitive_fields = options[:case_insensitive] || []
         fields = Array(options[:by])
 
         self.cache_indexes.push [alias_name, fields, unique]
@@ -194,7 +196,7 @@ module IdentityCache
 
         self.instance_eval(<<-CODE, __FILE__, __LINE__ + 1)
           def fetch_#{alias_name}_by_#{field_list}(#{arg_list})
-            attribute_dynamic_fetcher(#{attribute}, #{fields.inspect}, [#{arg_list}], #{unique})
+            attribute_dynamic_fetcher(#{attribute}, #{fields.inspect}, [#{arg_list}], #{unique}, #{case_insensitive_fields})
           end
         CODE
       end
@@ -249,8 +251,9 @@ module IdentityCache
         ParentModelExpiration.add_parent_expiry_hook(options)
       end
 
-      def attribute_dynamic_fetcher(attribute, fields, values, unique_index) #:nodoc:
+      def attribute_dynamic_fetcher(attribute, fields, values, unique_index, case_insensitive_fields) #:nodoc:
         raise_if_scoped
+        values = transform_case_insensitive_values(fields, values, case_insensitive_fields)
 
         if should_use_cache?
           cache_key = rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, values, unique_index)
@@ -259,6 +262,15 @@ module IdentityCache
           end
         else
           dynamic_attribute_cache_miss(attribute, fields, values, unique_index)
+        end
+      end
+
+      def transform_case_insensitive_values(fields, values, case_insensitive_fields)
+        return values if case_insensitive_fields.empty?
+
+        fields.zip(values).map do |field, value|
+          next(value.downcase) if case_insensitive_fields.include?(field)
+          value
         end
       end
 

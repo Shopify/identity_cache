@@ -179,6 +179,11 @@ _[:unique]_ Allows you to say that an index is unique (only one object stored at
 Example:
 `cache_index :handle`
 
+_[:case_insensitive]_ Allows you to specify attributes used in the secondary index for which the values should be downcased at cache key generation. This is helpful when indexing with nonbinary strings in MySQL.
+
+Example:
+`cache_index :vendor, :product_type, case_insensitive: [:product_type]`
+
 #### cache_has_many
 
 Options:
