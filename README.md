@@ -54,7 +54,7 @@ class Product < ActiveRecord::Base
   cache_has_many :images, :embed => true
 end
 
-# Fetch the product by its id using the primary primary index as well as the embedded images association.
+# Fetch the product by its id using the primary index as well as the embedded images association.
 @product = Product.fetch(id)
 
 # Access the loaded images for the Product.
