@@ -18,6 +18,15 @@ module IdentityCache
       @cache_backend.clear
     end
 
+    def exists?(key)
+      !!IdentityCache.unmap_cached_nil_for(read(key))
+    end
+
+    def read(key)
+      value = @cache_backend.read(key)
+      value unless IdentityCache::DELETED == value
+    end
+
     def fetch_multi(keys, &block)
       results = cas_multi(keys, &block)
       results = add_multi(keys, &block) if results.nil?

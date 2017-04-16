@@ -60,6 +60,96 @@ class FetchTest < IdentityCache::TestCase
     assert fetch.has_been_called_with?(@blob_key)
   end
 
+  def test_exists_in_identity_cache_when_cache_hit
+    Item.expects(:resolve_cache_miss).with(1).once.returns(@record)
+    Item.fetch(1)
+
+    assert_memcache_operations(1) do
+      assert_memcache_operations(1, :read) do
+        assert_no_queries do
+          assert Item.exists_in_identity_cache?(1)
+        end
+      end
+    end
+  end
+
+  def test_exists_in_identity_cache_when_cache_miss
+    assert_memcache_operations(1) do
+      assert_memcache_operations(1, :read) do
+        assert_no_queries do
+          refute Item.exists_in_identity_cache?(1)
+        end
+      end
+    end
+  end
+
+  def test_exists_in_identity_cache_when_cached_nil
+    Item.fetch_by_id(1)
+
+    assert_memcache_operations(1) do
+      assert_memcache_operations(1, :read) do
+        assert_no_queries do
+          refute Item.exists_in_identity_cache?(1)
+        end
+      end
+    end
+  end
+
+  def test_read_hit
+    Item.expects(:resolve_cache_miss).with(1).once.returns(@record)
+    Item.fetch(1)
+
+    Item.expects(:resolve_cache_miss).never
+    assert_memcache_operations(1) do
+      assert_memcache_operations(1, :read) do
+        assert_no_queries do
+          assert_equal @record, Item.read(1)
+        end
+      end
+    end
+  end
+
+  def test_read_miss
+    Item.expects(:resolve_cache_miss).never
+    assert_memcache_operations(2) do
+      assert_memcache_operations(2, :read) do
+        assert_no_queries do
+          assert_raises(ActiveRecord::RecordNotFound) { Item.read(1) }
+          assert_nil Item.read_by_id(1)
+        end
+      end
+    end
+  end
+
+  def test_read_when_cached_nil
+    Item.fetch_by_id(1)
+
+    Item.expects(:resolve_cache_miss).never
+    assert_memcache_operations(2) do
+      assert_memcache_operations(2, :read) do
+        assert_no_queries do
+          assert_raises(ActiveRecord::RecordNotFound) { Item.read(1) }
+          assert_nil Item.read_by_id(1)
+        end
+      end
+    end
+  end
+
+  def test_read_when_cached_deleted
+    @record.send(:expire_cache)
+    assert_equal IdentityCache::DELETED, backend.read(@record.primary_cache_index_key)
+
+    Item.expects(:resolve_cache_miss).never
+    assert_memcache_operations(2) do
+      assert_memcache_operations(2, :read) do
+        assert_no_queries do
+          assert_raises(ActiveRecord::RecordNotFound) { Item.read(1) }
+          assert_nil Item.read_by_id(1)
+        end
+      end
+    end
+  end
+
   def test_fetch_miss
     Item.expects(:resolve_cache_miss).with(1).once.returns(@record)
 

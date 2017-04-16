@@ -18,6 +18,14 @@ module IdentityCache
       @cache_backend.clear
     end
 
+    def exists?(key)
+      @cache_backend.exist?(key)
+    end
+
+    def read(key)
+      @cache_backend.read(key)
+    end
+
     def fetch_multi(keys, &block)
       results = @cache_backend.read_multi(*keys)
       missed_keys = keys - results.keys

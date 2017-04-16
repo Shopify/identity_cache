@@ -14,6 +14,27 @@ module IdentityCache
         !!fetch_by_id(id)
       end
 
+      def exists_in_identity_cache?(id)
+        return false unless id
+        raise NotImplementedError, "exists_in_identity_cache? needs the primary index enabled" unless primary_cache_index_enabled
+        IdentityCache.exists?(rails_cache_key(id))
+      end
+
+      def read_by_id(id)
+        return unless id
+        raise NotImplementedError, "reading needs the primary index enabled" unless primary_cache_index_enabled
+        return nil unless IdentityCache.should_use_cache?
+        require_if_necessary do
+          object = record_from_coder(IdentityCache.read(rails_cache_key(id)))
+          IdentityCache.logger.error "[IDC id mismatch] read_by_id_requested=#{id} read_by_id_got=#{object.id} for #{object.inspect[(0..100)]} " if object && object.id != id.to_i
+          object
+        end
+      end
+
+      def read(id)
+        read_by_id(id) or raise(ActiveRecord::RecordNotFound, "Couldn't find #{self.name} with ID=#{id}")
+      end
+
       # Default fetcher added to the model on inclusion, it behaves like
       # ActiveRecord::Base.where(id: id).first
       def fetch_by_id(id, options={})
