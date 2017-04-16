@@ -2,6 +2,8 @@ require 'monitor'
 
 module IdentityCache
   class MemoizedCacheProxy
+    include Benchmarking
+
     attr_reader :cache_fetcher
 
     def initialize(cache_adaptor = nil)
@@ -75,6 +77,7 @@ module IdentityCache
 
       value
     end
+    add_benchmark_to_method :fetch
 
     def fetch_multi(*keys)
       memoized_keys, missed_keys = [], [] if IdentityCache.logger.debug?
@@ -112,6 +115,7 @@ module IdentityCache
 
       result
     end
+    add_benchmark_to_method :fetch_multi
 
     def clear
       clear_memoization

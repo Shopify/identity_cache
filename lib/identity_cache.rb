@@ -3,6 +3,7 @@ require 'active_support/core_ext/module/attribute_accessors'
 require 'ar_transaction_changes'
 
 require "identity_cache/version"
+require 'identity_cache/benchmarking'
 require 'identity_cache/memoized_cache_proxy'
 require 'identity_cache/belongs_to_caching'
 require 'identity_cache/cache_key_generation'
