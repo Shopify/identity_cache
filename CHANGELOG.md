@@ -1,6 +1,6 @@
 # IdentityCache changelog
 
-#### 0.6.0 Unreleased
+#### 1.0.0 Unreleased
 
 - Remove disable_primary_cache_index
 - Remove deprecated `embed: false` cache_has_many option
