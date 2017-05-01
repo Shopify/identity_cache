@@ -29,7 +29,7 @@ class ReadonlyTest < IdentityCache::TestCase
   def test_delete_should_update_cache
     backend.write(@key, @value)
     fetcher.delete(@key)
-    assert_equal deleted_value, backend.read(@key)
+    assert_key_deleted(@key)
   end
 
   def test_clear_should_update_cache
@@ -62,6 +62,10 @@ class ReadonlyTest < IdentityCache::TestCase
 
   protected
 
+  def assert_key_deleted(key)
+    assert_equal IdentityCache::DELETED, backend.read(key)
+  end
+
   def assert_readonly_fetch
     cas = Spy.on(backend, :cas).and_call_through
     yield
@@ -72,10 +76,6 @@ class ReadonlyTest < IdentityCache::TestCase
     cas_multi = Spy.on(backend, :cas_multi).and_call_through
     yield
     assert cas_multi.has_been_called?
-  end
-
-  def deleted_value
-    IdentityCache::DELETED
   end
 end
 
@@ -103,7 +103,7 @@ class FallbackReadonlyTest < ReadonlyTest
     refute write.has_been_called?
   end
 
-  def deleted_value
-    nil
+  def assert_key_deleted(key)
+    assert_nil backend.read(key)
   end
 end

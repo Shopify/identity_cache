@@ -200,7 +200,7 @@ class FetchTest < IdentityCache::TestCase
       Item.where(updated_at: nil).fetch(1)
     end
 
-    assert_match /Item/, exception.message
+    assert_match(/Item/, exception.message)
   end
 
   def test_fetch_by_raises_when_called_on_a_scope
@@ -208,7 +208,7 @@ class FetchTest < IdentityCache::TestCase
       Item.where(updated_at: nil).fetch_by_id(1)
     end
 
-    assert_match /Item/, exception.message
+    assert_match(/Item/, exception.message)
   end
 
   def test_fetch_on_derived_model_raises
