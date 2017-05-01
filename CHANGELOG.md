@@ -3,6 +3,7 @@
 #### 0.6.0 Unreleased
 
 - Remove disable_primary_cache_index
+- Remove deprecated `embed: false` cache_has_many option
 - Raise when trying to cache a belong_to association with a scope. Previously the scope was ignored on a cache hit (#323)
 - Remove deprecated `never_set_inverse_association` option (#319)
 

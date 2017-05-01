@@ -102,7 +102,6 @@ module IdentityCache
         ensure_base_model
         options = options.slice(:embed, :inverse_name)
         options[:embed] = :ids unless options.has_key?(:embed)
-        deprecate_embed_option(options, false, :ids)
         check_association_for_caching(association, options)
         self.cached_has_manys[association] = options
 
@@ -261,13 +260,6 @@ module IdentityCache
         query = query.limit(1) if unique_index
         results = query.pluck(attribute)
         unique_index ? results.first : results
-      end
-
-      def deprecate_embed_option(options, old_value, new_value)
-        if options[:embed] == old_value
-          options[:embed] = new_value
-          ActiveSupport::Deprecation.warn("`embed: #{old_value.inspect}` was renamed to `embed: #{new_value.inspect}` for clarity", caller(2))
-        end
       end
 
       def ensure_base_model
