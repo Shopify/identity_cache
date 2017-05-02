@@ -54,6 +54,20 @@ class ItemTwo < ActiveRecord::Base
   self.table_name = 'items2'
 end
 
+class SelfItem < ActiveRecord::Base
+  include IdentityCache
+  belongs_to :parent_item, class_name: 'SelfItem'
+  belongs_to :self_item_two
+  has_many :self_item_twos
+  has_many :associated_items, class_name: 'SelfItem', foreign_key: 'parent_item_id'
+end
+
+class SelfItemTwo < ActiveRecord::Base
+  include IdentityCache
+  belongs_to :self_item
+  has_many :self_items
+end
+
 class KeyedRecord < ActiveRecord::Base
   include IdentityCache
   self.primary_key = "hashed_key"

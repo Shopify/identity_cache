@@ -31,6 +31,8 @@ module ActiveRecordObjects
     Object.send :remove_const, 'NotCachedRecord'
     Object.send :remove_const, 'Item'
     Object.send :remove_const, 'ItemTwo'
+    Object.send :remove_const, 'SelfItem'
+    Object.send :remove_const, 'SelfItemTwo'
     Object.send :remove_const, 'KeyedRecord'
     Object.send :remove_const, 'StiRecord'
     Object.send :remove_const, 'StiRecordTypeA'
