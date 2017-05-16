@@ -43,9 +43,7 @@ module IdentityCache
 
     def delete(key)
       memoized_key_values.delete(key) if memoizing?
-      result = @cache_fetcher.delete(key)
-      IdentityCache.logger.debug { "[IdentityCache] delete #{ result ? 'recorded'  : 'failed'  } for #{key}" }
-      result
+      @cache_fetcher.delete(key)
     end
 
     def fetch(key)
