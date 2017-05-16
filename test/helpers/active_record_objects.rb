@@ -37,6 +37,8 @@ module ActiveRecordObjects
     Deeply::Nested.send :remove_const, 'AssociatedRecord'
     Deeply.send :remove_const, 'Nested'
     Object.send :remove_const, 'Deeply'
+    Object.send :remove_const, 'CustomMasterRecord'
+    Object.send :remove_const, 'CustomChildRecord'
     IdentityCache.const_get(:ParentModelExpiration).send(:lazy_hooks).clear
   end
 end

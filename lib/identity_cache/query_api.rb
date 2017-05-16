@@ -228,7 +228,7 @@ module IdentityCache
           scope = child_model.all
           scope = scope.instance_exec(nil, &reflection.scope) if reflection.scope
 
-          pairs = scope.where(reflection.foreign_key => records.map(&:id)).pluck(reflection.foreign_key, reflection.active_record_primary_key)
+          pairs = scope.where(reflection.foreign_key => records.map(&:id)).pluck(reflection.foreign_key, reflection.association_primary_key)
           ids_by_parent = Hash.new{ |hash, key| hash[key] = [] }
           pairs.each do |parent_id, child_id|
             ids_by_parent[parent_id] << child_id

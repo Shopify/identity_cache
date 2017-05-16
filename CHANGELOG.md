@@ -6,6 +6,7 @@
 - Remove deprecated `embed: false` cache_has_many option
 - Raise when trying to cache a belong_to association with a scope. Previously the scope was ignored on a cache hit (#323)
 - Remove deprecated `never_set_inverse_association` option (#319)
+- Fix column name in the preload association query when using custom primary keys (#338)
 
 #### 0.5.1
 
