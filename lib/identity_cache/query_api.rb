@@ -121,6 +121,13 @@ module IdentityCache
       end
 
       def record_from_coder(coder) #:nodoc:
+        return unless coder
+        ActiveSupport::Notifications.instrument('identity_cache.hydration', class: coder[:class]) do
+          record_from_coder_internal(coder)
+        end
+      end
+
+      def record_from_coder_internal(coder) #:nodoc:
         if coder
           klass = coder[:class].constantize
           record = klass.instantiate(coder[:attributes].dup)
@@ -148,11 +155,11 @@ module IdentityCache
         value = if IdentityCache.unmap_cached_nil_for(coder_or_array).nil?
           nil
         elsif (reflection = record.class.reflect_on_association(association_name)).collection?
-          associated_records = coder_or_array.map {|e| record_from_coder(e) }
+          associated_records = coder_or_array.map {|e| record_from_coder_internal(e) }
           set_inverse_of_cached_has_many(record, reflection, associated_records)
           associated_records
         else
-          record_from_coder(coder_or_array)
+          record_from_coder_internal(coder_or_array)
         end
         variable_name = record.class.send(:recursively_embedded_associations)[association_name][:records_variable_name]
         record.instance_variable_set(:"@#{variable_name}", value)
@@ -161,13 +168,20 @@ module IdentityCache
       def get_embedded_association(record, association, options) #:nodoc:
         embedded_variable = record.public_send(options.fetch(:cached_accessor_name))
         if embedded_variable.respond_to?(:to_ary)
-          embedded_variable.map {|e| coder_from_record(e) }
+          embedded_variable.map {|e| coder_from_record_internal(e) }
         else
-          coder_from_record(embedded_variable)
+          coder_from_record_internal(embedded_variable)
         end
       end
 
       def coder_from_record(record) #:nodoc:
+        return unless record
+        ActiveSupport::Notifications.instrument('identity_cache.dehydration', class: record.class.name) do
+          coder_from_record_internal(record)
+        end
+      end
+
+      def coder_from_record_internal(record) #:nodoc:
         unless record.nil?
           coder = {
             attributes: record.attributes_before_type_cast.dup,

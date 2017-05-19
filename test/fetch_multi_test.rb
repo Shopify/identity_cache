@@ -38,6 +38,24 @@ class FetchMultiTest < IdentityCache::TestCase
     assert_equal [@bob, @joe, @fred], Item.fetch_multi(@bob.id, @joe.id, @fred.id)
   end
 
+  def test_fetch_multi_with_all_hits_publishes_notifications
+    cache_response = {}
+    cache_response[@bob_blob_key] = cache_response_for(@bob)
+    cache_response[@joe_blob_key] = cache_response_for(@joe)
+    cache_response[@fred_blob_key] = cache_response_for(@fred)
+    IdentityCache.cache.expects(:fetch_multi).with(@bob_blob_key, @joe_blob_key, @fred_blob_key).returns(cache_response)
+
+    events = 0
+    subscriber = ActiveSupport::Notifications.subscribe('identity_cache.hydration') do |_, _, _, _, payload|
+      events += 1
+      assert_equal "Item", payload[:class]
+    end
+    Item.fetch_multi(@bob.id, @joe.id, @fred.id)
+    assert_equal 3, events
+  ensure
+    ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
+  end
+
   def test_fetch_multi_with_all_misses
     cache_response = {}
     cache_response[@bob_blob_key] = nil
@@ -46,6 +64,24 @@ class FetchMultiTest < IdentityCache::TestCase
     fetch_multi = fetch_multi_stub(cache_response)
     assert_equal [@bob, @joe, @fred], Item.fetch_multi(@bob.id, @joe.id, @fred.id)
     assert fetch_multi.has_been_called_with?(@bob_blob_key, @joe_blob_key, @fred_blob_key)
+  end
+
+  def test_fetch_multi_with_all_misses_publishes_notifications
+    cache_response = {}
+    cache_response[@bob_blob_key] = nil
+    cache_response[@joe_blob_key] = nil
+    cache_response[@fred_blob_key] = nil
+    fetch_multi_stub(cache_response)
+
+    events = 0
+    subscriber = ActiveSupport::Notifications.subscribe('identity_cache.dehydration') do |_, _, _, _, payload|
+      events += 1
+      assert_equal "Item", payload[:class]
+    end
+    Item.fetch_multi(@bob.id, @joe.id, @fred.id)
+    assert_equal 3, events
+  ensure
+    ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
   end
 
   def test_fetch_multi_with_mixed_hits_and_misses
