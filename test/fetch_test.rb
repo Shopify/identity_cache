@@ -26,6 +26,20 @@ class FetchTest < IdentityCache::TestCase
     assert_equal @record, Item.fetch(1)
   end
 
+  def test_fetch_cache_hit_publishes_hydration_notification
+    IdentityCache.cache.expects(:fetch).with(@blob_key).returns(@cached_value)
+
+    events = 0
+    subscriber = ActiveSupport::Notifications.subscribe('identity_cache.hydration') do |_, _, _, _, payload|
+      events += 1
+      assert_equal "Item", payload[:class]
+    end
+    Item.fetch(1)
+    assert_equal 1, events
+  ensure
+    ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
+  end
+
   def test_fetch_hit_cache_namespace
     old_ns = IdentityCache.cache_namespace
     IdentityCache.cache_namespace = proc { |model| "#{model.table_name}:#{old_ns}" }
@@ -58,6 +72,20 @@ class FetchTest < IdentityCache::TestCase
 
     assert !Item.exists_with_identity_cache?(1)
     assert fetch.has_been_called_with?(@blob_key)
+  end
+
+  def test_fetch_miss_published_dehydration_notification
+    Item.expects(:resolve_cache_miss).with(1).once.returns(@record)
+
+    events = 0
+    subscriber = ActiveSupport::Notifications.subscribe('identity_cache.dehydration') do |_, _, _, _, payload|
+      events += 1
+      assert_equal "Item", payload[:class]
+    end
+    Item.fetch(1)
+    assert_equal 1, events
+  ensure
+    ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
   end
 
   def test_fetch_miss
