@@ -94,6 +94,26 @@ class FetchMultiTest < IdentityCache::TestCase
     assert fetch_multi.has_been_called_with?(@bob_blob_key, @joe_blob_key, @fred_blob_key)
   end
 
+  def test_fetch_multi_with_mixed_hits_and_misses_notifies
+    subscriber = nil
+    Item.fetch(@bob.id)
+
+    IdentityCache.cache.with_memoization do
+      Item.fetch(@fred.id)
+      expected = { memoizing: true, memo_hits: 1, cache_hits: 1, cache_misses: 1 }
+      events = 0
+      subscriber = ActiveSupport::Notifications.subscribe('identity_cache.cache.fetch_multi') do |_, _, _, _, payload|
+        events += 1
+        assert payload.delete(:resolve_miss_time) > 0
+        assert_equal expected, payload
+      end
+      Item.fetch_multi(@bob.id, @joe.id, @fred.id)
+      assert_equal 1, events
+    end
+  ensure
+    ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
+  end
+
   def test_fetch_multi_with_mixed_hits_and_misses_and_responses_in_the_wrong_order
     cache_response = {}
     cache_response[@bob_blob_key] = nil
