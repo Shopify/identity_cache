@@ -24,8 +24,8 @@ module IdentityCache
         record = if should_use_cache?
           require_if_necessary do
             object = nil
-            coder = IdentityCache.fetch(rails_cache_key(id)){ coder_from_record(object = resolve_cache_miss(id)) }
-            object ||= record_from_coder(coder)
+            coder = IdentityCache.fetch(rails_cache_key(id)){ instrumented_coder_from_record(object = resolve_cache_miss(id)) }
+            object ||= instrumented_record_from_coder(coder)
             if object && object.id.to_s != id.to_s
               IdentityCache.logger.error "[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{object.id} for #{object.inspect[(0..100)]}"
             end
@@ -63,10 +63,10 @@ module IdentityCache
               ids = unresolved_keys.map {|key| key_to_id_map[key] }
               records = find_batch(ids)
               key_to_record_map = records.compact.index_by{ |record| rails_cache_key(record.id) }
-              records.map {|record| coder_from_record(record) }
+              records.map {|record| instrumented_coder_from_record(record) }
             end
 
-            cache_keys.map{ |key| key_to_record_map[key] || record_from_coder(coders_by_key[key]) }
+            cache_keys.map{ |key| key_to_record_map[key] || instrumented_record_from_coder(coders_by_key[key]) }
           end
         else
           find_batch(ids)
@@ -121,6 +121,13 @@ module IdentityCache
         end
       end
 
+      def instrumented_record_from_coder(coder) #:nodoc:
+        return unless coder
+        ActiveSupport::Notifications.instrument('identity_cache.hydration', class: coder[:class]) do
+          record_from_coder(coder)
+        end
+      end
+
       def record_from_coder(coder) #:nodoc:
         if coder
           klass = coder[:class].constantize
@@ -165,6 +172,13 @@ module IdentityCache
           embedded_variable.map {|e| coder_from_record(e) }
         else
           coder_from_record(embedded_variable)
+        end
+      end
+
+      def instrumented_coder_from_record(record) #:nodoc:
+        return unless record
+        ActiveSupport::Notifications.instrument('identity_cache.dehydration', class: record.class.name) do
+          coder_from_record(record)
         end
       end
 
