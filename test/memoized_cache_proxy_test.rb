@@ -104,4 +104,42 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
     end
     assert_equal 'bar', @backend.fetch('foo')
   end
+
+  def test_write_notifies
+    events = 0
+    expected = { memoizing: false }
+    subscriber = ActiveSupport::Notifications.subscribe('identity_cache.cache.write') do |_, _, _, _, payload|
+      events += 1
+      assert_equal expected, payload
+    end
+    IdentityCache.cache.write('foo', 'bar')
+    assert_equal 1, events
+  ensure
+    ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
+  end
+
+  def test_delete_notifies
+    events = 0
+    expected = { memoizing: false }
+    subscriber = ActiveSupport::Notifications.subscribe('identity_cache.cache.delete') do |_, _, _, _, payload|
+      events += 1
+      assert_equal expected, payload
+    end
+    IdentityCache.cache.delete('foo')
+    assert_equal 1, events
+  ensure
+    ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
+  end
+
+  def test_clear_notifies
+    events = 0
+    subscriber = ActiveSupport::Notifications.subscribe('identity_cache.cache.clear') do |_, _, _, _, payload|
+      events += 1
+      assert payload.empty?
+    end
+    IdentityCache.cache.clear
+    assert_equal 1, events
+  ensure
+    ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
+  end
 end

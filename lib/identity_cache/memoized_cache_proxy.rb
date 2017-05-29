@@ -1,4 +1,5 @@
 require 'monitor'
+require 'benchmark'
 
 module IdentityCache
   class MemoizedCacheProxy
@@ -37,101 +38,152 @@ module IdentityCache
     end
 
     def write(key, value)
-      memoized_key_values[key] = value if memoizing?
-      @cache_fetcher.write(key, value)
+      memoizing = memoizing?
+      ActiveSupport::Notifications.instrument('identity_cache.cache.write', memoizing: memoizing) do
+        memoized_key_values[key] = value if memoizing
+        @cache_fetcher.write(key, value)
+      end
     end
 
     def delete(key)
-      memoized_key_values.delete(key) if memoizing?
-      result = @cache_fetcher.delete(key)
-      IdentityCache.logger.debug { "[IdentityCache] delete #{ result ? 'recorded'  : 'failed'  } for #{key}" }
-      result
+      memoizing = memoizing?
+      ActiveSupport::Notifications.instrument('identity_cache.cache.delete', memoizing: memoizing) do
+        memoized_key_values.delete(key) if memoizing
+        result = @cache_fetcher.delete(key)
+        IdentityCache.logger.debug {"[IdentityCache] delete #{ result ? 'recorded' : 'failed'  } for #{key}"}
+        result
+      end
     end
 
     def fetch(key)
-      used_cache_backend = true
-      missed = false
-      value = if memoizing?
-        used_cache_backend = false
-        memoized_key_values.fetch(key) do
-          used_cache_backend = true
-          memoized_key_values[key] = @cache_fetcher.fetch(key) do
-            missed = true
-            yield
+      memo_misses = 0
+      cache_misses = 0
+
+      value = ActiveSupport::Notifications.instrument('identity_cache.cache.fetch') do |payload|
+        payload[:resolve_miss_time] = 0.0
+
+        value = fetch_memoized(key) do
+          memo_misses = 1
+          @cache_fetcher.fetch(key) do
+            cache_misses = 1
+            instrument_duration(payload, :resolve_miss_time) do
+              yield
+            end
           end
         end
-      else
-        @cache_fetcher.fetch(key) do
-          missed = true
-          yield
-        end
+        set_instrumentation_payload(payload, num_keys: 1, memo_misses: memo_misses, cache_misses: cache_misses)
+        value
       end
 
-      if missed
+      if cache_misses > 0
         IdentityCache.logger.debug { "[IdentityCache] cache miss for #{key}" }
       else
-        IdentityCache.logger.debug { "[IdentityCache] #{ used_cache_backend ? '(cache_backend)' : '(memoized)' } cache hit for #{key}" }
+        IdentityCache.logger.debug { "[IdentityCache] #{ memo_misses > 0 ? '(cache_backend)' : '(memoized)' } cache hit for #{key}" }
       end
 
       value
     end
 
     def fetch_multi(*keys)
-      memoized_keys, missed_keys = [], [] if IdentityCache.logger.debug?
+      memo_miss_keys = EMPTY_ARRAY
+      cache_miss_keys = EMPTY_ARRAY
 
-      result = if memoizing?
-        hash = {}
-        mkv = memoized_key_values
+      result = ActiveSupport::Notifications.instrument('identity_cache.cache.fetch_multi') do |payload|
+        payload[:resolve_miss_time] = 0.0
 
-        non_memoized_keys = keys.reject do |key|
-          if mkv.has_key?(key)
-            memoized_keys << key if IdentityCache.logger.debug?
-            hit = mkv[key]
-            hash[key] = hit unless hit.nil?
-            true
+        result = fetch_multi_memoized(keys) do |non_memoized_keys|
+          memo_miss_keys = non_memoized_keys
+          @cache_fetcher.fetch_multi(non_memoized_keys) do |missing_keys|
+            cache_miss_keys = missing_keys
+            instrument_duration(payload, :resolve_miss_time) do
+              yield missing_keys
+            end
           end
         end
 
-        unless non_memoized_keys.empty?
-          results = @cache_fetcher.fetch_multi(non_memoized_keys) do |missing_keys|
-            missed_keys.concat(missing_keys) if IdentityCache.logger.debug?
-            yield missing_keys
-          end
-          mkv.merge! results
-          hash.merge! results
-        end
-        hash
-      else
-        @cache_fetcher.fetch_multi(keys) do |missing_keys|
-          missed_keys.concat(missing_keys) if IdentityCache.logger.debug?
-          yield missing_keys
-        end
+        set_instrumentation_payload(payload, num_keys: keys.length,
+          memo_misses: memo_miss_keys.length, cache_misses: cache_miss_keys.length)
+        result
       end
 
-      log_multi_result(memoized_keys, keys - missed_keys - memoized_keys, missed_keys) if IdentityCache.logger.debug?
+      log_multi_result(keys, memo_miss_keys, cache_miss_keys)
 
       result
     end
 
     def clear
-      clear_memoization
-      @cache_fetcher.clear
+      ActiveSupport::Notifications.instrument('identity_cache.cache.clear') do
+        clear_memoization
+        @cache_fetcher.clear
+      end
     end
 
     private
+
+    EMPTY_ARRAY = [].freeze
+    private_constant :EMPTY_ARRAY
+
+    def set_instrumentation_payload(payload, num_keys:, memo_misses:, cache_misses:)
+      payload[:memoizing] = memoizing?
+      payload[:memo_hits] = num_keys - memo_misses
+      payload[:cache_hits] = memo_misses - cache_misses
+      payload[:cache_misses] = cache_misses
+    end
+
+    def fetch_memoized(key)
+      return yield unless memoizing?
+      if memoized_key_values.key?(key)
+        return memoized_key_values[key]
+      end
+      memoized_key_values[key] = yield
+    end
+
+    def fetch_multi_memoized(keys)
+      return yield keys unless memoizing?
+
+      result = {}
+      missing_keys = keys.reject do |key|
+        if memoized_key_values.key?(key)
+          result[key] = memoized_key_values[key]
+          true
+        end
+      end
+
+      unless missing_keys.empty?
+        block_result = yield missing_keys
+        memoized_key_values.merge!(block_result)
+        result.merge!(block_result)
+      end
+
+      result
+    end
+
+    def instrument_duration(payload, key)
+      value = nil
+      payload[key] += Benchmark.realtime do
+        value = yield
+      end
+      value
+    end
 
     def clear_memoization
       @key_value_maps.delete(Thread.current)
     end
 
     def memoizing?
-      Thread.current[:memoizing_idc]
+      !!Thread.current[:memoizing_idc]
     end
 
-    def log_multi_result(memoized_keys, backend_keys, missed_keys)
-      memoized_keys.each {|k| IdentityCache.logger.debug "[IdentityCache] (memoized) cache hit for #{k} (multi)" }
-      backend_keys.each {|k| IdentityCache.logger.debug "[IdentityCache] (backend) cache hit for #{k} (multi)" }
-      missed_keys.each {|k| IdentityCache.logger.debug "[IdentityCache] cache miss for #{k} (multi)" }
+    def log_multi_result(keys, memo_miss_keys, cache_miss_keys)
+      IdentityCache.logger.debug do
+        memoized_keys = keys - memo_miss_keys
+        cache_hit_keys = memo_miss_keys - cache_miss_keys
+        missed_keys = cache_miss_keys
+
+        memoized_keys.each {|k| IdentityCache.logger.debug "[IdentityCache] (memoized) cache hit for #{k} (multi)" }
+        cache_hit_keys.each {|k| IdentityCache.logger.debug "[IdentityCache] (backend) cache hit for #{k} (multi)" }
+        missed_keys.each {|k| IdentityCache.logger.debug "[IdentityCache] cache miss for #{k} (multi)" }
+      end
     end
   end
 end
