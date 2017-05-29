@@ -55,6 +55,11 @@ module IdentityCache
     mattr_accessor :fetch_read_only_records
     self.fetch_read_only_records = true
 
+    # Raise an exception if the record returned from the cache don't match the id
+    # the user expected
+    mattr_accessor :raise_on_id_mismatch
+    self.raise_on_id_mismatch = false
+
     mattr_accessor :lazy_load_associated_classes
     self.lazy_load_associated_classes = Gem::Version.new(IdentityCache::VERSION) >= Gem::Version.new("0.6")
 

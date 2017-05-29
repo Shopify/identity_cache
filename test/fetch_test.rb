@@ -20,6 +20,15 @@ class FetchTest < IdentityCache::TestCase
     assert_nil Item.fetch_by_id('garbage')
   end
 
+  def test_fetch_with_corrupted_cache
+    attributes = @record.attributes_before_type_cast
+    attributes["id"] += 1
+    IdentityCache.cache.expects(:fetch).with(@blob_key).returns(class: @record.class.name, attributes: attributes)
+
+    IdentityCache.raise_on_id_mismatch = true
+    assert_raises(IdentityCache::CorruptedCache) { Item.fetch(1) }
+  end
+
   def test_fetch_cache_hit
     IdentityCache.cache.expects(:fetch).with(@blob_key).returns(@cached_value)
 
