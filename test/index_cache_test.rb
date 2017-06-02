@@ -153,9 +153,34 @@ class IndexCacheTest < IdentityCache::TestCase
     assert_equal 123, KeyedRecord.fetch_by_value('a').id
   end
 
+  def test_prepare_option_creates_class_methods
+    Item.cache_index :title, prepare: { title: ->(value) { value.downcase } }
+    assert(Item.respond_to?(:prepare_title))
+  end
+
+  def test_cache_index_prepare_values
+    Item.cache_index :title, prepare: { title: ->(value) { value.downcase } }
+
+    Item.fetch_by_title("FOO")
+    item = Item.create!(title: "foo")
+
+    assert_equal([item], Item.fetch_by_title("FOO"))
+    assert_nil(backend.read(cache_key(unique: true, title: "FOO")))
+  end
+
+  def test_cache_index_prepare_values_with_unique
+    Item.cache_index :title, unique: true, prepare: { title: ->(value) { value.downcase } }
+
+    Item.fetch_by_title("FOO")
+    item = Item.create!(title: "foo")
+
+    assert_equal(item, Item.fetch_by_title("FOO"))
+    assert_nil(backend.read(cache_key(unique: true, title: "FOO")))
+  end
+
   private
 
-  def cache_key(unique: false)
-    "#{NAMESPACE}attr#{unique ? '' : 's'}:Item:id:title:#{cache_hash(@record.title)}"
+  def cache_key(unique: false, title: @record.title)
+    "#{NAMESPACE}attr#{unique ? '' : 's'}:Item:id:title:#{cache_hash(title)}"
   end
 end
