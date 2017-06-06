@@ -8,6 +8,7 @@ require 'helpers/active_record_objects'
 require 'spy/integration'
 require 'memcached_store'
 require 'active_support/cache/memcached_store'
+require 'pry'
 
 require File.dirname(__FILE__) + '/../lib/identity_cache'
 
