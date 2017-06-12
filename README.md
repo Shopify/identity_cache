@@ -78,6 +78,9 @@ end
 # If the object isn't in the cache it is pulled from the db and stored in the cache.
 product = Product.fetch_by_handle(handle)
 
+# Fetch multiple products by providing an array of index values.
+products = Product.fetch_multi_by_handle(handles)
+
 products = Product.fetch_by_vendor_and_product_type(vendor, product_type)
 ```
 

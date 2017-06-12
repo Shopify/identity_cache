@@ -14,7 +14,7 @@ class IndexCacheTest < IdentityCache::TestCase
     Item.cache_index :title, :id
 
     assert_queries(1) do
-      assert_equal [], Item.fetch_by_title_and_id('garbage', 'garbage')
+      assert_equal [], Item.fetch_by_title_and_id('garbage_title', 'garbage_id')
     end
   end
 
