@@ -32,19 +32,13 @@ module IdentityCache
 
       private
 
-      def build_normalized_belongs_to_cache(association, options)
+      def build_normalized_belongs_to_cache(association_name, options)
         foreign_key = options[:association_reflection].foreign_key
         self.class_eval(<<-CODE, __FILE__, __LINE__ + 1)
           def #{options[:cached_accessor_name]}
-            association_klass = association(:#{association}).klass
-            if association_klass.should_use_cache? && #{foreign_key}.present? && !association(:#{association}).loaded?
-              if instance_variable_defined?(:@#{options[:records_variable_name]})
-                @#{options[:records_variable_name]}
-              else
-                @#{options[:records_variable_name]} = association_klass.fetch_by_id(#{foreign_key})
-              end
-            else
-              #{association}
+            return #{association_name} unless #{foreign_key}
+            fetch_cached_association(:#{association_name}, :@#{options[:records_variable_name]}) do |association|
+              association.klass.fetch_by_id(#{foreign_key})
             end
           end
 

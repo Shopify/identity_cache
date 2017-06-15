@@ -458,15 +458,14 @@ module IdentityCache
 
     private
 
-    def fetch_recursively_cached_association(ivar_name, association_name) # :nodoc:
-      ivar_full_name = :"@#{ivar_name}"
-      assoc = association(association_name)
-
+    def fetch_cached_association(association_name, instance_variable)
+      assoc = self.association(association_name)
       if assoc.klass.should_use_cache? && !assoc.loaded?
-        if instance_variable_defined?(ivar_full_name)
-          instance_variable_get(ivar_full_name)
+        if instance_variable_defined?(instance_variable)
+          instance_variable_get(instance_variable)
         else
-          instance_variable_set(ivar_full_name, assoc.load_target)
+          value = yield assoc
+          instance_variable_set(instance_variable, value)
         end
       else
         assoc.load_target

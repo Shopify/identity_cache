@@ -195,7 +195,9 @@ module IdentityCache
 
         self.class_eval(<<-CODE, __FILE__, __LINE__ + 1)
           def #{options[:cached_accessor_name]}
-            fetch_recursively_cached_association('#{options[:records_variable_name]}', :#{association})
+            fetch_cached_association(:#{association}, :@#{options[:records_variable_name]}) do |association|
+              association.load_target
+            end
           end
 
           def #{options[:prepopulate_method_name]}(records)
@@ -225,11 +227,8 @@ module IdentityCache
           end
 
           def #{options[:cached_accessor_name]}
-            association_klass = association(:#{association}).klass
-            if association_klass.should_use_cache? && !#{association}.loaded?
-              @#{options[:records_variable_name]} ||= #{options[:association_reflection].class_name}.fetch_multi(#{options[:cached_ids_name]})
-            else
-              #{association}.to_a
+            fetch_cached_association(:#{association}, :@#{options[:records_variable_name]}) do
+              #{options[:association_reflection].class_name}.fetch_multi(#{options[:cached_ids_name]})
             end
           end
 
