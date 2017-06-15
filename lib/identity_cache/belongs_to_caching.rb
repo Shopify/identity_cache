@@ -8,9 +8,8 @@ module IdentityCache
     end
 
     module ClassMethods
-      def cache_belongs_to(association, options = {})
+      def cache_belongs_to(association)
         ensure_base_model
-        raise NotImplementedError if options[:embed]
 
         unless association_reflection = reflect_on_association(association)
           raise AssociationError, "Association named '#{association}' was not found on #{self.class}"
