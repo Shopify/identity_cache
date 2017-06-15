@@ -186,7 +186,7 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
   end
 
   def test_fetch_multi_batch_fetches_first_level_belongs_to_associations
-    AssociatedRecord.send(:cache_belongs_to, :item, :embed => false)
+    AssociatedRecord.send(:cache_belongs_to, :item)
 
     @bob_child  = @bob.associated_records.create!(:name => "bob child")
     @fred_child = @fred.associated_records.create!(:name => "fred child")
@@ -238,8 +238,8 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
   end
 
   def test_fetch_multi_batch_fetches_non_embedded_second_level_belongs_to_associations
-    Item.send(:cache_belongs_to, :item, :embed => false)
-    AssociatedRecord.send(:cache_belongs_to, :item, :embed => false)
+    Item.send(:cache_belongs_to, :item)
+    AssociatedRecord.send(:cache_belongs_to, :item)
 
     @bob_child  = @bob.associated_records.create!(:name => "bob child")
     @fred_child = @fred.associated_records.create!(:name => "fred child")
@@ -261,7 +261,7 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
   end
 
   def test_fetch_multi_doesnt_batch_fetches_belongs_to_associations_if_the_foreign_key_isnt_present
-    AssociatedRecord.send(:cache_belongs_to, :item, :embed => false)
+    AssociatedRecord.send(:cache_belongs_to, :item)
     @child = AssociatedRecord.create!(:name => "bob child")
     # populate the cache entry
     AssociatedRecord.fetch_multi(@child.id)

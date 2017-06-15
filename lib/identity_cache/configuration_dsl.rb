@@ -35,12 +35,10 @@ module IdentityCache
       # +fields+ Array of symbols or strings representing the fields in the index
       #
       # == Options
-      # * unique: if the index would only have unique values
+      # * unique: if the index would only have unique values. Default is false
       #
-      def cache_index(*fields)
+      def cache_index(*fields, unique: false)
         raise NotImplementedError, "Cache indexes need an enabled primary index" unless primary_cache_index_enabled
-        options = fields.extract_options!
-        unique = options[:unique] || false
         cache_attribute_by_alias('primary_key', 'id', by: fields, unique: unique)
 
         field_list = fields.join("_and_")
@@ -48,21 +46,21 @@ module IdentityCache
 
         if unique
           self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
-            def fetch_by_#{field_list}(#{arg_list}, options={})
+            def fetch_by_#{field_list}(#{arg_list}, includes: nil)
               id = fetch_id_by_#{field_list}(#{arg_list})
-              id && fetch_by_id(id, options)
+              id && fetch_by_id(id, includes: includes)
             end
 
             # exception throwing variant
-            def fetch_by_#{field_list}!(#{arg_list}, options={})
-              fetch_by_#{field_list}(#{arg_list}, options) or raise ActiveRecord::RecordNotFound
+            def fetch_by_#{field_list}!(#{arg_list}, includes: nil)
+              fetch_by_#{field_list}(#{arg_list}, includes: includes) or raise ActiveRecord::RecordNotFound
             end
           CODE
         else
           self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
-            def fetch_by_#{field_list}(#{arg_list}, options={})
+            def fetch_by_#{field_list}(#{arg_list}, includes: nil)
               ids = fetch_id_by_#{field_list}(#{arg_list})
-              ids.empty? ? ids : fetch_multi(ids, options)
+              ids.empty? ? ids : fetch_multi(ids, includes: includes)
             end
           CODE
         end
@@ -98,14 +96,13 @@ module IdentityCache
       #   instead of its own.
       # * inverse_name: The name of the parent in the association if the name is
       #   not the lowercase pluralization of the parent object's class
-      def cache_has_many(association, options = {})
+      def cache_has_many(association, embed: :ids, inverse_name: nil)
         ensure_base_model
-        options = options.slice(:embed, :inverse_name)
-        options[:embed] = :ids unless options.has_key?(:embed)
-        check_association_for_caching(association, options)
+        check_association_for_caching(association)
+        options = { embed: embed, inverse_name: inverse_name }
         self.cached_has_manys[association] = options
 
-        case options[:embed]
+        case embed
         when true
           build_recursive_association_cache(association, options)
         when :ids
@@ -136,11 +133,10 @@ module IdentityCache
       # * inverse_name: The name of the parent in the association ( only
       #   necessary if the name is not the lowercase pluralization of the
       #   parent object's class)
-      def cache_has_one(association, options = {})
+      def cache_has_one(association, embed: true, inverse_name: nil)
         ensure_base_model
-        options = options.slice(:embed, :inverse_name)
-        options[:embed] = true unless options.has_key?(:embed)
-        check_association_for_caching(association, options)
+        check_association_for_caching(association)
+        options = { embed: embed, inverse_name: inverse_name }
         self.cached_has_ones[association] = options
 
         if options[:embed] == true
@@ -167,18 +163,17 @@ module IdentityCache
       #
       # * by: Other attribute or attributes in the model to keep values indexed. Default is :id
       # * unique: if the index would only have unique values. Default is true
-      def cache_attribute(attribute, options = {})
-        cache_attribute_by_alias(attribute.inspect, attribute, options)
+      def cache_attribute(attribute, by: :id, unique: true)
+        cache_attribute_by_alias(attribute.inspect, attribute, by: by, unique: unique)
       end
 
       private
 
-      def cache_attribute_by_alias(attribute, alias_name, options)
+      def cache_attribute_by_alias(attribute, alias_name, by:, unique:)
         ensure_base_model
-        options[:by] ||= :id
         alias_name = alias_name.to_sym
-        unique = options[:unique].nil? ? true : !!options[:unique]
-        fields = Array(options[:by])
+        unique = !!unique
+        fields = Array(by)
 
         self.cache_indexes.push [alias_name, fields, unique]
 
@@ -268,7 +263,7 @@ module IdentityCache
         end
       end
 
-      def check_association_for_caching(association, options)
+      def check_association_for_caching(association)
         unless association_reflection = self.reflect_on_association(association)
           raise AssociationError, "Association named '#{association}' was not found on #{self.class}"
         end

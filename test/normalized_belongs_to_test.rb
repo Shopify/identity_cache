@@ -3,7 +3,7 @@ require "test_helper"
 class NormalizedBelongsToTest < IdentityCache::TestCase
   def setup
     super
-    AssociatedRecord.cache_belongs_to :item, :embed => false
+    AssociatedRecord.cache_belongs_to :item
 
     @parent_record = Item.new(:title => 'foo')
     @parent_record.associated_records << AssociatedRecord.new(:name => 'bar')
@@ -49,7 +49,7 @@ class NormalizedBelongsToTest < IdentityCache::TestCase
 
   def test_cache_belongs_to_on_derived_model_raises
     assert_raises(IdentityCache::DerivedModelError) do
-      StiRecordTypeA.cache_belongs_to :item, :embed => false
+      StiRecordTypeA.cache_belongs_to :item
     end
   end
 

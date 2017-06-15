@@ -16,7 +16,7 @@ module IdentityCache
 
       # Default fetcher added to the model on inclusion, it behaves like
       # ActiveRecord::Base.where(id: id).first
-      def fetch_by_id(id, options={})
+      def fetch_by_id(id, includes: nil)
         ensure_base_model
         raise_if_scoped
         raise NotImplementedError, "fetching needs the primary index enabled" unless primary_cache_index_enabled
@@ -34,24 +34,23 @@ module IdentityCache
         else
           resolve_cache_miss(id)
         end
-        prefetch_associations(options[:includes], [record]) if record && options[:includes]
+        prefetch_associations(includes, [record]) if record && includes
         record
       end
 
       # Default fetcher added to the model on inclusion, it behaves like
       # ActiveRecord::Base.find, will raise ActiveRecord::RecordNotFound exception
       # if id is not in the cache or the db.
-      def fetch(id, options={})
-        fetch_by_id(id, options) or raise(ActiveRecord::RecordNotFound, "Couldn't find #{self.name} with ID=#{id}")
+      def fetch(id, includes: nil)
+        fetch_by_id(id, includes: includes) or raise(ActiveRecord::RecordNotFound, "Couldn't find #{self.name} with ID=#{id}")
       end
 
       # Default fetcher added to the model on inclusion, if behaves like
       # ActiveRecord::Base.find_all_by_id
-      def fetch_multi(*ids)
+      def fetch_multi(*ids, includes: nil)
         ensure_base_model
         raise_if_scoped
         raise NotImplementedError, "fetching needs the primary index enabled" unless primary_cache_index_enabled
-        options = ids.extract_options!
         ids.flatten!(1)
         records = if should_use_cache?
           require_if_necessary do
@@ -72,7 +71,7 @@ module IdentityCache
           find_batch(ids)
         end
         records.compact!
-        prefetch_associations(options[:includes], records) if options[:includes]
+        prefetch_associations(includes, records) if includes
         records
       end
 
