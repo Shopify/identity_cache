@@ -237,36 +237,61 @@ module IdentityCache
 
       def resolve_cache_miss(id)
         record = self.includes(cache_fetch_includes).reorder(nil).where(primary_key => id).first
-        if record
-          preload_id_embedded_associations([record])
-          record.readonly! if IdentityCache.fetch_read_only_records && should_use_cache?
-        end
+        setup_embedded_associations_on_miss(Array(record))
         record
       end
 
-      def preload_id_embedded_associations(records)
+      def setup_embedded_associations_on_miss(records, readonly: IdentityCache.fetch_read_only_records && should_use_cache?)
         return if records.empty?
-        each_id_embedded_association do |options|
-          reflection = options.fetch(:association_reflection)
-          child_model = reflection.klass
-          scope = child_model.all
-          scope = scope.instance_exec(nil, &reflection.scope) if reflection.scope
-
-          pairs = scope.where(reflection.foreign_key => records.map(&:id)).pluck(reflection.foreign_key, reflection.association_primary_key)
-          ids_by_parent = Hash.new{ |hash, key| hash[key] = [] }
-          pairs.each do |parent_id, child_id|
-            ids_by_parent[parent_id] << child_id
-          end
-
-          records.each do |parent|
-            child_ids = ids_by_parent[parent.id]
-            parent.instance_variable_set(:"@#{options.fetch(:ids_variable_name)}", child_ids)
-          end
+        records.each(&:readonly!) if readonly
+        each_id_embedded_association do |association_options|
+          preload_id_embedded_association(records, association_options)
         end
-        recursively_embedded_associations.each_value do |options|
-          child_model = options.fetch(:association_reflection).klass
-          child_records = records.flat_map(&options.fetch(:cached_accessor_name).to_sym).compact
-          child_model.send(:preload_id_embedded_associations, child_records)
+        recursively_embedded_associations.each_value do |association_options|
+          association_reflection = association_options.fetch(:association_reflection)
+          association_name = association_reflection.name
+
+          # Move the loaded records to the cached association instance variable so they
+          # behave the same way if they were loaded from the cache
+          records.each do |record|
+            association = record.association(association_name)
+            target = association.load_target
+            set_embedded_association(record, association_name, target)
+
+            association.reset
+            # reset inverse associations
+            if target
+              associated_class = association_options.fetch(:association_reflection).klass
+              inverse_name = association_options.fetch(:inverse_name)
+              if target.is_a?(Array)
+                target.each { |child_record| child_record.association(inverse_name).reset }
+              else
+                target.association(inverse_name).reset
+              end
+            end
+          end
+
+          child_model = association_reflection.klass
+          child_records = records.flat_map(&association_options.fetch(:cached_accessor_name).to_sym).compact
+          child_model.send(:setup_embedded_associations_on_miss, child_records, readonly: readonly)
+        end
+      end
+
+      def preload_id_embedded_association(records, association_options)
+        reflection = association_options.fetch(:association_reflection)
+        child_model = reflection.klass
+        scope = child_model.all
+        scope = scope.instance_exec(nil, &reflection.scope) if reflection.scope
+
+        pairs = scope.where(reflection.foreign_key => records.map(&:id)).pluck(reflection.foreign_key, reflection.association_primary_key)
+        ids_by_parent = Hash.new{ |hash, key| hash[key] = [] }
+        pairs.each do |parent_id, child_id|
+          ids_by_parent[parent_id] << child_id
+        end
+
+        records.each do |parent|
+          child_ids = ids_by_parent[parent.id]
+          parent.instance_variable_set(:"@#{association_options.fetch(:ids_variable_name)}", child_ids)
         end
       end
 
@@ -318,8 +343,7 @@ module IdentityCache
         @id_column ||= columns.detect {|c| c.name == primary_key}
         ids = ids.map{ |id| connection.type_cast(id, @id_column) }
         records = where(primary_key => ids).includes(cache_fetch_includes).to_a
-        records.each(&:readonly!) if IdentityCache.fetch_read_only_records && should_use_cache?
-        preload_id_embedded_associations(records)
+        setup_embedded_associations_on_miss(records)
         records_by_id = records.index_by(&:id)
         ids.map{ |id| records_by_id[id] }
       end
@@ -442,11 +466,7 @@ module IdentityCache
         if instance_variable_defined?(ivar_full_name)
           instance_variable_get(ivar_full_name)
         else
-          cached_assoc = assoc.load_target
-          if IdentityCache.fetch_read_only_records
-            cached_assoc = readonly_copy(cached_assoc)
-          end
-          instance_variable_set(ivar_full_name, cached_assoc)
+          instance_variable_set(ivar_full_name, assoc.load_target)
         end
       else
         assoc.load_target
