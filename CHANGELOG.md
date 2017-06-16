@@ -2,6 +2,7 @@
 
 #### 1.0.0 Unreleased
 
+- Set inverse cached association for cache_has_one on cache hit (#345)
 - Lazy load associated classes (#306)
 - Remove disable_primary_cache_index
 - Remove deprecated `embed: false` cache_has_many option

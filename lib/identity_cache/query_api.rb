@@ -132,35 +132,48 @@ module IdentityCache
           klass = coder[:class].constantize
           record = klass.instantiate(coder[:attributes].dup)
 
-          coder[:associations].each {|name, value| set_embedded_association(record, name, value) } if coder.has_key?(:associations)
+          coder[:associations].each do |name, value|
+            set_embedded_association(record, name, hydrate_association_target(value))
+          end if coder.has_key?(:associations)
           coder[:association_ids].each {|name, ids| record.instance_variable_set(:"@#{record.class.cached_has_manys[name][:ids_variable_name]}", ids) } if coder.has_key?(:association_ids)
           record.readonly! if IdentityCache.fetch_read_only_records
           record
         end
       end
 
-      def set_inverse_of_cached_has_many(record, association_reflection, child_records)
-        associated_class = association_reflection.klass
-        inverse_name = record.class.cached_has_manys.fetch(association_reflection.name).fetch(:inverse_name)
+      def hydrate_association_target(dehydrated_value)
+        dehydrated_value = IdentityCache.unmap_cached_nil_for(dehydrated_value)
+        if dehydrated_value.is_a?(Array)
+          dehydrated_value.map { |coder| record_from_coder(coder) }
+        else
+          record_from_coder(dehydrated_value)
+        end
+      end
+
+      def set_inverse_of_cached_association(record, association_options, association_target)
+        return if association_target.nil?
+        associated_class = association_options.fetch(:association_reflection).klass
+        inverse_name = association_options.fetch(:inverse_name)
         inverse_cached_association = associated_class.cached_belongs_tos[inverse_name]
         return unless inverse_cached_association
 
         prepopulate_method_name = inverse_cached_association.fetch(:prepopulate_method_name)
-        child_records.each { |child_record| child_record.send(prepopulate_method_name, record) }
+        if association_target.is_a?(Array)
+          association_target.each { |child_record| child_record.send(prepopulate_method_name, record) }
+        else
+          association_target.send(prepopulate_method_name, record)
+        end
       end
 
-      def set_embedded_association(record, association_name, coder_or_array) #:nodoc:
-        value = if IdentityCache.unmap_cached_nil_for(coder_or_array).nil?
-          nil
-        elsif (reflection = record.class.reflect_on_association(association_name)).collection?
-          associated_records = coder_or_array.map {|e| record_from_coder(e) }
-          set_inverse_of_cached_has_many(record, reflection, associated_records)
-          associated_records
-        else
-          record_from_coder(coder_or_array)
-        end
-        variable_name = record.class.send(:recursively_embedded_associations)[association_name][:records_variable_name]
-        record.instance_variable_set(:"@#{variable_name}", value)
+      def set_embedded_association(record, association_name, association_target) #:nodoc:
+        model = record.class
+        association_options = model.send(:cached_association_options, association_name)
+
+        reflection = model.reflect_on_association(association_name)
+        set_inverse_of_cached_association(record, association_options, association_target)
+
+        prepopulate_method_name = association_options.fetch(:prepopulate_method_name)
+        record.send(prepopulate_method_name, association_target)
       end
 
       def get_embedded_association(record, association, options) #:nodoc:
@@ -255,6 +268,10 @@ module IdentityCache
           child_records = records.flat_map(&options.fetch(:cached_accessor_name).to_sym).compact
           child_model.send(:preload_id_embedded_associations, child_records)
         end
+      end
+
+      def cached_association_options(name)
+        cached_has_manys[name] || cached_has_ones[name] || cached_belongs_tos.fetch(name)
       end
 
       def each_id_embedded_association
