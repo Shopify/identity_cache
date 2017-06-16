@@ -141,8 +141,6 @@ module IdentityCache
 
       def set_inverse_of_cached_has_many(record, association_reflection, child_records)
         associated_class = association_reflection.klass
-        return unless associated_class < IdentityCache
-
         inverse_name = record.class.cached_has_manys.fetch(association_reflection.name).fetch(:inverse_name)
         inverse_cached_association = associated_class.cached_belongs_tos[inverse_name]
         return unless inverse_cached_association
@@ -254,10 +252,8 @@ module IdentityCache
         end
         recursively_embedded_associations.each_value do |options|
           child_model = options.fetch(:association_reflection).klass
-          if child_model.include?(IdentityCache)
-            child_records = records.flat_map(&options.fetch(:cached_accessor_name).to_sym).compact
-            child_model.send(:preload_id_embedded_associations, child_records)
-          end
+          child_records = records.flat_map(&options.fetch(:cached_accessor_name).to_sym).compact
+          child_model.send(:preload_id_embedded_associations, child_records)
         end
       end
 

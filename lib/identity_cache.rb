@@ -55,9 +55,6 @@ module IdentityCache
     mattr_accessor :fetch_read_only_records
     self.fetch_read_only_records = true
 
-    mattr_accessor :lazy_load_associated_classes
-    self.lazy_load_associated_classes = Gem::Version.new(IdentityCache::VERSION) >= Gem::Version.new("0.6")
-
     def included(base) #:nodoc:
       raise AlreadyIncludedError if base.respond_to?(:cached_model)
       base.class_attribute :cached_model

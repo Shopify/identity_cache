@@ -2,6 +2,7 @@
 
 #### 1.0.0 Unreleased
 
+- Lazy load associated classes (#306)
 - Remove disable_primary_cache_index
 - Remove deprecated `embed: false` cache_has_many option
 - Raise when trying to cache a belong_to association with a scope. Previously the scope was ignored on a cache hit (#323)
