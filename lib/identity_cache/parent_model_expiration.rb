@@ -6,19 +6,8 @@ module IdentityCache
       def add_parent_expiry_hook(cached_association_hash)
         association_reflection = cached_association_hash[:association_reflection]
         name = model_basename(association_reflection.class_name)
-        if IdentityCache.lazy_load_associated_classes
-          lazy_hooks[name] ||= []
-          lazy_hooks[name] << cached_association_hash
-        else
-          child_model = association_reflection.klass
-          unless child_model < IdentityCache
-            message = "associated class #{child_model} will need to include IdentityCache or " \
-              "IdentityCache::WithoutPrimaryIndex for embedded associations"
-            ActiveSupport::Deprecation.warn(message, caller(3))
-            child_model.send(:include, IdentityCache::WithoutPrimaryIndex)
-          end
-          install_hook(cached_association_hash)
-        end
+        lazy_hooks[name] ||= []
+        lazy_hooks[name] << cached_association_hash
       end
 
       def install_all_pending_parent_expiry_hooks

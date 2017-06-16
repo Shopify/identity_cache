@@ -1,17 +1,6 @@
 require "test_helper"
 
 class LazyLoadAssociatedClassesTest < IdentityCache::TestCase
-  def setup
-    @old_lazy_load_associated_classes = IdentityCache.lazy_load_associated_classes
-    IdentityCache.lazy_load_associated_classes = true
-    super
-  end
-
-  def teardown
-    super
-    IdentityCache.lazy_load_associated_classes = @old_lazy_load_associated_classes
-  end
-
   def test_cache_has_many_does_not_load_associated_class
     Item.has_many :missing_model
     Item.cache_has_many :missing_model
