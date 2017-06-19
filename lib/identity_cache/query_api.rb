@@ -150,6 +150,17 @@ module IdentityCache
         end
       end
 
+      def set_embedded_association(record, association_name, association_target) #:nodoc:
+        model = record.class
+        association_options = model.send(:cached_association_options, association_name)
+
+        reflection = model.reflect_on_association(association_name)
+        set_inverse_of_cached_association(record, association_options, association_target)
+
+        prepopulate_method_name = association_options.fetch(:prepopulate_method_name)
+        record.send(prepopulate_method_name, association_target)
+      end
+
       def set_inverse_of_cached_association(record, association_options, association_target)
         return if association_target.nil?
         associated_class = association_options.fetch(:association_reflection).klass
@@ -163,17 +174,6 @@ module IdentityCache
         else
           association_target.send(prepopulate_method_name, record)
         end
-      end
-
-      def set_embedded_association(record, association_name, association_target) #:nodoc:
-        model = record.class
-        association_options = model.send(:cached_association_options, association_name)
-
-        reflection = model.reflect_on_association(association_name)
-        set_inverse_of_cached_association(record, association_options, association_target)
-
-        prepopulate_method_name = association_options.fetch(:prepopulate_method_name)
-        record.send(prepopulate_method_name, association_target)
       end
 
       def get_embedded_association(record, association, options) #:nodoc:
