@@ -191,10 +191,15 @@ module IdentityCache
         options[:association_reflection] = reflect_on_association(association)
         options[:cached_accessor_name]   = "fetch_#{association}"
         options[:records_variable_name]  = "cached_#{association}"
+        options[:prepopulate_method_name] = "prepopulate_fetched_#{association}"
 
         self.class_eval(<<-CODE, __FILE__, __LINE__ + 1)
           def #{options[:cached_accessor_name]}
             fetch_recursively_cached_association('#{options[:records_variable_name]}', :#{association})
+          end
+
+          def #{options[:prepopulate_method_name]}(records)
+            @#{options[:records_variable_name]} = records
           end
         CODE
 

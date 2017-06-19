@@ -97,6 +97,18 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     assert_nothing_raised { ar.expire_parent_caches }
   end
 
+  def test_set_inverse_cached_association
+    AssociatedRecord.cache_belongs_to :item
+    Item.fetch(@record.id) # warm cache
+    item = Item.fetch(@record.id)
+
+    assert_no_queries do
+      assert_memcache_operations(0) do
+        item.fetch_associated.fetch_item
+      end
+    end
+  end
+
   def test_cache_without_guessable_inverse_name_raises
     assert_raises IdentityCache::InverseAssociationError do
       Item.cache_has_one :polymorphic_record, :embed => true
