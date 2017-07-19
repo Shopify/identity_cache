@@ -15,6 +15,7 @@ require "identity_cache/cache_invalidation"
 require "identity_cache/cache_fetcher"
 require "identity_cache/fallback_fetcher"
 require 'identity_cache/without_primary_index'
+require "identity_cache/replicated_cache_proxy"
 
 module IdentityCache
   extend ActiveSupport::Concern
@@ -55,6 +56,9 @@ module IdentityCache
     mattr_accessor :fetch_read_only_records
     self.fetch_read_only_records = true
 
+    mattr_accessor :blob_replication_factor
+    self.blob_replication_factor = 1
+
     def included(base) #:nodoc:
       raise AlreadyIncludedError if base.respond_to?(:cached_model)
       base.class_attribute :cached_model
@@ -72,12 +76,12 @@ module IdentityCache
       if defined?(@cache)
         cache.cache_backend = cache_adaptor
       else
-        @cache = MemoizedCacheProxy.new(cache_adaptor)
+        @cache = wrap_in_replicated_proxy(MemoizedCacheProxy.new(cache_adaptor))
       end
     end
 
     def cache
-      @cache ||= MemoizedCacheProxy.new
+      @cache ||= wrap_in_replicated_proxy(MemoizedCacheProxy.new)
     end
 
     def logger
@@ -160,6 +164,14 @@ module IdentityCache
       keys.each_slice(BATCH_SIZE).each_with_object Hash.new do |slice, result|
         result.merge! cache.fetch_multi(*slice) {|missed_keys| yield missed_keys }
       end
+    end
+
+    def wrap_in_replicated_proxy(backend)
+      return backend if blob_replication_factor == 1
+      ReplicatedCacheProxy.new(
+        backend,
+        blob_replication_factor: blob_replication_factor,
+      )
     end
   end
 end
