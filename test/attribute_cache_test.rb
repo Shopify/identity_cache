@@ -76,6 +76,23 @@ class AttributeCacheTest < IdentityCache::TestCase
     assert_queries(1) { assert_equal 'bar', AssociatedRecord.fetch_name_by_id(new_id) }
   end
 
+  def test_value_coercion
+    assert_queries(1) { assert_equal 'foo', AssociatedRecord.fetch_name_by_id(@record.id.to_f) }
+    assert_no_queries { assert_equal 'foo', AssociatedRecord.fetch_name_by_id(@record.id) }
+    @record.update_attributes!(name: 'bar')
+    assert_queries(1) { assert_equal 'bar', AssociatedRecord.fetch_name_by_id(@record.id.to_f) }
+  end
+
+  def test_no_nil_empty_string_cache_key_conflict
+    Item.cache_attribute :id, by: [:title]
+    @parent.update_attributes!(title: "")
+    assert_queries(1) { assert_equal @parent.id, Item.fetch_id_by_title("") }
+    assert_queries(1) { assert_nil Item.fetch_id_by_title(nil) }
+    @parent.update_attributes!(title: nil)
+    assert_queries(1) { assert_nil Item.fetch_id_by_title("") }
+    assert_queries(1) { assert_equal @parent.id, Item.fetch_id_by_title(nil) }
+  end
+
   def test_fetching_by_attribute_delegates_to_block_if_transactions_are_open
     IdentityCache.cache.expects(:read).never
 

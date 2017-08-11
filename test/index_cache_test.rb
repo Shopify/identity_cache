@@ -156,6 +156,6 @@ class IndexCacheTest < IdentityCache::TestCase
   private
 
   def cache_key(unique: false)
-    "#{NAMESPACE}attr#{unique ? '' : 's'}:Item:id:title:#{cache_hash(@record.title)}"
+    "#{NAMESPACE}attr#{unique ? '' : 's'}:Item:id:title:#{cache_hash(@record.title.to_json)}"
   end
 end

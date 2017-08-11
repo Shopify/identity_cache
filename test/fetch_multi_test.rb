@@ -267,6 +267,13 @@ class FetchMultiTest < IdentityCache::TestCase
     assert_equal cache_response_for(Item.find(@bob.id)), backend.read(@bob.primary_cache_index_key)
   end
 
+  def test_fetch_multi_id_coercion
+    assert_equal @joe.title, Item.fetch_multi(@joe.id.to_f).first.title
+    @joe.update_attributes!(title: "#{@joe.title} changed")
+
+    assert_equal @joe.title, Item.fetch_multi(@joe.id.to_f).first.title
+  end
+
   def test_fetch_multi_raises_when_called_on_a_scope
     assert_raises(IdentityCache::UnsupportedScopeError) do
       Item.where(updated_at: nil).fetch_multi(@bob.id, @joe.id, @fred.id)

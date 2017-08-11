@@ -245,6 +245,10 @@ module IdentityCache
       def attribute_dynamic_fetcher(attribute, fields, values, unique_index) #:nodoc:
         raise_if_scoped
 
+        fields.each_with_index do |field, i|
+          values[i] = type_for_attribute(field.to_s).cast(values[i])
+        end
+
         if should_use_cache?
           cache_key = rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, values, unique_index)
           IdentityCache.fetch(cache_key) do

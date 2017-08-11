@@ -13,7 +13,7 @@ class FetchTest < IdentityCache::TestCase
     @record.title = 'bob'
     @cached_value = { class: @record.class.name, attributes: @record.attributes_before_type_cast }
     @blob_key = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:1"
-    @index_key = "#{NAMESPACE}attr:Item:id:title:#{cache_hash('bob')}"
+    @index_key = "#{NAMESPACE}attr:Item:id:title:#{cache_hash('"bob"')}"
   end
 
   def test_fetch_with_garbage_input
@@ -206,6 +206,13 @@ class FetchTest < IdentityCache::TestCase
 
     @record.save!
     assert_equal IdentityCache::DELETED, backend.read(key)
+  end
+
+  def test_fetch_id_coercion
+    assert_nil Item.fetch_by_id(@record.id.to_f)
+    @record.save!
+
+    assert_equal @record, Item.fetch_by_id(@record.id.to_f)
   end
 
   def test_fetch_by_title_hit
