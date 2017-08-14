@@ -2,6 +2,7 @@
 
 #### 1.0.0 Unreleased
 
+- Remove support for rails 4.2 (#355)
 - Set inverse cached association for cache_has_one on cache hit (#345)
 - Lazy load associated classes (#306)
 - Remove disable_primary_cache_index
