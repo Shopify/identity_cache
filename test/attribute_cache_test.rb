@@ -9,7 +9,7 @@ class AttributeCacheTest < IdentityCache::TestCase
 
     @parent = Item.create!(:title => 'bob')
     @record = @parent.associated_records.create!(:name => 'foo')
-    @name_attribute_key = "#{NAMESPACE}attr:AssociatedRecord:name:id:#{cache_hash(@record.id.to_s)}"
+    @name_attribute_key = "#{NAMESPACE}attr:AssociatedRecord:name:id:#{cache_hash(@record.id.to_s.inspect)}"
     IdentityCache.cache.clear
   end
 
