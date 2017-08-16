@@ -20,13 +20,14 @@ module IdentityCache
         ensure_base_model
         raise_if_scoped
         raise NotImplementedError, "fetching needs the primary index enabled" unless primary_cache_index_enabled
+        id = type_for_attribute(primary_key).cast(id)
         return unless id
         record = if should_use_cache?
           require_if_necessary do
             object = nil
             coder = IdentityCache.fetch(rails_cache_key(id)){ instrumented_coder_from_record(object = resolve_cache_miss(id)) }
             object ||= instrumented_record_from_coder(coder)
-            if object && object.id.to_s != id.to_s
+            if object && object.id != id
               IdentityCache.logger.error "[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{object.id} for #{object.inspect[(0..100)]}"
             end
             object
@@ -52,6 +53,8 @@ module IdentityCache
         raise_if_scoped
         raise NotImplementedError, "fetching needs the primary index enabled" unless primary_cache_index_enabled
         ids.flatten!(1)
+        id_type = type_for_attribute(primary_key)
+        ids.map! { |id| id_type.cast(id) }.compact!
         records = if should_use_cache?
           require_if_necessary do
             cache_keys = ids.map {|id| rails_cache_key(id) }

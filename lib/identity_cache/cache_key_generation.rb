@@ -51,7 +51,7 @@ module IdentityCache
 
       private
       def rails_cache_string_for_fields_and_values(fields, values)
-        "#{fields.join('/')}:#{IdentityCache.memcache_hash(values.join('/'))}"
+        "#{fields.join('/')}:#{IdentityCache.memcache_hash(values.map { |v| v.try!(:to_s).inspect }.join('/'))}"
       end
     end
 
