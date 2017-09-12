@@ -1,0 +1,16 @@
+# https://dev-accel.shopify.io/dev/railgun/Railgun-Config
+name: identity-cache
+
+vm:
+  image:      /opt/dev/misc/railgun-images/default
+  ip_address: 192.168.64.98
+  memory:     1G
+  cores:      1
+
+volumes:
+  root: 1G
+
+services:
+  - mysql
+  - postgresql
+  - memcached
