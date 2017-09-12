@@ -39,16 +39,5 @@ commands:
     desc: 'Update serialization format test fixture'
     run: bundle exec rake update_serialization_format
 
-railgun:
-  image: dev:railgun-common-services-0.2.x
-  ip_address: 192.168.64.98
-  memory: 1G
-  cores: 1
-  disk: 1G
-  services:
-    mysql: 3306
-    postgresql: 5432
-    memcached: 11211
-
 packages:
   - git@github.com:Shopify/dev-shopify.git
