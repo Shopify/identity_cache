@@ -2,6 +2,7 @@
 
 #### 1.0.0 Unreleased
 
+- Set inverse asoociation for cache_has_many without `:embed => true`
 - Type cast values using attribute types before using in cache key (#354)
 - Remove support for rails 4.2 (#355)
 - Set inverse cached association for cache_has_one on cache hit (#345)
@@ -11,7 +12,6 @@
 - Raise when trying to cache a belong_to association with a scope. Previously the scope was ignored on a cache hit (#323)
 - Remove deprecated `never_set_inverse_association` option (#319)
 - Fix column name in the preload association query when using custom primary keys (#338)
-- Fix inverse asoociation setting for cache_has_many without `:embed => true`
 
 #### 0.5.1
 
