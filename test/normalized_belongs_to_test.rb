@@ -112,4 +112,23 @@ class NormalizedBelongsToTest < IdentityCache::TestCase
       AssociatedRecord.cache_belongs_to :item_with_scope
     end
   end
+
+  def test_set_inverse_cached_association_on_cache_hit
+    Item.cache_has_one :associated
+
+    AssociatedRecord.fetch(@record.id) # warm cache
+    associated_record = AssociatedRecord.fetch(@record.id)
+
+    item = associated_record.fetch_item
+    assert_equal associated_record.object_id, item.fetch_associated.object_id
+  end
+
+  def test_never_set_active_record_inverse_association_on_cache_hit
+    AssociatedRecord.fetch(@record.id) # warm cache
+    associated_record = AssociatedRecord.fetch(@record.id)
+
+    item = associated_record.fetch_item
+    refute_equal associated_record.object_id, item.associated.object_id
+  end
+
 end
