@@ -30,7 +30,7 @@ class FetchTest < IdentityCache::TestCase
     IdentityCache.cache.expects(:fetch).with(@blob_key).returns(@cached_value)
 
     events = 0
-    subscriber = ActiveSupport::Notifications.subscribe('identity_cache.hydration') do |_, _, _, _, payload|
+    subscriber = ActiveSupport::Notifications.subscribe('hydration.identity_cache') do |_, _, _, _, payload|
       events += 1
       assert_equal "Item", payload[:class]
     end
@@ -45,7 +45,7 @@ class FetchTest < IdentityCache::TestCase
     expected = { memoizing: false, resolve_miss_time: 0, memo_hits: 0, cache_hits: 1, cache_misses: 0 }
 
     events = 0
-    subscriber = ActiveSupport::Notifications.subscribe('identity_cache.cache.fetch') do |_, _, _, _, payload|
+    subscriber = ActiveSupport::Notifications.subscribe('cache_fetch.identity_cache') do |_, _, _, _, payload|
       events += 1
       assert_equal expected, payload
     end
@@ -63,7 +63,7 @@ class FetchTest < IdentityCache::TestCase
     IdentityCache.cache.with_memoization do
       Item.fetch(1)
       events = 0
-      subscriber = ActiveSupport::Notifications.subscribe('identity_cache.cache.fetch') do |_, _, _, _, payload|
+      subscriber = ActiveSupport::Notifications.subscribe('cache_fetch.identity_cache') do |_, _, _, _, payload|
         events += 1
         assert_equal expected, payload
       end
@@ -112,7 +112,7 @@ class FetchTest < IdentityCache::TestCase
     Item.expects(:resolve_cache_miss).with(1).once.returns(@record)
 
     events = 0
-    subscriber = ActiveSupport::Notifications.subscribe('identity_cache.dehydration') do |_, _, _, _, payload|
+    subscriber = ActiveSupport::Notifications.subscribe('dehydration.identity_cache') do |_, _, _, _, payload|
       events += 1
       assert_equal "Item", payload[:class]
     end
@@ -127,7 +127,7 @@ class FetchTest < IdentityCache::TestCase
     expected = { memoizing: false, memo_hits: 0, cache_hits: 0, cache_misses: 1 }
 
     events = 0
-    subscriber = ActiveSupport::Notifications.subscribe('identity_cache.cache.fetch') do |_, _, _, _, payload|
+    subscriber = ActiveSupport::Notifications.subscribe('cache_fetch.identity_cache') do |_, _, _, _, payload|
       events += 1
       assert payload.delete(:resolve_miss_time) > 0
       assert_equal expected, payload

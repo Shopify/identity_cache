@@ -38,6 +38,3 @@ commands:
   update-serialization-format:
     desc: 'Update serialization format test fixture'
     run: bundle exec rake update_serialization_format
-
-packages:
-  - git@github.com:Shopify/dev-shopify.git

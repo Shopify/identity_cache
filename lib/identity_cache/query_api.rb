@@ -125,7 +125,7 @@ module IdentityCache
 
       def instrumented_record_from_coder(coder) #:nodoc:
         return unless coder
-        ActiveSupport::Notifications.instrument('identity_cache.hydration', class: coder[:class]) do
+        ActiveSupport::Notifications.instrument('hydration.identity_cache', class: coder[:class]) do
           record_from_coder(coder)
         end
       end
@@ -190,7 +190,7 @@ module IdentityCache
 
       def instrumented_coder_from_record(record) #:nodoc:
         return unless record
-        ActiveSupport::Notifications.instrument('identity_cache.dehydration', class: record.class.name) do
+        ActiveSupport::Notifications.instrument('dehydration.identity_cache', class: record.class.name) do
           coder_from_record(record)
         end
       end
