@@ -30,7 +30,7 @@ class InverseOfTest < IdentityCache::TestCase
   end
 
   def test_fetch_should_setup_association_for_cache_has_many
-    Item.cache_has_many :associated_records
+    Item.cache_has_many :associated_records, :embed => :ids
 
     item = Item.find(@item.id)
 
