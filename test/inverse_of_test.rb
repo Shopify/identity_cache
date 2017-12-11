@@ -23,7 +23,7 @@ class InverseOfTest < IdentityCache::TestCase
   def test_fetch_should_setup_association_for_cache_has_one
     Item.cache_has_one :associated
 
-    item = Item.find_by_id(@item.id)
+    item = Item.find(@item.id)
 
     record = item.fetch_associated
     assert_equal item.object_id, record.item.object_id
@@ -32,7 +32,7 @@ class InverseOfTest < IdentityCache::TestCase
   def test_fetch_should_setup_association_for_cache_has_many
     Item.cache_has_many :associated_records
 
-    item = Item.find_by_id(@item.id)
+    item = Item.find(@item.id)
 
     records = item.fetch_associated_records
     records.each do |r|
@@ -43,7 +43,7 @@ class InverseOfTest < IdentityCache::TestCase
   def test_fetch_should_setup_association_for_cache_has_many_embedded
     Item.cache_has_many :associated_records, :embed => true
 
-    item = Item.find_by_id(@item.id)
+    item = Item.find(@item.id)
 
     records = item.fetch_associated_records
     records.each do |r|
