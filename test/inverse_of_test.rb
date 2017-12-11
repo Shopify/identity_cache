@@ -12,12 +12,12 @@ class InverseOfTest < IdentityCache::TestCase
   end
 
   def test_fetch_should_setup_association_for_cache_belongs_to
-    Item.cache_belongs_to :associated
+    AssociatedRecord.cache_belongs_to :item
 
-    item = Item.find_by_id(@item.id)
+    item = AssociatedRecord.first
 
-    record = item.fetch_associated
-    assert_equal item.object_id, record.item.object_id
+    record = item.fetch_item
+    assert_equal item.object_id, record.associated.object_id
   end
 
   def test_fetch_should_setup_association_for_cache_has_one
