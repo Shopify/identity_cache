@@ -217,8 +217,6 @@ module IdentityCache
         options[:records_variable_name]   = "cached_#{association}"
         options[:prepopulate_method_name] = "prepopulate_fetched_#{association}"
 
-        inverse_name = options[:association_reflection].inverse_of.try!(:name)
-
         self.class_eval(<<-CODE, __FILE__, __LINE__ + 1)
           attr_reader :#{options[:ids_variable_name]}
 
