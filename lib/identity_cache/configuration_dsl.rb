@@ -229,11 +229,14 @@ module IdentityCache
           def #{options[:cached_accessor_name]}
             association_klass = association(:#{association}).klass
             if association_klass.should_use_cache? && !#{association}.loaded?
-              @#{options[:records_variable_name]} ||= begin
-                #{options[:association_reflection].class_name}.fetch_multi(#{options[:cached_ids_name]}).map do |record|
-                  record.send('#{inverse_name}=', self) if #{inverse_name.present?}
-                  record
-                end
+              ivar_full_name = :"@#{options[:records_variable_name]}"
+              if instance_variable_defined?(ivar_full_name)
+                instance_variable_get(ivar_full_name)
+              else
+                cached_assoc = #{options[:association_reflection].class_name}.fetch_multi(#{options[:cached_ids_name]})
+                association_options = self.class.send(:cached_association_options, :#{association})
+                self.class.send(:set_inverse_of_cached_association, self, association_options, cached_assoc)
+                instance_variable_set(ivar_full_name, cached_assoc)
               end
             else
               #{association}.to_a
