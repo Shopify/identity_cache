@@ -2,7 +2,7 @@
 
 #### 1.0.0 Unreleased
 
-- Set inverse association for id embedded cache_has_many associations
+- Set inverse association for id embedded cache_has_many associations (#360)
 - Type cast values using attribute types before using in cache key (#354)
 - Remove support for rails 4.2 (#355)
 - Set inverse cached association for cache_has_one on cache hit (#345)
