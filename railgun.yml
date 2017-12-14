@@ -5,7 +5,7 @@ vm:
   image:      /opt/dev/misc/railgun-images/default
   ip_address: 192.168.64.98
   memory:     1G
-  cores:      1
+  cores:      2
 
 volumes:
   root: 1G
