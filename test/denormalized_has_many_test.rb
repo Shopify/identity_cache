@@ -121,9 +121,18 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     Item.transaction { check.call }
   end
 
-  def test_never_set_inverse_association_on_cache_hit
-    Item.fetch(@record.id) # warm cache
+  def test_set_inverse_cached_association_on_cache_hit
+    AssociatedRecord.cache_belongs_to :item
 
+    Item.fetch(@record.id) # warm cache
+    item = Item.fetch(@record.id)
+
+    associated_record = item.fetch_associated_records.to_a.first
+    assert_equal item.object_id, associated_record.fetch_item.object_id
+  end
+
+  def test_never_set_active_record_inverse_association_on_cache_hit
+    Item.fetch(@record.id) # warm cache
     item = Item.fetch(@record.id)
 
     associated_record = item.fetch_associated_records.to_a.first

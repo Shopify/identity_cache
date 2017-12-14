@@ -97,16 +97,22 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     assert_nothing_raised { ar.expire_parent_caches }
   end
 
-  def test_set_inverse_cached_association
+  def test_set_inverse_cached_association_on_cache_hit
     AssociatedRecord.cache_belongs_to :item
+
     Item.fetch(@record.id) # warm cache
     item = Item.fetch(@record.id)
 
-    assert_no_queries do
-      assert_memcache_operations(0) do
-        item.fetch_associated.fetch_item
-      end
-    end
+    associated_record = item.fetch_associated
+    assert_equal item.object_id, associated_record.fetch_item.object_id
+  end
+
+  def test_never_set_active_record_inverse_association_on_cache_hit
+    Item.fetch(@record.id) # warm cache
+    item = Item.fetch(@record.id)
+
+    associated_record = item.fetch_associated
+    refute_equal item.object_id, associated_record.item.object_id
   end
 
   def test_cache_without_guessable_inverse_name_raises
