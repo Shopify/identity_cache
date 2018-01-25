@@ -118,7 +118,7 @@ class Product < ActiveRecord::Base
   include IdentityCache
 end
 
-@product.fetch_multi([1, 2])
+Product.fetch_multi([1, 2])
 ```
 
 ### Embedding Associations
