@@ -106,6 +106,22 @@ module IdentityCache
         nil
       end
 
+      protected
+
+      def record_from_coder(coder) #:nodoc:
+        if coder
+          record = instantiate(coder[:attributes].dup)
+
+          coder[:associations].each do |name, value|
+            associated_class = reflect_on_association(name).klass
+            set_embedded_association(record, name, hydrate_association_target(associated_class, value))
+          end if coder.has_key?(:associations)
+          coder[:association_ids].each {|name, ids| record.instance_variable_set(:"@#{record.class.cached_has_manys[name][:ids_variable_name]}", ids) } if coder.has_key?(:association_ids)
+          record.readonly! if IdentityCache.fetch_read_only_records
+          record
+        end
+      end
+
       private
 
       def raise_if_scoped
@@ -125,31 +141,17 @@ module IdentityCache
 
       def instrumented_record_from_coder(coder) #:nodoc:
         return unless coder
-        ActiveSupport::Notifications.instrument('hydration.identity_cache', class: coder[:class]) do
+        ActiveSupport::Notifications.instrument('hydration.identity_cache', class: name) do
           record_from_coder(coder)
         end
       end
 
-      def record_from_coder(coder) #:nodoc:
-        if coder
-          klass = coder[:class].constantize
-          record = klass.instantiate(coder[:attributes].dup)
-
-          coder[:associations].each do |name, value|
-            set_embedded_association(record, name, hydrate_association_target(value))
-          end if coder.has_key?(:associations)
-          coder[:association_ids].each {|name, ids| record.instance_variable_set(:"@#{record.class.cached_has_manys[name][:ids_variable_name]}", ids) } if coder.has_key?(:association_ids)
-          record.readonly! if IdentityCache.fetch_read_only_records
-          record
-        end
-      end
-
-      def hydrate_association_target(dehydrated_value)
+      def hydrate_association_target(associated_class, dehydrated_value)
         dehydrated_value = IdentityCache.unmap_cached_nil_for(dehydrated_value)
         if dehydrated_value.is_a?(Array)
-          dehydrated_value.map { |coder| record_from_coder(coder) }
+          dehydrated_value.map { |coder| associated_class.record_from_coder(coder) }
         else
-          record_from_coder(dehydrated_value)
+          associated_class.record_from_coder(dehydrated_value)
         end
       end
 
@@ -199,8 +201,8 @@ module IdentityCache
         unless record.nil?
           coder = {
             attributes: record.attributes_before_type_cast.dup,
-            class: record.class.name,
           }
+          coder[:class] = record.class.name if IdentityCache::CACHE_VERSION == 7
           add_cached_associations_to_coder(record, coder)
           coder
         end
