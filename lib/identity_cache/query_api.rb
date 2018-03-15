@@ -109,17 +109,19 @@ module IdentityCache
       protected
 
       def record_from_coder(coder) #:nodoc:
-        if coder
-          record = instantiate(coder[:attributes].dup)
+        return nil unless coder
 
+        record = instantiate(coder[:attributes].dup)
+
+        if coder.has_key?(:associations)
           coder[:associations].each do |name, value|
             associated_class = reflect_on_association(name).klass
             set_embedded_association(record, name, hydrate_association_target(associated_class, value))
-          end if coder.has_key?(:associations)
-          coder[:association_ids].each {|name, ids| record.instance_variable_set(:"@#{record.class.cached_has_manys[name][:ids_variable_name]}", ids) } if coder.has_key?(:association_ids)
-          record.readonly! if IdentityCache.fetch_read_only_records
-          record
+          end
         end
+        coder[:association_ids].each {|name, ids| record.instance_variable_set(:"@#{record.class.cached_has_manys[name][:ids_variable_name]}", ids) } if coder.has_key?(:association_ids)
+        record.readonly! if IdentityCache.fetch_read_only_records
+        record
       end
 
       private
