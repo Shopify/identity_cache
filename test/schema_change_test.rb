@@ -102,6 +102,45 @@ class SchemaChangeTest < IdentityCache::TestCase
     record = Item.fetch(@record.id)
   end
 
+  def test_cache_reusable_after_associated_class_name_changes
+    define_models = lambda do |associated_class_name|
+      self.class.class_exec do
+        associated_class = const_set(associated_class_name, Class.new(ActiveRecord::Base))
+        item_class = const_set(:Item, Class.new(ActiveRecord::Base))
+
+        associated_class.class_eval do
+          self.table_name = 'associated_records'
+          include IdentityCache::WithoutPrimaryIndex
+          belongs_to :item, class_name: item_class.name
+        end
+
+        item_class.class_eval do
+          self.table_name = 'items'
+          include IdentityCache
+          has_many :associated_records, class_name: associated_class_name
+          cache_has_many :associated_records, embed: true
+        end
+      end
+    end
+
+    define_models.call(:AssociatedRecord)
+
+    record = self.class::Item.fetch(@record.id) # warm cache
+    assert_equal ['bar'], record.fetch_associated_records.map(&:name)
+
+    self.class.send(:remove_const, :Item)
+    self.class.send(:remove_const, :AssociatedRecord)
+    define_models.call(:AssociatedRecordRenamed)
+
+    assert_no_queries do
+      record = self.class::Item.fetch(@record.id)
+      assert_equal ['bar'], record.fetch_associated_records.map(&:name)
+    end
+  ensure
+    self.class.send(:remove_const, :Item) if self.class.const_defined?(:Item, false)
+    self.class.send(:remove_const, :AssociatedRecordRenamed) if self.class.const_defined?(:AssociatedRecordRenamed, false)
+  end
+
   def test_add_non_embedded_cache_has_many
     PolymorphicRecord.include(IdentityCache)
     record = Item.fetch(@record.id)
