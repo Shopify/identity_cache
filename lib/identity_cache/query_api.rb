@@ -24,13 +24,19 @@ module IdentityCache
         return unless id
         record = if should_use_cache?
           require_if_necessary do
-            object = nil
-            coder = IdentityCache.fetch(rails_cache_key(id)){ instrumented_coder_from_record(object = resolve_cache_miss(id)) }
-            object ||= instrumented_record_from_coder(coder)
-            if object && object.id != id
-              IdentityCache.logger.error "[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{object.id} for #{object.inspect[(0..100)]}"
+            cache_key = rails_cache_key(id)
+            begin
+              object = nil
+              coder = IdentityCache.fetch(cache_key){ instrumented_coder_from_record(object = resolve_cache_miss(id)) }
+              object ||= instrumented_record_from_coder(coder)
+              if object && object.id != id
+                IdentityCache.logger.error "[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{object.id} for #{object.inspect[(0..100)]}"
+              end
+              object
+            rescue InexistentAssociationError
+              IdentityCache.cache.delete(cache_key)
+              resolve_cache_miss(id)
             end
-            object
           end
         else
           resolve_cache_miss(id)
@@ -57,18 +63,23 @@ module IdentityCache
         ids.map! { |id| id_type.cast(id) }.compact!
         records = if should_use_cache?
           require_if_necessary do
-            cache_keys = ids.map {|id| rails_cache_key(id) }
-            key_to_id_map = Hash[ cache_keys.zip(ids) ]
-            key_to_record_map = {}
+            begin
+              cache_keys = ids.map {|id| rails_cache_key(id) }
+              key_to_id_map = Hash[ cache_keys.zip(ids) ]
+              key_to_record_map = {}
 
-            coders_by_key = IdentityCache.fetch_multi(cache_keys) do |unresolved_keys|
-              ids = unresolved_keys.map {|key| key_to_id_map[key] }
-              records = find_batch(ids)
-              key_to_record_map = records.compact.index_by{ |record| rails_cache_key(record.id) }
-              records.map {|record| instrumented_coder_from_record(record) }
+              coders_by_key = IdentityCache.fetch_multi(cache_keys) do |unresolved_keys|
+                ids = unresolved_keys.map {|key| key_to_id_map[key] }
+                records = find_batch(ids)
+                key_to_record_map = records.compact.index_by{ |record| rails_cache_key(record.id) }
+                records.map {|record| instrumented_coder_from_record(record) }
+              end
+
+              cache_keys.map{ |key| key_to_record_map[key] || instrumented_record_from_coder(coders_by_key[key]) }
+            rescue InexistentAssociationError
+              cache_keys.each { |key| IdentityCache.cache.delete(key) }
+              find_batch(ids)
             end
-
-            cache_keys.map{ |key| key_to_record_map[key] || instrumented_record_from_coder(coders_by_key[key]) }
           end
         else
           find_batch(ids)
@@ -132,7 +143,12 @@ module IdentityCache
 
       def record_from_coder(coder) #:nodoc:
         if coder
-          klass = coder[:class].constantize
+          begin
+            klass = coder[:class].constantize
+          rescue NameError
+            raise InexistentAssociationError
+          end
+
           record = klass.instantiate(coder[:attributes].dup)
 
           coder[:associations].each do |name, value|
