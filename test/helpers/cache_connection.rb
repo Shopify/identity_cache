@@ -6,7 +6,7 @@ module CacheConnection
   end
 
   def backend
-    @backend ||= ActiveSupport::Cache::MemcachedStore.new("#{host}:11211", support_cas: true)
+    @backend ||= ActiveSupport::Cache::DalliStore.new("#{host}:11211")
   end
 
   def setup

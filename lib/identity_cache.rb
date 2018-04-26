@@ -13,6 +13,7 @@ require 'identity_cache/query_api'
 require "identity_cache/cache_hash"
 require "identity_cache/cache_invalidation"
 require "identity_cache/cache_fetcher"
+require "identity_cache/dalli_cache_fetcher"
 require "identity_cache/fallback_fetcher"
 require 'identity_cache/without_primary_index'
 

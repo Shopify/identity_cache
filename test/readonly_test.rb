@@ -67,13 +67,13 @@ class ReadonlyTest < IdentityCache::TestCase
   end
 
   def assert_readonly_fetch
-    cas = Spy.on(backend, :cas).and_call_through
+    cas = Spy.on(backend.dalli, :cas).and_call_through
     yield
     assert cas.has_been_called?
   end
 
   def assert_readonly_fetch_multi
-    cas_multi = Spy.on(backend, :cas_multi).and_call_through
+    cas_multi = Spy.on(backend.dalli, :get_multi_cas).and_call_through
     yield
     assert cas_multi.has_been_called?
   end

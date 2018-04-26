@@ -6,6 +6,8 @@ require 'helpers/database_connection'
 require 'helpers/cache_connection'
 require 'helpers/active_record_objects'
 require 'spy/integration'
+require 'active_support/cache/dalli_store'
+require 'dalli/cas/client'
 require 'memcached_store'
 require 'active_support/cache/memcached_store'
 
@@ -24,7 +26,6 @@ module MemcachedStoreInstrumentation
   end
 end
 ActiveSupport::Cache::MemcachedStore.prepend(MemcachedStoreInstrumentation)
-
 
 MiniTest::Test = MiniTest::Unit::TestCase unless defined?(MiniTest::Test)
 class IdentityCache::TestCase < Minitest::Test

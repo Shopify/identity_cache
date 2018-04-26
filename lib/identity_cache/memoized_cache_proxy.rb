@@ -11,7 +11,9 @@ module IdentityCache
     end
 
     def cache_backend=(cache_adaptor)
-      if cache_adaptor.respond_to?(:cas) && cache_adaptor.respond_to?(:cas_multi)
+      if defined?(ActiveSupport::Cache::DalliStore) && ActiveSupport::Cache::DalliStore === cache_adaptor
+        @cache_fetcher = DalliCacheFetcher.new(cache_adaptor)
+      elsif cache_adaptor.respond_to?(:cas) && cache_adaptor.respond_to?(:cas_multi)
         @cache_fetcher = CacheFetcher.new(cache_adaptor)
       else
         case cache_adaptor
