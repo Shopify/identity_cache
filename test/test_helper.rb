@@ -6,10 +6,7 @@ require 'helpers/database_connection'
 require 'helpers/cache_connection'
 require 'helpers/active_record_objects'
 require 'spy/integration'
-require 'active_support/cache/dalli_store'
-require 'dalli/cas/client'
-require 'memcached_store'
-require 'active_support/cache/memcached_store'
+require 'active_support/cache/mem_cache_store'
 
 require File.dirname(__FILE__) + '/../lib/identity_cache'
 
@@ -18,14 +15,14 @@ CacheConnection.setup
 ActiveSupport::Cache::Store.instrument = true if ActiveSupport.version < Gem::Version.new("4.2.0")
 
 # This patches AR::MemcacheStore to notify AS::Notifications upon read_multis like the rest of rails does
-module MemcachedStoreInstrumentation
-  def read_multi(*args, &block)
-    instrument('read_multi', 'MULTI', keys: args) do
-      super(*args, &block)
-    end
-  end
-end
-ActiveSupport::Cache::MemcachedStore.prepend(MemcachedStoreInstrumentation)
+# module MemcachedStoreInstrumentation
+#   def read_multi(*args, &block)
+#     instrument('read_multi', 'MULTI', keys: args) do
+#       super(*args, &block)
+#     end
+#   end
+# end
+# ActiveSupport::Cache::MemcachedStore.prepend(MemcachedStoreInstrumentation)
 
 MiniTest::Test = MiniTest::Unit::TestCase unless defined?(MiniTest::Test)
 class IdentityCache::TestCase < Minitest::Test
