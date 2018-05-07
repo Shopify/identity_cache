@@ -33,7 +33,25 @@ class MemCacheStoreCasTest < IdentityCache::TestCase
     )
   end
 
-  def test_cas_multi
+  def test_cas_multi_with_missing_key
+    assert(
+      @cache.cas_multi("not_exist") do |values|
+        assert_empty(values)
+        {}
+      end,
+    )
+  end
+
+  def test_cas_multi_with_missing_set
+    assert(
+      @cache.cas_multi("not_exist", "i_do_not_exist") do |values|
+        assert_empty(values)
+        {}
+      end,
+    )
+  end
+
+  def test_cas_multi_with_existing_set
     @cache.write("foo", "bar")
     @cache.write("fud", "biz")
     assert(
@@ -45,7 +63,7 @@ class MemCacheStoreCasTest < IdentityCache::TestCase
     assert_equal({ "foo" => "baz", "fud" => "buz" }, @cache.read_multi("foo", "fud"))
   end
 
-  def test_cas_multi_with_altered_key
+  def test_cas_multi_with_different_key
     @cache.write("foo", "baz")
     assert(
       @cache.cas_multi("foo") do |_values|
@@ -56,13 +74,17 @@ class MemCacheStoreCasTest < IdentityCache::TestCase
     assert_equal "baz", @cache.read("foo")
   end
 
-  def test_cas_multi_with_cache_miss
+  def test_cas_multi_with_existing_multi_set
+    @cache.write("foo", "bar")
+    @cache.write("fud", "biz")
     assert(
-      @cache.cas_multi("not_exist") do |values|
-        assert values.empty?
-        {}
-      end,
+      @cache.cas_multi("foo", "fud") do |values|
+        assert_equal({ "foo" => "bar", "fud" => "biz" }, values)
+        { "foo" => "biz" }
+      end
     )
+    assert_equal("biz", @cache.read("foo"))
+    assert_equal("biz", @cache.read("fud"))
   end
 
   def test_cas_multi_with_partial_miss
@@ -73,6 +95,7 @@ class MemCacheStoreCasTest < IdentityCache::TestCase
         {}
       end,
     )
+    assert_nil(@cache.read("bar"))
     assert_equal "baz", @cache.read("foo")
   end
 
@@ -99,6 +122,19 @@ class MemCacheStoreCasTest < IdentityCache::TestCase
       end,
     )
     assert_equal({ "foo" => "bad", "fud" => "buz" }, @cache.read_multi("foo", "fud"))
+  end
+
+  def test_cas_multi_with_exipration
+    @cache.write("foo", "bar")
+    @cache.write("fud", "biz", expires_in: 1, raw: true)
+    assert(
+      @cache.cas_multi("foo", "fud") do |values|
+        assert_equal({ "foo" => "bar", "fud" => "biz" }, values)
+        sleep(2)
+        { "foo" => "biz", "fud" => "biz" }
+      end,
+    )
+    assert_equal({ "foo" => "biz" }, @cache.read_multi("foo", "fud"))
   end
 
   def test_cas_with_read_only_memcached_store_should_not_s
