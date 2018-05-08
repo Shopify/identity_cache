@@ -44,7 +44,7 @@ module IdentityCache
         rescue_error_with(false) do
           values = {}
           raw_values = @data.with do |conn|
-            conn.get_multi_cas(*keys)
+            conn.get_multi_cas(*normalized_keys.keys)
           end
 
           raw_values.each do |key, raw_value_and_cas|
