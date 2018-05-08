@@ -7,6 +7,14 @@ module IdentityCache
       end
     end
 
+    def reset
+      rescue_error_with(false) do
+        @data.with do |conn|
+          conn.reset
+        end
+      end
+    end
+
     def cas(key, **options)
       options = merged_options(options)
       key = normalize_key(key, options)
