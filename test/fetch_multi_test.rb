@@ -145,9 +145,7 @@ class FetchMultiTest < IdentityCache::TestCase
     cache_result = {1 => IdentityCache::CACHED_NIL, 2 => IdentityCache::CACHED_NIL}
     fetch_result = {1 => nil, 2 => nil}
 
-    fetcher.expects(:cas_multi).with([1, 2]).twice.returns(nil, cache_result)
-    fetcher.expects(:add).with(1, IdentityCache::CACHED_NIL).once
-    fetcher.expects(:add).with(2, IdentityCache::CACHED_NIL).once
+    fetcher.expects(:fetch_multi).with([1, 2]).twice.returns(fetch_result, cache_result)
 
     results = IdentityCache.fetch_multi(1,2) do |keys|
       [nil, nil]
