@@ -22,10 +22,10 @@ module IdentityCache
       ActiveSupport::Notifications.instrument("cache_cas.active_support", key: key) do
         rescue_error_with(false) do
           @data.with do |conn|
-            conn.cas(key, options[:expires_in], options) do |raw_value|
+            conn.cas(key, options[:expires_in].to_i, options) do |raw_value|
               entry = deserialize_entry(raw_value)
               value = yield entry.value
-              ActiveSupport::Cache::Entry.new(value, options)
+              serialize_entry(ActiveSupport::Cache::Entry.new(value, options), options)
             end
           end
         end
@@ -65,9 +65,9 @@ module IdentityCache
             @data.with do |conn|
               conn.replace_cas(
                 normalized_key,
-                ActiveSupport::Cache::Entry.new(value, options),
+                serialize_entry(ActiveSupport::Cache::Entry.new(value, options), options),
                 cas,
-                options[:expires_in],
+                options[:expires_in].to_i,
                 options,
               )
             end
