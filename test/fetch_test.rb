@@ -26,20 +26,6 @@ class FetchTest < IdentityCache::TestCase
     assert_equal @record, Item.fetch(1)
   end
 
-  def test_fetch_cache_hit_publishes_hydration_notification
-    IdentityCache.cache.expects(:fetch).with(@blob_key).returns(@cached_value)
-
-    events = 0
-    subscriber = ActiveSupport::Notifications.subscribe('hydration.identity_cache') do |_, _, _, _, payload|
-      events += 1
-      assert_equal "Item", payload[:class]
-    end
-    Item.fetch(1)
-    assert_equal 1, events
-  ensure
-    ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
-  end
-
   def test_fetch_cache_hit_publishes_cache_notification
     IdentityCache.cache.cache_fetcher.expects(:fetch).with(@blob_key).returns(@cached_value)
     expected = { memoizing: false, resolve_miss_time: 0, memo_hits: 0, cache_hits: 1, cache_misses: 0 }

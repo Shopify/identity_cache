@@ -66,23 +66,6 @@ class RecursiveDenormalizedHasManyTest < IdentityCache::TestCase
     ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
   end
 
-  def test_on_cache_hit_record_should_publish_one_hydration_notification
-    Item.fetch(@record.id) # warm cache
-
-    Item.any_instance.expects(:associated_records).never
-    AssociatedRecord.any_instance.expects(:deeply_associated_records).never
-
-    events = 0
-    subscriber = ActiveSupport::Notifications.subscribe('hydration.identity_cache') do |_, _, _, _, payload|
-      events += 1
-      assert_equal "Item", payload[:class]
-    end
-    Item.fetch(@record.id)
-    assert_equal 1, events
-  ensure
-    ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
-  end
-
   def test_on_cache_miss_child_record_fetch_should_include_nested_associations_to_avoid_n_plus_ones
     assert_queries(5) do
       # one for the top level record

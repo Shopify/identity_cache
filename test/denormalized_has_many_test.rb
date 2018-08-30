@@ -45,7 +45,7 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     expected = @record.associated_records
 
     assoc = mock()
-    assoc.expects(:klass).returns(Item)
+    assoc.expects(:klass).at_least_once.returns(AssociatedRecord)
     Item.any_instance.expects(:association).with(:associated_records).returns(assoc).once
 
     assert_equal expected, record_from_cache_hit.fetch_associated_records
