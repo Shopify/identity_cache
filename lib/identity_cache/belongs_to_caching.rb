@@ -23,7 +23,7 @@ module IdentityCache
 
         options[:embed]                   = false
         options[:cached_accessor_name]    = "fetch_#{association}"
-        options[:records_variable_name]   = "cached_#{association}"
+        options[:records_variable_name]   = :"@cached_#{association}"
         options[:association_reflection]  = association_reflection
         options[:prepopulate_method_name] = "prepopulate_fetched_#{association}"
 
@@ -38,10 +38,10 @@ module IdentityCache
           def #{options[:cached_accessor_name]}
             association_klass = association(:#{association}).klass
             if association_klass.should_use_cache? && #{foreign_key}.present? && !association(:#{association}).loaded?
-              if instance_variable_defined?(:@#{options[:records_variable_name]})
-                @#{options[:records_variable_name]}
+              if instance_variable_defined?(:#{options[:records_variable_name]})
+                #{options[:records_variable_name]}
               else
-                @#{options[:records_variable_name]} = association_klass.fetch_by_id(#{foreign_key})
+                #{options[:records_variable_name]} = association_klass.fetch_by_id(#{foreign_key})
               end
             else
               #{association}
@@ -49,7 +49,7 @@ module IdentityCache
           end
 
           def #{options[:prepopulate_method_name]}(record)
-            @#{options[:records_variable_name]} = record
+            #{options[:records_variable_name]} = record
           end
         CODE
       end

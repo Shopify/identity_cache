@@ -190,16 +190,16 @@ module IdentityCache
       def build_recursive_association_cache(association, options) #:nodoc:
         options[:association_reflection] = reflect_on_association(association)
         options[:cached_accessor_name]   = "fetch_#{association}"
-        options[:records_variable_name]  = "cached_#{association}"
+        options[:records_variable_name]  = :"@cached_#{association}"
         options[:prepopulate_method_name] = "prepopulate_fetched_#{association}"
 
         self.class_eval(<<-CODE, __FILE__, __LINE__ + 1)
           def #{options[:cached_accessor_name]}
-            fetch_recursively_cached_association('#{options[:records_variable_name]}', :#{association})
+            fetch_recursively_cached_association(:#{options[:records_variable_name]}, :#{association})
           end
 
           def #{options[:prepopulate_method_name]}(records)
-            @#{options[:records_variable_name]} = records
+            #{options[:records_variable_name]} = records
           end
         CODE
 
@@ -213,28 +213,29 @@ module IdentityCache
         options[:cached_accessor_name]    = "fetch_#{association}"
         options[:ids_name]                = "#{singular_association}_ids"
         options[:cached_ids_name]         = "fetch_#{options[:ids_name]}"
-        options[:ids_variable_name]       = "cached_#{options[:ids_name]}"
-        options[:records_variable_name]   = "cached_#{association}"
+        ids_cached_reader_name = "cached_#{options[:ids_name]}"
+        options[:ids_variable_name]       = :"@#{ids_cached_reader_name}"
+        options[:records_variable_name]   = :"@cached_#{association}"
         options[:prepopulate_method_name] = "prepopulate_fetched_#{association}"
 
         self.class_eval(<<-CODE, __FILE__, __LINE__ + 1)
-          attr_reader :#{options[:ids_variable_name]}
+          attr_reader :#{ids_cached_reader_name}
 
           def #{options[:cached_ids_name]}
-            @#{options[:ids_variable_name]} ||= #{options[:ids_name]}
+            #{options[:ids_variable_name]} ||= #{options[:ids_name]}
           end
 
           def #{options[:cached_accessor_name]}
             association_klass = association(:#{association}).klass
             if association_klass.should_use_cache? && !#{association}.loaded?
-              @#{options[:records_variable_name]} ||= #{options[:association_reflection].class_name}.fetch_multi(#{options[:cached_ids_name]})
+              #{options[:records_variable_name]} ||= #{options[:association_reflection].class_name}.fetch_multi(#{options[:cached_ids_name]})
             else
               #{association}.to_a
             end
           end
 
           def #{options[:prepopulate_method_name]}(records)
-            @#{options[:records_variable_name]} = records
+            #{options[:records_variable_name]} = records
           end
         CODE
 

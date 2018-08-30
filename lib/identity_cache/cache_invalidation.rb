@@ -14,7 +14,7 @@ module IdentityCache
       self.class.send(:all_cached_associations).each do |_, data|
         CACHE_KEY_NAMES.each do |key|
           if data[key]
-            instance_variable_name = "@#{data[key]}"
+            instance_variable_name = data[key]
             if instance_variable_defined?(instance_variable_name)
               remove_instance_variable(instance_variable_name)
             end
