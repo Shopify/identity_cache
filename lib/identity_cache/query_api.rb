@@ -119,7 +119,7 @@ module IdentityCache
             set_embedded_association(record, name, hydrate_association_target(associated_class, value))
           end
         end
-        coder[:association_ids].each {|name, ids| record.instance_variable_set(:"@#{record.class.cached_has_manys[name][:ids_variable_name]}", ids) } if coder.has_key?(:association_ids)
+        coder[:association_ids].each {|name, ids| record.instance_variable_set(record.class.cached_has_manys[name][:ids_variable_name], ids) } if coder.has_key?(:association_ids)
         record.readonly! if IdentityCache.fetch_read_only_records
         record
       end
@@ -219,7 +219,7 @@ module IdentityCache
         end
         if (cached_has_manys = klass.cached_has_manys).present?
           coder[:association_ids] = cached_has_manys.each_with_object({}) do |(name, options), hash|
-            hash[name] = record.instance_variable_get(:"@#{options[:ids_variable_name]}") unless options[:embed] == true
+            hash[name] = record.instance_variable_get(options[:ids_variable_name]) unless options[:embed] == true
           end
         end
       end
@@ -267,7 +267,7 @@ module IdentityCache
 
           records.each do |parent|
             child_ids = ids_by_parent[parent.id]
-            parent.instance_variable_set(:"@#{options.fetch(:ids_variable_name)}", child_ids)
+            parent.instance_variable_set(options.fetch(:ids_variable_name), child_ids)
           end
         end
         recursively_embedded_associations.each_value do |options|
@@ -344,10 +344,10 @@ module IdentityCache
             next unless cached_record = cached_records_by_id[record.id]
             if options[:embed] == :ids
               cached_association = cached_record.public_send(options.fetch(:cached_ids_name))
-              record.instance_variable_set(:"@#{options.fetch(:ids_variable_name)}", cached_association)
+              record.instance_variable_set(options.fetch(:ids_variable_name), cached_association)
             else
               cached_association = cached_record.public_send(options.fetch(:cached_accessor_name))
-              record.instance_variable_set(:"@#{options.fetch(:records_variable_name)}", cached_association)
+              record.instance_variable_set(options.fetch(:records_variable_name), cached_association)
             end
           end
         end
@@ -360,7 +360,7 @@ module IdentityCache
         first_record = records.first
         return if first_record.association(association).loaded?
         iv_name_key = details[:embed] == true ? :records_variable_name : :ids_variable_name
-        return if first_record.instance_variable_defined?(:"@#{details[iv_name_key]}")
+        return if first_record.instance_variable_defined?(details[iv_name_key])
         fetch_embedded_associations(records)
       end
 
@@ -406,7 +406,7 @@ module IdentityCache
               raise ArgumentError.new("Polymorphic belongs_to associations do not support prefetching yet.")
             end
 
-            cached_iv_name = :"@#{details.fetch(:records_variable_name)}"
+            cached_iv_name = details.fetch(:records_variable_name)
             ids_to_child_record = records.each_with_object({}) do |child_record, hash|
               parent_id = child_record.send(reflection.foreign_key)
               if parent_id && !child_record.instance_variable_defined?(cached_iv_name)
@@ -442,18 +442,17 @@ module IdentityCache
     private
 
     def fetch_recursively_cached_association(ivar_name, association_name) # :nodoc:
-      ivar_full_name = :"@#{ivar_name}"
       assoc = association(association_name)
 
       if assoc.klass.should_use_cache?
-        if instance_variable_defined?(ivar_full_name)
-          instance_variable_get(ivar_full_name)
+        if instance_variable_defined?(ivar_name)
+          instance_variable_get(ivar_name)
         else
           cached_assoc = assoc.load_target
           if IdentityCache.fetch_read_only_records
             cached_assoc = readonly_copy(cached_assoc)
           end
-          instance_variable_set(ivar_full_name, cached_assoc)
+          instance_variable_set(ivar_name, cached_assoc)
         end
       else
         assoc.load_target
