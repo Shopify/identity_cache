@@ -26,7 +26,7 @@ module IdentityCache
           require_if_necessary do
             object = nil
             coder = IdentityCache.fetch(rails_cache_key(id)){ instrumented_coder_from_record(object = resolve_cache_miss(id)) }
-            object ||= instrumented_record_from_coder(coder)
+            object ||= record_from_coder(coder)
             if object && object.id != id
               IdentityCache.logger.error "[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{object.id} for #{object.inspect[(0..100)]}"
             end
@@ -68,7 +68,7 @@ module IdentityCache
               records.map {|record| instrumented_coder_from_record(record) }
             end
 
-            cache_keys.map{ |key| key_to_record_map[key] || instrumented_record_from_coder(coders_by_key[key]) }
+            cache_keys.map{ |key| key_to_record_map[key] || record_from_coder(coders_by_key[key]) }
           end
         else
           find_batch(ids)
@@ -106,8 +106,6 @@ module IdentityCache
         nil
       end
 
-      protected
-
       def record_from_coder(coder) #:nodoc:
         return nil unless coder
 
@@ -115,11 +113,14 @@ module IdentityCache
 
         if coder.has_key?(:associations)
           coder[:associations].each do |name, value|
-            associated_class = reflect_on_association(name).klass
-            set_embedded_association(record, name, hydrate_association_target(associated_class, value))
+            record.instance_variable_set(cached_association_options(name).fetch(:dehydrated_variable_name), value)
           end
         end
-        coder[:association_ids].each {|name, ids| record.instance_variable_set(record.class.cached_has_manys[name][:ids_variable_name], ids) } if coder.has_key?(:association_ids)
+        if coder.has_key?(:association_ids)
+          coder[:association_ids].each do |name, ids|
+            record.instance_variable_set(record.class.cached_has_manys[name][:ids_variable_name], ids)
+          end
+        end
         record.readonly! if IdentityCache.fetch_read_only_records
         record
       end
@@ -138,48 +139,6 @@ module IdentityCache
         scope = association_reflection.scope
         if scope && !association_reflection.klass.all.instance_exec(&scope).joins_values.empty?
           raise UnsupportedAssociationError, "caching association #{self}.#{association_name} scoped with a join isn't supported"
-        end
-      end
-
-      def instrumented_record_from_coder(coder) #:nodoc:
-        return unless coder
-        ActiveSupport::Notifications.instrument('hydration.identity_cache', class: name) do
-          record_from_coder(coder)
-        end
-      end
-
-      def hydrate_association_target(associated_class, dehydrated_value)
-        dehydrated_value = IdentityCache.unmap_cached_nil_for(dehydrated_value)
-        if dehydrated_value.is_a?(Array)
-          dehydrated_value.map { |coder| associated_class.record_from_coder(coder) }
-        else
-          associated_class.record_from_coder(dehydrated_value)
-        end
-      end
-
-      def set_embedded_association(record, association_name, association_target) #:nodoc:
-        model = record.class
-        association_options = model.send(:cached_association_options, association_name)
-
-        model.reflect_on_association(association_name)
-        set_inverse_of_cached_association(record, association_options, association_target)
-
-        prepopulate_method_name = association_options.fetch(:prepopulate_method_name)
-        record.send(prepopulate_method_name, association_target)
-      end
-
-      def set_inverse_of_cached_association(record, association_options, association_target)
-        return if association_target.nil?
-        associated_class = association_options.fetch(:association_reflection).klass
-        inverse_name = association_options.fetch(:inverse_name)
-        inverse_cached_association = associated_class.cached_belongs_tos[inverse_name]
-        return unless inverse_cached_association
-
-        prepopulate_method_name = inverse_cached_association.fetch(:prepopulate_method_name)
-        if association_target.is_a?(Array)
-          association_target.each { |child_record| child_record.send(prepopulate_method_name, record) }
-        else
-          association_target.send(prepopulate_method_name, record)
         end
       end
 
@@ -359,8 +318,12 @@ module IdentityCache
         # the first record to see if an association is loaded.
         first_record = records.first
         return if first_record.association(association).loaded?
-        iv_name_key = details[:embed] == true ? :records_variable_name : :ids_variable_name
-        return if first_record.instance_variable_defined?(details[iv_name_key])
+        if details[:embed] == true
+          return if first_record.instance_variable_defined?(details[:dehydrated_variable_name])
+          return if first_record.instance_variable_defined?(details[:records_variable_name])
+        else
+          return if first_record.instance_variable_defined?(details[:ids_variable_name])
+        end
         fetch_embedded_associations(records)
       end
 
@@ -441,12 +404,17 @@ module IdentityCache
 
     private
 
-    def fetch_recursively_cached_association(ivar_name, association_name) # :nodoc:
+    def fetch_recursively_cached_association(ivar_name, dehydrated_ivar_name, association_name) # :nodoc:
       assoc = association(association_name)
 
       if assoc.klass.should_use_cache?
         if instance_variable_defined?(ivar_name)
           instance_variable_get(ivar_name)
+        elsif instance_variable_defined?(dehydrated_ivar_name)
+          associated_records = hydrate_association_target(assoc.klass, instance_variable_get(dehydrated_ivar_name))
+          set_embedded_association(association_name, associated_records)
+          remove_instance_variable(dehydrated_ivar_name)
+          instance_variable_set(ivar_name, associated_records)
         else
           cached_assoc = assoc.load_target
           if IdentityCache.fetch_read_only_records
@@ -456,6 +424,40 @@ module IdentityCache
         end
       else
         assoc.load_target
+      end
+    end
+
+    def hydrate_association_target(associated_class, dehydrated_value) # :nodoc:
+      dehydrated_value = IdentityCache.unmap_cached_nil_for(dehydrated_value)
+      if dehydrated_value.is_a?(Array)
+        dehydrated_value.map { |coder| associated_class.record_from_coder(coder) }
+      else
+        associated_class.record_from_coder(dehydrated_value)
+      end
+    end
+
+    def set_embedded_association(association_name, association_target) #:nodoc:
+      model = self.class
+      association_options = model.send(:cached_association_options, association_name)
+
+      set_inverse_of_cached_association(association_options, association_target)
+
+      prepopulate_method_name = association_options.fetch(:prepopulate_method_name)
+      send(prepopulate_method_name, association_target)
+    end
+
+    def set_inverse_of_cached_association(association_options, association_target)
+      return if association_target.nil?
+      associated_class = association_options.fetch(:association_reflection).klass
+      inverse_name = association_options.fetch(:inverse_name)
+      inverse_cached_association = associated_class.cached_belongs_tos[inverse_name]
+      return unless inverse_cached_association
+
+      prepopulate_method_name = inverse_cached_association.fetch(:prepopulate_method_name)
+      if association_target.is_a?(Array)
+        association_target.each { |child_record| child_record.send(prepopulate_method_name, self) }
+      else
+        association_target.send(prepopulate_method_name, self)
       end
     end
 
