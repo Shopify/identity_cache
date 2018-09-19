@@ -9,11 +9,11 @@ module IdentityCache
         @model = model
       end
 
-      def fetch(id)
+      def fetch(id, cache_fetcher_options)
         id = cast_id(id)
         return unless id
         record = if model.should_use_cache?
-          object = CacheKeyLoader.load(self, id)
+          object = CacheKeyLoader.load(self, id, cache_fetcher_options)
           if object && object.id != id
             IdentityCache.logger.error(
               <<~MSG.squish

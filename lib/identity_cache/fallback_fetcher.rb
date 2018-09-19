@@ -32,7 +32,10 @@ module IdentityCache
       results
     end
 
-    def fetch(key)
+    def fetch(key, **cache_fetcher_options)
+      unless cache_fetcher_options.empty?
+        raise ArgumentError, "unsupported cache_fetcher options: #{cache_fetcher_options.keys.join(', ')}"
+      end
       result = @cache_backend.read(key)
       if result.nil?
         result = yield

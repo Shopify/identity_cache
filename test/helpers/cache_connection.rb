@@ -16,15 +16,19 @@ module CacheConnection
   end
 
   def backend
-    @backend ||= case ENV['ADAPTER']
+    @backend ||= build_backend
+  end
+
+  def build_backend(address: "#{host}:11211")
+    case ENV['ADAPTER']
     when nil, 'dalli'
       require 'active_support/cache/mem_cache_store'
-      ActiveSupport::Cache::MemCacheStore.new("#{host}:11211", failover: false, expires_in: 6.hours.to_i)
+      ActiveSupport::Cache::MemCacheStore.new(address, failover: false, expires_in: 6.hours.to_i)
     when 'memcached'
       require 'memcached_store'
       require 'active_support/cache/memcached_store'
       ActiveSupport::Cache::MemcachedStore.prepend(MemcachedStoreInstrumentation)
-      ActiveSupport::Cache::MemcachedStore.new("#{host}:11211", support_cas: true, auto_eject_hosts: false)
+      ActiveSupport::Cache::MemcachedStore.new(address, support_cas: true, auto_eject_hosts: false)
     else
       raise "Unknown adapter: #{ENV['ADAPTER']}"
     end

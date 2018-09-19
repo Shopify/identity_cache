@@ -48,7 +48,7 @@ class ReadonlyTest < IdentityCache::TestCase
       assert_equal(@record, Item.fetch(1))
     end
     assert_nil(backend.read(@record.primary_cache_index_key))
-    assert(fetch.has_been_called_with?(@record.primary_cache_index_key))
+    assert(fetch.has_been_called_with?(@record.primary_cache_index_key, {}))
   end
 
   def test_fetch_multi_should_not_update_cache

@@ -23,16 +23,8 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     assert_equal(@record, record_from_cache_miss)
     assert_not_nil(@record.fetch_associated)
     assert_equal(@record.associated, record_from_cache_miss.fetch_associated)
-    assert(
-      fetch.has_been_called_with?(
-        @cached_attribute.cache_key('foo')
-      )
-    )
-    assert(
-      fetch.has_been_called_with?(
-        @record.primary_cache_index_key
-      )
-    )
+    assert(fetch.has_been_called_with?(@cached_attribute.cache_key('foo'), {}))
+    assert(fetch.has_been_called_with?(@record.primary_cache_index_key, {}))
   end
 
   def test_on_cache_miss_record_should_embed_nil_object
@@ -50,16 +42,8 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     5.times do
       assert_nil(record_from_cache_miss.fetch_associated)
     end
-    assert(
-      fetch.has_been_called_with?(
-        @cached_attribute.cache_key('foo')
-      )
-    )
-    assert(
-      fetch.has_been_called_with?(
-        @record.primary_cache_index_key
-      )
-    )
+    assert(fetch.has_been_called_with?(@cached_attribute.cache_key('foo'), {}))
+    assert(fetch.has_been_called_with?(@record.primary_cache_index_key, {}))
   end
 
   def test_on_record_from_the_db_will_use_normal_association
