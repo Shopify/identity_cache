@@ -15,6 +15,7 @@ require "identity_cache/cache_invalidation"
 require "identity_cache/cache_fetcher"
 require "identity_cache/fallback_fetcher"
 require 'identity_cache/without_primary_index'
+require 'identity_cache/marshal_codec'
 
 module IdentityCache
   extend ActiveSupport::Concern
@@ -54,6 +55,9 @@ module IdentityCache
     # When set to true, it will only return read-only records when cache is used.
     mattr_accessor :fetch_read_only_records
     self.fetch_read_only_records = true
+
+    mattr_accessor :codec
+    self.codec = IdentityCache::MarshalCodec
 
     def included(base) #:nodoc:
       raise AlreadyIncludedError if base.respond_to?(:cached_model)

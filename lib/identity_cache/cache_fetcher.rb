@@ -6,12 +6,13 @@ module IdentityCache
       @cache_backend = cache_backend
     end
 
-    def write(key, value)
-      @cache_backend.write(key, value) if IdentityCache.should_fill_cache?
+    def write(key, value, expires_in: nil, unless_exist: false)
+      return if IdentityCache.should_fill_cache?
+      @cache_backend.write(key, encode(value), raw: true, expires_in: expires_in, unless_exist: unless_exist)
     end
 
     def delete(key)
-      @cache_backend.write(key, IdentityCache::DELETED, :expires_in => IdentityCache::DELETED_TTL.seconds)
+      write(key, IdentityCache::DELETED, expires_in: IdentityCache::DELETED_TTL.seconds)
     end
 
     def clear
@@ -27,28 +28,38 @@ module IdentityCache
     def fetch(key)
       result = nil
       yielded = false
-      @cache_backend.cas(key) do |value|
+      @cache_backend.cas(key, raw: true) do |data|
         yielded = true
+        value = decode(data)
         unless IdentityCache::DELETED == value
           result = value
           break
         end
         result = yield
         break unless IdentityCache.should_fill_cache?
-        result
+        encode(result)
       end
       unless yielded
         result = yield
-        add(key, result)
+        add(key, encode(result))
       end
       result
     end
 
     private
 
+    def encode(value)
+      IdentityCache.codec.encode(value)
+    end
+
+    def decode(data)
+      IdentityCache.codec.decode(data)
+    end
+
     def cas_multi(keys)
       result = nil
-      @cache_backend.cas_multi(*keys) do |results|
+      @cache_backend.cas_multi(*keys, raw: true) do |results|
+        results.transform_values! { |data| decode(data) }
         deleted = results.select {|_, v| IdentityCache::DELETED == v }
         results.reject! {|_, v| IdentityCache::DELETED == v }
 
@@ -60,7 +71,7 @@ module IdentityCache
           missed_keys.zip(missed_vals) do |k, v|
             result[k] = v
             if deleted.include?(k)
-              updates[k] = v
+              updates[k] = encode(v)
             else
               add(k, v)
             end
@@ -81,7 +92,7 @@ module IdentityCache
     end
 
     def add(key, value)
-      @cache_backend.write(key, value, :unless_exist => true) if IdentityCache.should_fill_cache?
+      write(key, value, unless_exist: true)
     end
   end
 end
