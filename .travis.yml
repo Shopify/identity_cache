@@ -30,5 +30,8 @@ matrix:
     - rvm: 2.2.6
       gemfile: gemfiles/Gemfile.rails-edge
 
+addons:
+  postgresql: 9.3
+
 notifications:
   email: false
