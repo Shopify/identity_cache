@@ -7,6 +7,7 @@ rvm:
 gemfile:
   - gemfiles/Gemfile.rails50
   - gemfiles/Gemfile.latest-release
+  - gemfiles/Gemfile.rails-edge
 
 env:
   - DB=mysql2
@@ -23,3 +24,11 @@ before_script:
   - psql -c 'create database identity_cache_test;' -U postgres
 
 cache: bundler
+
+matrix:
+  exclude:
+    - rvm: 2.2.6
+      gemfile: gemfiles/Gemfile.rails-edge
+
+notifications:
+  email: false
