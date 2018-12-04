@@ -111,14 +111,14 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
 
   def test_cache_without_guessable_inverse_name_raises
     assert_raises IdentityCache::InverseAssociationError do
-      Item.cache_has_one :polymorphic_record, :embed => true
+      Item.cache_has_one :no_inverse_of_record, :embed => true
       IdentityCache.eager_load!
     end
   end
 
   def test_cache_without_guessable_inverse_name_does_not_raise_when_inverse_name_specified
     assert_nothing_raised do
-      Item.cache_has_one :polymorphic_record, :inverse_name => :owner, :embed => true
+      Item.cache_has_one :no_inverse_of_record, :inverse_name => :owner, :embed => true
       IdentityCache.eager_load!
     end
   end
