@@ -29,6 +29,7 @@ module ActiveRecordObjects
     Object.send :remove_const, 'NormalizedAssociatedRecord'
     Object.send :remove_const, 'AssociatedRecord'
     Object.send :remove_const, 'NotCachedRecord'
+    Object.send :remove_const, 'NoInverseOfRecord'
     Object.send :remove_const, 'Item'
     Object.send :remove_const, 'ItemTwo'
     Object.send :remove_const, 'KeyedRecord'

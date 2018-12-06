@@ -28,6 +28,11 @@ class PolymorphicRecord < ActiveRecord::Base
   belongs_to :owner, :polymorphic => true
 end
 
+class NoInverseOfRecord < ActiveRecord::Base
+  include IdentityCache
+  belongs_to :owner
+end
+
 module Deeply
   module Nested
     class AssociatedRecord < ActiveRecord::Base
@@ -44,8 +49,10 @@ class Item < ActiveRecord::Base
   has_many :normalized_associated_records
   has_many :not_cached_records
   has_many :polymorphic_records, :as => 'owner'
+  has_many :no_inverse_of_records
   has_one :polymorphic_record, :as => 'owner'
   has_one :associated, :class_name => 'AssociatedRecord'
+  has_one :no_inverse_of_record
 end
 
 class ItemTwo < ActiveRecord::Base

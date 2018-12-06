@@ -47,6 +47,7 @@ module DatabaseConnection
     :deeply_associated_records     => [[:string, :name], [:integer, :associated_record_id], [:integer, :item_id], [:timestamps, null: true]],
     :associated_records            => [[:string, :name], [:integer, :item_id], [:integer, :item_two_id]],
     :normalized_associated_records => [[:string, :name], [:integer, :item_id], [:timestamps, null: true]],
+    :no_inverse_of_records         => [[:integer, :owner_id], [:timestamps, null: true]],
     :not_cached_records            => [[:string, :name], [:integer, :item_id], [:timestamps, null: true]],
     :items                         => [[:integer, :item_id], [:string, :title], [:timestamps, null: true]],
     :items2                        => [[:integer, :item_id], [:string, :title], [:timestamps, null: true]],
