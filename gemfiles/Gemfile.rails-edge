@@ -3,4 +3,4 @@ gemspec path: '..'
 
 gem 'activerecord', github: 'rails/rails'
 gem 'activesupport', github: 'rails/rails'
-gem 'mysql2', '>= 0.3.18', '< 0.5'
+gem "mysql2", ">= 0.4.4"
