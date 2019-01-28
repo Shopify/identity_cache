@@ -210,8 +210,8 @@ module IdentityCache
         record
       end
 
-      def preload_id_embedded_association(records, options)
-        reflection = options.fetch(:association_reflection)
+      def preload_id_embedded_association(records, association_options)
+        reflection = association_options.fetch(:association_reflection)
         child_model = reflection.klass
         scope = child_model.all
         scope = scope.instance_exec(nil, &reflection.scope) if reflection.scope
@@ -224,7 +224,7 @@ module IdentityCache
 
         records.each do |parent|
           child_ids = ids_by_parent[parent.id]
-          parent.instance_variable_set(options.fetch(:ids_variable_name), child_ids)
+          parent.instance_variable_set(association_options.fetch(:ids_variable_name), child_ids)
         end
       end
 
