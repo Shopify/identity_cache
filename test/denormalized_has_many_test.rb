@@ -57,6 +57,7 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
 
     assert_equal @record, record_from_cache_miss
     assert_equal expected, record_from_cache_miss.fetch_associated_records
+    assert_equal false, record_from_cache_miss.associated_records.loaded?
   end
 
   def test_changes_in_associated_records_should_expire_the_parents_cache
@@ -150,7 +151,7 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
       record_from_db = Item.find(@record.id)
       uncached_records = record_from_db.associated_records
       assert uncached_records.none?(&:readonly?)
-      assert record_from_db.fetch_associated_records.all?(&:readonly?)
+      assert record_from_db.fetch_associated_records.none?(&:readonly?)
       assert record_from_db.associated_records.none?(&:readonly?)
     end
   end

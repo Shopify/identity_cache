@@ -203,10 +203,7 @@ module IdentityCache
 
       def resolve_cache_miss(id)
         record = self.includes(cache_fetch_includes).reorder(nil).where(primary_key => id).first
-        if record
-          preload_id_embedded_associations([record])
-          record.readonly! if IdentityCache.fetch_read_only_records && should_use_cache?
-        end
+        setup_embedded_associations_on_miss([record]) if record
         record
       end
 
@@ -228,15 +225,54 @@ module IdentityCache
         end
       end
 
-      def preload_id_embedded_associations(records)
+      def setup_embedded_associations_on_miss(records,
+        readonly: IdentityCache.fetch_read_only_records && should_use_cache?
+      )
         return if records.empty?
+        records.each(&:readonly!) if readonly
         each_id_embedded_association do |options|
           preload_id_embedded_association(records, options)
         end
         recursively_embedded_associations.each_value do |options|
-          child_model = options.fetch(:association_reflection).klass
+          association_reflection = options.fetch(:association_reflection)
+          association_name = association_reflection.name
+
+          # Move the loaded records to the cached association instance variable so they
+          # behave the same way if they were loaded from the cache
+          records.each do |record|
+            association = record.association(association_name)
+            target = association.target
+            target = readonly_copy(target) if readonly
+            record.send(:set_embedded_association, association_name, target)
+            association.reset
+            # reset inverse associations
+            if target
+              inverse_name = options.fetch(:inverse_name)
+              if target.is_a?(Array)
+                target.each { |child_record| child_record.association(inverse_name).reset }
+              else
+                target.association(inverse_name).reset
+              end
+            end
+          end
+
+          child_model = association_reflection.klass
           child_records = records.flat_map(&options.fetch(:cached_accessor_name).to_sym).compact
-          child_model.send(:preload_id_embedded_associations, child_records)
+          child_model.send(:setup_embedded_associations_on_miss, child_records, readonly: readonly)
+        end
+      end
+
+      def readonly_record_copy(record)
+        record = record.clone
+        record.readonly!
+        record
+      end
+
+      def readonly_copy(record_or_records)
+        if record_or_records.is_a?(Array)
+          record_or_records.map { |record| readonly_record_copy(record) }
+        elsif record_or_records
+          readonly_record_copy(record_or_records)
         end
       end
 
@@ -288,8 +324,7 @@ module IdentityCache
         @id_column ||= columns.detect {|c| c.name == primary_key}
         ids = ids.map{ |id| connection.type_cast(id, @id_column) }
         records = where(primary_key => ids).includes(cache_fetch_includes).to_a
-        records.each(&:readonly!) if IdentityCache.fetch_read_only_records && should_use_cache?
-        preload_id_embedded_associations(records)
+        setup_embedded_associations_on_miss(records)
         records_by_id = records.index_by(&:id)
         ids.map{ |id| records_by_id[id] }
       end
@@ -420,11 +455,7 @@ module IdentityCache
           remove_instance_variable(dehydrated_ivar_name)
           instance_variable_set(ivar_name, associated_records)
         else
-          cached_assoc = assoc.load_target
-          if IdentityCache.fetch_read_only_records
-            cached_assoc = readonly_copy(cached_assoc)
-          end
-          instance_variable_set(ivar_name, cached_assoc)
+          assoc.load_target
         end
       else
         assoc.load_target
@@ -507,20 +538,6 @@ module IdentityCache
     def was_new_record? # :nodoc:
       pk = self.class.primary_key
       !destroyed? && transaction_changed_attributes.has_key?(pk) && transaction_changed_attributes[pk].nil?
-    end
-
-    def readonly_record_copy(record)
-      record = record.clone
-      record.readonly!
-      record
-    end
-
-    def readonly_copy(record_or_records)
-      if record_or_records.is_a?(Array)
-        record_or_records.map { |record| readonly_record_copy(record) }
-      elsif record_or_records
-        readonly_record_copy(record_or_records)
-      end
     end
   end
 end
