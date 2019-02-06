@@ -244,16 +244,6 @@ module IdentityCache
             target = association.target
             target = readonly_copy(target) if readonly
             record.send(:set_embedded_association, association_name, target)
-            association.reset
-            # reset inverse associations
-            if target
-              inverse_name = options.fetch(:inverse_name)
-              if target.is_a?(Array)
-                target.each { |child_record| child_record.association(inverse_name).reset }
-              else
-                target.association(inverse_name).reset
-              end
-            end
           end
 
           child_model = association_reflection.klass

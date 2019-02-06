@@ -57,7 +57,6 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
 
     assert_equal @record, record_from_cache_miss
     assert_equal expected, record_from_cache_miss.fetch_associated_records
-    assert_equal false, record_from_cache_miss.associated_records.loaded?
   end
 
   def test_delegate_to_normal_association_if_loaded
