@@ -246,8 +246,8 @@ module IdentityCache
             record.send(:set_embedded_association, association_name, target)
             association.reset
             # reset inverse associations
-            if target
-              inverse_name = options.fetch(:inverse_name)
+            if target && association_reflection.has_inverse?
+              inverse_name = association_reflection.inverse_of.name
               if target.is_a?(Array)
                 target.each { |child_record| child_record.association(inverse_name).reset }
               else
