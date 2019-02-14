@@ -42,13 +42,13 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     record_from_cache_hit = Item.fetch(@record.id)
     assert_equal @record, record_from_cache_hit
 
-    expected = @record.associated_records
+    result = assert_memcache_operations(0) do
+      assert_no_queries do
+        record_from_cache_hit.fetch_associated_records
+      end
+    end
 
-    assoc = mock()
-    assoc.expects(:klass).at_least_once.returns(AssociatedRecord)
-    Item.any_instance.expects(:association).with(:associated_records).returns(assoc).once
-
-    assert_equal expected, record_from_cache_hit.fetch_associated_records
+    assert_equal @record.associated_records, result
   end
 
   def test_on_cache_miss_record_should_embed_associated_objects_and_return
@@ -57,6 +57,16 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
 
     assert_equal @record, record_from_cache_miss
     assert_equal expected, record_from_cache_miss.fetch_associated_records
+    assert_equal false, record_from_cache_miss.associated_records.loaded?
+  end
+
+  def test_delegate_to_normal_association_if_loaded
+    Item.fetch(@record.id) # warm cache
+    item = Item.fetch(@record.id)
+    item.fetch_associated_records
+
+    item.associated_records << AssociatedRecord.new(:name => 'buzz')
+    assert_equal item.associated_records.to_a, item.fetch_associated_records
   end
 
   def test_changes_in_associated_records_should_expire_the_parents_cache
@@ -150,7 +160,7 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
       record_from_db = Item.find(@record.id)
       uncached_records = record_from_db.associated_records
       assert uncached_records.none?(&:readonly?)
-      assert record_from_db.fetch_associated_records.all?(&:readonly?)
+      assert record_from_db.fetch_associated_records.none?(&:readonly?)
       assert record_from_db.associated_records.none?(&:readonly?)
     end
   end
