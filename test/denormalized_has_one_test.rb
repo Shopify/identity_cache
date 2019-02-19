@@ -63,6 +63,27 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     assert_equal expected, record_from_cache_hit.fetch_associated
   end
 
+
+  def test_on_cache_hit_record_must_invoke_listener
+    payloads = []
+    subscriber = ActiveSupport::Notifications.subscribe('hydration.identity_cache') do |_, _, _, _, payload|
+      payloads << payload
+    end
+
+    _miss = Item.fetch_by_title('foo')
+    assert_equal(0, payloads.length)
+
+    hit = Item.fetch_by_title('foo')
+    assert_equal(1, payloads.length)
+    assert_equal({ class: "Item" }, payloads.pop)
+
+    assert_equal(@record.associated, hit.fetch_associated)
+    assert_equal(1, payloads.length)
+    assert_equal({ class: "AssociatedRecord" }, payloads.pop)
+  ensure
+    ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
+  end
+
   def test_on_cache_hit_record_should_come_back_with_cached_nil_association
     @record.associated = nil
     @record.save!
