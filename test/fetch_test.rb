@@ -157,7 +157,7 @@ class FetchTest < IdentityCache::TestCase
 
   def test_fetch_conflict
     resolve_cache_miss = Spy.on(Item, :resolve_cache_miss).and_return do
-      @record.send(:expire_cache)
+      @record.expire_cache
       @record
     end
     add = Spy.on(fetcher, :add).and_call_through
@@ -169,11 +169,11 @@ class FetchTest < IdentityCache::TestCase
   end
 
   def test_fetch_conflict_after_delete
-    @record.send(:expire_cache)
+    @record.expire_cache
     assert_equal IdentityCache::DELETED, backend.read(@record.primary_cache_index_key)
 
     resolve_cache_miss = Spy.on(Item, :resolve_cache_miss).and_return do
-      @record.send(:expire_cache)
+      @record.expire_cache
       @record
     end
     add = Spy.on(IdentityCache.cache.cache_fetcher, :add).and_call_through

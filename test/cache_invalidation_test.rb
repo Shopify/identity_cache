@@ -128,7 +128,7 @@ class CacheInvalidationTest < IdentityCache::TestCase
 
     refute_nil IdentityCache.cache.fetch(record.primary_cache_index_key) { nil }
 
-    Item.expire_primary_index(record.id)
+    Item.expire_primary_key_cache_index(record.id)
 
     assert_nil IdentityCache.cache.fetch(record.primary_cache_index_key) { nil }
   end

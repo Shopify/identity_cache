@@ -113,7 +113,8 @@ module IdentityCache
         end
       end
 
-      def expire_primary_index(id) # :nodoc:
+      # Invalidates the primary cache index for the associated record. Will not invalidate cached attributes.
+      def expire_primary_key_cache_index(id)
         return unless primary_cache_index_enabled
         id = type_for_attribute(primary_key).cast(id)
         IdentityCache.cache.delete(rails_cache_key(id))
@@ -458,6 +459,13 @@ module IdentityCache
       end
     end
 
+    # Invalidate the cache data associated with the record.
+    def expire_cache
+      expire_primary_index
+      expire_attribute_indexes
+      true
+    end
+
     private
 
     def fetch_recursively_cached_association(ivar_name, dehydrated_ivar_name, association_name) # :nodoc:
@@ -514,7 +522,7 @@ module IdentityCache
     end
 
     def expire_primary_index # :nodoc:
-      self.class.expire_primary_index(id)
+      self.class.expire_primary_key_cache_index(id)
     end
 
     def expire_attribute_indexes # :nodoc:
@@ -530,12 +538,6 @@ module IdentityCache
           end
         end
       end
-    end
-
-    def expire_cache # :nodoc:
-      expire_primary_index
-      expire_attribute_indexes
-      true
     end
 
     def was_new_record? # :nodoc:
