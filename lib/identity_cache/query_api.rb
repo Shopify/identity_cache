@@ -113,6 +113,12 @@ module IdentityCache
         end
       end
 
+      def expire_primary_index(id) # :nodoc:
+        return unless primary_cache_index_enabled
+        id = type_for_attribute(primary_key).cast(id)
+        IdentityCache.cache.delete(rails_cache_key(id))
+      end
+
       private
 
       def record_from_coder(coder) #:nodoc:
@@ -508,21 +514,7 @@ module IdentityCache
     end
 
     def expire_primary_index # :nodoc:
-      return unless self.class.primary_cache_index_enabled
-
-      IdentityCache.logger.debug do
-        extra_keys =
-          if respond_to?(:updated_at)
-            old_updated_at = old_values_for_fields([:updated_at]).first
-            "expiring_last_updated_at=#{old_updated_at}"
-          else
-            ""
-          end
-
-        "[IdentityCache] expiring=#{self.class.name} expiring_id=#{id} #{extra_keys}"
-      end
-
-      IdentityCache.cache.delete(primary_cache_index_key)
+      self.class.expire_primary_index(id)
     end
 
     def expire_attribute_indexes # :nodoc:
