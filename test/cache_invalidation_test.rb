@@ -122,6 +122,17 @@ class CacheInvalidationTest < IdentityCache::TestCase
     end
   end
 
+  def test_cache_invalidation_expire_properly_when_expired_via_class_method
+    record = Item.create(:title => 'foo')
+    record.class.fetch(record.id)
+
+    refute_nil IdentityCache.cache.fetch(record.primary_cache_index_key) { nil }
+
+    Item.expire_primary_key_cache_index(record.id)
+
+    assert_nil IdentityCache.cache.fetch(record.primary_cache_index_key) { nil }
+  end
+
   def test_dedup_cache_invalidation_of_records_embedded_twice_through_different_associations
     Item.cache_has_many :associated_records, embed: true
     AssociatedRecord.cache_has_many :deeply_associated_records, embed: true

@@ -71,7 +71,7 @@ class SaveTest < IdentityCache::TestCase
     expect_cache_delete(@blob_key)
 
     ActiveRecord::Base.transaction do
-      @record.send(:expire_cache)
+      @record.expire_cache
     end
   end
 
