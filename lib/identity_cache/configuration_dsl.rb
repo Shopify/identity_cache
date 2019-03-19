@@ -322,7 +322,7 @@ module IdentityCache
         result = {}
         default = unique_index ? nil : []
         values.each do |index_value|
-          result[index_value] = default.dup
+          result[index_value] = default.try!(:dup)
         end
         if unique_index
           rows.each do |index_value, attribute_value|
