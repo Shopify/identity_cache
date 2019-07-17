@@ -223,6 +223,7 @@ module IdentityCache
         reflection = association_options.fetch(:association_reflection)
         child_model = reflection.klass
         scope = child_model.all
+        scope = scope.where(reflection.type => base_class.name) if reflection.type
         scope = scope.instance_exec(nil, &reflection.scope) if reflection.scope
 
         pairs = scope.where(reflection.foreign_key => records.map(&:id)).pluck(reflection.foreign_key, reflection.association_primary_key)

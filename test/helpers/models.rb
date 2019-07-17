@@ -58,6 +58,7 @@ end
 class ItemTwo < ActiveRecord::Base
   include IdentityCache
   has_many :associated_records, inverse_of: :item_two, foreign_key: :item_two_id
+  has_many :polymorphic_records, :as => 'owner'
   self.table_name = 'items2'
 end
 
