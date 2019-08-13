@@ -214,7 +214,7 @@ module IdentityCache
       end
 
       def resolve_cache_miss(id)
-        record = self.includes(cache_fetch_includes).reorder(nil).where(primary_key => id).first
+        record = self.includes(cache_fetch_includes).where(primary_key => id).take
         setup_embedded_associations_on_miss([record]) if record
         record
       end
