@@ -286,6 +286,46 @@ class FetchMultiTest < IdentityCache::TestCase
     end
   end
 
+  def test_fetch_multi_with_polymorphic_has_one
+    PolymorphicRecord.include(IdentityCache)
+    PolymorphicRecord.send(:cache_belongs_to, :owner)
+
+    item = Item.create!
+
+    poly1 = item.polymorphic_record = PolymorphicRecord.create!
+
+    assert_queries(2) do
+      stuff = PolymorphicRecord.fetch_multi(poly1.id, :includes => :owner)
+    end
+  end
+
+  def test_fetch_multi_with_polymorphic_has_many
+    PolymorphicRecord.include(IdentityCache)
+    PolymorphicRecord.send(:cache_belongs_to, :owner)
+
+    item = Item.create!
+    item2 = ItemTwo.create!
+
+    poly1 = item.polymorphic_records.create
+    poly2 = item.polymorphic_records.create
+    poly3 = item2.polymorphic_records.create
+
+    assert_queries(3) do
+      stuff = PolymorphicRecord.fetch_multi([poly1.id, poly2.id, poly3.id], :includes => :owner)
+    end
+  end
+
+  def test_fetch_multi_with_polymorphic_has_one_with_nil
+    PolymorphicRecord.include(IdentityCache)
+    PolymorphicRecord.send(:cache_belongs_to, :owner)
+
+    poly1 = PolymorphicRecord.create!
+
+    assert_queries(1) do
+      stuff = PolymorphicRecord.fetch_multi(poly1.id, :includes => :owner)
+    end
+  end
+
   def test_fetch_multi_with_mixed_hits_and_misses_returns_only_readonly_records
     IdentityCache.with_fetch_read_only_records do
       cache_response = {}
