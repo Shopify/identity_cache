@@ -423,21 +423,41 @@ module IdentityCache
             raise ArgumentError.new("Embedded belongs_to associations do not support prefetching yet.")
           else
             reflection = details[:association_reflection]
-            if reflection.polymorphic?
-              raise ArgumentError.new("Polymorphic belongs_to associations do not support prefetching yet.")
-            end
-
             cached_iv_name = details.fetch(:records_variable_name)
-            ids_to_child_record = records.each_with_object({}) do |child_record, hash|
-              parent_id = child_record.send(reflection.foreign_key)
-              if parent_id && !child_record.instance_variable_defined?(cached_iv_name)
-                hash[parent_id] = child_record
+            if reflection.polymorphic?
+              types_to_parent_ids = {}
+
+              records.each do |child_record|
+                parent_id = child_record.send(reflection.foreign_key)
+                if parent_id && !child_record.instance_variable_defined?(cached_iv_name)
+                  parent_type = Object.const_get(child_record.send(reflection.foreign_type)).cached_model
+                  types_to_parent_ids[parent_type] = {} unless types_to_parent_ids[parent_type]
+                  types_to_parent_ids[parent_type][parent_id] = child_record
+                end
               end
-            end
-            parent_records = reflection.klass.fetch_multi(ids_to_child_record.keys)
-            parent_records.each do |parent_record|
-              child_record = ids_to_child_record[parent_record.id]
-              child_record.send(details[:prepopulate_method_name], parent_record)
+
+              parent_records = []
+
+              types_to_parent_ids.each do |type, ids_to_child_record|
+                type_parent_records = type.fetch_multi(ids_to_child_record.keys)
+                type_parent_records.each do |parent_record|
+                  child_record = ids_to_child_record[parent_record.id]
+                  child_record.send(details[:prepopulate_method_name], parent_record)
+                end
+                parent_records.append(type_parent_records)
+              end
+            else
+              ids_to_child_record = records.each_with_object({}) do |child_record, hash|
+                parent_id = child_record.send(reflection.foreign_key)
+                if parent_id && !child_record.instance_variable_defined?(cached_iv_name)
+                  hash[parent_id] = child_record
+                end
+              end
+              parent_records = reflection.klass.fetch_multi(ids_to_child_record.keys)
+              parent_records.each do |parent_record|
+                child_record = ids_to_child_record[parent_record.id]
+                child_record.send(details[:prepopulate_method_name], parent_record)
+              end
             end
           end
 
