@@ -163,3 +163,5 @@ module IdentityCache
     end
   end
 end
+
+require 'identity_cache/railtie' if defined?(Rails)
