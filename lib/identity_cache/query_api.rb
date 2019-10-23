@@ -135,6 +135,11 @@ module IdentityCache
             record.instance_variable_set(record.class.cached_has_manys[name][:ids_variable_name], ids)
           end
         end
+        if coder.has_key?(:association_id)
+          coder[:association_id].each do |name, id|
+            record.instance_variable_set(record.class.cached_has_ones[name][:id_variable_name], id)
+          end
+        end
         record.readonly! if IdentityCache.fetch_read_only_records
         record
       end
@@ -193,6 +198,11 @@ module IdentityCache
             hash[name] = record.instance_variable_get(options[:ids_variable_name]) unless options[:embed] == true
           end
         end
+        if (id_embedded_has_ones = klass.cached_has_ones.select { |_, options| options[:embed] != true }).present?
+          coder[:association_id] = id_embedded_has_ones.each_with_object({}) do |(name, options), hash|
+            hash[name] = record.instance_variable_get(options[:id_variable_name])
+          end
+        end
       end
 
       def require_if_necessary #:nodoc:
@@ -234,7 +244,11 @@ module IdentityCache
 
         records.each do |parent|
           child_ids = ids_by_parent[parent.id]
-          parent.instance_variable_set(association_options.fetch(:ids_variable_name), child_ids)
+          if association_options[:embed] == :ids
+            parent.instance_variable_set(association_options[:ids_variable_name], child_ids)
+          elsif association_options[:embed] == :id
+            parent.instance_variable_set(association_options[:id_variable_name], child_ids.first)
+          end
         end
       end
 
@@ -297,6 +311,9 @@ module IdentityCache
         cached_has_manys.each_value do |options|
           yield options if options.fetch(:embed) == :ids
         end
+        cached_has_ones.each_value do |options|
+          yield options if options.fetch(:embed) == :id
+        end
       end
 
       def recursively_embedded_associations
@@ -356,6 +373,9 @@ module IdentityCache
             if options[:embed] == :ids
               cached_association = cached_record.public_send(options.fetch(:cached_ids_name))
               record.instance_variable_set(options.fetch(:ids_variable_name), cached_association)
+            elsif options[:embed] == :id
+              cached_association = cached_record.public_send(options.fetch(:cached_id_name))
+              record.instance_variable_set(options.fetch(:id_variable_name), cached_association)
             else
               cached_association = cached_record.public_send(options.fetch(:cached_accessor_name))
               record.instance_variable_set(options.fetch(:records_variable_name), cached_association)
@@ -468,7 +488,21 @@ module IdentityCache
             prefetch_embedded_association(records, association, details)
             parent_records = records.map(&details[:cached_accessor_name].to_sym).compact
           else
-            raise ArgumentError.new("Non-embedded has_one associations do not support prefetching yet.")
+            ids_to_parent_record = records.each_with_object({}) do |record, hash|
+              child_id = record.send(details[:cached_id_name])
+              hash[child_id] = record if child_id
+            end
+
+            parent_record_to_child_record = Hash.new
+            child_records = details[:association_reflection].klass.fetch_multi(*ids_to_parent_record.keys)
+            child_records.each do |child_record|
+              parent_record = ids_to_parent_record[child_record.id]
+              parent_record_to_child_record[parent_record] ||= child_record
+            end
+
+            parent_record_to_child_record.each do |parent, child|
+              parent.send(details[:prepopulate_method_name], child)
+            end
           end
 
           next_level_records = parent_records

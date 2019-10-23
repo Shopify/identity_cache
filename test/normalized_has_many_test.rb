@@ -15,6 +15,12 @@ class NormalizedHasManyTest < IdentityCache::TestCase
     @not_cached = @record.not_cached_records.first
   end
 
+  def test_not_implemented_error
+    assert_raises(NotImplementedError) do
+      Item.cache_has_many :associated_records, embed: false
+    end
+  end
+
   def test_a_records_list_of_associated_ids_on_the_parent_record_retains_association_sort_order
     assert_equal [2, 1], @record.associated_record_ids
 
