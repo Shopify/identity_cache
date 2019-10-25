@@ -3,6 +3,15 @@ require 'active_support/core_ext/module/attribute_accessors'
 require 'ar_transaction_changes'
 
 require "identity_cache/version"
+require "identity_cache/cached"
+require "identity_cache/cached/association"
+require "identity_cache/cached/recursive/association"
+require "identity_cache/cached/recursive/has_one"
+require "identity_cache/cached/recursive/has_many"
+require "identity_cache/cached/reference/association"
+require "identity_cache/cached/reference/belongs_to"
+require "identity_cache/cached/reference/has_one"
+require "identity_cache/cached/reference/has_many"
 require 'identity_cache/memoized_cache_proxy'
 require 'identity_cache/belongs_to_caching'
 require 'identity_cache/cache_key_generation'
