@@ -10,6 +10,7 @@ class AssociatedRecord < ActiveRecord::Base
   belongs_to :item, inverse_of: :associated_records
   belongs_to :item_two, inverse_of: :associated_records
   has_many :deeply_associated_records
+  has_one :deeply_associated, class_name: "DeeplyAssociatedRecord"
   default_scope { order('id DESC') }
 end
 

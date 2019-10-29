@@ -149,8 +149,11 @@ module IdentityCache
         options = { embed: embed, inverse_name: inverse_name }
         self.cached_has_ones[association] = options
 
-        if options[:embed] == true
+        case embed
+        when true
           build_recursive_association_cache(association, options)
+        when :id
+          build_id_embedded_has_one_cache(association, options)
         else
           raise NotImplementedError
         end
@@ -259,6 +262,42 @@ module IdentityCache
 
           def #{options[:prepopulate_method_name]}(records)
             #{options[:records_variable_name]} = records
+          end
+        CODE
+
+        options[:only_on_foreign_key_change] = true
+        ParentModelExpiration.add_parent_expiry_hook(options)
+      end
+
+      def build_id_embedded_has_one_cache(association, options) #:nodoc:
+        options[:association_reflection]  = reflect_on_association(association)
+        options[:cached_accessor_name]    = "fetch_#{association}"
+        options[:id_name]                 = "#{association}_id"
+        options[:cached_id_name]          = "fetch_#{options[:id_name]}"
+        id_cached_reader_name             = "cached_#{options[:id_name]}"
+        options[:id_variable_name]        = :"@#{id_cached_reader_name}"
+        options[:records_variable_name]   = :"@cached_#{association}"
+        options[:prepopulate_method_name] = "prepopulate_fetched_#{association}"
+
+        self.class_eval(<<-CODE, __FILE__, __LINE__ + 1)
+          attr_reader :#{id_cached_reader_name}
+
+          def #{options[:cached_id_name]}
+            return #{options[:id_variable_name]} if defined?(#{options[:id_variable_name]})
+            #{options[:id_variable_name]} = association(:#{association}).scope.ids.first
+          end
+
+          def #{options[:cached_accessor_name]}
+            association_klass = association(:#{association}).klass
+            if association_klass.should_use_cache? && !association(:#{association}).loaded?
+              #{options[:records_variable_name]} ||= #{options[:association_reflection].class_name}.fetch(#{options[:cached_id_name]}) if #{options[:cached_id_name]}
+            else
+              #{association}
+            end
+          end
+
+          def #{options[:prepopulate_method_name]}(record)
+            #{options[:records_variable_name]} = record
           end
         CODE
 

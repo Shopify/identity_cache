@@ -56,6 +56,19 @@ class CacheInvalidationTest < IdentityCache::TestCase
     assert_equal [@bar], @record.associated_records
   end
 
+  def test_after_a_reload_the_cache_perform_as_expected
+    Item.cache_has_one :associated, embed: :id
+
+    assert_equal @baz, @record.fetch_associated
+    assert_equal @baz, @record.associated
+
+    @baz.destroy
+    @record.reload
+
+    assert_equal @bar, @record.fetch_associated
+    assert_equal @bar, @record.associated
+  end
+
   def test_cache_invalidation_expire_properly_if_child_is_embed_in_multiple_parents
     Item.cache_has_many :associated_records, :embed => true
     ItemTwo.cache_has_many :associated_records, :embed => true

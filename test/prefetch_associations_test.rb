@@ -221,6 +221,24 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
     end
   end
 
+  def test_fetch_multi_batch_fetches_non_embedded_first_level_has_one_associations
+    Item.send(:cache_has_one, :associated, embed: :id)
+
+    child_records = []
+    [@bob, @joe].each do |parent|
+      child_records << (child_record = parent.create_associated(name: "child"))
+      AssociatedRecord.fetch(child_record.id)
+    end
+
+    Item.fetch_multi(@bob.id, @joe.id) # populate the cache entries and associated children ID variables
+
+    assert_memcache_operations(2) do
+      @cached_bob, @cached_joe = Item.fetch_multi(@bob.id, @joe.id, includes: :associated)
+      assert_equal child_records.first, @cached_bob.fetch_associated
+      assert_equal child_records.second, @cached_joe.fetch_associated
+    end
+  end
+
   def test_fetch_multi_batch_fetches_first_level_belongs_to_associations
     AssociatedRecord.send(:cache_belongs_to, :item)
 
