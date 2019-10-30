@@ -12,6 +12,7 @@ require "identity_cache/cached/reference/association"
 require "identity_cache/cached/reference/belongs_to"
 require "identity_cache/cached/reference/has_one"
 require "identity_cache/cached/reference/has_many"
+require "identity_cache/expiry_hook"
 require 'identity_cache/memoized_cache_proxy'
 require 'identity_cache/belongs_to_caching'
 require 'identity_cache/cache_key_generation'
