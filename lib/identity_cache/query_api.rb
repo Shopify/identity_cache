@@ -180,7 +180,7 @@ module IdentityCache
           coder = {
             attributes: record.attributes_before_type_cast.dup,
           }
-          coder[:class] = record.class.name if IdentityCache::CACHE_VERSION == 7
+          coder[:class] = record.class.name
           add_cached_associations_to_coder(record, coder)
           coder
         end
@@ -193,9 +193,9 @@ module IdentityCache
             hash[name] = IdentityCache.map_cached_nil_for(get_embedded_association(record, name, options))
           end
         end
-        if (cached_has_manys = klass.cached_has_manys).present?
-          coder[:association_ids] = cached_has_manys.each_with_object({}) do |(name, options), hash|
-            hash[name] = record.instance_variable_get(options[:ids_variable_name]) unless options[:embed] == true
+        if (id_embedded_has_manys = klass.cached_has_manys.select { |_, options| options[:embed] != true }).present?
+          coder[:association_ids] = id_embedded_has_manys.each_with_object({}) do |(name, options), hash|
+            hash[name] = record.instance_variable_get(options[:ids_variable_name])
           end
         end
         if (id_embedded_has_ones = klass.cached_has_ones.select { |_, options| options[:embed] != true }).present?
