@@ -15,7 +15,7 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = IdentityCache::VERSION
 
-  gem.required_ruby_version = '>= 2.2.0'
+  gem.required_ruby_version = '>= 2.4.0'
 
   gem.add_dependency('ar_transaction_changes', '~> 1.0')
   gem.add_dependency('activerecord', '>= 5.0')
@@ -33,6 +33,6 @@ Gem::Specification.new do |gem|
     gem.add_development_dependency('cityhash', '0.6.0')
     gem.add_development_dependency('mysql2')
     gem.add_development_dependency('pg', '~> 0.18')
-    gem.add_development_dependency('stackprof') if Gem::Version.new(RUBY_VERSION.dup) >= Gem::Version.new("2.1.0")
+    gem.add_development_dependency('stackprof')
   end
 end
