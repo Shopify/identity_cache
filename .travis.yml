@@ -16,7 +16,7 @@ env:
 jobs:
   exclude:
     - rvm: 2.4
-    - gemfiles/Gemfile.rails-edge
+      gemfile: gemfiles/Gemfile.rails-edge
 
 services:
   - memcache
