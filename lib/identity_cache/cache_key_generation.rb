@@ -7,18 +7,25 @@ module IdentityCache
       columns.sort_by(&:name).map{|c| "#{c.name}:#{c.type}"}.join(',')
     end
 
-    def self.denormalized_schema_hash(klass)
-      schema_string = schema_to_string(klass.columns)
-      klass.send(:all_cached_associations).sort.each do |name, options|
-        klass.send(:check_association_scope, name)
-        ParentModelExpiration.check_association(options) if options[:embed]
-        case options[:embed]
-        when true
-          schema_string << ",#{name}:(#{denormalized_schema_hash(options[:association_reflection].klass)})"
-        when :ids
-          schema_string << ",#{name}:ids"
+    def self.denormalized_schema_string(klass)
+      schema_to_string(klass.columns).tap do |schema_string|
+        klass.send(:all_cached_associations).sort.each do |name, options|
+          klass.send(:check_association_scope, name)
+          ParentModelExpiration.check_association(options) if options[:embed]
+          case options[:embed]
+          when true
+            schema_string << ",#{name}:(#{denormalized_schema_hash(options[:association_reflection].klass)})"
+          when :ids
+            schema_string << ",#{name}:ids"
+          when :id
+            schema_string << ",#{name}:id"
+          end
         end
       end
+    end
+
+    def self.denormalized_schema_hash(klass)
+      schema_string = denormalized_schema_string(klass)
       IdentityCache.memcache_hash(schema_string)
     end
 
@@ -36,7 +43,7 @@ module IdentityCache
       end
 
       def rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, values, unique)
-        unique_indicator = unique ? '' : 's' 
+        unique_indicator = unique ? '' : 's'
         "#{rails_cache_key_namespace}" \
           "attr#{unique_indicator}" \
           ":#{base_class.name}" \
