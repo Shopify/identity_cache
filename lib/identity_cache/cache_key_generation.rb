@@ -17,6 +17,8 @@ module IdentityCache
             schema_string << ",#{name}:(#{denormalized_schema_hash(options[:association_reflection].klass)})"
           when :ids
             schema_string << ",#{name}:ids"
+          when :id
+            schema_string << ",#{name}:id"
           end
         end
       end

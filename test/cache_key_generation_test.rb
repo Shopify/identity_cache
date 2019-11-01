@@ -40,7 +40,7 @@ module IdentityCache
       AssociatedRecord.cache_has_one(:deeply_associated, embed: :id)
 
       assert_equal(
-        "id:integer,item_id:integer,item_two_id:integer,name:string",
+        "id:integer,item_id:integer,item_two_id:integer,name:string,deeply_associated:id",
         CacheKeyGeneration.denormalized_schema_string(AssociatedRecord),
       )
     end
