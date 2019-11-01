@@ -108,7 +108,7 @@ module IdentityCache
 
       def instrumented_record_from_coder(coder) #:nodoc:
         return nil unless coder
-        ActiveSupport::Notifications.instrument('hydration.identity_cache', class: coder[:class]) do
+        ActiveSupport::Notifications.instrument('hydration.identity_cache', class: name) do
           record_from_coder(coder)
         end
       end
@@ -180,7 +180,6 @@ module IdentityCache
           coder = {
             attributes: record.attributes_before_type_cast.dup,
           }
-          coder[:class] = record.class.name
           add_cached_associations_to_coder(record, coder)
           coder
         end
