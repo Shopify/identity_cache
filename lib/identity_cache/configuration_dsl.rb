@@ -109,17 +109,21 @@ module IdentityCache
       def cache_has_many(association, embed: :ids, inverse_name: nil)
         ensure_base_model
         check_association_for_caching(association)
-        options = { embed: embed, inverse_name: inverse_name }
-        self.cached_has_manys[association] = options
-
-        case embed
-        when true
-          build_recursive_association_cache(association, options)
+        reflection = reflect_on_association(association)
+        association_class = case embed
         when :ids
-          build_id_embedded_has_many_cache(association, options)
+          Cached::Reference::HasMany
+        when true
+          Cached::Recursive::HasMany
         else
           raise NotImplementedError
         end
+
+        self.cached_has_manys[association] = association_class.new(
+          association,
+          reflection: reflection,
+          inverse_name: inverse_name,
+        ).tap(&:build)
       end
 
       # Will cache an association to the class including IdentityCache.
@@ -146,17 +150,21 @@ module IdentityCache
       def cache_has_one(association, embed: true, inverse_name: nil)
         ensure_base_model
         check_association_for_caching(association)
-        options = { embed: embed, inverse_name: inverse_name }
-        self.cached_has_ones[association] = options
-
-        case embed
-        when true
-          build_recursive_association_cache(association, options)
+        reflection = reflect_on_association(association)
+        association_class = case embed
         when :id
-          build_id_embedded_has_one_cache(association, options)
+          Cached::Reference::HasOne
+        when true
+          Cached::Recursive::HasOne
         else
           raise NotImplementedError
         end
+
+        self.cached_has_ones[association] = association_class.new(
+          association,
+          reflection: reflection,
+          inverse_name: inverse_name,
+        ).tap(&:build)
       end
 
       # Will cache a single attribute on its own blob, it will add a
@@ -206,103 +214,6 @@ module IdentityCache
             end
           CODE
         end
-      end
-
-      def build_recursive_association_cache(association, options) #:nodoc:
-        options[:association_reflection] = reflect_on_association(association)
-        options[:cached_accessor_name]   = "fetch_#{association}"
-        options[:records_variable_name]  = :"@cached_#{association}"
-        options[:dehydrated_variable_name]  = :"@dehydrated_#{association}"
-        options[:prepopulate_method_name] = "prepopulate_fetched_#{association}"
-
-        self.class_eval(<<-CODE, __FILE__, __LINE__ + 1)
-          def #{options[:cached_accessor_name]}
-            fetch_recursively_cached_association(
-              :#{options[:records_variable_name]},
-              :#{options[:dehydrated_variable_name]},
-              :#{association}
-            )
-          end
-
-          def #{options[:prepopulate_method_name]}(records)
-            #{options[:records_variable_name]} = records
-          end
-        CODE
-
-        options[:only_on_foreign_key_change] = false
-        ParentModelExpiration.add_parent_expiry_hook(options)
-      end
-
-      def build_id_embedded_has_many_cache(association, options) #:nodoc:
-        singular_association = association.to_s.singularize
-        options[:association_reflection]  = reflect_on_association(association)
-        options[:cached_accessor_name]    = "fetch_#{association}"
-        options[:ids_name]                = "#{singular_association}_ids"
-        options[:cached_ids_name]         = "fetch_#{options[:ids_name]}"
-        ids_cached_reader_name = "cached_#{options[:ids_name]}"
-        options[:ids_variable_name]       = :"@#{ids_cached_reader_name}"
-        options[:records_variable_name]   = :"@cached_#{association}"
-        options[:prepopulate_method_name] = "prepopulate_fetched_#{association}"
-
-        self.class_eval(<<-CODE, __FILE__, __LINE__ + 1)
-          attr_reader :#{ids_cached_reader_name}
-
-          def #{options[:cached_ids_name]}
-            #{options[:ids_variable_name]} ||= #{options[:ids_name]}
-          end
-
-          def #{options[:cached_accessor_name]}
-            association_klass = association(:#{association}).klass
-            if association_klass.should_use_cache? && !#{association}.loaded?
-              #{options[:records_variable_name]} ||= #{options[:association_reflection].class_name}.fetch_multi(#{options[:cached_ids_name]})
-            else
-              #{association}.to_a
-            end
-          end
-
-          def #{options[:prepopulate_method_name]}(records)
-            #{options[:records_variable_name]} = records
-          end
-        CODE
-
-        options[:only_on_foreign_key_change] = true
-        ParentModelExpiration.add_parent_expiry_hook(options)
-      end
-
-      def build_id_embedded_has_one_cache(association, options) #:nodoc:
-        options[:association_reflection]  = reflect_on_association(association)
-        options[:cached_accessor_name]    = "fetch_#{association}"
-        options[:id_name]                 = "#{association}_id"
-        options[:cached_id_name]          = "fetch_#{options[:id_name]}"
-        id_cached_reader_name             = "cached_#{options[:id_name]}"
-        options[:id_variable_name]        = :"@#{id_cached_reader_name}"
-        options[:records_variable_name]   = :"@cached_#{association}"
-        options[:prepopulate_method_name] = "prepopulate_fetched_#{association}"
-
-        self.class_eval(<<-CODE, __FILE__, __LINE__ + 1)
-          attr_reader :#{id_cached_reader_name}
-
-          def #{options[:cached_id_name]}
-            return #{options[:id_variable_name]} if defined?(#{options[:id_variable_name]})
-            #{options[:id_variable_name]} = association(:#{association}).scope.ids.first
-          end
-
-          def #{options[:cached_accessor_name]}
-            association_klass = association(:#{association}).klass
-            if association_klass.should_use_cache? && !association(:#{association}).loaded?
-              #{options[:records_variable_name]} ||= #{options[:association_reflection].class_name}.fetch(#{options[:cached_id_name]}) if #{options[:cached_id_name]}
-            else
-              #{association}
-            end
-          end
-
-          def #{options[:prepopulate_method_name]}(record)
-            #{options[:records_variable_name]} = record
-          end
-        CODE
-
-        options[:only_on_foreign_key_change] = true
-        ParentModelExpiration.add_parent_expiry_hook(options)
       end
 
       def attribute_dynamic_fetcher(attribute, fields, values, unique_index) #:nodoc:

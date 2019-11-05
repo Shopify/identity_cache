@@ -101,6 +101,10 @@ class IdentityCache::TestCase < Minitest::Test
   def cache_hash(key)
     IdentityCache.memcache_hash(key)
   end
+
+  def reflect(model, association_name)
+    model.reflect_on_association(association_name)
+  end
 end
 
 class SQLCounter

@@ -16,7 +16,7 @@ class CacheInvalidationTest < IdentityCache::TestCase
   def test_reload_invalidate_cached_ids
     Item.cache_has_many :associated_records, :embed => :ids
 
-    variable_name = @record.class.send(:embedded_associations)[:associated_records][:ids_variable_name]
+    variable_name = @record.class.send(:embedded_associations)[:associated_records].ids_variable_name
 
     @record.fetch_associated_record_ids
     assert_equal [@baz.id, @bar.id], @record.instance_variable_get(variable_name)
@@ -31,7 +31,7 @@ class CacheInvalidationTest < IdentityCache::TestCase
   def test_reload_invalidate_cached_objects
     Item.cache_has_many :associated_records, :embed => :ids
 
-    variable_name = @record.class.send(:embedded_associations)[:associated_records][:records_variable_name]
+    variable_name = @record.class.send(:embedded_associations)[:associated_records].records_variable_name
 
     @record.fetch_associated_records
     assert_equal [@baz, @bar], @record.instance_variable_get(variable_name)
