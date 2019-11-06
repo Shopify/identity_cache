@@ -3,10 +3,10 @@ module IdentityCache
     extend ActiveSupport::Concern
 
     included do |base|
-      base.class_attribute :cache_indexes
-      base.class_attribute :cached_has_manys
-      base.class_attribute :cached_has_ones
-      base.class_attribute :primary_cache_index_enabled
+      base.class_attribute(:cache_indexes)
+      base.class_attribute(:cached_has_manys)
+      base.class_attribute(:cached_has_ones)
+      base.class_attribute(:primary_cache_index_enabled)
 
       base.cached_has_manys = {}
       base.cached_has_ones = {}
@@ -196,7 +196,7 @@ module IdentityCache
         unique = !!unique
         fields = Array(by)
 
-        self.cache_indexes.push [alias_name, fields, unique]
+        self.cache_indexes.push([alias_name, fields, unique])
 
         field_list = fields.join("_and_")
         arg_list = (0...fields.size).collect { |i| "arg#{i}" }.join(',')

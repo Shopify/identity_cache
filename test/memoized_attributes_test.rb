@@ -19,7 +19,7 @@ class MemoizedAttributesTest < IdentityCache::TestCase
       Item.fetch(item.id).update!(title: "my title")
     end
 
-    assert_equal "my title", Item.find(item.id).title
+    assert_equal("my title", Item.find(item.id).title)
   end
 
   def test_memoization_should_not_break_dirty_tracking_with_filled_cache
@@ -31,7 +31,7 @@ class MemoizedAttributesTest < IdentityCache::TestCase
       Item.fetch(item.id).update!(title: "my title")
     end
 
-    assert_equal "my title", Item.find(item.id).title
+    assert_equal("my title", Item.find(item.id).title)
   end
 
   def test_memoization_with_fetch_multi_should_not_break_dirty_tracking_with_empty_cache
@@ -42,7 +42,7 @@ class MemoizedAttributesTest < IdentityCache::TestCase
       Item.fetch_multi(item.id).first.update!(title: "my title")
     end
 
-    assert_equal "my title", Item.find(item.id).title
+    assert_equal("my title", Item.find(item.id).title)
   end
 
   def test_memoization_with_fetch_multi_should_not_break_dirty_tracking_with_filled_cache
@@ -54,6 +54,6 @@ class MemoizedAttributesTest < IdentityCache::TestCase
       Item.fetch_multi(item.id).first.update!(title: "my title")
     end
 
-    assert_equal "my title", Item.find(item.id).title
+    assert_equal("my title", Item.find(item.id).title)
   end
 end

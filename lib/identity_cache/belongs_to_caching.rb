@@ -3,7 +3,7 @@ module IdentityCache
     extend ActiveSupport::Concern
 
     included do |base|
-      base.class_attribute :cached_belongs_tos
+      base.class_attribute(:cached_belongs_tos)
       base.cached_belongs_tos = {}
     end
 

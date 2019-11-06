@@ -3,7 +3,7 @@ module IdentityCache
     extend ActiveSupport::Concern
 
     included do |base|
-      base.after_commit :expire_cache
+      base.after_commit(:expire_cache)
     end
 
     module ClassMethods
@@ -28,7 +28,7 @@ module IdentityCache
             coder = IdentityCache.fetch(rails_cache_key(id)){ instrumented_coder_from_record(object = resolve_cache_miss(id)) }
             object ||= instrumented_record_from_coder(coder)
             if object && object.id != id
-              IdentityCache.logger.error "[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{object.id} for #{object.inspect[(0..100)]}"
+              IdentityCache.logger.error("[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{object.id} for #{object.inspect[(0..100)]}")
             end
             object
           end

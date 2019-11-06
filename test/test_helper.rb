@@ -76,7 +76,7 @@ class IdentityCache::TestCase < Minitest::Test
     raise
   ensure
     ActiveSupport::Notifications.unsubscribe(subscriber)
-    assert_equal num, counter.log.size, "#{counter.log.size} instead of #{num} queries were executed.#{counter.log.size == 0 ? '' : "\nQueries:\n#{counter.log.join("\n")}"}" unless exception
+    assert_equal(num, counter.log.size, "#{counter.log.size} instead of #{num} queries were executed.#{counter.log.size == 0 ? '' : "\nQueries:\n#{counter.log.join("\n")}"}") unless exception
   end
 
   def assert_memcache_operations(num)
@@ -89,7 +89,7 @@ class IdentityCache::TestCase < Minitest::Test
     raise
   ensure
     ActiveSupport::Notifications.unsubscribe(subscriber)
-    assert_equal num, counter.log.size, "#{counter.log.size} instead of #{num} memcache operations were executed. #{counter.log.size == 0 ? '' : "\nOperations:\n#{counter.log.join("\n")}"}" unless exception
+    assert_equal(num, counter.log.size, "#{counter.log.size} instead of #{num} memcache operations were executed. #{counter.log.size == 0 ? '' : "\nOperations:\n#{counter.log.join("\n")}"}") unless exception
   end
 
   def assert_no_queries
@@ -113,7 +113,7 @@ class SQLCounter
 
   # FIXME: this needs to be refactored so specific database can add their own
   # ignored SQL.  This ignored SQL is for Oracle.
-  ignored_sql.concat [/^select .*nextval/i, /^SAVEPOINT/, /^ROLLBACK TO/, /^\s*select .* from all_triggers/im]
+  ignored_sql.concat([/^select .*nextval/i, /^SAVEPOINT/, /^ROLLBACK TO/, /^\s*select .* from all_triggers/im])
 
   attr_reader :ignore
   attr_accessor :log

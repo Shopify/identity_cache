@@ -26,7 +26,7 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
 
     Item.prefetch_associations(:item, items)
 
-    assert spy.calls.one?{ |call| call.args == [[john.id, jim.id]] }
+    assert(spy.calls.one?{ |call| call.args == [[john.id, jim.id]] })
   end
 
   def test_prefetch_associations_on_db_records
@@ -106,7 +106,7 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
       assert_equal :item, payload[:association]
     end
     Item.prefetch_associations(:item, items)
-    assert_equal 1, events
+    assert_equal(1, events)
   ensure
     ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
   end
@@ -124,7 +124,7 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
       assert_equal "Item", payload[:class]
     end
     Item.prefetch_associations(:item, items)
-    assert_equal 2, events
+    assert_equal(2, events)
   ensure
     ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
   end
@@ -132,7 +132,7 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
   def test_prefetch_associations_with_nil_cached_belongs_to
     Item.send(:cache_belongs_to, :item)
     @bob.update_attributes!(item_id: 1234)
-    assert_nil @bob.fetch_item
+    assert_nil(@bob.fetch_item)
 
     assert_no_queries do
       assert_memcache_operations(0) do
@@ -182,9 +182,9 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
 
     spy = Spy.on(Item, :fetch_multi).and_call_through
 
-    assert_equal @bob, Item.fetch(@bob.id, includes: :item)
+    assert_equal(@bob, Item.fetch(@bob.id, includes: :item))
 
-    assert spy.calls.one?{ |call| call.args == [[john.id]] }
+    assert(spy.calls.one?{ |call| call.args == [[john.id]] })
   end
 
   def test_fetch_multi_with_includes_option
@@ -196,9 +196,9 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
 
     spy = Spy.on(Item, :fetch_multi).and_call_through
 
-    assert_equal [@bob, @joe, @fred], Item.fetch_multi(@bob.id, @joe.id, @fred.id, :includes => :item)
+    assert_equal([@bob, @joe, @fred], Item.fetch_multi(@bob.id, @joe.id, @fred.id, :includes => :item))
 
-    assert spy.calls.one?{ |call| call.args == [[john.id, jim.id]] }
+    assert(spy.calls.one?{ |call| call.args == [[john.id, jim.id]] })
   end
 
   def test_fetch_multi_batch_fetches_non_embedded_first_level_has_many_associations
@@ -377,28 +377,28 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
 
   def test_fetch_by_index_with_includes_option
     Item.send(:cache_belongs_to, :item)
-    Item.cache_index :title
+    Item.cache_index(:title)
     john = Item.create!(title: 'john')
     @bob.update_column(:item_id, john.id)
 
     spy = Spy.on(Item, :fetch_multi).and_call_through
 
-    assert_equal [@bob], Item.fetch_by_title('bob', includes: :item)
+    assert_equal([@bob], Item.fetch_by_title('bob', includes: :item))
 
-    assert spy.calls.one?{ |call| call.args == [[john.id]] }
+    assert(spy.calls.one?{ |call| call.args == [[john.id]] })
   end
 
   def test_fetch_by_unique_index_with_includes_option
     Item.send(:cache_belongs_to, :item)
-    Item.cache_index :title, :unique => true
+    Item.cache_index(:title, :unique => true)
     john = Item.create!(title: 'john')
     @bob.update_column(:item_id, john.id)
 
     spy = Spy.on(Item, :fetch_multi).and_call_through
 
-    assert_equal @bob, Item.fetch_by_title('bob', includes: :item)
+    assert_equal(@bob, Item.fetch_by_title('bob', includes: :item))
 
-    assert spy.calls.one?{ |call| call.args == [[john.id]] }
+    assert(spy.calls.one?{ |call| call.args == [[john.id]] })
   end
 
   private
@@ -410,7 +410,7 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
     parents.each do |parent|
       3.times do |i|
         child_records << (child = parent.associated_records.create!(:name => i.to_s))
-        grandchildren.concat setup_grandchildren(child)
+        grandchildren.concat(setup_grandchildren(child))
         AssociatedRecord.fetch(child.id)
       end
     end

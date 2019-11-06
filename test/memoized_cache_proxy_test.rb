@@ -4,7 +4,7 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
   def test_changing_default_cache
     IdentityCache.cache_backend = ActiveSupport::Cache::MemoryStore.new
     IdentityCache.cache.write('foo', 'bar')
-    assert_equal 'bar', IdentityCache.cache.fetch('foo')
+    assert_equal('bar', IdentityCache.cache.fetch('foo'))
   end
 
   def test_fetch_multi_with_fallback_fetcher
@@ -13,7 +13,7 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
     backend.expects(:write).with('bar', 'baz')
     yielded = nil
     assert_equal({'foo' => 'bar', 'bar' => 'baz'}, IdentityCache.cache.fetch_multi('foo', 'bar') {|_| yielded = ['baz'] })
-    assert_equal ['baz'], yielded
+    assert_equal(['baz'], yielded)
   end
 
   def test_fetch_should_short_circuit_on_memoized_values
@@ -102,7 +102,7 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
     IdentityCache.cache.with_memoization do
       IdentityCache.cache.write('foo', 'bar')
     end
-    assert_equal 'bar', @backend.fetch('foo')
+    assert_equal('bar', @backend.fetch('foo'))
   end
 
   def test_write_notifies
@@ -113,7 +113,7 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
       assert_equal expected, payload
     end
     IdentityCache.cache.write('foo', 'bar')
-    assert_equal 1, events
+    assert_equal(1, events)
   ensure
     ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
   end
@@ -126,7 +126,7 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
       assert_equal expected, payload
     end
     IdentityCache.cache.delete('foo')
-    assert_equal 1, events
+    assert_equal(1, events)
   ensure
     ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
   end
@@ -138,7 +138,7 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
       assert payload.empty?
     end
     IdentityCache.cache.clear
-    assert_equal 1, events
+    assert_equal(1, events)
   ensure
     ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
   end

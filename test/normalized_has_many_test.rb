@@ -3,7 +3,7 @@ require "test_helper"
 class NormalizedHasManyTest < IdentityCache::TestCase
   def setup
     super
-    Item.cache_has_many :associated_records, :embed => :ids
+    Item.cache_has_many(:associated_records, :embed => :ids)
 
     @record = Item.new(:title => 'foo')
     @record.not_cached_records << NotCachedRecord.new(:name => 'NoCache')
@@ -17,22 +17,22 @@ class NormalizedHasManyTest < IdentityCache::TestCase
 
   def test_not_implemented_error
     assert_raises(NotImplementedError) do
-      Item.cache_has_many :associated_records, embed: false
+      Item.cache_has_many(:associated_records, embed: false)
     end
   end
 
   def test_a_records_list_of_associated_ids_on_the_parent_record_retains_association_sort_order
-    assert_equal [2, 1], @record.associated_record_ids
+    assert_equal([2, 1], @record.associated_record_ids)
 
     AssociatedRecord.create(name: 'foo', item_id: @record.id)
     @record.reload
-    assert_equal [3, 2, 1], @record.associated_record_ids
+    assert_equal([3, 2, 1], @record.associated_record_ids)
   end
 
   def test_defining_a_denormalized_has_many_cache_caches_the_list_of_associated_ids_on_the_parent_record_during_cache_miss
     fetched_record = Item.fetch(@record.id)
-    assert_equal [2, 1], fetched_record.cached_associated_record_ids
-    assert_equal false, fetched_record.associated_records.loaded?
+    assert_equal([2, 1], fetched_record.cached_associated_record_ids)
+    assert_equal(false, fetched_record.associated_records.loaded?)
   end
 
   def test_batch_fetching_of_association_for_multiple_parent_records
@@ -44,14 +44,14 @@ class NormalizedHasManyTest < IdentityCache::TestCase
     fetched_records = assert_queries(2) do
       Item.fetch_multi(@record.id, record2.id)
     end
-    assert_equal [[2, 1], [4, 3]], fetched_records.map(&:cached_associated_record_ids)
-    assert_equal false, fetched_records.any?{ |record| record.associated_records.loaded? }
+    assert_equal([[2, 1], [4, 3]], fetched_records.map(&:cached_associated_record_ids))
+    assert_equal(false, fetched_records.any?{ |record| record.associated_records.loaded? })
   end
 
   def test_batch_fetching_of_deeply_associated_records
-    Item.has_many :denormalized_associated_records, class_name: 'AssociatedRecord'
-    Item.cache_has_many :denormalized_associated_records, embed: true
-    AssociatedRecord.cache_has_many :deeply_associated_records, embed: :ids
+    Item.has_many(:denormalized_associated_records, class_name: 'AssociatedRecord')
+    Item.cache_has_many(:denormalized_associated_records, embed: true)
+    AssociatedRecord.cache_has_many(:deeply_associated_records, embed: :ids)
     @record.associated_records[0].deeply_associated_records << DeeplyAssociatedRecord.new(:name => 'deep1')
     @record.associated_records[1].deeply_associated_records << DeeplyAssociatedRecord.new(:name => 'deep2')
     @record.associated_records.each(&:save!)
@@ -66,8 +66,8 @@ class NormalizedHasManyTest < IdentityCache::TestCase
   end
 
   def test_batch_fetching_stops_with_nil_parent
-    Item.cache_has_one :associated, embed: true
-    AssociatedRecord.cache_has_many :deeply_associated_records, embed: :ids
+    Item.cache_has_one(:associated, embed: true)
+    AssociatedRecord.cache_has_many(:deeply_associated_records, embed: :ids)
     AssociatedRecord.delete_all
 
     fetched_records = assert_queries(3) do
@@ -80,7 +80,7 @@ class NormalizedHasManyTest < IdentityCache::TestCase
   end
 
   def test_fetching_associated_ids_will_populate_the_value_if_the_record_isnt_from_the_cache
-    assert_equal [2, 1], @record.fetch_associated_record_ids
+    assert_equal([2, 1], @record.fetch_associated_record_ids)
   end
 
   def test_fetching_associated_ids_will_use_the_cached_value_if_the_record_is_from_the_cache
@@ -91,11 +91,11 @@ class NormalizedHasManyTest < IdentityCache::TestCase
   end
 
   def test_the_cached_the_list_of_associated_ids_on_the_parent_record_should_not_be_populated_by_default
-    assert_nil @record.cached_associated_record_ids
+    assert_nil(@record.cached_associated_record_ids)
   end
 
   def test_fetching_the_association_should_fetch_each_record_by_id
-    assert_equal [@baz, @bar], @record.fetch_associated_records
+    assert_equal([@baz, @bar], @record.fetch_associated_records)
   end
 
   def test_fetching_the_association_from_a_record_on_a_cache_hit_should_not_issue_any_queries
@@ -111,7 +111,7 @@ class NormalizedHasManyTest < IdentityCache::TestCase
   def test_fetching_the_association_from_a_identity_cached_record_should_not_re_fetch_the_association_ids
     @record = Item.fetch(@record.id)
     @record.expects(:associated_record_ids).never
-    assert_equal [@baz, @bar], @record.fetch_associated_records
+    assert_equal([@baz, @bar], @record.fetch_associated_records)
   end
 
   def test_fetching_the_association_should_delegate_to_the_normal_association_fetcher_if_any_transaction_are_open
@@ -138,15 +138,15 @@ class NormalizedHasManyTest < IdentityCache::TestCase
     IdentityCache.cache.expects(:delete).with(@baz.primary_cache_index_key)
     @baz.name = 'foo'
     @baz.save!
-    assert_equal [@baz.id, @bar.id], Item.fetch(@record.id).cached_associated_record_ids
-    assert_equal [@baz, @bar], Item.fetch(@record.id).fetch_associated_records
+    assert_equal([@baz.id, @bar.id], Item.fetch(@record.id).cached_associated_record_ids)
+    assert_equal([@baz, @bar], Item.fetch(@record.id).fetch_associated_records)
   end
 
   def test_creating_a_child_record_should_expire_the_parents_cache_blob
     IdentityCache.cache.expects(:delete).with(@record.primary_cache_index_key).once
     IdentityCache.cache.expects(:delete).with(@bar.primary_cache_index_key[0...-1] + '3')
     @qux = @record.associated_records.create!(:name => 'qux')
-    assert_equal [@qux, @baz, @bar], Item.fetch(@record.id).fetch_associated_records
+    assert_equal([@qux, @baz, @bar], Item.fetch(@record.id).fetch_associated_records)
   end
 
   def test_saving_a_child_record_should_expire_the_new_and_old_parents_cache_blob
@@ -159,8 +159,8 @@ class NormalizedHasManyTest < IdentityCache::TestCase
 
     @baz.save!
 
-    assert_equal [@bar.id], Item.fetch(@record.id).cached_associated_record_ids
-    assert_equal [@bar], Item.fetch(@record.id).fetch_associated_records
+    assert_equal([@bar.id], Item.fetch(@record.id).cached_associated_record_ids)
+    assert_equal([@bar], Item.fetch(@record.id).fetch_associated_records)
   end
 
   def test_saving_a_child_record_in_a_transaction_should_expire_the_new_and_old_parents_cache_blob
@@ -176,15 +176,15 @@ class NormalizedHasManyTest < IdentityCache::TestCase
       @baz.reload
     end
 
-    assert_equal [@bar.id], Item.fetch(@record.id).cached_associated_record_ids
-    assert_equal [@bar], Item.fetch(@record.id).fetch_associated_records
+    assert_equal([@bar.id], Item.fetch(@record.id).cached_associated_record_ids)
+    assert_equal([@bar], Item.fetch(@record.id).fetch_associated_records)
   end
 
   def test_destroying_a_child_record_should_expire_the_parents_cache_blob
     IdentityCache.cache.expects(:delete).with(@record.primary_cache_index_key).once
     IdentityCache.cache.expects(:delete).with(@baz.primary_cache_index_key).once
     @baz.destroy
-    assert_equal [@bar], @record.reload.fetch_associated_records
+    assert_equal([@bar], @record.reload.fetch_associated_records)
   end
 
   def test_saving_a_child_record_should_expire_only_itself

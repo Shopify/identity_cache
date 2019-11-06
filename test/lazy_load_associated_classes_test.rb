@@ -2,22 +2,22 @@ require "test_helper"
 
 class LazyLoadAssociatedClassesTest < IdentityCache::TestCase
   def test_cache_has_many_does_not_load_associated_class
-    Item.has_many :missing_model
-    Item.cache_has_many :missing_model
+    Item.has_many(:missing_model)
+    Item.cache_has_many(:missing_model)
   end
 
   def test_cache_has_many_embed_does_not_load_associated_class
-    Item.has_many :missing_model
-    Item.cache_has_many :missing_model, embed: true
+    Item.has_many(:missing_model)
+    Item.cache_has_many(:missing_model, embed: true)
   end
 
   def test_cache_has_one_does_not_load_associated_class
-    Item.has_one :missing_model
-    Item.cache_has_one :missing_model
+    Item.has_one(:missing_model)
+    Item.cache_has_one(:missing_model)
   end
 
   def test_cache_invalidation
-    Item.cache_has_many :associated_records, embed: true
+    Item.cache_has_many(:associated_records, embed: true)
     associated_record = AssociatedRecord.new(name: 'baz')
     item = Item.new(title: 'foo')
     item.associated_records << associated_record
@@ -34,7 +34,7 @@ class LazyLoadAssociatedClassesTest < IdentityCache::TestCase
   end
 
   def test_avoid_caching_embed_association_missing_include_identity_cache
-    Item.cache_has_many :not_cached_records, embed: true
+    Item.cache_has_many(:not_cached_records, embed: true)
 
     assert_memcache_operations(0) do
       err1 = assert_raises(IdentityCache::UnsupportedAssociationError) do
@@ -49,7 +49,7 @@ class LazyLoadAssociatedClassesTest < IdentityCache::TestCase
   end
 
   def test_avoid_caching_id_embed_association_missing_include_identity_cache
-    Item.cache_has_many :not_cached_records, embed: :ids
+    Item.cache_has_many(:not_cached_records, embed: :ids)
 
     assert_memcache_operations(0) do
       err1 = assert_raises(IdentityCache::UnsupportedAssociationError) do

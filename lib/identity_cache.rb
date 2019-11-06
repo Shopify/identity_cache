@@ -67,7 +67,7 @@ module IdentityCache
 
     def included(base) #:nodoc:
       raise AlreadyIncludedError if base.respond_to?(:cached_model)
-      base.class_attribute :cached_model
+      base.class_attribute(:cached_model)
       base.cached_model = base
       super
     end
@@ -167,8 +167,8 @@ module IdentityCache
     private
 
     def fetch_in_batches(keys)
-      keys.each_slice(BATCH_SIZE).each_with_object Hash.new do |slice, result|
-        result.merge! cache.fetch_multi(*slice) {|missed_keys| yield missed_keys }
+      keys.each_slice(BATCH_SIZE).each_with_object(Hash.new) do |slice, result|
+        result.merge!(cache.fetch_multi(*slice) {|missed_keys| yield missed_keys })
       end
     end
   end
