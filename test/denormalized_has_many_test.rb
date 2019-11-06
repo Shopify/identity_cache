@@ -4,11 +4,11 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
   def setup
     super
     PolymorphicRecord.include(IdentityCache::WithoutPrimaryIndex)
-    Item.cache_has_many(:associated_records, :embed => true)
+    Item.cache_has_many(:associated_records, embed: true)
 
-    @record = Item.new(:title => 'foo')
-    @record.associated_records << AssociatedRecord.new(:name => 'bar')
-    @record.associated_records << AssociatedRecord.new(:name => 'baz')
+    @record = Item.new(title: 'foo')
+    @record.associated_records << AssociatedRecord.new(name: 'bar')
+    @record.associated_records << AssociatedRecord.new(name: 'baz')
     @record.save
     @record.reload
   end
@@ -65,7 +65,7 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     item = Item.fetch(@record.id)
     item.fetch_associated_records
 
-    item.associated_records << AssociatedRecord.new(:name => 'buzz')
+    item.associated_records << AssociatedRecord.new(name: 'buzz')
     assert_equal(item.associated_records.to_a, item.fetch_associated_records)
   end
 
@@ -100,21 +100,21 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
 
   def test_cache_without_guessable_inverse_name_raises
     assert_raises IdentityCache::InverseAssociationError do
-      Item.cache_has_many(:no_inverse_of_records, :embed => true)
+      Item.cache_has_many(:no_inverse_of_records, embed: true)
       IdentityCache.eager_load!
     end
   end
 
   def test_cache_without_guessable_inverse_name_does_not_raise_when_inverse_name_specified
     assert_nothing_raised do
-      Item.cache_has_many(:no_inverse_of_records, :inverse_name => :owner, :embed => true)
+      Item.cache_has_many(:no_inverse_of_records, inverse_name: :owner, embed: true)
       IdentityCache.eager_load!
     end
   end
 
   def test_cache_uses_inverse_of_on_association
-    Item.has_many(:invertable_association, :inverse_of => :owner, :class_name => 'PolymorphicRecord', :as => "owner")
-    Item.cache_has_many(:invertable_association, :embed => true)
+    Item.has_many(:invertable_association, inverse_of: :owner, class_name: 'PolymorphicRecord', as: "owner")
+    Item.cache_has_many(:invertable_association, embed: true)
     IdentityCache.eager_load!
   end
 
@@ -188,15 +188,15 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
   class CheckAssociationTest < IdentityCache::TestCase
     def test_unsupported_through_assocation
       assert_raises IdentityCache::UnsupportedAssociationError, "caching through associations isn't supported" do
-        Item.has_many(:deeply_through_associated_records, :through => :associated_records, foreign_key: 'associated_record_id', inverse_of: :item, :class_name => 'DeeplyAssociatedRecord')
-        Item.cache_has_many(:deeply_through_associated_records, :embed => true)
+        Item.has_many(:deeply_through_associated_records, through: :associated_records, foreign_key: 'associated_record_id', inverse_of: :item, class_name: 'DeeplyAssociatedRecord')
+        Item.cache_has_many(:deeply_through_associated_records, embed: true)
       end
     end
 
     def test_unsupported_joins_in_assocation_scope
       scope = -> { joins(:associated_record).where(associated_records: { name: 'contrived example' }) }
       Item.has_many(:deeply_joined_associated_records, scope, inverse_of: :item, class_name: 'DeeplyAssociatedRecord')
-      Item.cache_has_many(:deeply_joined_associated_records, :embed => true)
+      Item.cache_has_many(:deeply_joined_associated_records, embed: true)
 
       message = "caching association Item.deeply_joined_associated_records scoped with a join isn't supported"
       assert_raises IdentityCache::UnsupportedAssociationError, message do
@@ -206,7 +206,7 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
 
     def test_cache_has_many_on_derived_model_raises
       assert_raises(IdentityCache::DerivedModelError) do
-        StiRecordTypeA.cache_has_many(:polymorphic_records, :inverse_name => :owner, :embed => true)
+        StiRecordTypeA.cache_has_many(:polymorphic_records, inverse_name: :owner, embed: true)
       end
     end
   end

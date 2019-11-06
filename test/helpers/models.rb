@@ -21,12 +21,12 @@ class NormalizedAssociatedRecord < ActiveRecord::Base
 end
 
 class NotCachedRecord < ActiveRecord::Base
-  belongs_to :item, :touch => true
+  belongs_to :item, touch: true
   default_scope { order('id DESC') }
 end
 
 class PolymorphicRecord < ActiveRecord::Base
-  belongs_to :owner, :polymorphic => true
+  belongs_to :owner, polymorphic: true
 end
 
 class NoInverseOfRecord < ActiveRecord::Base
@@ -49,17 +49,17 @@ class Item < ActiveRecord::Base
   has_many :deeply_associated_records, inverse_of: :item
   has_many :normalized_associated_records
   has_many :not_cached_records
-  has_many :polymorphic_records, :as => 'owner'
+  has_many :polymorphic_records, as: 'owner'
   has_many :no_inverse_of_records
-  has_one :polymorphic_record, :as => 'owner'
-  has_one :associated, :class_name => 'AssociatedRecord'
+  has_one :polymorphic_record, as: 'owner'
+  has_one :associated, class_name: 'AssociatedRecord'
   has_one :no_inverse_of_record
 end
 
 class ItemTwo < ActiveRecord::Base
   include IdentityCache
   has_many :associated_records, inverse_of: :item_two, foreign_key: :item_two_id
-  has_many :polymorphic_records, :as => 'owner'
+  has_many :polymorphic_records, as: 'owner'
   self.table_name = 'items2'
 end
 
@@ -70,7 +70,7 @@ end
 
 class StiRecord < ActiveRecord::Base
   include IdentityCache
-  has_many :polymorphic_records, :as => 'owner'
+  has_many :polymorphic_records, as: 'owner'
 end
 
 class StiRecordTypeA < StiRecord

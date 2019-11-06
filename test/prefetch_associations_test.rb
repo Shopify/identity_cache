@@ -5,9 +5,9 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
 
   def setup
     super
-    @bob = Item.create!(:title => 'bob')
-    @joe = Item.create!(:title => 'joe')
-    @fred = Item.create!(:title => 'fred')
+    @bob = Item.create!(title: 'bob')
+    @joe = Item.create!(title: 'joe')
+    @fred = Item.create!(title: 'fred')
     @bob_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:1"
     @joe_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:2"
     @fred_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:3"
@@ -16,8 +16,8 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
 
   def test_prefetch_associations_on_fetched_records
     Item.send(:cache_belongs_to, :item)
-    john = Item.create!(:title => 'john')
-    jim = Item.create!(:title => 'jim')
+    john = Item.create!(title: 'john')
+    jim = Item.create!(title: 'jim')
     @bob.update_column(:item_id, john.id)
     @joe.update_column(:item_id, jim.id)
     items = Item.fetch_multi(@bob.id, @joe.id, @fred.id)
@@ -30,8 +30,8 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
   end
 
   def test_prefetch_associations_on_db_records
-    Item.send(:cache_has_many, :associated_records, :embed => true)
-    AssociatedRecord.send(:cache_has_many, :deeply_associated_records, :embed => :ids)
+    Item.send(:cache_has_many, :associated_records, embed: true)
+    AssociatedRecord.send(:cache_has_many, :deeply_associated_records, embed: :ids)
 
     setup_has_many_children_and_grandchildren(@bob)
 
@@ -54,7 +54,7 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
   end
 
   def test_prefetch_associations_without_using_cache
-    Item.send(:cache_has_many, :associated_records, :embed => true)
+    Item.send(:cache_has_many, :associated_records, embed: true)
 
     associated1 = @bob.associated_records.create!(name: 'foo')
     associated2 = @joe.associated_records.create!(name: 'bar')
@@ -169,7 +169,7 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
     Item.fetch_multi(@bob.id, @joe.id)
 
     assert_memcache_operations(2) do
-      cached_bob, cached_joe = Item.fetch_multi(@bob.id, @joe.id, includes: {:associated => :deeply_associated_records})
+      cached_bob, cached_joe = Item.fetch_multi(@bob.id, @joe.id, includes: {associated: :deeply_associated_records})
       assert_nil cached_joe.fetch_associated
       assert_equal 'deep child', cached_bob.fetch_associated.fetch_deeply_associated_records.first.name
     end
@@ -189,25 +189,25 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
 
   def test_fetch_multi_with_includes_option
     Item.send(:cache_belongs_to, :item)
-    john = Item.create!(:title => 'john')
-    jim = Item.create!(:title => 'jim')
+    john = Item.create!(title: 'john')
+    jim = Item.create!(title: 'jim')
     @bob.update_column(:item_id, john.id)
     @joe.update_column(:item_id, jim.id)
 
     spy = Spy.on(Item, :fetch_multi).and_call_through
 
-    assert_equal([@bob, @joe, @fred], Item.fetch_multi(@bob.id, @joe.id, @fred.id, :includes => :item))
+    assert_equal([@bob, @joe, @fred], Item.fetch_multi(@bob.id, @joe.id, @fred.id, includes: :item))
 
     assert(spy.calls.one?{ |call| call.args == [[john.id, jim.id]] })
   end
 
   def test_fetch_multi_batch_fetches_non_embedded_first_level_has_many_associations
-    Item.send(:cache_has_many, :associated_records, :embed => :ids)
+    Item.send(:cache_has_many, :associated_records, embed: :ids)
 
     child_records = []
     [@bob, @joe].each do |parent|
       3.times do |i|
-        child_records << (child_record = parent.associated_records.create!(:name => i.to_s))
+        child_records << (child_record = parent.associated_records.create!(name: i.to_s))
         AssociatedRecord.fetch(child_record.id)
       end
     end
@@ -215,7 +215,7 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
     Item.fetch_multi(@bob.id, @joe.id) # populate the cache entries and associated children ID variables
 
     assert_memcache_operations(2) do
-      @cached_bob, @cached_joe = Item.fetch_multi(@bob.id, @joe.id, :includes => :associated_records)
+      @cached_bob, @cached_joe = Item.fetch_multi(@bob.id, @joe.id, includes: :associated_records)
       assert_equal child_records[0..2].sort, @cached_bob.fetch_associated_records.sort
       assert_equal child_records[3..5].sort, @cached_joe.fetch_associated_records.sort
     end
@@ -242,15 +242,15 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
   def test_fetch_multi_batch_fetches_first_level_belongs_to_associations
     AssociatedRecord.send(:cache_belongs_to, :item)
 
-    @bob_child  = @bob.associated_records.create!(:name => "bob child")
-    @fred_child = @fred.associated_records.create!(:name => "fred child")
+    @bob_child  = @bob.associated_records.create!(name: "bob child")
+    @fred_child = @fred.associated_records.create!(name: "fred child")
 
     # populate the cache entries and associated children ID variables
     AssociatedRecord.fetch_multi(@bob_child.id, @fred_child.id)
     Item.fetch_multi(@bob.id, @fred.id)
 
     assert_memcache_operations(2) do
-      @cached_bob_child, @cached_fred_child = AssociatedRecord.fetch_multi(@bob_child.id, @fred_child.id, :includes => :item)
+      @cached_bob_child, @cached_fred_child = AssociatedRecord.fetch_multi(@bob_child.id, @fred_child.id, includes: :item)
       assert_equal @bob,  @cached_bob_child.fetch_item
       assert_equal @fred, @cached_fred_child.fetch_item
     end
@@ -258,27 +258,27 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
 
   def test_fetch_multi_batch_fetches_first_level_associations_who_dont_include_identity_cache
     NotCachedRecord.include(IdentityCache::WithoutPrimaryIndex)
-    Item.send(:cache_has_many, :not_cached_records, :embed => true)
+    Item.send(:cache_has_many, :not_cached_records, embed: true)
 
-    @bob_child  = @bob.not_cached_records.create!(:name => "bob child")
-    @fred_child = @fred.not_cached_records.create!(:name => "fred child")
+    @bob_child  = @bob.not_cached_records.create!(name: "bob child")
+    @fred_child = @fred.not_cached_records.create!(name: "fred child")
 
     # populate the cache entries and associated children ID variables
     Item.fetch_multi(@bob.id, @fred.id)
 
     assert_memcache_operations(1) do
-      @cached_bob_child, @cached_fred_child = Item.fetch_multi(@bob.id, @fred.id, :includes => :not_cached_records)
+      @cached_bob_child, @cached_fred_child = Item.fetch_multi(@bob.id, @fred.id, includes: :not_cached_records)
     end
   end
 
   def test_fetch_multi_batch_fetches_non_embedded_second_level_has_many_associations
-    Item.send(:cache_has_many, :associated_records, :embed => :ids)
-    AssociatedRecord.send(:cache_has_many, :deeply_associated_records, :embed => :ids)
+    Item.send(:cache_has_many, :associated_records, embed: :ids)
+    AssociatedRecord.send(:cache_has_many, :deeply_associated_records, embed: :ids)
 
     _child_records, grandchildren = setup_has_many_children_and_grandchildren(@bob, @joe)
 
     assert_memcache_operations(3) do
-      @cached_bob, @cached_joe = Item.fetch_multi(@bob.id, @joe.id, :includes => {:associated_records => :deeply_associated_records})
+      @cached_bob, @cached_joe = Item.fetch_multi(@bob.id, @joe.id, includes: {associated_records: :deeply_associated_records})
       bob_children = @cached_bob.fetch_associated_records.sort
       joe_children = @cached_joe.fetch_associated_records.sort
 
@@ -295,8 +295,8 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
     Item.send(:cache_belongs_to, :item)
     AssociatedRecord.send(:cache_belongs_to, :item)
 
-    @bob_child  = @bob.associated_records.create!(:name => "bob child")
-    @fred_child = @fred.associated_records.create!(:name => "fred child")
+    @bob_child  = @bob.associated_records.create!(name: "bob child")
+    @fred_child = @fred.associated_records.create!(name: "fred child")
     @bob.update_attribute(:item_id, @bob.id)
     @fred.update_attribute(:item_id, @fred.id)
 
@@ -305,7 +305,7 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
     Item.fetch_multi(@bob.id, @fred.id)
 
     assert_memcache_operations(3) do
-      @cached_bob_child, @cached_fred_child = AssociatedRecord.fetch_multi(@bob_child.id, @fred_child.id, :includes => {:item => :item})
+      @cached_bob_child, @cached_fred_child = AssociatedRecord.fetch_multi(@bob_child.id, @fred_child.id, includes: {item: :item})
 
       @cached_bob_parent  = @cached_bob_child.fetch_item
       @cached_fred_parent = @cached_fred_child.fetch_item
@@ -316,24 +316,24 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
 
   def test_fetch_multi_doesnt_batch_fetches_belongs_to_associations_if_the_foreign_key_isnt_present
     AssociatedRecord.send(:cache_belongs_to, :item)
-    @child = AssociatedRecord.create!(:name => "bob child")
+    @child = AssociatedRecord.create!(name: "bob child")
     # populate the cache entry
     AssociatedRecord.fetch_multi(@child.id)
 
     assert_memcache_operations(1) do
-      @cached_child = AssociatedRecord.fetch_multi(@child.id, :includes => :item)
+      @cached_child = AssociatedRecord.fetch_multi(@child.id, includes: :item)
     end
   end
 
 
   def test_fetch_multi_batch_fetches_non_embedded_second_level_associations_through_embedded_first_level_has_many_associations
-    Item.send(:cache_has_many, :associated_records, :embed => true)
-    AssociatedRecord.send(:cache_has_many, :deeply_associated_records, :embed => :ids)
+    Item.send(:cache_has_many, :associated_records, embed: true)
+    AssociatedRecord.send(:cache_has_many, :deeply_associated_records, embed: :ids)
 
     _child_records, grandchildren = setup_has_many_children_and_grandchildren(@bob, @joe)
 
     assert_memcache_operations(2) do
-      @cached_bob, @cached_joe = Item.fetch_multi(@bob.id, @joe.id, :includes => {:associated_records => :deeply_associated_records})
+      @cached_bob, @cached_joe = Item.fetch_multi(@bob.id, @joe.id, includes: {associated_records: :deeply_associated_records})
       bob_children = @cached_bob.fetch_associated_records.sort
       joe_children = @cached_joe.fetch_associated_records.sort
 
@@ -347,18 +347,18 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
   end
 
   def test_fetch_multi_batch_fetches_non_embedded_second_level_associations_through_embedded_first_level_has_one_associations
-    Item.send(:cache_has_one, :associated, :embed => true)
-    AssociatedRecord.send(:cache_has_many, :deeply_associated_records, :embed => :ids)
+    Item.send(:cache_has_one, :associated, embed: true)
+    AssociatedRecord.send(:cache_has_many, :deeply_associated_records, embed: :ids)
 
-    @bob_child = @bob.create_associated!(:name => "bob child")
-    @joe_child = @joe.create_associated!(:name => "joe child")
+    @bob_child = @bob.create_associated!(name: "bob child")
+    @joe_child = @joe.create_associated!(name: "joe child")
 
     grandchildren = setup_grandchildren(@bob_child, @joe_child)
     AssociatedRecord.fetch_multi(@bob_child.id, @joe_child.id)
     Item.fetch_multi(@bob.id, @joe.id)
 
     assert_memcache_operations(2) do
-      @cached_bob, @cached_joe = Item.fetch_multi(@bob.id, @joe.id, :includes => {:associated => :deeply_associated_records})
+      @cached_bob, @cached_joe = Item.fetch_multi(@bob.id, @joe.id, includes: {associated: :deeply_associated_records})
       bob_child = @cached_bob.fetch_associated
       joe_child = @cached_joe.fetch_associated
 
@@ -370,7 +370,7 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
   def test_find_batch_coerces_ids_to_primary_key_type
     mock_relation = mock("ActiveRecord::Relation")
     Item.expects(:where).returns(mock_relation)
-    mock_relation.expects(:includes).returns(stub(:to_a => [@bob, @joe, @fred]))
+    mock_relation.expects(:includes).returns(stub(to_a: [@bob, @joe, @fred]))
 
     Item.send(:find_batch, [@bob, @joe, @fred].map(&:id).map(&:to_s))
   end
@@ -390,7 +390,7 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
 
   def test_fetch_by_unique_index_with_includes_option
     Item.send(:cache_belongs_to, :item)
-    Item.cache_index(:title, :unique => true)
+    Item.cache_index(:title, unique: true)
     john = Item.create!(title: 'john')
     @bob.update_column(:item_id, john.id)
 
@@ -409,7 +409,7 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
 
     parents.each do |parent|
       3.times do |i|
-        child_records << (child = parent.associated_records.create!(:name => i.to_s))
+        child_records << (child = parent.associated_records.create!(name: i.to_s))
         grandchildren.concat(setup_grandchildren(child))
         AssociatedRecord.fetch(child.id)
       end
@@ -424,7 +424,7 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
     grandchildren = []
     children.each do |child|
       3.times do |j|
-        grandchildren << (grandchild = child.deeply_associated_records.create!(:name => j.to_s))
+        grandchildren << (grandchild = child.deeply_associated_records.create!(name: j.to_s))
         DeeplyAssociatedRecord.fetch(grandchild.id)
       end
     end

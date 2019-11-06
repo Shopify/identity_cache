@@ -3,12 +3,12 @@ require "test_helper"
 class NormalizedHasManyTest < IdentityCache::TestCase
   def setup
     super
-    Item.cache_has_many(:associated_records, :embed => :ids)
+    Item.cache_has_many(:associated_records, embed: :ids)
 
-    @record = Item.new(:title => 'foo')
-    @record.not_cached_records << NotCachedRecord.new(:name => 'NoCache')
-    @record.associated_records << AssociatedRecord.new(:name => 'bar')
-    @record.associated_records << AssociatedRecord.new(:name => 'baz')
+    @record = Item.new(title: 'foo')
+    @record.not_cached_records << NotCachedRecord.new(name: 'NoCache')
+    @record.associated_records << AssociatedRecord.new(name: 'bar')
+    @record.associated_records << AssociatedRecord.new(name: 'baz')
     @record.save
     @record.reload
     @baz, @bar  = @record.associated_records[0], @record.associated_records[1]
@@ -36,9 +36,9 @@ class NormalizedHasManyTest < IdentityCache::TestCase
   end
 
   def test_batch_fetching_of_association_for_multiple_parent_records
-    record2 = Item.new(:title => 'two')
-    record2.associated_records << AssociatedRecord.new(:name => 'a')
-    record2.associated_records << AssociatedRecord.new(:name => 'b')
+    record2 = Item.new(title: 'two')
+    record2.associated_records << AssociatedRecord.new(name: 'a')
+    record2.associated_records << AssociatedRecord.new(name: 'b')
     record2.save!
 
     fetched_records = assert_queries(2) do
@@ -52,8 +52,8 @@ class NormalizedHasManyTest < IdentityCache::TestCase
     Item.has_many(:denormalized_associated_records, class_name: 'AssociatedRecord')
     Item.cache_has_many(:denormalized_associated_records, embed: true)
     AssociatedRecord.cache_has_many(:deeply_associated_records, embed: :ids)
-    @record.associated_records[0].deeply_associated_records << DeeplyAssociatedRecord.new(:name => 'deep1')
-    @record.associated_records[1].deeply_associated_records << DeeplyAssociatedRecord.new(:name => 'deep2')
+    @record.associated_records[0].deeply_associated_records << DeeplyAssociatedRecord.new(name: 'deep1')
+    @record.associated_records[1].deeply_associated_records << DeeplyAssociatedRecord.new(name: 'deep2')
     @record.associated_records.each(&:save!)
 
     fetched_records = assert_queries(4) do
@@ -145,7 +145,7 @@ class NormalizedHasManyTest < IdentityCache::TestCase
   def test_creating_a_child_record_should_expire_the_parents_cache_blob
     IdentityCache.cache.expects(:delete).with(@record.primary_cache_index_key).once
     IdentityCache.cache.expects(:delete).with(@bar.primary_cache_index_key[0...-1] + '3')
-    @qux = @record.associated_records.create!(:name => 'qux')
+    @qux = @record.associated_records.create!(name: 'qux')
     assert_equal([@qux, @baz, @bar], Item.fetch(@record.id).fetch_associated_records)
   end
 

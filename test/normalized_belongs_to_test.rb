@@ -5,8 +5,8 @@ class NormalizedBelongsToTest < IdentityCache::TestCase
     super
     AssociatedRecord.cache_belongs_to(:item)
 
-    @parent_record = Item.new(:title => 'foo')
-    @parent_record.associated_records << AssociatedRecord.new(:name => 'bar')
+    @parent_record = Item.new(title: 'foo')
+    @parent_record.associated_records << AssociatedRecord.new(name: 'bar')
     @parent_record.save
     @parent_record.reload
     @record = @parent_record.associated_records.first

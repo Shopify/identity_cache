@@ -5,7 +5,7 @@ require 'rake/testtask'
 require 'rdoc/task'
 
 desc('Default: run unit tests.')
-task(:default => :test)
+task(default: :test)
 
 desc('Test the identity_cache plugin.')
 Rake::TestTask.new(:test) do |t|

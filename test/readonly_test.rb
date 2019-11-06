@@ -7,9 +7,9 @@ class ReadonlyTest < IdentityCache::TestCase
     @record = Item.new
     @record.id = 1
     @record.title = 'bob'
-    @bob = Item.create!(:title => 'bob')
-    @joe = Item.create!(:title => 'joe')
-    @fred = Item.create!(:title => 'fred')
+    @bob = Item.create!(title: 'bob')
+    @joe = Item.create!(title: 'joe')
+    @fred = Item.create!(title: 'fred')
     IdentityCache.cache.clear
     IdentityCache.readonly = true
   end

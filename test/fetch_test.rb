@@ -5,8 +5,8 @@ class FetchTest < IdentityCache::TestCase
 
   def setup
     super
-    Item.cache_index(:title, :unique => true)
-    Item.cache_index(:id, :title, :unique => true)
+    Item.cache_index(:title, unique: true)
+    Item.cache_index(:id, :title, unique: true)
 
     @record = Item.new
     @record.id = 1
@@ -151,7 +151,7 @@ class FetchTest < IdentityCache::TestCase
 
   def test_fetch_miss_with_non_id_primary_key
     hashed_key = Zlib::crc32("foo") % (2 ** 30 - 1)
-    fixture = KeyedRecord.create!(:value => "foo") { |r| r.hashed_key = hashed_key }
+    fixture = KeyedRecord.create!(value: "foo") { |r| r.hashed_key = hashed_key }
     assert_equal(fixture, KeyedRecord.fetch(hashed_key))
   end
 

@@ -5,9 +5,9 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     super
     PolymorphicRecord.include(IdentityCache::WithoutPrimaryIndex)
     Item.cache_has_one(:associated)
-    Item.cache_index(:title, :unique => true)
-    @record = Item.new(:title => 'foo')
-    @record.associated = AssociatedRecord.new(:name => 'bar')
+    Item.cache_index(:title, unique: true)
+    @record = Item.new(title: 'foo')
+    @record.associated = AssociatedRecord.new(name: 'bar')
     @record.save
 
     @record.reload
@@ -132,28 +132,28 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
 
   def test_cache_without_guessable_inverse_name_raises
     assert_raises IdentityCache::InverseAssociationError do
-      Item.cache_has_one(:no_inverse_of_record, :embed => true)
+      Item.cache_has_one(:no_inverse_of_record, embed: true)
       IdentityCache.eager_load!
     end
   end
 
   def test_cache_without_guessable_inverse_name_does_not_raise_when_inverse_name_specified
     assert_nothing_raised do
-      Item.cache_has_one(:no_inverse_of_record, :inverse_name => :owner, :embed => true)
+      Item.cache_has_one(:no_inverse_of_record, inverse_name: :owner, embed: true)
       IdentityCache.eager_load!
     end
   end
 
   def test_unsupported_through_assocation
     assert_raises IdentityCache::UnsupportedAssociationError, "caching through associations isn't supported" do
-      Item.has_one(:deeply_associated, :through => :associated, :class_name => 'DeeplyAssociatedRecord')
-      Item.cache_has_one(:deeply_associated, :embed => true)
+      Item.has_one(:deeply_associated, through: :associated, class_name: 'DeeplyAssociatedRecord')
+      Item.cache_has_one(:deeply_associated, embed: true)
     end
   end
 
   def test_cache_has_one_on_derived_model_raises
     assert_raises(IdentityCache::DerivedModelError) do
-      StiRecordTypeA.cache_has_one(:polymorphic_record, :inverse_name => :owner, :embed => true)
+      StiRecordTypeA.cache_has_one(:polymorphic_record, inverse_name: :owner, embed: true)
     end
   end
 

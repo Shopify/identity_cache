@@ -5,9 +5,9 @@ class FetchMultiTest < IdentityCache::TestCase
 
   def setup
     super
-    @bob = Item.create!(:title => 'bob')
-    @joe = Item.create!(:title => 'joe')
-    @fred = Item.create!(:title => 'fred')
+    @bob = Item.create!(title: 'bob')
+    @joe = Item.create!(title: 'joe')
+    @fred = Item.create!(title: 'fred')
     @bob_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:1"
     @joe_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:2"
     @fred_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:3"
@@ -213,7 +213,7 @@ class FetchMultiTest < IdentityCache::TestCase
   def test_find_batch_coerces_ids_to_primary_key_type
     mock_relation = mock("ActiveRecord::Relation")
     Item.expects(:where).returns(mock_relation)
-    mock_relation.expects(:includes).returns(stub(:to_a => [@bob, @joe, @fred]))
+    mock_relation.expects(:includes).returns(stub(to_a: [@bob, @joe, @fred]))
 
     Item.send(:find_batch, [@bob, @joe, @fred].map(&:id).map(&:to_s))
   end
@@ -251,7 +251,7 @@ class FetchMultiTest < IdentityCache::TestCase
   end
 
   def test_fetch_multi_with_non_id_primary_key
-    fixture = KeyedRecord.create!(:value => "a") { |r| r.hashed_key = 123 }
+    fixture = KeyedRecord.create!(value: "a") { |r| r.hashed_key = 123 }
     assert_equal([fixture], KeyedRecord.fetch_multi(123, 456))
   end
 
@@ -295,7 +295,7 @@ class FetchMultiTest < IdentityCache::TestCase
     poly1 = item.polymorphic_record = PolymorphicRecord.create!
 
     assert_queries(2) do
-      stuff = PolymorphicRecord.fetch_multi(poly1.id, :includes => :owner)
+      stuff = PolymorphicRecord.fetch_multi(poly1.id, includes: :owner)
     end
   end
 
@@ -311,7 +311,7 @@ class FetchMultiTest < IdentityCache::TestCase
     poly3 = item2.polymorphic_records.create
 
     assert_queries(3) do
-      stuff = PolymorphicRecord.fetch_multi([poly1.id, poly2.id, poly3.id], :includes => :owner)
+      stuff = PolymorphicRecord.fetch_multi([poly1.id, poly2.id, poly3.id], includes: :owner)
     end
   end
 
@@ -322,7 +322,7 @@ class FetchMultiTest < IdentityCache::TestCase
     poly1 = PolymorphicRecord.create!
 
     assert_queries(1) do
-      stuff = PolymorphicRecord.fetch_multi(poly1.id, :includes => :owner)
+      stuff = PolymorphicRecord.fetch_multi(poly1.id, includes: :owner)
     end
   end
 

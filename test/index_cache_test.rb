@@ -19,7 +19,7 @@ class IndexCacheTest < IdentityCache::TestCase
   end
 
   def test_fetch_with_unique_adds_limit_clause
-    Item.cache_index(:title, :id, :unique => true)
+    Item.cache_index(:title, :id, unique: true)
 
     Item.connection.expects(:exec_query)
       .with(regexp_matches(/ LIMIT 1\Z/i), any_parameters)
@@ -29,27 +29,27 @@ class IndexCacheTest < IdentityCache::TestCase
   end
 
   def test_unique_index_caches_nil
-    Item.cache_index(:title, :unique => true)
+    Item.cache_index(:title, unique: true)
     assert_nil(Item.fetch_by_title('bob'))
     assert_equal(IdentityCache::CACHED_NIL, backend.read(cache_key(unique: true)))
   end
 
   def test_unique_index_expired_by_new_record
-    Item.cache_index(:title, :unique => true)
+    Item.cache_index(:title, unique: true)
     IdentityCache.cache.write(cache_key(unique: true), IdentityCache::CACHED_NIL)
     @record.save!
     assert_equal(IdentityCache::DELETED, backend.read(cache_key(unique: true)))
   end
 
   def test_unique_index_filled_on_fetch_by
-    Item.cache_index(:title, :unique => true)
+    Item.cache_index(:title, unique: true)
     @record.save!
     assert_equal(@record, Item.fetch_by_title('bob'))
     assert_equal(@record.id, backend.read(cache_key(unique: true)))
   end
 
   def test_unique_index_expired_by_updated_record
-    Item.cache_index(:title, :unique => true)
+    Item.cache_index(:title, unique: true)
     @record.save!
     old_cache_key = cache_key(unique: true)
     IdentityCache.cache.write(old_cache_key, @record.id)
@@ -85,7 +85,7 @@ class IndexCacheTest < IdentityCache::TestCase
   def test_non_unique_index_fetches_multiple_records
     Item.cache_index(:title)
     @record.save!
-    record2 = Item.create(:title => 'bob') { |item| item.id = 2 }
+    record2 = Item.create(title: 'bob') { |item| item.id = 2 }
 
     assert_equal([@record, record2], Item.fetch_by_title('bob'))
     assert_equal([1, 2], backend.read(cache_key))
@@ -129,7 +129,7 @@ class IndexCacheTest < IdentityCache::TestCase
   end
 
   def test_fetch_by_unique_index_raises_when_called_on_a_scope
-    Item.cache_index(:title, :id, :unique => true)
+    Item.cache_index(:title, :id, unique: true)
     assert_raises(IdentityCache::UnsupportedScopeError) do
       Item.where(updated_at: nil).fetch_by_title_and_id('bob', 2)
     end

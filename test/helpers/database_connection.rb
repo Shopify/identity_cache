@@ -43,18 +43,18 @@ module DatabaseConnection
   end
 
   TABLES = {
-    :polymorphic_records           => [[:string, :owner_type], [:integer, :owner_id], [:timestamps, null: true]],
-    :deeply_associated_records     => [[:string, :name], [:integer, :associated_record_id], [:integer, :item_id], [:timestamps, null: true]],
-    :associated_records            => [[:string, :name], [:integer, :item_id], [:integer, :item_two_id]],
-    :normalized_associated_records => [[:string, :name], [:integer, :item_id], [:timestamps, null: true]],
-    :no_inverse_of_records         => [[:integer, :owner_id], [:timestamps, null: true]],
-    :not_cached_records            => [[:string, :name], [:integer, :item_id], [:timestamps, null: true]],
-    :items                         => [[:integer, :item_id], [:string, :title], [:timestamps, null: true]],
-    :items2                        => [[:integer, :item_id], [:string, :title], [:timestamps, null: true]],
-    :keyed_records                 => [[:string, :value], :primary_key => "hashed_key"],
-    :sti_records                   => [[:string, :type], [:string, :name]],
-    :custom_master_records         => [[:integer, :master_primary_key], :id => false, :primary_key => 'master_primary_key'],
-    :custom_child_records          => [[:integer, :child_primary_key], [:integer, :master_id], :id => false, :primary_key => 'child_primary_key' ]
+    polymorphic_records: [[:string, :owner_type], [:integer, :owner_id], [:timestamps, null: true]],
+    deeply_associated_records: [[:string, :name], [:integer, :associated_record_id], [:integer, :item_id], [:timestamps, null: true]],
+    associated_records: [[:string, :name], [:integer, :item_id], [:integer, :item_two_id]],
+    normalized_associated_records: [[:string, :name], [:integer, :item_id], [:timestamps, null: true]],
+    no_inverse_of_records: [[:integer, :owner_id], [:timestamps, null: true]],
+    not_cached_records: [[:string, :name], [:integer, :item_id], [:timestamps, null: true]],
+    items: [[:integer, :item_id], [:string, :title], [:timestamps, null: true]],
+    items2: [[:integer, :item_id], [:string, :title], [:timestamps, null: true]],
+    keyed_records: [[:string, :value], primary_key: "hashed_key"],
+    sti_records: [[:string, :type], [:string, :name]],
+    custom_master_records: [[:integer, :master_primary_key], id: false, primary_key: 'master_primary_key'],
+    custom_child_records: [[:integer, :child_primary_key], [:integer, :master_id], id: false, primary_key: 'child_primary_key' ]
   }
 
   DEFAULT_CONFIG = {

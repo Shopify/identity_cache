@@ -3,19 +3,19 @@ require "test_helper"
 class RecursiveDenormalizedHasManyTest < IdentityCache::TestCase
   def setup
     super
-    AssociatedRecord.cache_has_many(:deeply_associated_records, :embed => true)
-    Item.cache_has_many(:associated_records, :embed => true)
+    AssociatedRecord.cache_has_many(:deeply_associated_records, embed: true)
+    Item.cache_has_many(:associated_records, embed: true)
     Item.cache_has_one(:associated)
 
-    @record = Item.new(:title => 'foo')
+    @record = Item.new(title: 'foo')
 
-    @associated_record = AssociatedRecord.new(:name => 'bar')
-    @record.associated_records << AssociatedRecord.new(:name => 'baz')
+    @associated_record = AssociatedRecord.new(name: 'bar')
+    @record.associated_records << AssociatedRecord.new(name: 'baz')
     @record.associated_records << @associated_record
 
-    @deeply_associated_record = DeeplyAssociatedRecord.new(:name => "corge")
+    @deeply_associated_record = DeeplyAssociatedRecord.new(name: "corge")
     @associated_record.deeply_associated_records << @deeply_associated_record
-    @associated_record.deeply_associated_records << DeeplyAssociatedRecord.new(:name => "qux")
+    @associated_record.deeply_associated_records << DeeplyAssociatedRecord.new(name: "qux")
 
     @record.save
     @record.reload
@@ -23,7 +23,7 @@ class RecursiveDenormalizedHasManyTest < IdentityCache::TestCase
   end
 
   def test_cache_fetch_includes
-    assert_equal([{:associated_records => [:deeply_associated_records]}, :associated => [:deeply_associated_records]], Item.send(:cache_fetch_includes))
+    assert_equal([{associated_records: [:deeply_associated_records]}, associated: [:deeply_associated_records]], Item.send(:cache_fetch_includes))
   end
 
   def test_uncached_record_from_the_db_will_use_normal_association_for_deeply_associated_records
@@ -139,10 +139,10 @@ end
 class RecursiveNormalizedHasManyTest < IdentityCache::TestCase
   def setup
     super
-    AssociatedRecord.cache_has_many(:deeply_associated_records, :embed => true)
-    Item.cache_has_many(:associated_records, :embed => :ids)
+    AssociatedRecord.cache_has_many(:deeply_associated_records, embed: true)
+    Item.cache_has_many(:associated_records, embed: :ids)
 
-    @record = Item.new(:title => 'foo')
+    @record = Item.new(title: 'foo')
     @record.save
     @record.reload
   end

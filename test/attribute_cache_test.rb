@@ -7,8 +7,8 @@ class AttributeCacheTest < IdentityCache::TestCase
     super
     AssociatedRecord.cache_attribute(:name)
 
-    @parent = Item.create!(:title => 'bob')
-    @record = @parent.associated_records.create!(:name => 'foo')
+    @parent = Item.create!(title: 'bob')
+    @record = @parent.associated_records.create!(name: 'foo')
     @name_attribute_key = "#{NAMESPACE}attr:AssociatedRecord:name:id:#{cache_hash(@record.id.to_s.inspect)}"
     IdentityCache.cache.clear
   end
@@ -71,7 +71,7 @@ class AttributeCacheTest < IdentityCache::TestCase
     assert_queries(1) { assert_nil AssociatedRecord.fetch_name_by_id(new_id) }
     assert_queries(0) { assert_nil AssociatedRecord.fetch_name_by_id(new_id) }
 
-    @parent.associated_records.create(:name => 'bar')
+    @parent.associated_records.create(name: 'bar')
 
     assert_queries(1) { assert_equal 'bar', AssociatedRecord.fetch_name_by_id(new_id) }
   end
@@ -105,7 +105,7 @@ class AttributeCacheTest < IdentityCache::TestCase
 
   def test_previously_stored_cached_nils_are_busted_by_new_record_saves
     assert_nil(AssociatedRecord.fetch_name_by_id(2))
-    AssociatedRecord.create(:name => "Jim")
+    AssociatedRecord.create(name: "Jim")
     assert_equal("Jim", AssociatedRecord.fetch_name_by_id(2))
   end
 
