@@ -3,7 +3,7 @@ begin
   require 'cityhash'
 rescue LoadError
   unless RUBY_PLATFORM == 'java'
-    warn <<-NOTICE
+    warn(<<-NOTICE)
       ** Notice: CityHash was not loaded. **
 
       For optimal performance, use of the cityhash gem is recommended.

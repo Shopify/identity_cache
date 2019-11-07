@@ -4,10 +4,10 @@ require 'bundler/gem_tasks'
 require 'rake/testtask'
 require 'rdoc/task'
 
-desc 'Default: run unit tests.'
-task :default => :test
+desc('Default: run unit tests.')
+task(default: :test)
 
-desc 'Test the identity_cache plugin.'
+desc('Test the identity_cache plugin.')
 Rake::TestTask.new(:test) do |t|
   t.libs << 'lib'
   t.libs << 'test'
@@ -15,7 +15,7 @@ Rake::TestTask.new(:test) do |t|
   t.verbose = true
 end
 
-desc 'Update serialization format test fixture.'
+desc('Update serialization format test fixture.')
 task :update_serialization_format do
   %w(mysql2 postgresql).each do |db|
     ENV["DB"] = db

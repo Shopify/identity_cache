@@ -17,15 +17,15 @@ module IdentityCache
         attr_reader :reflection, :has_one
 
         def test_is_cached_association
-          assert_equal Cached::Association, HasOne.superclass.superclass
+          assert_equal(Cached::Association, HasOne.superclass.superclass)
         end
 
         def test_build
           has_one.build
           record = AssociatedRecord.new
 
-          assert_operator record, :respond_to?, :fetch_deeply_associated
-          assert_operator record, :respond_to?, :prepopulate_fetched_deeply_associated
+          assert_operator(record, :respond_to?, :fetch_deeply_associated)
+          assert_operator(record, :respond_to?, :prepopulate_fetched_deeply_associated)
         end
 
         def test_clear
@@ -34,19 +34,19 @@ module IdentityCache
 
           has_one.clear(record)
 
-          refute_operator record, :instance_variable_defined?, :@cached_deeply_associated
+          refute_operator(record, :instance_variable_defined?, :@cached_deeply_associated)
         end
 
         def test_embedded
-          assert_predicate has_one, :embedded?
+          assert_predicate(has_one, :embedded?)
         end
 
         def test_embedded_recursively
-          assert_predicate has_one, :embedded_recursively?
+          assert_predicate(has_one, :embedded_recursively?)
         end
 
         def test_embedded_by_reference
-          refute_predicate has_one, :embedded_by_reference?
+          refute_predicate(has_one, :embedded_by_reference?)
         end
       end
     end

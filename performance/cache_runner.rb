@@ -1,4 +1,4 @@
-$LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
+$LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 require 'active_record'
 require 'active_support/core_ext'
 require 'active_support/cache'
@@ -22,7 +22,7 @@ def create_record(id)
 end
 
 def database_ready(count)
-  Item.where(:id => (1..count)).count == count
+  Item.where(id: (1..count)).count == count
 rescue
   false
 end
@@ -57,9 +57,9 @@ ensure
 end
 
 def setup_embedded_associations
-  Item.cache_has_one :associated
-  Item.cache_has_many :associated_records, :embed => true
-  AssociatedRecord.cache_has_many :deeply_associated_records, :embed => true
+  Item.cache_has_one(:associated)
+  Item.cache_has_many(:associated_records, embed: true)
+  AssociatedRecord.cache_has_many(:deeply_associated_records, embed: true)
 end
 
 class CacheRunner
@@ -84,7 +84,7 @@ CACHE_RUNNERS = []
 class FindRunner < CacheRunner
   def run
     (1..@count).each do |i|
-      ::Item.includes(:associated, {:associated_records => :deeply_associated_records}).find(i)
+      ::Item.includes(:associated, {associated_records: :deeply_associated_records}).find(i)
     end
   end
 end
@@ -136,9 +136,9 @@ end
 class EmbedRunner < CacheRunner
   def setup_models
     super
-    Item.cache_has_one :associated
-    Item.cache_has_many :associated_records, :embed => true
-    AssociatedRecord.cache_has_many :deeply_associated_records, :embed => true
+    Item.cache_has_one(:associated)
+    Item.cache_has_many(:associated_records, embed: true)
+    AssociatedRecord.cache_has_many(:deeply_associated_records, embed: true)
   end
 
   def run
@@ -178,9 +178,9 @@ CACHE_RUNNERS << FetchEmbedDeletedConflictRunner
 class NormalizedRunner < CacheRunner
   def setup_models
     super
-    Item.cache_has_one :associated # :embed => false isn't supported
-    Item.cache_has_many :associated_records, :embed => :ids
-    AssociatedRecord.cache_has_many :deeply_associated_records, :embed => :ids
+    Item.cache_has_one(:associated) # :embed => false isn't supported
+    Item.cache_has_many(:associated_records, embed: :ids)
+    AssociatedRecord.cache_has_many(:deeply_associated_records, embed: :ids)
   end
 
   def run

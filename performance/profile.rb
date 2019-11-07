@@ -26,7 +26,7 @@ if runner_name = ENV['RUNNER']
     run(runner.new(RUNS), filename: ENV['FILENAME'])
   else
     puts "Couldn't find cache runner #{runner_name.inspect}"
-    exit 1
+    exit(1)
   end
 else
   CACHE_RUNNERS.each do |runner|

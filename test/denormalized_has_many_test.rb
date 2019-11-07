@@ -4,18 +4,18 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
   def setup
     super
     PolymorphicRecord.include(IdentityCache::WithoutPrimaryIndex)
-    Item.cache_has_many :associated_records, :embed => true
+    Item.cache_has_many(:associated_records, embed: true)
 
-    @record = Item.new(:title => 'foo')
-    @record.associated_records << AssociatedRecord.new(:name => 'bar')
-    @record.associated_records << AssociatedRecord.new(:name => 'baz')
+    @record = Item.new(title: 'foo')
+    @record.associated_records << AssociatedRecord.new(name: 'bar')
+    @record.associated_records << AssociatedRecord.new(name: 'baz')
     @record.save
     @record.reload
   end
 
   def test_uncached_record_from_the_db_should_come_back_with_association_array
     record_from_db = Item.find(@record.id)
-    assert_equal Array, record_from_db.fetch_associated_records.class
+    assert_equal(Array, record_from_db.fetch_associated_records.class)
   end
 
   def test_uncached_record_from_the_db_will_use_normal_association
@@ -24,23 +24,23 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
 
     Item.any_instance.expects(:association).with(:associated_records).returns(expected)
 
-    assert_equal @record, record_from_db
-    assert_equal expected, record_from_db.fetch_associated_records
+    assert_equal(@record, record_from_db)
+    assert_equal(expected, record_from_db.fetch_associated_records)
   end
 
   def test_on_cache_hit_record_should_come_back_with_cached_association_array
     Item.fetch(@record.id) # warm cache
 
     record_from_cache_hit = Item.fetch(@record.id)
-    assert_equal @record, record_from_cache_hit
-    assert_equal Array, record_from_cache_hit.fetch_associated_records.class
+    assert_equal(@record, record_from_cache_hit)
+    assert_equal(Array, record_from_cache_hit.fetch_associated_records.class)
   end
 
   def test_on_cache_hit_record_should_come_back_with_cached_association
     Item.fetch(@record.id) # warm cache
 
     record_from_cache_hit = Item.fetch(@record.id)
-    assert_equal @record, record_from_cache_hit
+    assert_equal(@record, record_from_cache_hit)
 
     result = assert_memcache_operations(0) do
       assert_no_queries do
@@ -48,16 +48,16 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
       end
     end
 
-    assert_equal @record.associated_records, result
+    assert_equal(@record.associated_records, result)
   end
 
   def test_on_cache_miss_record_should_embed_associated_objects_and_return
     record_from_cache_miss = Item.fetch(@record.id)
     expected = @record.associated_records
 
-    assert_equal @record, record_from_cache_miss
-    assert_equal expected, record_from_cache_miss.fetch_associated_records
-    assert_equal false, record_from_cache_miss.associated_records.loaded?
+    assert_equal(@record, record_from_cache_miss)
+    assert_equal(expected, record_from_cache_miss.fetch_associated_records)
+    assert_equal(false, record_from_cache_miss.associated_records.loaded?)
   end
 
   def test_delegate_to_normal_association_if_loaded
@@ -65,14 +65,14 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     item = Item.fetch(@record.id)
     item.fetch_associated_records
 
-    item.associated_records << AssociatedRecord.new(:name => 'buzz')
-    assert_equal item.associated_records.to_a, item.fetch_associated_records
+    item.associated_records << AssociatedRecord.new(name: 'buzz')
+    assert_equal(item.associated_records.to_a, item.fetch_associated_records)
   end
 
   def test_changes_in_associated_records_should_expire_the_parents_cache
     Item.fetch(@record.id)
     key = @record.primary_cache_index_key
-    assert_not_nil IdentityCache.cache.fetch(key)
+    assert_not_nil(IdentityCache.cache.fetch(key))
 
     IdentityCache.cache.expects(:delete).with(@record.associated_records.first.primary_cache_index_key)
     IdentityCache.cache.expects(:delete).with(key)
@@ -100,21 +100,21 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
 
   def test_cache_without_guessable_inverse_name_raises
     assert_raises IdentityCache::InverseAssociationError do
-      Item.cache_has_many :no_inverse_of_records, :embed => true
+      Item.cache_has_many(:no_inverse_of_records, embed: true)
       IdentityCache.eager_load!
     end
   end
 
   def test_cache_without_guessable_inverse_name_does_not_raise_when_inverse_name_specified
     assert_nothing_raised do
-      Item.cache_has_many :no_inverse_of_records, :inverse_name => :owner, :embed => true
+      Item.cache_has_many(:no_inverse_of_records, inverse_name: :owner, embed: true)
       IdentityCache.eager_load!
     end
   end
 
   def test_cache_uses_inverse_of_on_association
-    Item.has_many :invertable_association, :inverse_of => :owner, :class_name => 'PolymorphicRecord', :as => "owner"
-    Item.cache_has_many :invertable_association, :embed => true
+    Item.has_many(:invertable_association, inverse_of: :owner, class_name: 'PolymorphicRecord', as: "owner")
+    Item.cache_has_many(:invertable_association, embed: true)
     IdentityCache.eager_load!
   end
 
@@ -137,7 +137,7 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     item = Item.fetch(@record.id)
 
     associated_record = item.fetch_associated_records.to_a.first
-    refute_equal item.object_id, associated_record.item.object_id
+    refute_equal(item.object_id, associated_record.item.object_id)
   end
 
   def test_returned_records_should_be_readonly_on_cache_hit
@@ -188,15 +188,15 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
   class CheckAssociationTest < IdentityCache::TestCase
     def test_unsupported_through_assocation
       assert_raises IdentityCache::UnsupportedAssociationError, "caching through associations isn't supported" do
-        Item.has_many :deeply_through_associated_records, :through => :associated_records, foreign_key: 'associated_record_id', inverse_of: :item, :class_name => 'DeeplyAssociatedRecord'
-        Item.cache_has_many :deeply_through_associated_records, :embed => true
+        Item.has_many(:deeply_through_associated_records, through: :associated_records, foreign_key: 'associated_record_id', inverse_of: :item, class_name: 'DeeplyAssociatedRecord')
+        Item.cache_has_many(:deeply_through_associated_records, embed: true)
       end
     end
 
     def test_unsupported_joins_in_assocation_scope
       scope = -> { joins(:associated_record).where(associated_records: { name: 'contrived example' }) }
-      Item.has_many :deeply_joined_associated_records, scope, inverse_of: :item, class_name: 'DeeplyAssociatedRecord'
-      Item.cache_has_many :deeply_joined_associated_records, :embed => true
+      Item.has_many(:deeply_joined_associated_records, scope, inverse_of: :item, class_name: 'DeeplyAssociatedRecord')
+      Item.cache_has_many(:deeply_joined_associated_records, embed: true)
 
       message = "caching association Item.deeply_joined_associated_records scoped with a join isn't supported"
       assert_raises IdentityCache::UnsupportedAssociationError, message do
@@ -206,7 +206,7 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
 
     def test_cache_has_many_on_derived_model_raises
       assert_raises(IdentityCache::DerivedModelError) do
-        StiRecordTypeA.cache_has_many :polymorphic_records, :inverse_name => :owner, :embed => true
+        StiRecordTypeA.cache_has_many(:polymorphic_records, inverse_name: :owner, embed: true)
       end
     end
   end

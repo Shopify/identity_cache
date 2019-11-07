@@ -5,10 +5,10 @@ class AttributeCacheTest < IdentityCache::TestCase
 
   def setup
     super
-    AssociatedRecord.cache_attribute :name
+    AssociatedRecord.cache_attribute(:name)
 
-    @parent = Item.create!(:title => 'bob')
-    @record = @parent.associated_records.create!(:name => 'foo')
+    @parent = Item.create!(title: 'bob')
+    @record = @parent.associated_records.create!(name: 'foo')
     @name_attribute_key = "#{NAMESPACE}attr:AssociatedRecord:name:id:#{cache_hash(@record.id.to_s.inspect)}"
     IdentityCache.cache.clear
   end
@@ -19,11 +19,11 @@ class AttributeCacheTest < IdentityCache::TestCase
     assert_queries(1) do
       assert_equal 'foo', AssociatedRecord.fetch_name_by_id(1)
     end
-    assert fetch.has_been_called_with?(@name_attribute_key)
+    assert(fetch.has_been_called_with?(@name_attribute_key))
   end
 
   def test_attribute_values_are_returned_on_cache_hits
-    assert_equal 'foo', AssociatedRecord.fetch_name_by_id(1)
+    assert_equal('foo', AssociatedRecord.fetch_name_by_id(1))
 
     assert_queries(0) do
       assert_equal 'foo', AssociatedRecord.fetch_name_by_id(1)
@@ -31,7 +31,7 @@ class AttributeCacheTest < IdentityCache::TestCase
   end
 
   def test_nil_is_stored_in_the_cache_on_cache_misses
-    assert_nil AssociatedRecord.fetch_name_by_id(2)
+    assert_nil(AssociatedRecord.fetch_name_by_id(2))
 
     assert_queries(0) do
       assert_nil AssociatedRecord.fetch_name_by_id(2)
@@ -71,7 +71,7 @@ class AttributeCacheTest < IdentityCache::TestCase
     assert_queries(1) { assert_nil AssociatedRecord.fetch_name_by_id(new_id) }
     assert_queries(0) { assert_nil AssociatedRecord.fetch_name_by_id(new_id) }
 
-    @parent.associated_records.create(:name => 'bar')
+    @parent.associated_records.create(name: 'bar')
 
     assert_queries(1) { assert_equal 'bar', AssociatedRecord.fetch_name_by_id(new_id) }
   end
@@ -84,7 +84,7 @@ class AttributeCacheTest < IdentityCache::TestCase
   end
 
   def test_no_nil_empty_string_cache_key_conflict
-    Item.cache_attribute :id, by: [:title]
+    Item.cache_attribute(:id, by: [:title])
     @parent.update_attributes!(title: "")
     assert_queries(1) { assert_equal @parent.id, Item.fetch_id_by_title("") }
     assert_queries(1) { assert_nil Item.fetch_id_by_title(nil) }
@@ -104,14 +104,14 @@ class AttributeCacheTest < IdentityCache::TestCase
   end
 
   def test_previously_stored_cached_nils_are_busted_by_new_record_saves
-    assert_nil AssociatedRecord.fetch_name_by_id(2)
-    AssociatedRecord.create(:name => "Jim")
-    assert_equal "Jim", AssociatedRecord.fetch_name_by_id(2)
+    assert_nil(AssociatedRecord.fetch_name_by_id(2))
+    AssociatedRecord.create(name: "Jim")
+    assert_equal("Jim", AssociatedRecord.fetch_name_by_id(2))
   end
 
   def test_cache_attribute_on_derived_model_raises
     assert_raises(IdentityCache::DerivedModelError) do
-      StiRecordTypeA.cache_attribute :name
+      StiRecordTypeA.cache_attribute(:name)
     end
   end
 

@@ -3,7 +3,7 @@ require "test_helper"
 class NormalizedHasOneTest < IdentityCache::TestCase
   def setup
     super
-    Item.cache_has_one :associated, embed: :id
+    Item.cache_has_one(:associated, embed: :id)
 
     @record = Item.new(title: 'foo')
     @record.build_associated(name: 'bar')
@@ -14,14 +14,14 @@ class NormalizedHasOneTest < IdentityCache::TestCase
 
   def test_not_implemented_error
     assert_raises(NotImplementedError) do
-      Item.cache_has_one :associated, embed: false
+      Item.cache_has_one(:associated, embed: false)
     end
   end
 
   def test_defining_a_denormalized_has_one_cache_caches_the_associated_id_on_the_parent_record_during_cache_miss
     fetched_record = Item.fetch(@record.id)
-    assert_equal 1, fetched_record.cached_associated_id
-    refute_predicate fetched_record.association(:associated), :loaded?
+    assert_equal(1, fetched_record.cached_associated_id)
+    refute_predicate(fetched_record.association(:associated), :loaded?)
   end
 
   def test_batch_fetching_of_association_for_multiple_parent_records
@@ -32,7 +32,7 @@ class NormalizedHasOneTest < IdentityCache::TestCase
     fetched_records = assert_queries(2) do
       Item.fetch_multi(@record.id, record2.id)
     end
-    assert_equal [1, 2], fetched_records.map(&:cached_associated_id)
+    assert_equal([1, 2], fetched_records.map(&:cached_associated_id))
 
     fetched_records.each do |record|
       refute_predicate record.association(:associated), :loaded?
@@ -40,9 +40,9 @@ class NormalizedHasOneTest < IdentityCache::TestCase
   end
 
   def test_batch_fetching_of_deeply_associated_records
-    Item.has_one :denormalized_associated, class_name: 'AssociatedRecord'
-    Item.cache_has_one :denormalized_associated, embed: true
-    AssociatedRecord.cache_has_one :deeply_associated, embed: :id
+    Item.has_one(:denormalized_associated, class_name: 'AssociatedRecord')
+    Item.cache_has_one(:denormalized_associated, embed: true)
+    AssociatedRecord.cache_has_one(:deeply_associated, embed: :id)
 
     @record.associated.build_deeply_associated(name: 'deep1')
     @record.associated.save!
@@ -58,7 +58,7 @@ class NormalizedHasOneTest < IdentityCache::TestCase
   end
 
   def test_fetching_associated_id_will_populate_the_value_if_the_record_isnt_from_the_cache
-    assert_equal 1, @record.fetch_associated_id
+    assert_equal(1, @record.fetch_associated_id)
   end
 
   def test_fetching_associated_id_will_use_the_cached_value_if_the_record_is_from_the_cache
@@ -69,11 +69,11 @@ class NormalizedHasOneTest < IdentityCache::TestCase
   end
 
   def test_the_cached_associated_id_on_the_parent_record_should_not_be_populated_by_default
-    assert_nil @record.cached_associated_id
+    assert_nil(@record.cached_associated_id)
   end
 
   def test_fetching_the_association_should_fetch_each_record_by_id
-    assert_equal @baz, @record.fetch_associated
+    assert_equal(@baz, @record.fetch_associated)
   end
 
   def test_fetching_the_association_from_a_record_on_a_cache_hit_should_not_issue_any_queries
@@ -110,8 +110,8 @@ class NormalizedHasOneTest < IdentityCache::TestCase
     IdentityCache.cache.expects(:delete).with(@baz.primary_cache_index_key)
     @baz.name = 'foo'
     @baz.save!
-    assert_equal @baz.id, Item.fetch(@record.id).cached_associated_id
-    assert_equal @baz, Item.fetch(@record.id).fetch_associated
+    assert_equal(@baz.id, Item.fetch(@record.id).cached_associated_id)
+    assert_equal(@baz, Item.fetch(@record.id).fetch_associated)
   end
 
   def test_saving_the_child_in_a_transaction_should_expire_the_new_and_old_parents_cache_blob
@@ -127,8 +127,8 @@ class NormalizedHasOneTest < IdentityCache::TestCase
       @baz.reload
     end
 
-    assert_nil Item.fetch(@record.id).cached_associated_id
-    assert_nil Item.fetch(@record.id).fetch_associated
+    assert_nil(Item.fetch(@record.id).cached_associated_id)
+    assert_nil(Item.fetch(@record.id).fetch_associated)
   end
 
   def test_saving_a_child_record_should_expire_only_itself

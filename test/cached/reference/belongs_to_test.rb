@@ -13,15 +13,15 @@ module IdentityCache
         attr_reader :reflection, :belongs_to
 
         def test_is_cached_association
-          assert_equal Cached::Association, BelongsTo.superclass.superclass
+          assert_equal(Cached::Association, BelongsTo.superclass.superclass)
         end
 
         def test_build
           belongs_to.build
           record = AssociatedRecord.new
 
-          assert_operator record, :respond_to?, :fetch_item
-          assert_operator record, :respond_to?, :prepopulate_fetched_item
+          assert_operator(record, :respond_to?, :fetch_item)
+          assert_operator(record, :respond_to?, :prepopulate_fetched_item)
         end
 
         def test_clear
@@ -30,19 +30,19 @@ module IdentityCache
 
           belongs_to.clear(record)
 
-          refute_operator record, :instance_variable_defined?, :@cached_item
+          refute_operator(record, :instance_variable_defined?, :@cached_item)
         end
 
         def test_embedded
-          refute_predicate belongs_to, :embedded?
+          refute_predicate(belongs_to, :embedded?)
         end
 
         def test_embedded_recursively
-          refute_predicate belongs_to, :embedded_recursively?
+          refute_predicate(belongs_to, :embedded_recursively?)
         end
 
         def test_embedded_by_reference
-          refute_predicate belongs_to, :embedded_by_reference?
+          refute_predicate(belongs_to, :embedded_by_reference?)
         end
       end
     end

@@ -18,8 +18,8 @@ module IdentityCache
         when ActiveSupport::Cache::MemoryStore, ActiveSupport::Cache::NullStore
           # no need for CAS support
         else
-          warn "[IdentityCache] Missing CAS support in cache backend #{cache_adaptor.class} "\
-               "which is needed for cache consistency"
+          warn("[IdentityCache] Missing CAS support in cache backend #{cache_adaptor.class} "\
+               "which is needed for cache consistency")
         end
         @cache_fetcher = FallbackFetcher.new(cache_adaptor)
       end
@@ -183,9 +183,9 @@ module IdentityCache
         cache_hit_keys = memo_miss_keys - cache_miss_keys
         missed_keys = cache_miss_keys
 
-        memoized_keys.each {|k| IdentityCache.logger.debug "[IdentityCache] (memoized) cache hit for #{k} (multi)" }
-        cache_hit_keys.each {|k| IdentityCache.logger.debug "[IdentityCache] (backend) cache hit for #{k} (multi)" }
-        missed_keys.each {|k| IdentityCache.logger.debug "[IdentityCache] cache miss for #{k} (multi)" }
+        memoized_keys.each {|k| IdentityCache.logger.debug("[IdentityCache] (memoized) cache hit for #{k} (multi)") }
+        cache_hit_keys.each {|k| IdentityCache.logger.debug("[IdentityCache] (backend) cache hit for #{k} (multi)") }
+        missed_keys.each {|k| IdentityCache.logger.debug("[IdentityCache] cache miss for #{k} (multi)") }
       end
     end
   end

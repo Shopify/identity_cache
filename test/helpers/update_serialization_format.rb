@@ -1,4 +1,4 @@
-$LOAD_PATH.unshift File.expand_path("../../../lib", __FILE__)
+$LOAD_PATH.unshift(File.expand_path("../../../lib", __FILE__))
 
 require 'logger'
 require 'active_record'
@@ -10,8 +10,8 @@ require_relative 'cache_connection'
 require_relative 'active_record_objects'
 require 'identity_cache'
 
-include SerializationFormat
-include ActiveRecordObjects
+include(SerializationFormat)
+include(ActiveRecordObjects)
 
 DatabaseConnection.setup
 DatabaseConnection.drop_tables

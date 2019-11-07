@@ -18,7 +18,7 @@ class IdentityCacheTest < IdentityCache::TestCase
   end
 
   def test_should_use_cache_outside_transaction
-    assert_equal true, IdentityCache.should_use_cache?
+    assert_equal(true, IdentityCache.should_use_cache?)
   end
 
   def test_should_use_cache_in_transaction

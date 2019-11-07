@@ -11,7 +11,7 @@ module IdentityCache
     end
 
     def delete(key)
-      @cache_backend.write(key, IdentityCache::DELETED, :expires_in => IdentityCache::DELETED_TTL.seconds)
+      @cache_backend.write(key, IdentityCache::DELETED, expires_in: IdentityCache::DELETED_TTL.seconds)
     end
 
     def clear
@@ -81,7 +81,7 @@ module IdentityCache
     end
 
     def add(key, value)
-      @cache_backend.write(key, value, :unless_exist => true) if IdentityCache.should_fill_cache?
+      @cache_backend.write(key, value, unless_exist: true) if IdentityCache.should_fill_cache?
     end
   end
 end

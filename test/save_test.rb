@@ -5,10 +5,10 @@ class SaveTest < IdentityCache::TestCase
 
   def setup
     super
-    Item.cache_index :title, :unique => true
-    Item.cache_index :id, :title, :unique => true
+    Item.cache_index(:title, unique: true)
+    Item.cache_index(:id, :title, unique: true)
 
-    @record = Item.create(:title => 'bob')
+    @record = Item.create(title: 'bob')
     @blob_key_prefix = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:"
     @blob_key = "#{@blob_key_prefix}1"
   end

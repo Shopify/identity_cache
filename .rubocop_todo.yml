@@ -354,25 +354,11 @@ Style/EmptyLiteral:
 Style/FrozenStringLiteralComment:
   Enabled: false
 
-# Offense count: 217
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, UseHashRocketsWithSymbolValues, PreferHashRocketsForNonAlnumEndingSymbols.
-# SupportedStyles: ruby19, hash_rockets, no_mixed_keys, ruby19_no_mixed_keys
-Style/HashSyntax:
-  Enabled: false
-
 # Offense count: 1
 # Configuration parameters: AllowIfModifier.
 Style/IfInsideElse:
   Exclude:
     - 'lib/identity_cache/query_api.rb'
-
-# Offense count: 466
-# Cop supports --auto-correct.
-# Configuration parameters: IgnoreMacros, IgnoredMethods, IgnoredPatterns, IncludedMacros, AllowParenthesesInMultilineCall, AllowParenthesesInChaining, AllowParenthesesInCamelCaseMethod, EnforcedStyle.
-# SupportedStyles: require_parentheses, omit_parentheses
-Style/MethodCallWithArgsParentheses:
-  Enabled: false
 
 # Offense count: 4
 # Cop supports --auto-correct.

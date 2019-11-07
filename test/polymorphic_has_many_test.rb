@@ -5,8 +5,8 @@ class PolymorphicHasManyTest < IdentityCache::TestCase
     super
     PolymorphicRecord.include(IdentityCache)
 
-    Item.cache_has_many :polymorphic_records, inverse_name: :owner
-    ItemTwo.cache_has_many :polymorphic_records, inverse_name: :owner
+    Item.cache_has_many(:polymorphic_records, inverse_name: :owner)
+    ItemTwo.cache_has_many(:polymorphic_records, inverse_name: :owner)
   end
 
   def test_polymorphic_has_many_filters_by_type
@@ -17,6 +17,6 @@ class PolymorphicHasManyTest < IdentityCache::TestCase
     poly2 = item.polymorphic_records.create
     poly3 = item2.polymorphic_records.create
 
-    assert_equal [poly1, poly2], Item.fetch(1).fetch_polymorphic_records
+    assert_equal([poly1, poly2], Item.fetch(1).fetch_polymorphic_records)
   end
 end

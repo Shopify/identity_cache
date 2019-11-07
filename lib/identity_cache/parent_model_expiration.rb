@@ -66,10 +66,10 @@ module IdentityCache
     end
 
     included do |base|
-      base.class_attribute :parent_expiration_entries
+      base.class_attribute(:parent_expiration_entries)
       base.parent_expiration_entries = Hash.new{ |hash, key| hash[key] = [] }
 
-      base.after_commit :expire_parent_caches
+      base.after_commit(:expire_parent_caches)
     end
 
     def expire_parent_caches
