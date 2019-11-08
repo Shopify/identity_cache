@@ -27,7 +27,6 @@ module IdentityCache
           assert_operator(record, :respond_to?, :cached_deeply_associated_id)
           assert_operator(record, :respond_to?, :fetch_deeply_associated_id)
           assert_operator(record, :respond_to?, :fetch_deeply_associated)
-          assert_operator(record, :respond_to?, :prepopulate_fetched_deeply_associated)
         end
 
         def test_clear
