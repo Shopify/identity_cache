@@ -75,14 +75,14 @@ class SchemaChangeTest < IdentityCache::TestCase
   end
 
   def test_schema_changes_on_new_cached_child_association
-    record = Item.fetch(@record.id)
+    Item.fetch(@record.id)
 
     PolymorphicRecord.include(IdentityCache::WithoutPrimaryIndex)
     Item.cache_has_many(:polymorphic_records, inverse_name: :owner, embed: true)
     read_new_schema
 
     Item.expects(:resolve_cache_miss).returns(@record)
-    record = Item.fetch(@record.id)
+    Item.fetch(@record.id)
   end
 
   def test_embed_existing_cache_has_many
@@ -90,7 +90,7 @@ class SchemaChangeTest < IdentityCache::TestCase
     Item.cache_has_many(:polymorphic_records, inverse_name: :owner, embed: :ids)
     read_new_schema
 
-    record = Item.fetch(@record.id)
+    Item.fetch(@record.id)
 
     teardown_models
     setup_models
@@ -99,7 +99,7 @@ class SchemaChangeTest < IdentityCache::TestCase
     Item.cache_has_many(:polymorphic_records, inverse_name: :owner, embed: true)
     read_new_schema
 
-    record = Item.fetch(@record.id)
+    Item.fetch(@record.id)
   end
 
   def test_cache_reusable_after_associated_class_name_changes
@@ -143,11 +143,11 @@ class SchemaChangeTest < IdentityCache::TestCase
 
   def test_add_non_embedded_cache_has_many
     PolymorphicRecord.include(IdentityCache)
-    record = Item.fetch(@record.id)
+    Item.fetch(@record.id)
 
     Item.cache_has_many(:polymorphic_records, inverse_name: :owner, embed: :ids)
     read_new_schema
 
-    record = Item.fetch(@record.id)
+    Item.fetch(@record.id)
   end
 end

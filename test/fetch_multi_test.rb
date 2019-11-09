@@ -295,7 +295,7 @@ class FetchMultiTest < IdentityCache::TestCase
     poly1 = item.polymorphic_record = PolymorphicRecord.create!
 
     assert_queries(2) do
-      stuff = PolymorphicRecord.fetch_multi(poly1.id, includes: :owner)
+      PolymorphicRecord.fetch_multi(poly1.id, includes: :owner)
     end
   end
 
@@ -311,7 +311,7 @@ class FetchMultiTest < IdentityCache::TestCase
     poly3 = item2.polymorphic_records.create
 
     assert_queries(3) do
-      stuff = PolymorphicRecord.fetch_multi([poly1.id, poly2.id, poly3.id], includes: :owner)
+      PolymorphicRecord.fetch_multi([poly1.id, poly2.id, poly3.id], includes: :owner)
     end
   end
 
@@ -322,7 +322,7 @@ class FetchMultiTest < IdentityCache::TestCase
     poly1 = PolymorphicRecord.create!
 
     assert_queries(1) do
-      stuff = PolymorphicRecord.fetch_multi(poly1.id, includes: :owner)
+      PolymorphicRecord.fetch_multi(poly1.id, includes: :owner)
     end
   end
 

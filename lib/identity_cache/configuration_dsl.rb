@@ -251,9 +251,9 @@ module IdentityCache
         end
 
         fields = [field]
-        index_by_cache_key = index_values.each_with_object({}) do |index_value, index_by_cache_key|
+        index_by_cache_key = index_values.each_with_object({}) do |index_value, index_hash|
           cache_key = rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, [index_value], unique_index)
-          index_by_cache_key[cache_key] = index_value
+          index_hash[cache_key] = index_value
         end
         attribute_by_cache_key = IdentityCache.fetch_multi(index_by_cache_key.keys) do |unresolved_keys|
           unresolved_index_values = unresolved_keys.map { |cache_key| index_by_cache_key.fetch(cache_key) }
