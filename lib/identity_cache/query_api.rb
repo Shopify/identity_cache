@@ -25,8 +25,10 @@ module IdentityCache
         record = if should_use_cache?
           require_if_necessary do
             object = nil
-            coder = IdentityCache.fetch(rails_cache_key(id)){ instrumented_coder_from_record(object = resolve_cache_miss(id)) }
-            object ||= instrumented_record_from_coder(coder)
+            coder  = IdentityCache.fetch(rails_cache_key(id)) do
+              Encoder.encode(object = resolve_cache_miss(id))
+            end
+            object ||= Encoder.decode(coder, self)
             if object && object.id != id
               IdentityCache.logger.error("[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{object.id} for #{object.inspect[(0..100)]}")
             end
@@ -65,10 +67,12 @@ module IdentityCache
               ids = unresolved_keys.map {|key| key_to_id_map[key] }
               records = find_batch(ids)
               key_to_record_map = records.compact.index_by{ |record| rails_cache_key(record.id) }
-              records.map {|record| instrumented_coder_from_record(record) }
+              records.map { |record| Encoder.encode(record) }
             end
 
-            cache_keys.map{ |key| key_to_record_map[key] || instrumented_record_from_coder(coders_by_key[key]) }
+            cache_keys.map do |key|
+              key_to_record_map[key] || Encoder.decode(coders_by_key[key], self)
+            end
           end
         else
           find_batch(ids)
@@ -106,13 +110,6 @@ module IdentityCache
         nil
       end
 
-      def instrumented_record_from_coder(coder) #:nodoc:
-        return nil unless coder
-        ActiveSupport::Notifications.instrument('hydration.identity_cache', class: name) do
-          record_from_coder(coder)
-        end
-      end
-
       # Invalidates the primary cache index for the associated record. Will not invalidate cached attributes.
       def expire_primary_key_cache_index(id)
         return unless primary_cache_index_enabled
@@ -121,28 +118,6 @@ module IdentityCache
       end
 
       private
-
-      def record_from_coder(coder) #:nodoc:
-        record = instantiate(coder[:attributes].dup)
-
-        if coder.has_key?(:associations)
-          coder[:associations].each do |name, value|
-            record.instance_variable_set(cached_association(name).dehydrated_variable_name, value)
-          end
-        end
-        if coder.has_key?(:association_ids)
-          coder[:association_ids].each do |name, ids|
-            record.instance_variable_set(record.class.cached_has_manys[name].ids_variable_name, ids)
-          end
-        end
-        if coder.has_key?(:association_id)
-          coder[:association_id].each do |name, id|
-            record.instance_variable_set(record.class.cached_has_ones[name].id_variable_name, id)
-          end
-        end
-        record.readonly! if IdentityCache.fetch_read_only_records
-        record
-      end
 
       def raise_if_scoped
         if current_scope
@@ -156,51 +131,6 @@ module IdentityCache
         scope = association_reflection.scope
         if scope && !association_reflection.klass.all.instance_exec(&scope).joins_values.empty?
           raise UnsupportedAssociationError, "caching association #{self}.#{association_name} scoped with a join isn't supported"
-        end
-      end
-
-      def get_embedded_association(record, association, cached_association) #:nodoc:
-        embedded_variable = record.public_send(cached_association.cached_accessor_name)
-        if embedded_variable.respond_to?(:to_ary)
-          embedded_variable.map {|e| coder_from_record(e) }
-        else
-          coder_from_record(embedded_variable)
-        end
-      end
-
-      def instrumented_coder_from_record(record) #:nodoc:
-        return unless record
-        ActiveSupport::Notifications.instrument('dehydration.identity_cache', class: record.class.name) do
-          coder_from_record(record)
-        end
-      end
-
-      def coder_from_record(record) #:nodoc:
-        unless record.nil?
-          coder = {
-            attributes: record.attributes_before_type_cast.dup,
-          }
-          add_cached_associations_to_coder(record, coder)
-          coder
-        end
-      end
-
-      def add_cached_associations_to_coder(record, coder)
-        klass = record.class
-        if (recursively_embedded_associations = klass.send(:recursively_embedded_associations)).present?
-          coder[:associations] = recursively_embedded_associations.each_with_object({}) do |(name, association), hash|
-            hash[name] = IdentityCache.map_cached_nil_for(get_embedded_association(record, name, association))
-          end
-        end
-        if (id_embedded_has_manys = klass.cached_has_manys.select { |_, association| association.embedded_by_reference? }).present?
-          coder[:association_ids] = id_embedded_has_manys.each_with_object({}) do |(name, association), hash|
-            hash[name] = record.instance_variable_get(association.ids_variable_name)
-          end
-        end
-        if (id_embedded_has_ones = klass.cached_has_ones.select { |_, association| association.embedded_by_reference? }).present?
-          coder[:association_id] = id_embedded_has_ones.each_with_object({}) do |(name, association), hash|
-            hash[name] = record.instance_variable_get(association.id_variable_name)
-          end
         end
       end
 
@@ -542,9 +472,9 @@ module IdentityCache
     def hydrate_association_target(associated_class, dehydrated_value) # :nodoc:
       dehydrated_value = IdentityCache.unmap_cached_nil_for(dehydrated_value)
       if dehydrated_value.is_a?(Array)
-        dehydrated_value.map { |coder| associated_class.instrumented_record_from_coder(coder) }
+        dehydrated_value.map { |coder| Encoder.decode(coder, associated_class) }
       else
-        associated_class.instrumented_record_from_coder(dehydrated_value)
+        Encoder.decode(dehydrated_value, associated_class)
       end
     end
 

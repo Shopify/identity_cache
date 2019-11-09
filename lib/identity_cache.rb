@@ -3,6 +3,7 @@ require 'active_support/core_ext/module/attribute_accessors'
 require 'ar_transaction_changes'
 
 require "identity_cache/version"
+require "identity_cache/encoder"
 require "identity_cache/cached"
 require "identity_cache/cached/association"
 require "identity_cache/cached/recursive/association"
