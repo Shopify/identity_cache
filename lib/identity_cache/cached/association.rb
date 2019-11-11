@@ -6,12 +6,10 @@ module IdentityCache
         @reflection = reflection
         @inverse_name = inverse_name
         @cached_accessor_name = "fetch_#{name}"
-        @prepopulate_method_name = "prepopulate_fetched_#{name}"
         @records_variable_name = :"@cached_#{name}"
       end
 
-      attr_reader :name, :reflection, :cached_accessor_name,
-                  :prepopulate_method_name, :records_variable_name
+      attr_reader :name, :reflection, :cached_accessor_name, :records_variable_name
 
       def build
         raise NotImplementedError

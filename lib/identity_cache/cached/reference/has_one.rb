@@ -27,10 +27,6 @@ module IdentityCache
                 #{name}
               end
             end
-
-            def #{prepopulate_method_name}(record)
-              #{records_variable_name} = record
-            end
           RUBY
 
           ParentModelExpiration.add_parent_expiry_hook(self)

@@ -21,7 +21,6 @@ module IdentityCache
           record = AssociatedRecord.new
 
           assert_operator(record, :respond_to?, :fetch_item)
-          assert_operator(record, :respond_to?, :prepopulate_fetched_item)
         end
 
         def test_clear

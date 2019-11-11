@@ -429,7 +429,7 @@ module IdentityCache
             end
 
             parent_record_to_child_records.each do |parent, children|
-              parent.send(cached_association.prepopulate_method_name, children)
+              parent.instance_variable_set(cached_association.records_variable_name, children)
             end
           end
 
@@ -459,7 +459,7 @@ module IdentityCache
                 type_parent_records = type.fetch_multi(ids_to_child_record.keys)
                 type_parent_records.each do |parent_record|
                   child_record = ids_to_child_record[parent_record.id]
-                  child_record.send(cached_association.prepopulate_method_name, parent_record)
+                  child_record.instance_variable_set(cached_association.records_variable_name, parent_record)
                 end
                 parent_records.append(type_parent_records)
               end
@@ -473,7 +473,7 @@ module IdentityCache
               parent_records = reflection.klass.fetch_multi(ids_to_child_record.keys)
               parent_records.each do |parent_record|
                 child_record = ids_to_child_record[parent_record.id]
-                child_record.send(cached_association.prepopulate_method_name, parent_record)
+                child_record.instance_variable_set(cached_association.records_variable_name, parent_record)
               end
             end
           end
@@ -498,7 +498,7 @@ module IdentityCache
             end
 
             parent_record_to_child_record.each do |parent, child|
-              parent.send(cached_association.prepopulate_method_name, child)
+              parent.instance_variable_set(cached_association.records_variable_name, child)
             end
           end
 
@@ -554,8 +554,7 @@ module IdentityCache
 
       set_inverse_of_cached_association(cached_association, association_target)
 
-      prepopulate_method_name = cached_association.prepopulate_method_name
-      send(prepopulate_method_name, association_target)
+      instance_variable_set(cached_association.records_variable_name, association_target)
     end
 
     def set_inverse_of_cached_association(cached_association, association_target)
@@ -565,11 +564,16 @@ module IdentityCache
       inverse_cached_association = associated_class.cached_belongs_tos[inverse_name]
       return unless inverse_cached_association
 
-      prepopulate_method_name = inverse_cached_association.prepopulate_method_name
       if association_target.is_a?(Array)
-        association_target.each { |child_record| child_record.send(prepopulate_method_name, self) }
+        association_target.each do |child_record|
+          child_record.instance_variable_set(
+            inverse_cached_association.records_variable_name, self
+          )
+        end
       else
-        association_target.send(prepopulate_method_name, self)
+        association_target.instance_variable_set(
+          inverse_cached_association.records_variable_name, self
+        )
       end
     end
 

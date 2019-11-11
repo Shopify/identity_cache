@@ -30,10 +30,6 @@ module IdentityCache
       def test_cached_accessor_name
         assert_equal("fetch_item", association.cached_accessor_name)
       end
-
-      def test_prepopulate_method_name
-        assert_equal("prepopulate_fetched_item", association.prepopulate_method_name)
-      end
     end
   end
 end
