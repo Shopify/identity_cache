@@ -15,7 +15,7 @@ class PolymorphicHasManyTest < IdentityCache::TestCase
 
     poly1 = item.polymorphic_records.create
     poly2 = item.polymorphic_records.create
-    poly3 = item2.polymorphic_records.create
+    item2.polymorphic_records.create
 
     assert_equal([poly1, poly2], Item.fetch(1).fetch_polymorphic_records)
   end

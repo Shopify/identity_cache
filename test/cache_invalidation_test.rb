@@ -43,7 +43,7 @@ class CacheInvalidationTest < IdentityCache::TestCase
     assert_equal([@baz, @bar], @record.instance_variable_get(variable_name))
   end
 
-  def test_after_a_reload_the_cache_perform_as_expected
+  def test_reload_cache_ids
     Item.cache_has_many(:associated_records, embed: :ids)
 
     assert_equal([@baz, @bar], @record.fetch_associated_records)
@@ -56,7 +56,7 @@ class CacheInvalidationTest < IdentityCache::TestCase
     assert_equal([@bar], @record.associated_records)
   end
 
-  def test_after_a_reload_the_cache_perform_as_expected
+  def test_reload_cache_id
     Item.cache_has_one(:associated, embed: :id)
 
     assert_equal(@baz, @record.fetch_associated)
