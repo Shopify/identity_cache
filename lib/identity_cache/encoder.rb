@@ -29,17 +29,23 @@ module IdentityCache
         coder = {}
         coder[:attributes] = record.attributes_before_type_cast.dup
 
-        if (recursively_embedded_associations = klass.send(:recursively_embedded_associations)).present?
+        recursively_embedded_associations = klass.send(:recursively_embedded_associations)
+        id_embedded_has_manys = klass.cached_has_manys.select { |_, association| association.embedded_by_reference? }
+        id_embedded_has_ones = klass.cached_has_ones.select { |_, association| association.embedded_by_reference? }
+
+        if recursively_embedded_associations.present?
           coder[:associations] = recursively_embedded_associations.each_with_object({}) do |(name, association), hash|
             hash[name] = IdentityCache.map_cached_nil_for(embedded_coder(record, name, association))
           end
         end
-        if (id_embedded_has_manys = klass.cached_has_manys.select { |_, association| association.embedded_by_reference? }).present?
+
+        if id_embedded_has_manys.present?
           coder[:association_ids] = id_embedded_has_manys.each_with_object({}) do |(name, association), hash|
             hash[name] = record.instance_variable_get(association.ids_variable_name)
           end
         end
-        if (id_embedded_has_ones = klass.cached_has_ones.select { |_, association| association.embedded_by_reference? }).present?
+
+        if id_embedded_has_ones.present?
           coder[:association_id] = id_embedded_has_ones.each_with_object({}) do |(name, association), hash|
             hash[name] = record.instance_variable_get(association.id_variable_name)
           end

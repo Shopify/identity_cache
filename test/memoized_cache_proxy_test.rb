@@ -13,7 +13,10 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
     IdentityCache.cache.write('foo', 'bar')
     backend.expects(:write).with('bar', 'baz')
     yielded = nil
-    assert_equal({'foo' => 'bar', 'bar' => 'baz'}, IdentityCache.cache.fetch_multi('foo', 'bar') {|_| yielded = ['baz'] })
+    assert_equal(
+      {'foo' => 'bar', 'bar' => 'baz'},
+      IdentityCache.cache.fetch_multi('foo', 'bar') { |_| yielded = ['baz'] }
+    )
     assert_equal(['baz'], yielded)
   end
 

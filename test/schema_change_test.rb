@@ -139,7 +139,9 @@ class SchemaChangeTest < IdentityCache::TestCase
     end
   ensure
     self.class.send(:remove_const, :Item) if self.class.const_defined?(:Item, false)
-    self.class.send(:remove_const, :AssociatedRecordRenamed) if self.class.const_defined?(:AssociatedRecordRenamed, false)
+    if self.class.const_defined?(:AssociatedRecordRenamed, false)
+      self.class.send(:remove_const, :AssociatedRecordRenamed)
+    end
   end
 
   def test_add_non_embedded_cache_has_many

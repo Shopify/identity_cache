@@ -252,13 +252,6 @@ Lint/UselessAssignment:
 Metrics/BlockNesting:
   Max: 5
 
-# Offense count: 56
-# Cop supports --auto-correct.
-# Configuration parameters: AutoCorrect, AllowHeredoc, AllowURI, URISchemes, IgnoreCopDirectives, IgnoredPatterns.
-# URISchemes: http, https
-Metrics/LineLength:
-  Max: 337
-
 # Offense count: 1
 Naming/ConstantName:
   Exclude:

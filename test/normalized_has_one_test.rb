@@ -97,7 +97,7 @@ class NormalizedHasOneTest < IdentityCache::TestCase
     end
   end
 
-  def test_fetching_the_association_should_delegate_to_the_normal_association_fetcher_if_the_normal_association_is_loaded
+  def test_fetching_association_should_delegate_to_normal_association_fetcher_if_normal_association_is_loaded
     # Warm the ActiveRecord association
     @record.associated
 

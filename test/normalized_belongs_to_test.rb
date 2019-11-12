@@ -22,7 +22,7 @@ class NormalizedBelongsToTest < IdentityCache::TestCase
     end
   end
 
-  def test_fetching_the_association_should_delegate_to_the_normal_association_fetcher_if_the_normal_association_is_loaded
+  def test_fetching_association_should_delegate_to_normal_association_fetcher_if_normal_association_is_loaded
     # Warm the ActiveRecord association
     @record.item
 
@@ -35,7 +35,7 @@ class NormalizedBelongsToTest < IdentityCache::TestCase
     assert_equal(@parent_record, @record.fetch_item)
   end
 
-  def test_fetching_the_association_should_assign_the_result_to_an_instance_variable_so_that_successive_accesses_are_cached
+  def test_fetching_association_should_assign_result_to_instance_variable_so_successive_accesses_are_cached
     Item.expects(:fetch_by_id).with(@parent_record.id).returns(@parent_record)
     assert_equal(@parent_record, @record.fetch_item)
     assert_equal(false, @record.association(:item).loaded?)

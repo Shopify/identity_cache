@@ -33,7 +33,8 @@ class IdentityCache::TestCase < Minitest::Test
   attr_reader :backend
 
   def setup
-    if ActiveRecord.gem_version < Gem::Version.new('5') && ActiveRecord::Base.respond_to?(:raise_in_transactional_callbacks=)
+    if ActiveRecord.gem_version < Gem::Version.new('5') &&
+       ActiveRecord::Base.respond_to?(:raise_in_transactional_callbacks=)
       ActiveRecord::Base.raise_in_transactional_callbacks = true
     end
 
@@ -77,7 +78,14 @@ class IdentityCache::TestCase < Minitest::Test
     raise
   ensure
     ActiveSupport::Notifications.unsubscribe(subscriber)
-    assert_equal(num, counter.log.size, "#{counter.log.size} instead of #{num} queries were executed.#{counter.log.size == 0 ? '' : "\nQueries:\n#{counter.log.join("\n")}"}") unless exception
+    assert_equal(
+      num,
+      counter.log.size,
+      <<~MSG.squish
+        #{counter.log.size} instead of #{num} queries were executed.
+        #{counter.log.size == 0 ? '' : "\nQueries:\n#{counter.log.join("\n")}"}
+      MSG
+    ) unless exception
   end
 
   def assert_memcache_operations(num)
@@ -90,7 +98,14 @@ class IdentityCache::TestCase < Minitest::Test
     raise
   ensure
     ActiveSupport::Notifications.unsubscribe(subscriber)
-    assert_equal(num, counter.log.size, "#{counter.log.size} instead of #{num} memcache operations were executed. #{counter.log.size == 0 ? '' : "\nOperations:\n#{counter.log.join("\n")}"}") unless exception
+    assert_equal(
+      num,
+      counter.log.size,
+      <<~MSG.squish
+        #{counter.log.size} instead of #{num} memcache operations were executed.
+        #{counter.log.size == 0 ? '' : "\nOperations:\n#{counter.log.join("\n")}"}
+      MSG
+    ) unless exception
   end
 
   def assert_no_queries
@@ -110,11 +125,29 @@ end
 
 class SQLCounter
   cattr_accessor :ignored_sql
-  self.ignored_sql = [/^PRAGMA (?!(table_info))/, /^SELECT currval/, /^SELECT CAST/, /^SELECT @@IDENTITY/, /^SELECT @@ROWCOUNT/, /^SAVEPOINT/, /^ROLLBACK TO SAVEPOINT/, /^RELEASE SAVEPOINT/, /^SHOW max_identifier_length/, /^BEGIN/, /^COMMIT/, /^SHOW /]
+  self.ignored_sql = [
+    /^PRAGMA (?!(table_info))/,
+    /^SELECT currval/,
+    /^SELECT CAST/,
+    /^SELECT @@IDENTITY/,
+    /^SELECT @@ROWCOUNT/,
+    /^SAVEPOINT/,
+    /^ROLLBACK TO SAVEPOINT/,
+    /^RELEASE SAVEPOINT/,
+    /^SHOW max_identifier_length/,
+    /^BEGIN/,
+    /^COMMIT/,
+    /^SHOW /,
+  ]
 
   # FIXME: this needs to be refactored so specific database can add their own
   # ignored SQL.  This ignored SQL is for Oracle.
-  ignored_sql.concat([/^select .*nextval/i, /^SAVEPOINT/, /^ROLLBACK TO/, /^\s*select .* from all_triggers/im])
+  ignored_sql.concat([
+    /^select .*nextval/i,
+    /^SAVEPOINT/,
+    /^ROLLBACK TO/,
+    /^\s*select .* from all_triggers/im,
+  ])
 
   attr_reader :ignore
   attr_accessor :log

@@ -30,7 +30,7 @@ class NormalizedHasManyTest < IdentityCache::TestCase
     assert_equal([3, 2, 1], @record.associated_record_ids)
   end
 
-  def test_defining_a_denormalized_has_many_cache_caches_the_list_of_associated_ids_on_the_parent_record_during_cache_miss
+  def test_defining_denormalized_has_many_cache_caches_list_of_associated_ids_on_parent_record_during_cache_miss
     fetched_record = Item.fetch(@record.id)
     assert_equal([2, 1], fetched_record.cached_associated_record_ids)
     assert_equal(false, fetched_record.associated_records.loaded?)
@@ -61,8 +61,16 @@ class NormalizedHasManyTest < IdentityCache::TestCase
       Item.fetch(@record.id)
     end
     assert_no_queries do
-      assert_equal [[1], [2]], fetched_records.fetch_denormalized_associated_records.map(&:cached_deeply_associated_record_ids)
-      assert_equal false, fetched_records.fetch_denormalized_associated_records.any?{ |record| record.deeply_associated_records.loaded? }
+      assert_equal(
+        [[1], [2]],
+        fetched_records.fetch_denormalized_associated_records.map(&:cached_deeply_associated_record_ids)
+      )
+      assert_equal(
+        false,
+        fetched_records.fetch_denormalized_associated_records.any? do |record|
+          record.deeply_associated_records.loaded?
+        end
+      )
     end
   end
 
@@ -125,7 +133,7 @@ class NormalizedHasManyTest < IdentityCache::TestCase
     end
   end
 
-  def test_fetching_the_association_should_delegate_to_the_normal_association_fetcher_if_the_normal_association_is_loaded
+  def test_fetching_association_should_delegate_to_normal_association_fetcher_if_normal_association_is_loaded
     # Warm the ActiveRecord association
     @record.associated_records.to_a
 

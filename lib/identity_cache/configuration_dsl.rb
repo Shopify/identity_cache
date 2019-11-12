@@ -253,12 +253,16 @@ module IdentityCache
 
         fields = [field]
         index_by_cache_key = index_values.each_with_object({}) do |index_value, index_hash|
-          cache_key = rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, [index_value], unique_index)
+          cache_key = rails_cache_key_for_attribute_and_fields_and_values(
+            attribute, fields, [index_value], unique_index
+          )
           index_hash[cache_key] = index_value
         end
         attribute_by_cache_key = IdentityCache.fetch_multi(index_by_cache_key.keys) do |unresolved_keys|
           unresolved_index_values = unresolved_keys.map { |cache_key| index_by_cache_key.fetch(cache_key) }
-          resolved_attributes = batch_dynamic_attribute_cache_miss(attribute, field, unresolved_index_values, unique_index)
+          resolved_attributes = batch_dynamic_attribute_cache_miss(
+            attribute, field, unresolved_index_values, unique_index
+          )
           unresolved_index_values.map { |index_value| resolved_attributes.fetch(index_value) }
         end
         result = {}
@@ -289,7 +293,10 @@ module IdentityCache
 
       def ensure_base_model
         if self != cached_model
-          raise DerivedModelError, "IdentityCache class methods must be called on the same model that includes IdentityCache"
+          raise DerivedModelError, <<~MSG.squish
+            IdentityCache class methods must be called on the same
+            model that includes IdentityCache
+          MSG
         end
       end
 

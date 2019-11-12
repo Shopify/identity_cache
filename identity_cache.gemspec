@@ -3,10 +3,23 @@
 require File.expand_path('../lib/identity_cache/version', __FILE__)
 
 Gem::Specification.new do |gem|
-  gem.authors       = ["Camilo Lopez", "Tom Burns", "Harry Brundage", "Dylan Thacker-Smith", "Tobias Lutke", "Arthur Neves", "Francis Bogsanyi"]
+  gem.authors = [
+    "Camilo Lopez",
+    "Tom Burns",
+    "Harry Brundage",
+    "Dylan Thacker-Smith",
+    "Tobias Lutke",
+    "Arthur Neves",
+    "Francis Bogsanyi",
+  ]
   gem.email         = ["gems@shopify.com"]
-  gem.description   = %q{Opt in read through ActiveRecord caching.}
-  gem.summary       = %q{IdentityCache lets you specify how you want to cache your model objects, at the model level, and adds a number of convenience methods for accessing those objects through the cache. Memcached is used as the backend cache store, and the database is only hit when a copy of the object cannot be found in Memcached.}
+  gem.description   = "Opt in read through ActiveRecord caching."
+  gem.summary       = "IdentityCache lets you specify how you want to cache your " \
+                      "model objects, at the model level, and adds a number of " \
+                      "convenience methods for accessing those objects through " \
+                      "the cache. Memcached is used as the backend cache store, " \
+                      "and the database is only hit when a copy of the object " \
+                      "cannot be found in Memcached."
   gem.homepage      = "https://github.com/Shopify/identity_cache"
 
   gem.files         = `git ls-files`.split($\)

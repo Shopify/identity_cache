@@ -9,10 +9,11 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
     @bob = Item.create!(title: 'bob')
     @joe = Item.create!(title: 'joe')
     @fred = Item.create!(title: 'fred')
-    @bob_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:1"
-    @joe_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:2"
-    @fred_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:3"
-    @tenth_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:10"
+    attr_string = "created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime"
+    @bob_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash(attr_string)}:1"
+    @joe_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash(attr_string)}:2"
+    @fred_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash(attr_string)}:3"
+    @tenth_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash(attr_string)}:10"
   end
 
   def test_prefetch_associations_on_fetched_records
@@ -251,7 +252,9 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
     Item.fetch_multi(@bob.id, @fred.id)
 
     assert_memcache_operations(2) do
-      @cached_bob_child, @cached_fred_child = AssociatedRecord.fetch_multi(@bob_child.id, @fred_child.id, includes: :item)
+      @cached_bob_child, @cached_fred_child = AssociatedRecord.fetch_multi(
+        @bob_child.id, @fred_child.id, includes: :item
+      )
       assert_equal @bob,  @cached_bob_child.fetch_item
       assert_equal @fred, @cached_fred_child.fetch_item
     end
@@ -279,7 +282,9 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
     _child_records, grandchildren = setup_has_many_children_and_grandchildren(@bob, @joe)
 
     assert_memcache_operations(3) do
-      @cached_bob, @cached_joe = Item.fetch_multi(@bob.id, @joe.id, includes: {associated_records: :deeply_associated_records})
+      @cached_bob, @cached_joe = Item.fetch_multi(
+        @bob.id, @joe.id, includes: {associated_records: :deeply_associated_records}
+      )
       bob_children = @cached_bob.fetch_associated_records.sort
       joe_children = @cached_joe.fetch_associated_records.sort
 
@@ -306,7 +311,9 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
     Item.fetch_multi(@bob.id, @fred.id)
 
     assert_memcache_operations(3) do
-      @cached_bob_child, @cached_fred_child = AssociatedRecord.fetch_multi(@bob_child.id, @fred_child.id, includes: {item: :item})
+      @cached_bob_child, @cached_fred_child = AssociatedRecord.fetch_multi(
+        @bob_child.id, @fred_child.id, includes: {item: :item}
+      )
 
       @cached_bob_parent  = @cached_bob_child.fetch_item
       @cached_fred_parent = @cached_fred_child.fetch_item
@@ -327,14 +334,16 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
   end
 
 
-  def test_fetch_multi_batch_fetches_non_embedded_second_level_associations_through_embedded_first_level_has_many_associations
+  def test_fetch_multi_batch_fetches_non_embedded_second_level_associations_through_embedded_first_level_has_many_associations # rubocop:disable Metrics/LineLength
     Item.send(:cache_has_many, :associated_records, embed: true)
     AssociatedRecord.send(:cache_has_many, :deeply_associated_records, embed: :ids)
 
     _child_records, grandchildren = setup_has_many_children_and_grandchildren(@bob, @joe)
 
     assert_memcache_operations(2) do
-      @cached_bob, @cached_joe = Item.fetch_multi(@bob.id, @joe.id, includes: {associated_records: :deeply_associated_records})
+      @cached_bob, @cached_joe = Item.fetch_multi(
+        @bob.id, @joe.id, includes: {associated_records: :deeply_associated_records}
+      )
       bob_children = @cached_bob.fetch_associated_records.sort
       joe_children = @cached_joe.fetch_associated_records.sort
 
@@ -347,7 +356,7 @@ class PrefetchAssociationsTest < IdentityCache::TestCase
     end
   end
 
-  def test_fetch_multi_batch_fetches_non_embedded_second_level_associations_through_embedded_first_level_has_one_associations
+  def test_fetch_multi_batch_fetches_non_embedded_second_level_associations_through_embedded_first_level_has_one_associations # rubocop:disable Metrics/LineLength
     Item.send(:cache_has_one, :associated, embed: true)
     AssociatedRecord.send(:cache_has_many, :deeply_associated_records, embed: :ids)
 

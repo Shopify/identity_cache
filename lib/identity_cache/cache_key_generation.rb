@@ -68,11 +68,15 @@ module IdentityCache
     end
 
     def attribute_cache_key_for_attribute_and_current_values(attribute, fields, unique) # :nodoc:
-      self.class.rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, current_values_for_fields(fields), unique)
+      self.class.rails_cache_key_for_attribute_and_fields_and_values(
+        attribute, fields, current_values_for_fields(fields), unique
+      )
     end
 
     def attribute_cache_key_for_attribute_and_previous_values(attribute, fields, unique) # :nodoc:
-      self.class.rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, old_values_for_fields(fields), unique)
+      self.class.rails_cache_key_for_attribute_and_fields_and_values(
+        attribute, fields, old_values_for_fields(fields), unique
+      )
     end
 
     def current_values_for_fields(fields) # :nodoc:
