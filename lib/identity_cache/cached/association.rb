@@ -37,6 +37,34 @@ module IdentityCache
           reflection.active_record.name.underscore
         end
       end
+
+      def validate
+        parent_class = reflection.active_record
+        child_class  = reflection.klass
+
+        unless child_class < IdentityCache
+          if embedded_recursively?
+            raise UnsupportedAssociationError, <<~MSG.squish
+              cached association #{parent_class}\##{reflection.name} requires
+              associated class #{child_class} to include IdentityCache
+              or IdentityCache::WithoutPrimaryIndex
+            MSG
+          else
+            raise UnsupportedAssociationError, <<~MSG.squish
+              cached association #{parent_class}\##{reflection.name} requires
+              associated class #{child_class} to include IdentityCache
+            MSG
+          end
+        end
+
+        unless child_class.reflect_on_association(inverse_name)
+          raise InverseAssociationError, <<~MSG.squish
+            Inverse name for association #{parent_class}\##{reflection.name} could
+            not be determined. Please use the :inverse_name option to specify
+            the inverse association name for this cache.
+          MSG
+        end
+      end
     end
   end
 end
