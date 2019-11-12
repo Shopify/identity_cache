@@ -11,7 +11,7 @@ module IdentityCache
       schema_to_string(klass.columns).tap do |schema_string|
         klass.send(:all_cached_associations).sort.each do |name, association|
           klass.send(:check_association_scope, name)
-          ParentModelExpiration.check_association(association) if association.embedded?
+          association.validate if association.embedded?
           case association
           when Cached::Recursive::Association
             schema_string << ",#{name}:(#{denormalized_schema_hash(association.reflection.klass)})"

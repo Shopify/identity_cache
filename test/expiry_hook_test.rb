@@ -2,28 +2,37 @@ require "test_helper"
 
 module IdentityCache
   class ExpiryHookTest < IdentityCache::TestCase
-    def test_cached_association
+    def test_install_on_reference_association
       hook = ExpiryHook.new(reference_cached_association)
 
-      assert_same(reference_cached_association, hook.cached_association)
+      hook.install
+
+      assert_equal(
+        DeeplyAssociatedRecord.parent_expiration_entries[:associated_record],
+        [[AssociatedRecord, true]]
+      )
     end
 
-    def test_only_on_foreign_key_change_true_when_reference_association
-      hook = ExpiryHook.new(reference_cached_association)
-
-      assert_predicate(hook, :only_on_foreign_key_change?)
-    end
-
-    def test_only_on_foreign_key_change_false_when_recursive_association
+    def test_install_on_recursive_association
       hook = ExpiryHook.new(recursive_cached_association)
 
-      refute_predicate(hook, :only_on_foreign_key_change?)
+      hook.install
+
+      assert_equal(
+        DeeplyAssociatedRecord.parent_expiration_entries[:associated_record],
+        [[AssociatedRecord, false]]
+      )
     end
 
-    def test_only_on_foreign_key_change_false_when_belongs_to
+    def test_install_on_belongs_to
       hook = ExpiryHook.new(belongs_to_reference_cached_association)
 
-      refute_predicate(hook, :only_on_foreign_key_change?)
+      hook.install
+
+      assert_equal(
+        Item.parent_expiration_entries[:associated_records],
+        [[AssociatedRecord, false]]
+      )
     end
 
     private

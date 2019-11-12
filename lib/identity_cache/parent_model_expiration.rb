@@ -4,72 +4,38 @@ module IdentityCache
 
     class << self
       def add_parent_expiry_hook(cached_association)
-        name = model_basename(cached_association.reflection.class_name)
+        name = cached_association.reflection.class_name.demodulize
         lazy_hooks[name] << ExpiryHook.new(cached_association)
       end
 
       def install_all_pending_parent_expiry_hooks
         until lazy_hooks.empty?
-          lazy_hooks.keys.each do |key|
-            lazy_hooks.delete(key).each do |expiry_hook|
-              install_hook(expiry_hook)
+          lazy_hooks.keys.each do |name|
+            if (hooks = lazy_hooks.delete(name))
+              hooks.each(&:install)
             end
           end
         end
       end
 
       def install_pending_parent_expiry_hooks(model)
-        name = model_basename(model.name)
-        lazy_hooks.delete(name).try!(:each) do |expiry_hook|
-          install_hook(expiry_hook)
-        end
-      end
-
-      def check_association(cached_association)
-        reflection = cached_association.reflection
-        parent_model = reflection.active_record
-        child_model = reflection.klass
-
-        unless child_model < IdentityCache
-          message = "cached association #{parent_model}\##{reflection.name} requires" \
-            " associated class #{child_model} to include IdentityCache"
-          message << " or IdentityCache::WithoutPrimaryIndex" if cached_association.embedded_recursively?
-          raise UnsupportedAssociationError, message
-        end
-
-        unless child_model.reflect_on_association(cached_association.inverse_name)
-          raise InverseAssociationError, "Inverse name for association #{parent_model}\##{reflection.name} could not be determined. " \
-            "Please use the :inverse_name option to specify the inverse association name for this cache."
+        name = model.name.demodulize
+        if (hooks = lazy_hooks.delete(name))
+          hooks.each(&:install)
         end
       end
 
       private
 
-      def model_basename(name)
-        name.split("::").last
-      end
-
       def lazy_hooks
         @lazy_hooks ||= Hash.new { |hash, key| hash[key] = [] }
       end
-
-      def install_hook(expiry_hook)
-        check_association(expiry_hook.cached_association)
-
-        association_reflection = expiry_hook.cached_association.reflection
-        parent_model = association_reflection.active_record
-        child_model = association_reflection.klass
-
-        parent_expiration_entry = [parent_model, expiry_hook.only_on_foreign_key_change?]
-        child_model.parent_expiration_entries[expiry_hook.cached_association.inverse_name] << parent_expiration_entry
-      end
     end
 
-    included do |base|
-      base.class_attribute(:parent_expiration_entries)
-      base.parent_expiration_entries = Hash.new{ |hash, key| hash[key] = [] }
-
-      base.after_commit(:expire_parent_caches)
+    included do
+      class_attribute(:parent_expiration_entries)
+      self.parent_expiration_entries = Hash.new { |hash, key| hash[key] = [] }
+      after_commit(:expire_parent_caches)
     end
 
     def expire_parent_caches
@@ -136,5 +102,6 @@ module IdentityCache
       end
     end
   end
+
   private_constant :ParentModelExpiration
 end
