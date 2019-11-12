@@ -47,7 +47,7 @@ module IdentityCache
         coder
       end
 
-      def embedded_coder(record, association, cached_association)
+      def embedded_coder(record, _association, cached_association)
         embedded_record_or_records = record.public_send(cached_association.cached_accessor_name)
 
         if embedded_record_or_records.respond_to?(:to_ary)
@@ -62,17 +62,17 @@ module IdentityCache
       def record_from_coder(coder, klass) #:nodoc:
         record = klass.instantiate(coder[:attributes].dup)
 
-        if coder.has_key?(:associations)
+        if coder.key?(:associations)
           coder[:associations].each do |name, value|
             record.instance_variable_set(klass.send(:cached_association, name).dehydrated_variable_name, value)
           end
         end
-        if coder.has_key?(:association_ids)
+        if coder.key?(:association_ids)
           coder[:association_ids].each do |name, ids|
             record.instance_variable_set(record.class.cached_has_manys[name].ids_variable_name, ids)
           end
         end
-        if coder.has_key?(:association_id)
+        if coder.key?(:association_id)
           coder[:association_id].each do |name, id|
             record.instance_variable_set(record.class.cached_has_ones[name].id_variable_name, id)
           end
