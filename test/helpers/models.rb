@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 class DeeplyAssociatedRecord < ActiveRecord::Base
   include IdentityCache
   belongs_to :item

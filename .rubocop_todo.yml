@@ -337,13 +337,6 @@ Style/EmptyLiteral:
     - 'lib/identity_cache.rb'
     - 'lib/identity_cache/query_api.rb'
 
-# Offense count: 74
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: always, never
-Style/FrozenStringLiteralComment:
-  Enabled: false
-
 # Offense count: 1
 # Configuration parameters: AllowIfModifier.
 Style/IfInsideElse:

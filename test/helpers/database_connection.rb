@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module DatabaseConnection
   def self.db_name
     ENV.fetch('DB', 'mysql2')

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module IdentityCache
   module BelongsToCaching
     extend ActiveSupport::Concern

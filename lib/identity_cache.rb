@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'active_record'
 require 'active_support/core_ext/module/attribute_accessors'
 require 'ar_transaction_changes'
@@ -58,7 +59,7 @@ module IdentityCache
     attr_writer :logger
 
     mattr_accessor :cache_namespace
-    self.cache_namespace = "IDC:#{CACHE_VERSION}:".freeze
+    self.cache_namespace = "IDC:#{CACHE_VERSION}:"
 
     # Fetched records are not read-only and this could sometimes prevent IDC from
     # reflecting what's truly in the database when fetch_read_only_records is false.
