@@ -13,7 +13,7 @@ Gem::Specification.new do |gem|
     "Francis Bogsanyi",
   ]
   gem.email         = ["gems@shopify.com"]
-  gem.description   = "Opt in read through ActiveRecord caching."
+  gem.description   = "Opt-in read through Active Record caching."
   gem.summary       = "IdentityCache lets you specify how you want to cache your " \
                       "model objects, at the model level, and adds a number of " \
                       "convenience methods for accessing those objects through " \
