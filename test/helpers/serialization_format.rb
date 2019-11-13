@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module SerializationFormat
   def serialized_record
     AssociatedRecord.cache_has_many(:deeply_associated_records, embed: true)

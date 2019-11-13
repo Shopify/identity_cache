@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Use CityHash for fast hashing if it is available; use Digest::MD5 otherwise
 begin
   require 'cityhash'

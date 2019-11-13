@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module IdentityCache
   module BelongsToCaching
     extend ActiveSupport::Concern
@@ -16,7 +17,10 @@ module IdentityCache
         end
 
         if reflection.scope
-          raise UnsupportedAssociationError, "caching association #{self}.#{association} is scoped which isn't supported"
+          raise(
+            UnsupportedAssociationError,
+            "caching association #{self}.#{association} is scoped which isn't supported"
+          )
         end
 
         cached_belongs_to = Cached::Reference::BelongsTo.new(

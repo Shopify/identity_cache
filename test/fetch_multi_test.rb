@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require "test_helper"
 
 class FetchMultiTest < IdentityCache::TestCase
@@ -8,10 +9,11 @@ class FetchMultiTest < IdentityCache::TestCase
     @bob = Item.create!(title: 'bob')
     @joe = Item.create!(title: 'joe')
     @fred = Item.create!(title: 'fred')
-    @bob_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:1"
-    @joe_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:2"
-    @fred_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:3"
-    @tenth_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:10"
+    attr_string = "created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime"
+    @bob_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash(attr_string)}:1"
+    @joe_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash(attr_string)}:2"
+    @fred_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash(attr_string)}:3"
+    @tenth_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash(attr_string)}:10"
   end
 
   def test_fetch_multi_with_no_records

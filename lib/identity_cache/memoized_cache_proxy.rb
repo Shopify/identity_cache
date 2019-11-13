@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'monitor'
 require 'benchmark'
 
@@ -81,7 +82,9 @@ module IdentityCache
       if cache_misses > 0
         IdentityCache.logger.debug { "[IdentityCache] cache miss for #{key}" }
       else
-        IdentityCache.logger.debug { "[IdentityCache] #{ memo_misses > 0 ? '(cache_backend)' : '(memoized)' } cache hit for #{key}" }
+        IdentityCache.logger.debug do
+          "[IdentityCache] #{ memo_misses > 0 ? '(cache_backend)' : '(memoized)' } cache hit for #{key}"
+        end
       end
 
       value

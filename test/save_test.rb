@@ -1,7 +1,9 @@
+# frozen_string_literal: true
 require "test_helper"
 
 class SaveTest < IdentityCache::TestCase
-  NAMESPACE = IdentityCache::CacheKeyGeneration::DEFAULT_NAMESPACE
+  NAMESPACE   = IdentityCache::CacheKeyGeneration::DEFAULT_NAMESPACE
+  ATTR_STRING = "created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime"
 
   def setup
     super
@@ -9,7 +11,9 @@ class SaveTest < IdentityCache::TestCase
     Item.cache_index(:id, :title, unique: true)
 
     @record = Item.create(title: 'bob')
-    @blob_key_prefix = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:"
+    @blob_key_prefix = [
+      NAMESPACE, "blob:", "Item:", "#{cache_hash(ATTR_STRING)}:"
+    ].join
     @blob_key = "#{@blob_key_prefix}1"
   end
 

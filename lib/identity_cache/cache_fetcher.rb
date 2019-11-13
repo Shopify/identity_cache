@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module IdentityCache
   class CacheFetcher
     attr_accessor :cache_backend

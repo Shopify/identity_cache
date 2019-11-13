@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require "test_helper"
 
 class LazyLoadAssociatedClassesTest < IdentityCache::TestCase
@@ -40,7 +41,12 @@ class LazyLoadAssociatedClassesTest < IdentityCache::TestCase
       err1 = assert_raises(IdentityCache::UnsupportedAssociationError) do
         Item.fetch(1)
       end
-      assert_equal 'cached association Item#not_cached_records requires associated class NotCachedRecord to include IdentityCache or IdentityCache::WithoutPrimaryIndex', err1.message
+      assert_equal(
+        "cached association Item#not_cached_records " \
+        "requires associated class NotCachedRecord to " \
+        "include IdentityCache or IdentityCache::WithoutPrimaryIndex",
+        err1.message
+      )
       err2 = assert_raises(IdentityCache::UnsupportedAssociationError) do
         Item.fetch_multi([1])
       end
@@ -55,7 +61,11 @@ class LazyLoadAssociatedClassesTest < IdentityCache::TestCase
       err1 = assert_raises(IdentityCache::UnsupportedAssociationError) do
         Item.fetch(1)
       end
-      assert_equal 'cached association Item#not_cached_records requires associated class NotCachedRecord to include IdentityCache', err1.message
+      assert_equal(
+        "cached association Item#not_cached_records " \
+        "requires associated class NotCachedRecord to include IdentityCache",
+        err1.message
+      )
       err2 = assert_raises(IdentityCache::UnsupportedAssociationError) do
         Item.fetch_multi([1])
       end
@@ -63,4 +73,3 @@ class LazyLoadAssociatedClassesTest < IdentityCache::TestCase
     end
   end
 end
-

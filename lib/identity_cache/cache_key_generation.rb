@@ -1,7 +1,8 @@
+# frozen_string_literal: true
 module IdentityCache
   module CacheKeyGeneration
     extend ActiveSupport::Concern
-    DEFAULT_NAMESPACE = "IDC:#{CACHE_VERSION}:".freeze
+    DEFAULT_NAMESPACE = "IDC:#{CACHE_VERSION}:"
 
     def self.schema_to_string(columns)
       columns.sort_by(&:name).map{|c| "#{c.name}:#{c.type}"}.join(',')
@@ -67,11 +68,15 @@ module IdentityCache
     end
 
     def attribute_cache_key_for_attribute_and_current_values(attribute, fields, unique) # :nodoc:
-      self.class.rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, current_values_for_fields(fields), unique)
+      self.class.rails_cache_key_for_attribute_and_fields_and_values(
+        attribute, fields, current_values_for_fields(fields), unique
+      )
     end
 
     def attribute_cache_key_for_attribute_and_previous_values(attribute, fields, unique) # :nodoc:
-      self.class.rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, old_values_for_fields(fields), unique)
+      self.class.rails_cache_key_for_attribute_and_fields_and_values(
+        attribute, fields, old_values_for_fields(fields), unique
+      )
     end
 
     def current_values_for_fields(fields) # :nodoc:

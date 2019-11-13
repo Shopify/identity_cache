@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require "test_helper"
 
 class FetchTest < IdentityCache::TestCase
@@ -12,7 +13,8 @@ class FetchTest < IdentityCache::TestCase
     @record.id = 1
     @record.title = 'bob'
     @cached_value = { attributes: @record.attributes_before_type_cast }
-    @blob_key = "#{NAMESPACE}blob:Item:#{cache_hash("created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime")}:1"
+    attrs = "created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime"
+    @blob_key = "#{NAMESPACE}blob:Item:#{cache_hash(attrs)}:1"
     @index_key = "#{NAMESPACE}attr:Item:id:title:#{cache_hash('"bob"')}"
   end
 

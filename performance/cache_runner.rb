@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 require 'active_record'
 require 'active_support/core_ext'
@@ -12,10 +13,6 @@ require File.dirname(__FILE__) + '/../test/helpers/cache_connection'
 
 IdentityCache.logger = Logger.new(nil)
 CacheConnection.setup
-
-if ActiveRecord.gem_version < Gem::Version.new('5') && ActiveRecord::Base.respond_to?(:raise_in_transactional_callbacks=)
-  ActiveRecord::Base.raise_in_transactional_callbacks = true
-end
 
 def create_record(id)
   Item.new(id)

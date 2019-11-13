@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module IdentityCache
   module QueryAPI
     extend ActiveSupport::Concern
@@ -10,7 +11,9 @@ module IdentityCache
       # Similar to ActiveRecord::Base#exists? will return true if the id can be
       # found in the cache or in the DB.
       def exists_with_identity_cache?(id)
-        raise NotImplementedError, "exists_with_identity_cache? needs the primary index enabled" unless primary_cache_index_enabled
+        unless primary_cache_index_enabled
+          raise NotImplementedError, "exists_with_identity_cache? needs the primary index enabled"
+        end
         !!fetch_by_id(id)
       end
 
@@ -30,7 +33,13 @@ module IdentityCache
             end
             object ||= Encoder.decode(coder, self)
             if object && object.id != id
-              IdentityCache.logger.error("[IDC id mismatch] fetch_by_id_requested=#{id} fetch_by_id_got=#{object.id} for #{object.inspect[(0..100)]}")
+              IdentityCache.logger.error(
+                <<~MSG.squish
+                  [IDC id mismatch] fetch_by_id_requested=#{id}
+                  fetch_by_id_got=#{object.id}
+                  for #{object.inspect[(0..100)]}
+                MSG
+              )
             end
             object
           end
@@ -45,7 +54,9 @@ module IdentityCache
       # ActiveRecord::Base.find, will raise ActiveRecord::RecordNotFound exception
       # if id is not in the cache or the db.
       def fetch(id, includes: nil)
-        fetch_by_id(id, includes: includes) or raise(ActiveRecord::RecordNotFound, "Couldn't find #{self.name} with ID=#{id}")
+        fetch_by_id(id, includes: includes) or raise(
+          ActiveRecord::RecordNotFound, "Couldn't find #{self.name} with ID=#{id}"
+        )
       end
 
       # Default fetcher added to the model on inclusion, if behaves like
@@ -130,7 +141,10 @@ module IdentityCache
         association_reflection = reflect_on_association(association_name)
         scope = association_reflection.scope
         if scope && !association_reflection.klass.all.instance_exec(&scope).joins_values.empty?
-          raise UnsupportedAssociationError, "caching association #{self}.#{association_name} scoped with a join isn't supported"
+          raise UnsupportedAssociationError, <<~MSG.squish
+            caching association #{self}.#{association_name}
+            scoped with a join isn't supported
+          MSG
         end
       end
 
@@ -165,7 +179,9 @@ module IdentityCache
         scope = scope.where(reflection.type => base_class.name) if reflection.type
         scope = scope.instance_exec(nil, &reflection.scope) if reflection.scope
 
-        pairs = scope.where(reflection.foreign_key => records.map(&:id)).pluck(reflection.foreign_key, reflection.association_primary_key)
+        pairs = scope.where(reflection.foreign_key => records.map(&:id)).pluck(
+          reflection.foreign_key, reflection.association_primary_key
+        )
         ids_by_parent = Hash.new{ |hash, key| hash[key] = [] }
         pairs.each do |parent_id, child_id|
           ids_by_parent[parent_id] << child_id
