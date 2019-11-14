@@ -46,7 +46,7 @@ module IdentityCache
         arg_list = (0...fields.size).collect { |i| "arg#{i}" }.join(',')
 
         if unique
-          self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
+          instance_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
             def fetch_by_#{field_list}(#{arg_list}, includes: nil)
               id = fetch_id_by_#{field_list}(#{arg_list})
               id && fetch_by_id(id, includes: includes)
@@ -58,7 +58,7 @@ module IdentityCache
             end
           CODE
         else
-          self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
+          instance_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
             def fetch_by_#{field_list}(#{arg_list}, includes: nil)
               ids = fetch_id_by_#{field_list}(#{arg_list})
               ids.empty? ? ids : fetch_multi(ids, includes: includes)
@@ -67,7 +67,7 @@ module IdentityCache
         end
 
         if fields.length == 1
-          self.instance_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
+          instance_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
             def fetch_multi_by_#{field_list}(index_values, includes: nil)
               ids = fetch_multi_id_by_#{field_list}(index_values).values.flatten(1)
               return ids if ids.empty?
@@ -120,7 +120,7 @@ module IdentityCache
           raise NotImplementedError
         end
 
-        self.cached_has_manys[association] = association_class.new(
+        cached_has_manys[association] = association_class.new(
           association,
           reflection: reflection,
           inverse_name: inverse_name,
@@ -161,7 +161,7 @@ module IdentityCache
           raise NotImplementedError
         end
 
-        self.cached_has_ones[association] = association_class.new(
+        cached_has_ones[association] = association_class.new(
           association,
           reflection: reflection,
           inverse_name: inverse_name,
@@ -197,19 +197,19 @@ module IdentityCache
         unique = !!unique
         fields = Array(by)
 
-        self.cache_indexes.push([alias_name, fields, unique])
+        cache_indexes.push([alias_name, fields, unique])
 
         field_list = fields.join("_and_")
         arg_list = (0...fields.size).collect { |i| "arg#{i}" }.join(',')
 
-        self.instance_eval(<<-CODE, __FILE__, __LINE__ + 1)
+        instance_eval(<<-CODE, __FILE__, __LINE__ + 1)
           def fetch_#{alias_name}_by_#{field_list}(#{arg_list})
             attribute_dynamic_fetcher(#{attribute}, #{fields.inspect}, [#{arg_list}], #{unique})
           end
         CODE
 
         if fields.length == 1
-          self.instance_eval(<<-CODE, __FILE__, __LINE__ + 1)
+          instance_eval(<<-CODE, __FILE__, __LINE__ + 1)
             def fetch_multi_#{alias_name}_by_#{field_list}(index_values)
               batch_attribute_dynamic_fetcher(#{attribute}, #{fields.first.to_s.inspect}.freeze, index_values, #{unique})
             end
@@ -301,7 +301,7 @@ module IdentityCache
       end
 
       def check_association_for_caching(association)
-        unless association_reflection = self.reflect_on_association(association)
+        unless association_reflection = reflect_on_association(association)
           raise AssociationError, "Association named '#{association}' was not found on #{self.class}"
         end
         if association_reflection.options[:through]

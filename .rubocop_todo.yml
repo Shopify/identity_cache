@@ -304,18 +304,6 @@ Style/RedundantReturn:
   Exclude:
     - 'test/prefetch_associations_test.rb'
 
-# Offense count: 18
-# Cop supports --auto-correct.
-Style/RedundantSelf:
-  Exclude:
-    - 'lib/identity_cache.rb'
-    - 'lib/identity_cache/belongs_to_caching.rb'
-    - 'lib/identity_cache/cache_key_generation.rb'
-    - 'lib/identity_cache/configuration_dsl.rb'
-    - 'lib/identity_cache/query_api.rb'
-    - 'test/helpers/active_record_objects.rb'
-    - 'test/test_helper.rb'
-
 # Offense count: 1
 # Cop supports --auto-correct.
 # Configuration parameters: EnforcedStyle, AllowInnerSlashes.

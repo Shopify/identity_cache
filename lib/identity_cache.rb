@@ -157,7 +157,7 @@ module IdentityCache
     end
 
     def with_fetch_read_only_records(value = true)
-      old_value = self.fetch_read_only_records
+      old_value = fetch_read_only_records
       self.fetch_read_only_records = value
       yield
     ensure

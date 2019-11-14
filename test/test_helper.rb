@@ -158,7 +158,7 @@ class SQLCounter
     # FIXME: this seems bad. we should probably have a better way to indicate
     # the query was cached
     return if 'CACHE' == values[:name] || ignore.any? { |x| x =~ sql }
-    self.log << sql
+    log << sql
   end
 end
 
@@ -170,6 +170,6 @@ class CacheCounter
   end
 
   def call(name, start, finish, message_id, values)
-    self.log << "#{name} #{(values[:keys].try(:join, ', ') || values[:key])}"
+    log << "#{name} #{(values[:keys].try(:join, ', ') || values[:key])}"
   end
 end

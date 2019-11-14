@@ -25,7 +25,7 @@ module IdentityCache
 
         cached_belongs_to = Cached::BelongsTo.new(association, reflection: reflection)
 
-        self.cached_belongs_tos[association] = cached_belongs_to.tap(&:build)
+        cached_belongs_tos[association] = cached_belongs_to.tap(&:build)
       end
     end
   end

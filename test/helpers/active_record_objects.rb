@@ -3,7 +3,7 @@ module SwitchNamespace
 
   module ClassMethods
     def rails_cache_key_namespace
-      "#{self.namespace}:#{super}"
+      "#{namespace}:#{super}"
     end
   end
 

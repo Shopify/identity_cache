@@ -55,7 +55,7 @@ module IdentityCache
       # if id is not in the cache or the db.
       def fetch(id, includes: nil)
         fetch_by_id(id, includes: includes) or raise(
-          ActiveRecord::RecordNotFound, "Couldn't find #{self.name} with ID=#{id}"
+          ActiveRecord::RecordNotFound, "Couldn't find #{name} with ID=#{id}"
         )
       end
 
@@ -149,7 +149,7 @@ module IdentityCache
       end
 
       def resolve_cache_miss(id)
-        record = self.includes(cache_fetch_includes).where(primary_key => id).take
+        record = includes(cache_fetch_includes).where(primary_key => id).take
         setup_embedded_associations_on_miss([record]) if record
         record
       end
