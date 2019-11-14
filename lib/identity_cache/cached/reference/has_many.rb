@@ -32,6 +32,14 @@ module IdentityCache
           ParentModelExpiration.add_parent_expiry_hook(self)
         end
 
+        def read(record)
+          record.public_send(cached_ids_name)
+        end
+
+        def write(record, ids)
+          record.instance_variable_set(ids_variable_name, ids)
+        end
+
         def clear(record)
           [ids_variable_name, records_variable_name].each do |ivar|
             if record.instance_variable_defined?(ivar)
@@ -40,7 +48,37 @@ module IdentityCache
           end
         end
 
+        def fetch(records)
+          fetch_embedded(records)
+
+          ids_to_parent_record = records.each_with_object({}) do |record, hash|
+            child_ids = record.send(cached_ids_name)
+            child_ids.each do |child_id|
+              hash[child_id] = record
+            end
+          end
+
+          parent_record_to_child_records = Hash.new { |h, k| h[k] = [] }
+
+          child_records = reflection.klass.fetch_multi(*ids_to_parent_record.keys)
+          child_records.each do |child_record|
+            parent_record = ids_to_parent_record[child_record.id]
+            parent_record_to_child_records[parent_record] << child_record
+          end
+
+          parent_record_to_child_records.each do |parent, children|
+            parent.instance_variable_set(records_variable_name, children)
+          end
+
+          child_records
+        end
+
         private
+
+        def embedded_fetched?(records)
+          record = records.first
+          super || record.instance_variable_defined?(ids_variable_name)
+        end
 
         def singular_name
           name.to_s.singularize
