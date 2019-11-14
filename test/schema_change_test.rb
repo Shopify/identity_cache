@@ -40,7 +40,7 @@ class SchemaChangeTest < IdentityCache::TestCase
   def teardown
     active_records = [AssociatedRecord, DeeplyAssociatedRecord]
     super
-    active_records.each {|ar| ar.reset_column_information }
+    active_records.each { |ar| ar.reset_column_information }
   end
 
   # This helper simulates the models being reloaded

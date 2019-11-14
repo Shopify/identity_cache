@@ -74,7 +74,7 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
     backend.write('foo', 'bar')
 
     IdentityCache.cache.with_memoization do
-      assert_equal(expected_hash, IdentityCache.cache.fetch_multi('foo', 'fooz') {|_| [IdentityCache::CACHED_NIL] })
+      assert_equal(expected_hash, IdentityCache.cache.fetch_multi('foo', 'fooz') { |_| [IdentityCache::CACHED_NIL] })
       assert_equal(expected_hash, IdentityCache.cache.memoized_key_values)
       backend.delete('foo')
       backend.write('fooz', 'baz')

@@ -70,12 +70,12 @@ module IdentityCache
         ids.map! { |id| id_type.cast(id) }.compact!
         records = if should_use_cache?
           require_if_necessary do
-            cache_keys = ids.map {|id| rails_cache_key(id) }
+            cache_keys = ids.map { |id| rails_cache_key(id) }
             key_to_id_map = Hash[ cache_keys.zip(ids) ]
             key_to_record_map = {}
 
             coders_by_key = IdentityCache.fetch_multi(cache_keys) do |unresolved_keys|
-              ids = unresolved_keys.map {|key| key_to_id_map[key] }
+              ids = unresolved_keys.map { |key| key_to_id_map[key] }
               records = find_batch(ids)
               key_to_record_map = records.compact.index_by{ |record| rails_cache_key(record.id) }
               records.map { |record| Encoder.encode(record) }
@@ -271,7 +271,7 @@ module IdentityCache
       def find_batch(ids)
         return [] if ids.empty?
 
-        @id_column ||= columns.detect {|c| c.name == primary_key}
+        @id_column ||= columns.detect { |c| c.name == primary_key }
         ids = ids.map{ |id| connection.type_cast(id, @id_column) }
         records = where(primary_key => ids).includes(cache_fetch_includes).to_a
         setup_embedded_associations_on_miss(records)

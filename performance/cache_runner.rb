@@ -104,14 +104,14 @@ end
 module DeletedRunner
   def prepare
     super
-    (1..@count).each {|i| ::Item.find(i).expire_cache }
+    (1..@count).each { |i| ::Item.find(i).expire_cache }
   end
 end
 
 module ConflictRunner
   def prepare
     super
-    records = (1..@count).map {|id| ::Item.find(id) }
+    records = (1..@count).map { |id| ::Item.find(id) }
     orig_resolve_cache_miss = ::Item.method(:resolve_cache_miss)
 
     ::Item.define_singleton_method(:resolve_cache_miss) do |id|
@@ -126,7 +126,7 @@ module DeletedConflictRunner
   include ConflictRunner
   def prepare
     super
-    (1..@count).each {|i| ::Item.find(i).expire_cache }
+    (1..@count).each { |i| ::Item.find(i).expire_cache }
   end
 end
 

@@ -142,7 +142,7 @@ module IdentityCache
       result = if should_use_cache?
         fetch_in_batches(keys.uniq) do |missed_keys|
           results = yield missed_keys
-          results.map {|e| map_cached_nil_for e }
+          results.map { |e| map_cached_nil_for e }
         end
       else
         results = yield keys
@@ -172,7 +172,7 @@ module IdentityCache
 
     def fetch_in_batches(keys)
       keys.each_slice(BATCH_SIZE).each_with_object(Hash.new) do |slice, result|
-        result.merge!(cache.fetch_multi(*slice) {|missed_keys| yield missed_keys })
+        result.merge!(cache.fetch_multi(*slice) { |missed_keys| yield missed_keys })
       end
     end
   end

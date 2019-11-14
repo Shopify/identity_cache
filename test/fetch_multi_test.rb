@@ -406,7 +406,7 @@ class FetchMultiTest < IdentityCache::TestCase
 
   def fetch_multi_stub(cache_response)
     Spy.on(IdentityCache.cache, :fetch_multi).and_return do |*args, &block|
-      nil_keys = cache_response.select {|_, v| v.nil? }.keys
+      nil_keys = cache_response.select { |_, v| v.nil? }.keys
       cache_response.merge(Hash[nil_keys.zip(block.call(nil_keys))])
     end
   end

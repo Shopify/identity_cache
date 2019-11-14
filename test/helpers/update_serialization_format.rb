@@ -20,7 +20,7 @@ DatabaseConnection.create_tables
 IdentityCache.logger = Logger.new(nil)
 CacheConnection.setup
 setup_models
-File.open(serialized_record_file, 'w') {|file| serialize(serialized_record, file) }
+File.open(serialized_record_file, 'w') { |file| serialize(serialized_record, file) }
 puts "Serialized record to #{serialized_record_file}"
 IdentityCache.cache.clear
 teardown_models

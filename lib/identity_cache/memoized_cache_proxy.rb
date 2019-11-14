@@ -8,7 +8,7 @@ module IdentityCache
 
     def initialize(cache_adaptor = nil)
       self.cache_backend = cache_adaptor || Rails.cache
-      @key_value_maps = Hash.new {|h, k| h[k] = {} }
+      @key_value_maps = Hash.new { |h, k| h[k] = {} }
     end
 
     def cache_backend=(cache_adaptor)
@@ -51,9 +51,9 @@ module IdentityCache
       ActiveSupport::Notifications.instrument('cache_delete.identity_cache', memoizing: memoizing) do
         memoized_key_values.delete(key) if memoizing
         if result = @cache_fetcher.delete(key)
-          IdentityCache.logger.debug {"[IdentityCache] delete recorded for #{key}"}
+          IdentityCache.logger.debug { "[IdentityCache] delete recorded for #{key}" }
         else
-          IdentityCache.logger.error {"[IdentityCache] delete failed for #{key}"}
+          IdentityCache.logger.error { "[IdentityCache] delete failed for #{key}" }
         end
         result
       end
@@ -186,9 +186,9 @@ module IdentityCache
         cache_hit_keys = memo_miss_keys - cache_miss_keys
         missed_keys = cache_miss_keys
 
-        memoized_keys.each {|k| IdentityCache.logger.debug("[IdentityCache] (memoized) cache hit for #{k} (multi)") }
-        cache_hit_keys.each {|k| IdentityCache.logger.debug("[IdentityCache] (backend) cache hit for #{k} (multi)") }
-        missed_keys.each {|k| IdentityCache.logger.debug("[IdentityCache] cache miss for #{k} (multi)") }
+        memoized_keys.each { |k| IdentityCache.logger.debug("[IdentityCache] (memoized) cache hit for #{k} (multi)") }
+        cache_hit_keys.each { |k| IdentityCache.logger.debug("[IdentityCache] (backend) cache hit for #{k} (multi)") }
+        missed_keys.each { |k| IdentityCache.logger.debug("[IdentityCache] cache miss for #{k} (multi)") }
       end
     end
   end
