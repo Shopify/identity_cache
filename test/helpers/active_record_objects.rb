@@ -18,7 +18,7 @@ end
 
 module ActiveRecordObjects
 
-  def setup_models(base = ActiveRecord::Base)
+  def setup_models(_base = ActiveRecord::Base)
     Kernel.load(File.expand_path('../../helpers/models.rb', __FILE__))
   end
 

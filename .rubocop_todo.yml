@@ -160,17 +160,6 @@ Lint/UnusedBlockArgument:
     - 'lib/identity_cache/query_api.rb'
     - 'test/fetch_multi_test.rb'
 
-# Offense count: 11
-# Cop supports --auto-correct.
-# Configuration parameters: AllowUnusedKeywordArguments, IgnoreEmptyMethods.
-Lint/UnusedMethodArgument:
-  Exclude:
-    - 'lib/identity_cache/cached/association.rb'
-    - 'lib/identity_cache/fallback_fetcher.rb'
-    - 'lib/identity_cache/memoized_cache_proxy.rb'
-    - 'test/helpers/active_record_objects.rb'
-    - 'test/test_helper.rb'
-
 # Offense count: 5
 Lint/UselessAssignment:
   Exclude:

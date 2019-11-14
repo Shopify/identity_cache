@@ -30,7 +30,7 @@ module IdentityCache
       @key_value_maps[Thread.current]
     end
 
-    def with_memoization(&block)
+    def with_memoization
       Thread.current[:memoizing_idc] = true
       yield
     ensure

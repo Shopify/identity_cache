@@ -19,7 +19,7 @@ module IdentityCache
       @cache_backend.clear
     end
 
-    def fetch_multi(keys, &block)
+    def fetch_multi(keys)
       results = @cache_backend.read_multi(*keys)
       missed_keys = keys - results.keys
       unless missed_keys.empty?

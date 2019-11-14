@@ -152,7 +152,7 @@ class SQLCounter
     @log = []
   end
 
-  def call(name, start, finish, message_id, values)
+  def call(_name, _start, _finish, _message_id, values)
     sql = values[:sql]
 
     # FIXME: this seems bad. we should probably have a better way to indicate
@@ -169,7 +169,7 @@ class CacheCounter
     @log = []
   end
 
-  def call(name, start, finish, message_id, values)
+  def call(name, _start, _finish, _message_id, values)
     log << "#{name} #{(values[:keys].try(:join, ', ') || values[:key])}"
   end
 end
