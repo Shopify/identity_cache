@@ -46,7 +46,7 @@ module IdentityCache
         else
           resolve_cache_miss(id)
         end
-        prefetch_associations(includes, [record]) if record && includes
+        Cached::Prefetcher.prefetch(self, includes, [record]) if record && includes
         record
       end
 
@@ -89,36 +89,8 @@ module IdentityCache
           find_batch(ids)
         end
         records.compact!
-        prefetch_associations(includes, records) if includes
+        Cached::Prefetcher.prefetch(self, includes, records) if includes
         records
-      end
-
-      def prefetch_associations(associations, records)
-        records = records.to_a
-        return if records.empty?
-
-        case associations
-        when nil
-          # do nothing
-        when Symbol
-          instrumented_prefetch_one_association(associations, records)
-        when Array
-          associations.each do |association|
-            prefetch_associations(association, records)
-          end
-        when Hash
-          associations.each do |association, sub_associations|
-            next_level_records = instrumented_prefetch_one_association(association, records)
-
-            if sub_associations.present?
-              associated_class = reflect_on_association(association).klass
-              associated_class.prefetch_associations(sub_associations, next_level_records)
-            end
-          end
-        else
-          raise TypeError, "Invalid associations class #{associations.class}"
-        end
-        nil
       end
 
       # Invalidates the primary cache index for the associated record. Will not invalidate cached attributes.
@@ -299,161 +271,6 @@ module IdentityCache
         setup_embedded_associations_on_miss(records)
         records_by_id = records.index_by(&:id)
         ids.map{ |id| records_by_id[id] }
-      end
-
-      def fetch_embedded_associations(records)
-        associations = embedded_associations
-        return if associations.empty?
-
-        return unless primary_cache_index_enabled
-
-        cached_records_by_id = fetch_multi(records.map(&:id)).index_by(&:id)
-
-        associations.each_value do |association|
-          records.each do |record|
-            next unless cached_record = cached_records_by_id[record.id]
-            case association
-            when Cached::Reference::HasMany
-              cached_association = cached_record.public_send(association.cached_ids_name)
-              record.instance_variable_set(association.ids_variable_name, cached_association)
-            when Cached::Reference::HasOne
-              cached_association = cached_record.public_send(association.cached_id_name)
-              record.instance_variable_set(association.id_variable_name, cached_association)
-            else
-              cached_association = cached_record.public_send(association.cached_accessor_name)
-              record.instance_variable_set(association.records_variable_name, cached_association)
-            end
-          end
-        end
-      end
-
-      def prefetch_embedded_association(records, association, cached_association)
-        # Make the same assumption as ActiveRecord::Associations::Preloader, which is
-        # that all the records have the same associations loaded, so we can just check
-        # the first record to see if an association is loaded.
-        first_record = records.first
-        return if first_record.association(association).loaded?
-        if cached_association.embedded_recursively?
-          return if first_record.instance_variable_defined?(cached_association.dehydrated_variable_name)
-          return if first_record.instance_variable_defined?(cached_association.records_variable_name)
-        else
-          return if first_record.instance_variable_defined?(cached_association.ids_variable_name)
-        end
-        fetch_embedded_associations(records)
-      end
-
-      def instrumented_prefetch_one_association(association, records)
-        ActiveSupport::Notifications.instrument('association_fetch.identity_cache', association: association) do
-          prefetch_one_association(association, records)
-        end
-      end
-
-      def prefetch_one_association(association, records)
-        unless records.first.class.should_use_cache?
-          ActiveRecord::Associations::Preloader.new.preload(records, association)
-          return
-        end
-
-        case
-        when cached_association = cached_has_manys[association]
-          prefetch_embedded_association(records, association, cached_association)
-          if cached_association.embedded_recursively?
-            child_records = records.flat_map(&cached_association.cached_accessor_name.to_sym)
-          else
-            ids_to_parent_record = records.each_with_object({}) do |record, hash|
-              child_ids = record.send(cached_association.cached_ids_name)
-              child_ids.each do |child_id|
-                hash[child_id] = record
-              end
-            end
-
-            parent_record_to_child_records = Hash.new { |h, k| h[k] = [] }
-            child_records = cached_association.reflection.klass.fetch_multi(*ids_to_parent_record.keys)
-            child_records.each do |child_record|
-              parent_record = ids_to_parent_record[child_record.id]
-              parent_record_to_child_records[parent_record] << child_record
-            end
-
-            parent_record_to_child_records.each do |parent, children|
-              parent.instance_variable_set(cached_association.records_variable_name, children)
-            end
-          end
-
-          next_level_records = child_records
-
-        when cached_association = cached_belongs_tos[association]
-          if cached_association.embedded_recursively?
-            raise ArgumentError.new("Embedded belongs_to associations do not support prefetching yet.")
-          else
-            reflection = cached_association.reflection
-            cached_iv_name = cached_association.records_variable_name
-            if reflection.polymorphic?
-              types_to_parent_ids = {}
-
-              records.each do |child_record|
-                parent_id = child_record.send(reflection.foreign_key)
-                if parent_id && !child_record.instance_variable_defined?(cached_iv_name)
-                  parent_type = Object.const_get(child_record.send(reflection.foreign_type)).cached_model
-                  types_to_parent_ids[parent_type] = {} unless types_to_parent_ids[parent_type]
-                  types_to_parent_ids[parent_type][parent_id] = child_record
-                end
-              end
-
-              parent_records = []
-
-              types_to_parent_ids.each do |type, ids_to_child_record|
-                type_parent_records = type.fetch_multi(ids_to_child_record.keys)
-                type_parent_records.each do |parent_record|
-                  child_record = ids_to_child_record[parent_record.id]
-                  child_record.instance_variable_set(cached_association.records_variable_name, parent_record)
-                end
-                parent_records.append(type_parent_records)
-              end
-            else
-              ids_to_child_record = records.each_with_object({}) do |child_record, hash|
-                parent_id = child_record.send(reflection.foreign_key)
-                if parent_id && !child_record.instance_variable_defined?(cached_iv_name)
-                  hash[parent_id] = child_record
-                end
-              end
-              parent_records = reflection.klass.fetch_multi(ids_to_child_record.keys)
-              parent_records.each do |parent_record|
-                child_record = ids_to_child_record[parent_record.id]
-                child_record.instance_variable_set(cached_association.records_variable_name, parent_record)
-              end
-            end
-          end
-
-          next_level_records = parent_records
-
-        when cached_association = cached_has_ones[association]
-          if cached_association.embedded_recursively?
-            prefetch_embedded_association(records, association, cached_association)
-            parent_records = records.map(&cached_association.cached_accessor_name.to_sym).compact
-          else
-            ids_to_parent_record = records.each_with_object({}) do |record, hash|
-              child_id = record.send(cached_association.cached_id_name)
-              hash[child_id] = record if child_id
-            end
-
-            parent_record_to_child_record = Hash.new
-            child_records = cached_association.reflection.klass.fetch_multi(*ids_to_parent_record.keys)
-            child_records.each do |child_record|
-              parent_record = ids_to_parent_record[child_record.id]
-              parent_record_to_child_record[parent_record] ||= child_record
-            end
-
-            parent_record_to_child_record.each do |parent, child|
-              parent.instance_variable_set(cached_association.records_variable_name, child)
-            end
-          end
-
-          next_level_records = parent_records
-
-        else
-          raise ArgumentError.new("Unknown cached association #{association} listed for prefetching")
-        end
-        next_level_records
       end
     end
 
