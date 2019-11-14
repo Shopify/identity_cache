@@ -144,8 +144,8 @@ class FetchMultiTest < IdentityCache::TestCase
 
 
   def test_fetch_multi_works_with_nils
-    cache_result = {1 => IdentityCache::CACHED_NIL, 2 => IdentityCache::CACHED_NIL}
-    fetch_result = {1 => nil, 2 => nil}
+    cache_result = { 1 => IdentityCache::CACHED_NIL, 2 => IdentityCache::CACHED_NIL }
+    fetch_result = { 1 => nil, 2 => nil }
 
     fetcher.expects(:cas_multi).with([1, 2]).twice.returns(nil, cache_result)
     fetcher.expects(:add).with(1, IdentityCache::CACHED_NIL).once
@@ -164,7 +164,7 @@ class FetchMultiTest < IdentityCache::TestCase
   end
 
   def test_fetch_multi_works_with_blanks
-    cache_result = {1 => false, 2 => '   '}
+    cache_result = { 1 => false, 2 => '   ' }
 
     fetcher.expects(:fetch_multi).with([1,2]).returns(cache_result)
 

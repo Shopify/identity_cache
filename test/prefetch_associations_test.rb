@@ -48,7 +48,7 @@ module IdentityCache
           item.fetch_associated_records.each(&:fetch_deeply_associated_record_ids)
         end
         assert_memcache_operations(1) do
-          prefetch(Item, {associated_records: :deeply_associated_records}, [item])
+          prefetch(Item, { associated_records: :deeply_associated_records }, [item])
         end
         assert_memcache_operations(0) do
           item.fetch_associated_records.each(&:fetch_deeply_associated_records)
@@ -172,7 +172,9 @@ module IdentityCache
       Item.fetch_multi(@bob.id, @joe.id)
 
       assert_memcache_operations(2) do
-        cached_bob, cached_joe = Item.fetch_multi(@bob.id, @joe.id, includes: {associated: :deeply_associated_records})
+        cached_bob, cached_joe = Item.fetch_multi(
+          @bob.id, @joe.id, includes: { associated: :deeply_associated_records }
+        )
         assert_nil cached_joe.fetch_associated
         assert_equal 'deep child', cached_bob.fetch_associated.fetch_deeply_associated_records.first.name
       end
@@ -284,7 +286,7 @@ module IdentityCache
 
       assert_memcache_operations(3) do
         @cached_bob, @cached_joe = Item.fetch_multi(
-          @bob.id, @joe.id, includes: {associated_records: :deeply_associated_records}
+          @bob.id, @joe.id, includes: { associated_records: :deeply_associated_records }
         )
         bob_children = @cached_bob.fetch_associated_records.sort
         joe_children = @cached_joe.fetch_associated_records.sort
@@ -313,7 +315,7 @@ module IdentityCache
 
       assert_memcache_operations(3) do
         @cached_bob_child, @cached_fred_child = AssociatedRecord.fetch_multi(
-          @bob_child.id, @fred_child.id, includes: {item: :item}
+          @bob_child.id, @fred_child.id, includes: { item: :item }
         )
 
         @cached_bob_parent  = @cached_bob_child.fetch_item
@@ -343,7 +345,7 @@ module IdentityCache
 
       assert_memcache_operations(2) do
         @cached_bob, @cached_joe = Item.fetch_multi(
-          @bob.id, @joe.id, includes: {associated_records: :deeply_associated_records}
+          @bob.id, @joe.id, includes: { associated_records: :deeply_associated_records }
         )
         bob_children = @cached_bob.fetch_associated_records.sort
         joe_children = @cached_joe.fetch_associated_records.sort
@@ -370,7 +372,7 @@ module IdentityCache
 
       assert_memcache_operations(2) do
         @cached_bob, @cached_joe = Item.fetch_multi(
-          @bob.id, @joe.id, includes: {associated: :deeply_associated_records}
+          @bob.id, @joe.id, includes: { associated: :deeply_associated_records }
         )
         bob_child = @cached_bob.fetch_associated
         joe_child = @cached_joe.fetch_associated

@@ -157,20 +157,6 @@ Layout/SpaceInsideBlockBraces:
     - 'test/memoized_cache_proxy_test.rb'
     - 'test/schema_change_test.rb'
 
-# Offense count: 38
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, EnforcedStyleForEmptyBraces.
-# SupportedStyles: space, no_space, compact
-# SupportedStylesForEmptyBraces: space, no_space
-Layout/SpaceInsideHashLiteralBraces:
-  Exclude:
-    - 'performance/cache_runner.rb'
-    - 'performance/externals.rb'
-    - 'test/cache_fetch_includes_test.rb'
-    - 'test/fetch_multi_test.rb'
-    - 'test/memoized_cache_proxy_test.rb'
-    - 'test/prefetch_associations_test.rb'
-
 # Offense count: 2
 # Cop supports --auto-correct.
 # Configuration parameters: EnforcedStyle, EnforcedStyleForEmptyBrackets.

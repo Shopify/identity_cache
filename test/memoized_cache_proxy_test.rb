@@ -14,7 +14,7 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
     backend.expects(:write).with('bar', 'baz')
     yielded = nil
     assert_equal(
-      {'foo' => 'bar', 'bar' => 'baz'},
+      { 'foo' => 'bar', 'bar' => 'baz' },
       IdentityCache.cache.fetch_multi('foo', 'bar') { |_| yielded = ['baz'] }
     )
     assert_equal(['baz'], yielded)
@@ -69,7 +69,7 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
   end
 
   def test_fetch_multi_should_memoize_values
-    expected_hash = {'foo' => 'bar', 'fooz' => IdentityCache::CACHED_NIL}
+    expected_hash = { 'foo' => 'bar', 'fooz' => IdentityCache::CACHED_NIL }
 
     backend.write('foo', 'bar')
 
@@ -87,7 +87,7 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
     @backend.write('fooz', 'baz')
 
     IdentityCache.cache.with_memoization do
-      assert_equal({'foo' => 'bar', 'fooz' => 'baz'}, IdentityCache.cache.fetch_multi('foo', 'fooz'))
+      assert_equal({ 'foo' => 'bar', 'fooz' => 'baz' }, IdentityCache.cache.fetch_multi('foo', 'fooz'))
     end
   end
 
@@ -98,7 +98,7 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
       IdentityCache.cache.write('foo', [])
       IdentityCache.cache.write('bar', false)
       IdentityCache.cache.write('baz', {})
-      assert_equal({'foo' => [], 'bar' => false, 'baz' => {}}, IdentityCache.cache.fetch_multi('foo', 'bar', 'baz'))
+      assert_equal({ 'foo' => [], 'bar' => false, 'baz' => {} }, IdentityCache.cache.fetch_multi('foo', 'bar', 'baz'))
     end
   end
 

@@ -8,8 +8,8 @@ require_relative 'cache_runner'
 RUNS = 1000
 RubyProf.measure_mode = RubyProf::CPU_TIME
 
-EXTERNALS = {"Memcache" => ["MemCache#set", "MemCache#get"],
-             "Database" => ["Mysql2::Client#query"]}
+EXTERNALS = { "Memcache" => ["MemCache#set", "MemCache#get"],
+              "Database" => ["Mysql2::Client#query"] }
 
 def run(obj)
   obj.prepare
