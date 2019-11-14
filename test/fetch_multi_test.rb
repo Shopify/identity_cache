@@ -225,7 +225,7 @@ class FetchMultiTest < IdentityCache::TestCase
     cache_response[@bob_blob_key] = cache_response_for(@bob)
     cache_response[@joe_blob_key] = cache_response_for(@fred)
 
-    IdentityCache.expects(:fetch_multi).with{ |*args| args.none?(&:frozen?) }.returns(cache_response)
+    IdentityCache.expects(:fetch_multi).with { |*args| args.none?(&:frozen?) }.returns(cache_response)
 
     Item.fetch_multi(@bob.id, @joe.id)
   end

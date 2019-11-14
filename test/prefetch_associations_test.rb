@@ -29,7 +29,7 @@ module IdentityCache
 
       prefetch(Item, :item, items)
 
-      assert(spy.calls.one?{ |call| call.args == [[john.id, jim.id]] })
+      assert(spy.calls.one? { |call| call.args == [[john.id, jim.id]] })
     end
 
     def test_prefetch_associations_on_db_records
@@ -189,7 +189,7 @@ module IdentityCache
 
       assert_equal(@bob, Item.fetch(@bob.id, includes: :item))
 
-      assert(spy.calls.one?{ |call| call.args == [[john.id]] })
+      assert(spy.calls.one? { |call| call.args == [[john.id]] })
     end
 
     def test_fetch_multi_with_includes_option
@@ -203,7 +203,7 @@ module IdentityCache
 
       assert_equal([@bob, @joe, @fred], Item.fetch_multi(@bob.id, @joe.id, @fred.id, includes: :item))
 
-      assert(spy.calls.one?{ |call| call.args == [[john.id, jim.id]] })
+      assert(spy.calls.one? { |call| call.args == [[john.id, jim.id]] })
     end
 
     def test_fetch_multi_batch_fetches_non_embedded_first_level_has_many_associations
@@ -400,7 +400,7 @@ module IdentityCache
 
       assert_equal([@bob], Item.fetch_by_title('bob', includes: :item))
 
-      assert(spy.calls.one?{ |call| call.args == [[john.id]] })
+      assert(spy.calls.one? { |call| call.args == [[john.id]] })
     end
 
     def test_fetch_by_unique_index_with_includes_option
@@ -413,7 +413,7 @@ module IdentityCache
 
       assert_equal(@bob, Item.fetch_by_title('bob', includes: :item))
 
-      assert(spy.calls.one?{ |call| call.args == [[john.id]] })
+      assert(spy.calls.one? { |call| call.args == [[john.id]] })
     end
 
     def test_prefetch_associations

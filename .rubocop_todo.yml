@@ -120,23 +120,6 @@ Layout/SpaceAroundOperators:
     - 'test/normalized_has_many_test.rb'
     - 'test/test_helper.rb'
 
-# Offense count: 17
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, EnforcedStyleForEmptyBraces.
-# SupportedStyles: space, no_space
-# SupportedStylesForEmptyBraces: space, no_space
-Layout/SpaceBeforeBlockBraces:
-  Exclude:
-    - 'identity_cache.gemspec'
-    - 'lib/identity_cache/cache_key_generation.rb'
-    - 'lib/identity_cache/query_api.rb'
-    - 'performance/cpu.rb'
-    - 'performance/profile.rb'
-    - 'test/cache_hash_test.rb'
-    - 'test/fetch_multi_test.rb'
-    - 'test/normalized_has_many_test.rb'
-    - 'test/prefetch_associations_test.rb'
-
 # Offense count: 2
 # Cop supports --auto-correct.
 # Configuration parameters: EnforcedStyle, EnforcedStyleForEmptyBrackets.

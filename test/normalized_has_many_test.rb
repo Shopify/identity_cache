@@ -46,7 +46,7 @@ class NormalizedHasManyTest < IdentityCache::TestCase
       Item.fetch_multi(@record.id, record2.id)
     end
     assert_equal([[2, 1], [4, 3]], fetched_records.map(&:cached_associated_record_ids))
-    assert_equal(false, fetched_records.any?{ |record| record.associated_records.loaded? })
+    assert_equal(false, fetched_records.any? { |record| record.associated_records.loaded? })
   end
 
   def test_batch_fetching_of_deeply_associated_records

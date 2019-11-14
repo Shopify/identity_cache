@@ -5,7 +5,7 @@ module IdentityCache
     DEFAULT_NAMESPACE = "IDC:#{CACHE_VERSION}:"
 
     def self.schema_to_string(columns)
-      columns.sort_by(&:name).map{ |c| "#{c.name}:#{c.type}" }.join(',')
+      columns.sort_by(&:name).map { |c| "#{c.name}:#{c.type}" }.join(',')
     end
 
     def self.denormalized_schema_string(klass)

@@ -77,7 +77,7 @@ module IdentityCache
             coders_by_key = IdentityCache.fetch_multi(cache_keys) do |unresolved_keys|
               ids = unresolved_keys.map { |key| key_to_id_map[key] }
               records = find_batch(ids)
-              key_to_record_map = records.compact.index_by{ |record| rails_cache_key(record.id) }
+              key_to_record_map = records.compact.index_by { |record| rails_cache_key(record.id) }
               records.map { |record| Encoder.encode(record) }
             end
 
@@ -137,7 +137,7 @@ module IdentityCache
         when String
           rval = Marshal.load(rval)
         when Array
-          rval.map!{ |v| v.kind_of?(String) ? Marshal.load(v) : v }
+          rval.map! { |v| v.kind_of?(String) ? Marshal.load(v) : v }
         end
         rval
       rescue ArgumentError => e
@@ -164,7 +164,7 @@ module IdentityCache
         pairs = scope.where(reflection.foreign_key => records.map(&:id)).pluck(
           reflection.foreign_key, reflection.association_primary_key
         )
-        ids_by_parent = Hash.new{ |hash, key| hash[key] = [] }
+        ids_by_parent = Hash.new { |hash, key| hash[key] = [] }
         pairs.each do |parent_id, child_id|
           ids_by_parent[parent_id] << child_id
         end
@@ -272,11 +272,11 @@ module IdentityCache
         return [] if ids.empty?
 
         @id_column ||= columns.detect { |c| c.name == primary_key }
-        ids = ids.map{ |id| connection.type_cast(id, @id_column) }
+        ids = ids.map { |id| connection.type_cast(id, @id_column) }
         records = where(primary_key => ids).includes(cache_fetch_includes).to_a
         setup_embedded_associations_on_miss(records)
         records_by_id = records.index_by(&:id)
-        ids.map{ |id| records_by_id[id] }
+        ids.map { |id| records_by_id[id] }
       end
     end
 
