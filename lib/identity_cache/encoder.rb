@@ -71,7 +71,7 @@ module IdentityCache
 
         if coder.key?(:associations)
           coder[:associations].each do |name, value|
-            record.instance_variable_set(klass.send(:cached_association, name).dehydrated_variable_name, value)
+            record.instance_variable_set(klass.cached_association(name).dehydrated_variable_name, value)
           end
         end
         if coder.key?(:association_ids)
