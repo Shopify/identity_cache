@@ -414,6 +414,23 @@ module IdentityCache
       assert(spy.calls.one?{ |call| call.args == [[john.id]] })
     end
 
+    def test_prefetch_associations
+      AssociatedRecord.send(:cache_belongs_to, :item)
+
+      chunky_bacon = Item.create!(title: "Chunky Bacon")
+      record = AssociatedRecord.create!
+
+      record.update_column(:item_id, chunky_bacon.id)
+
+      assert_memcache_operations(1) do
+        AssociatedRecord.prefetch_associations(:item, [record])
+      end
+
+      assert_no_queries do
+        assert_equal(chunky_bacon, record.fetch_item)
+      end
+    end
+
     private
 
     def prefetch(klass, includes, records)

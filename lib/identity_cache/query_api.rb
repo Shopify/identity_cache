@@ -46,7 +46,7 @@ module IdentityCache
         else
           resolve_cache_miss(id)
         end
-        Cached::Prefetcher.prefetch(self, includes, [record]) if record && includes
+        prefetch_associations(includes, [record]) if record && includes
         record
       end
 
@@ -89,8 +89,13 @@ module IdentityCache
           find_batch(ids)
         end
         records.compact!
-        Cached::Prefetcher.prefetch(self, includes, records) if includes
+        prefetch_associations(includes, records) if includes
         records
+      end
+
+      # Prefetches cached associations on a collection of records
+      def prefetch_associations(includes, records)
+        Cached::Prefetcher.prefetch(self, includes, records)
       end
 
       # Invalidates the primary cache index for the associated record. Will not invalidate cached attributes.
