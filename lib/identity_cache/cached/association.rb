@@ -2,11 +2,13 @@
 module IdentityCache
   module Cached
     class Association # :nodoc:
+      include EmbeddedFetching
+
       def initialize(name, inverse_name:, reflection:)
         @name = name
         @reflection = reflection
         @inverse_name = inverse_name
-        @cached_accessor_name = "fetch_#{name}"
+        @cached_accessor_name = :"fetch_#{name}"
         @records_variable_name = :"@cached_#{name}"
       end
 
@@ -16,7 +18,19 @@ module IdentityCache
         raise NotImplementedError
       end
 
+      def read(record)
+        raise NotImplementedError
+      end
+
+      def write(record, value)
+        raise NotImplementedError
+      end
+
       def clear(record)
+        raise NotImplementedError
+      end
+
+      def fetch(records)
         raise NotImplementedError
       end
 

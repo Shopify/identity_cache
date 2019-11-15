@@ -212,7 +212,7 @@ module IdentityCache
           end
 
           child_model = association_reflection.klass
-          child_records = records.flat_map(&cached_association.cached_accessor_name.to_sym).compact
+          child_records = records.flat_map(&cached_association.cached_accessor_name).compact
           child_model.send(:setup_embedded_associations_on_miss, child_records, readonly: readonly)
         end
       end

@@ -26,7 +26,7 @@ module IdentityCache
     end
 
     def test_install_on_belongs_to
-      hook = ExpiryHook.new(belongs_to_reference_cached_association)
+      hook = ExpiryHook.new(belongs_to_cached_association)
 
       hook.install
 
@@ -54,8 +54,8 @@ module IdentityCache
       )
     end
 
-    def belongs_to_reference_cached_association
-      @reference_assocaition ||= Cached::Reference::BelongsTo.new(
+    def belongs_to_cached_association
+      @reference_assocaition ||= Cached::BelongsTo.new(
         :item,
         reflection: reflect(AssociatedRecord, :item),
       )

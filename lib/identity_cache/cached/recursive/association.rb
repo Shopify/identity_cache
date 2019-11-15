@@ -24,10 +24,24 @@ module IdentityCache
           ParentModelExpiration.add_parent_expiry_hook(self)
         end
 
+        def read(record)
+          record.public_send(cached_accessor_name)
+        end
+
+        def write(record, records)
+          record.instance_variable_set(records_variable_name, records)
+        end
+
         def clear(record)
           if record.instance_variable_defined?(records_variable_name)
             record.remove_instance_variable(records_variable_name)
           end
+        end
+
+        def fetch(records)
+          fetch_embedded(records)
+
+          records.flat_map(&cached_accessor_name).tap(&:compact!)
         end
 
         def embedded_by_reference?
@@ -36,6 +50,13 @@ module IdentityCache
 
         def embedded_recursively?
           true
+        end
+
+        private
+
+        def embedded_fetched?(records)
+          record = records.first
+          super || record.instance_variable_defined?(dehydrated_variable_name)
         end
       end
     end
