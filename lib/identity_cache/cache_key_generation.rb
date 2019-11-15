@@ -5,7 +5,7 @@ module IdentityCache
     DEFAULT_NAMESPACE = "IDC:#{CACHE_VERSION}:"
 
     def self.schema_to_string(columns)
-      columns.sort_by(&:name).map{|c| "#{c.name}:#{c.type}"}.join(',')
+      columns.sort_by(&:name).map { |c| "#{c.name}:#{c.type}" }.join(',')
     end
 
     def self.denormalized_schema_string(klass)
@@ -80,7 +80,7 @@ module IdentityCache
     end
 
     def current_values_for_fields(fields) # :nodoc:
-      fields.collect {|field| self.send(field)}
+      fields.collect { |field| send(field) }
     end
 
     def old_values_for_fields(fields) # :nodoc:
@@ -91,7 +91,7 @@ module IdentityCache
         elsif persisted? && transaction_changed_attributes.has_key?(field_string)
           transaction_changed_attributes[field_string]
         else
-          self.send(field)
+          send(field)
         end
       end
     end

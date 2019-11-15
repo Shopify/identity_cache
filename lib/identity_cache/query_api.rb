@@ -55,7 +55,7 @@ module IdentityCache
       # if id is not in the cache or the db.
       def fetch(id, includes: nil)
         fetch_by_id(id, includes: includes) or raise(
-          ActiveRecord::RecordNotFound, "Couldn't find #{self.name} with ID=#{id}"
+          ActiveRecord::RecordNotFound, "Couldn't find #{name} with ID=#{id}"
         )
       end
 
@@ -70,14 +70,14 @@ module IdentityCache
         ids.map! { |id| id_type.cast(id) }.compact!
         records = if should_use_cache?
           require_if_necessary do
-            cache_keys = ids.map {|id| rails_cache_key(id) }
+            cache_keys = ids.map { |id| rails_cache_key(id) }
             key_to_id_map = Hash[ cache_keys.zip(ids) ]
             key_to_record_map = {}
 
             coders_by_key = IdentityCache.fetch_multi(cache_keys) do |unresolved_keys|
-              ids = unresolved_keys.map {|key| key_to_id_map[key] }
+              ids = unresolved_keys.map { |key| key_to_id_map[key] }
               records = find_batch(ids)
-              key_to_record_map = records.compact.index_by{ |record| rails_cache_key(record.id) }
+              key_to_record_map = records.compact.index_by { |record| rails_cache_key(record.id) }
               records.map { |record| Encoder.encode(record) }
             end
 
@@ -137,7 +137,7 @@ module IdentityCache
         when String
           rval = Marshal.load(rval)
         when Array
-          rval.map!{ |v| v.kind_of?(String) ? Marshal.load(v) : v }
+          rval.map! { |v| v.kind_of?(String) ? Marshal.load(v) : v }
         end
         rval
       rescue ArgumentError => e
@@ -149,7 +149,7 @@ module IdentityCache
       end
 
       def resolve_cache_miss(id)
-        record = self.includes(cache_fetch_includes).where(primary_key => id).take
+        record = includes(cache_fetch_includes).where(primary_key => id).take
         setup_embedded_associations_on_miss([record]) if record
         record
       end
@@ -164,7 +164,7 @@ module IdentityCache
         pairs = scope.where(reflection.foreign_key => records.map(&:id)).pluck(
           reflection.foreign_key, reflection.association_primary_key
         )
-        ids_by_parent = Hash.new{ |hash, key| hash[key] = [] }
+        ids_by_parent = Hash.new { |hash, key| hash[key] = [] }
         pairs.each do |parent_id, child_id|
           ids_by_parent[parent_id] << child_id
         end
@@ -241,7 +241,7 @@ module IdentityCache
       end
 
       def recursively_embedded_associations
-        all_cached_associations.select { |name, association| association.embedded_recursively? }
+        all_cached_associations.select { |_name, association| association.embedded_recursively? }
       end
 
       def all_cached_associations
@@ -249,11 +249,11 @@ module IdentityCache
       end
 
       def embedded_associations
-        all_cached_associations.select { |name, association| association.embedded? }
+        all_cached_associations.select { |_name, association| association.embedded? }
       end
 
       def cache_fetch_includes
-        associations_for_identity_cache = recursively_embedded_associations.map do |child_association, options|
+        associations_for_identity_cache = recursively_embedded_associations.map do |child_association, _options|
           child_class = reflect_on_association(child_association).try(:klass)
 
           child_includes = child_class.send(:cache_fetch_includes)
@@ -271,12 +271,12 @@ module IdentityCache
       def find_batch(ids)
         return [] if ids.empty?
 
-        @id_column ||= columns.detect {|c| c.name == primary_key}
-        ids = ids.map{ |id| connection.type_cast(id, @id_column) }
+        @id_column ||= columns.detect { |c| c.name == primary_key }
+        ids = ids.map { |id| connection.type_cast(id, @id_column) }
         records = where(primary_key => ids).includes(cache_fetch_includes).to_a
         setup_embedded_associations_on_miss(records)
         records_by_id = records.index_by(&:id)
-        ids.map{ |id| records_by_id[id] }
+        ids.map { |id| records_by_id[id] }
       end
     end
 

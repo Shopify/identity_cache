@@ -142,21 +142,20 @@ class FetchMultiTest < IdentityCache::TestCase
     assert(fetch_multi.has_been_called_with?(@fred_blob_key, @bob_blob_key, @tenth_blob_key, @joe_blob_key))
   end
 
-
   def test_fetch_multi_works_with_nils
-    cache_result = {1 => IdentityCache::CACHED_NIL, 2 => IdentityCache::CACHED_NIL}
-    fetch_result = {1 => nil, 2 => nil}
+    cache_result = { 1 => IdentityCache::CACHED_NIL, 2 => IdentityCache::CACHED_NIL }
+    fetch_result = { 1 => nil, 2 => nil }
 
     fetcher.expects(:cas_multi).with([1, 2]).twice.returns(nil, cache_result)
     fetcher.expects(:add).with(1, IdentityCache::CACHED_NIL).once
     fetcher.expects(:add).with(2, IdentityCache::CACHED_NIL).once
 
-    results = IdentityCache.fetch_multi(1,2) do |keys|
+    results = IdentityCache.fetch_multi(1,2) do |_keys|
       [nil, nil]
     end
     assert_equal(fetch_result, results)
 
-    results = IdentityCache.fetch_multi(1,2) do |keys|
+    results = IdentityCache.fetch_multi(1,2) do |_keys|
       flunk "Contents should have been fetched from cache successfully"
     end
 
@@ -164,11 +163,11 @@ class FetchMultiTest < IdentityCache::TestCase
   end
 
   def test_fetch_multi_works_with_blanks
-    cache_result = {1 => false, 2 => '   '}
+    cache_result = { 1 => false, 2 => '   ' }
 
     fetcher.expects(:fetch_multi).with([1,2]).returns(cache_result)
 
-    results = IdentityCache.fetch_multi(1,2) do |keys|
+    results = IdentityCache.fetch_multi(1,2) do |_keys|
       flunk "Contents should have been fetched from cache successfully"
     end
 
@@ -225,7 +224,7 @@ class FetchMultiTest < IdentityCache::TestCase
     cache_response[@bob_blob_key] = cache_response_for(@bob)
     cache_response[@joe_blob_key] = cache_response_for(@fred)
 
-    IdentityCache.expects(:fetch_multi).with{ |*args| args.none?(&:frozen?) }.returns(cache_response)
+    IdentityCache.expects(:fetch_multi).with { |*args| args.none?(&:frozen?) }.returns(cache_response)
 
     Item.fetch_multi(@bob.id, @joe.id)
   end
@@ -405,8 +404,8 @@ class FetchMultiTest < IdentityCache::TestCase
   end
 
   def fetch_multi_stub(cache_response)
-    Spy.on(IdentityCache.cache, :fetch_multi).and_return do |*args, &block|
-      nil_keys = cache_response.select {|_, v| v.nil? }.keys
+    Spy.on(IdentityCache.cache, :fetch_multi).and_return do |*_args, &block|
+      nil_keys = cache_response.select { |_, v| v.nil? }.keys
       cache_response.merge(Hash[nil_keys.zip(block.call(nil_keys))])
     end
   end

@@ -29,7 +29,7 @@ def benchmark(runners, label_width=0)
 end
 
 def bmbm(runners)
-  label_width = runners.map{ |r| r.name.size }.max + 2
+  label_width = runners.map { |r| r.name.size }.max + 2
   width = label_width + Benchmark::CAPTION.size
 
   puts 'Rehearsal: '.ljust(width, '-')

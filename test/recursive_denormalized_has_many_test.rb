@@ -73,7 +73,6 @@ class RecursiveDenormalizedHasManyTest < IdentityCache::TestCase
     ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
   end
 
-
   def test_on_cache_hit_record_should_publish_one_hydration_notification
     Item.fetch(@record.id) # warm cache
 

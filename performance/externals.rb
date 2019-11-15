@@ -8,8 +8,8 @@ require_relative 'cache_runner'
 RUNS = 1000
 RubyProf.measure_mode = RubyProf::CPU_TIME
 
-EXTERNALS = {"Memcache" => ["MemCache#set", "MemCache#get"],
-             "Database" => ["Mysql2::Client#query"]}
+EXTERNALS = { "Memcache" => ["MemCache#set", "MemCache#get"],
+              "Database" => ["Mysql2::Client#query"] }
 
 def run(obj)
   obj.prepare
@@ -27,7 +27,7 @@ def count_externals(results)
   count = {}
   results.split(/\n/).each do |line|
     fields = line.split
-    if ext = EXTERNALS.detect { |e| e[1].any? { |method| method == fields[-1] } }
+    if (ext = EXTERNALS.detect { |e| e[1].any? { |method| method == fields[-1] } })
       count[ext[0]] ||= 0
       count[ext[0]] += fields[-2].to_i
     end

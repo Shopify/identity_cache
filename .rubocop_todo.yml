@@ -27,17 +27,6 @@ Layout/EmptyLineBetweenDefs:
     - 'test/prefetch_associations_test.rb'
     - 'test/recursive_denormalized_has_many_test.rb'
 
-# Offense count: 6
-# Cop supports --auto-correct.
-Layout/EmptyLines:
-  Exclude:
-    - 'lib/identity_cache/configuration_dsl.rb'
-    - 'test/denormalized_has_one_test.rb'
-    - 'test/fetch_multi_test.rb'
-    - 'test/prefetch_associations_test.rb'
-    - 'test/recursive_denormalized_has_many_test.rb'
-    - 'test/test_helper.rb'
-
 # Offense count: 1
 # Cop supports --auto-correct.
 # Configuration parameters: EnforcedStyle.
@@ -120,57 +109,6 @@ Layout/SpaceAroundOperators:
     - 'test/normalized_has_many_test.rb'
     - 'test/test_helper.rb'
 
-# Offense count: 17
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, EnforcedStyleForEmptyBraces.
-# SupportedStyles: space, no_space
-# SupportedStylesForEmptyBraces: space, no_space
-Layout/SpaceBeforeBlockBraces:
-  Exclude:
-    - 'identity_cache.gemspec'
-    - 'lib/identity_cache/cache_key_generation.rb'
-    - 'lib/identity_cache/query_api.rb'
-    - 'performance/cpu.rb'
-    - 'performance/profile.rb'
-    - 'test/cache_hash_test.rb'
-    - 'test/fetch_multi_test.rb'
-    - 'test/normalized_has_many_test.rb'
-    - 'test/prefetch_associations_test.rb'
-
-# Offense count: 36
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, EnforcedStyleForEmptyBraces, SpaceBeforeBlockParameters.
-# SupportedStyles: space, no_space
-# SupportedStylesForEmptyBraces: space, no_space
-Layout/SpaceInsideBlockBraces:
-  Exclude:
-    - 'lib/identity_cache.rb'
-    - 'lib/identity_cache/cache_fetcher.rb'
-    - 'lib/identity_cache/cache_key_generation.rb'
-    - 'lib/identity_cache/memoized_cache_proxy.rb'
-    - 'lib/identity_cache/query_api.rb'
-    - 'performance/cache_runner.rb'
-    - 'test/cache_hash_test.rb'
-    - 'test/fetch_multi_test.rb'
-    - 'test/fetch_test.rb'
-    - 'test/helpers/update_serialization_format.rb'
-    - 'test/memoized_cache_proxy_test.rb'
-    - 'test/schema_change_test.rb'
-
-# Offense count: 38
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, EnforcedStyleForEmptyBraces.
-# SupportedStyles: space, no_space, compact
-# SupportedStylesForEmptyBraces: space, no_space
-Layout/SpaceInsideHashLiteralBraces:
-  Exclude:
-    - 'performance/cache_runner.rb'
-    - 'performance/externals.rb'
-    - 'test/cache_fetch_includes_test.rb'
-    - 'test/fetch_multi_test.rb'
-    - 'test/memoized_cache_proxy_test.rb'
-    - 'test/prefetch_associations_test.rb'
-
 # Offense count: 2
 # Cop supports --auto-correct.
 # Configuration parameters: EnforcedStyle, EnforcedStyleForEmptyBrackets.
@@ -188,39 +126,10 @@ Layout/SpaceInsideStringInterpolation:
   Exclude:
     - 'lib/identity_cache/memoized_cache_proxy.rb'
 
-# Offense count: 6
-# Configuration parameters: AllowSafeAssignment.
-Lint/AssignmentInCondition:
-  Exclude:
-    - 'lib/identity_cache/belongs_to_caching.rb'
-    - 'lib/identity_cache/configuration_dsl.rb'
-    - 'lib/identity_cache/memoized_cache_proxy.rb'
-    - 'performance/externals.rb'
-    - 'performance/profile.rb'
-
 # Offense count: 1
 Lint/ShadowingOuterLocalVariable:
   Exclude:
     - 'performance/profile.rb'
-
-# Offense count: 7
-# Cop supports --auto-correct.
-# Configuration parameters: IgnoreEmptyBlocks, AllowUnusedKeywordArguments.
-Lint/UnusedBlockArgument:
-  Exclude:
-    - 'lib/identity_cache/query_api.rb'
-    - 'test/fetch_multi_test.rb'
-
-# Offense count: 11
-# Cop supports --auto-correct.
-# Configuration parameters: AllowUnusedKeywordArguments, IgnoreEmptyMethods.
-Lint/UnusedMethodArgument:
-  Exclude:
-    - 'lib/identity_cache/cached/association.rb'
-    - 'lib/identity_cache/fallback_fetcher.rb'
-    - 'lib/identity_cache/memoized_cache_proxy.rb'
-    - 'test/helpers/active_record_objects.rb'
-    - 'test/test_helper.rb'
 
 # Offense count: 5
 Lint/UselessAssignment:
@@ -337,18 +246,6 @@ Style/PreferredHashMethods:
 Style/RedundantReturn:
   Exclude:
     - 'test/prefetch_associations_test.rb'
-
-# Offense count: 18
-# Cop supports --auto-correct.
-Style/RedundantSelf:
-  Exclude:
-    - 'lib/identity_cache.rb'
-    - 'lib/identity_cache/belongs_to_caching.rb'
-    - 'lib/identity_cache/cache_key_generation.rb'
-    - 'lib/identity_cache/configuration_dsl.rb'
-    - 'lib/identity_cache/query_api.rb'
-    - 'test/helpers/active_record_objects.rb'
-    - 'test/test_helper.rb'
 
 # Offense count: 1
 # Cop supports --auto-correct.

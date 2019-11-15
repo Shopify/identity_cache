@@ -18,19 +18,19 @@ module IdentityCache
         raise NotImplementedError
       end
 
-      def read(record)
+      def read(_record)
         raise NotImplementedError
       end
 
-      def write(record, value)
+      def write(_record, _value)
         raise NotImplementedError
       end
 
-      def clear(record)
+      def clear(_record)
         raise NotImplementedError
       end
 
-      def fetch(records)
+      def fetch(_records)
         raise NotImplementedError
       end
 

@@ -50,8 +50,8 @@ module IdentityCache
     def cas_multi(keys)
       result = nil
       @cache_backend.cas_multi(*keys) do |results|
-        deleted = results.select {|_, v| IdentityCache::DELETED == v }
-        results.reject! {|_, v| IdentityCache::DELETED == v }
+        deleted = results.select { |_, v| IdentityCache::DELETED == v }
+        results.reject! { |_, v| IdentityCache::DELETED == v }
 
         result = results
         updates = {}
@@ -78,7 +78,7 @@ module IdentityCache
     def add_multi(keys)
       values = yield keys
       result = Hash[keys.zip(values)]
-      result.each {|k, v| add(k, v) }
+      result.each { |k, v| add(k, v) }
     end
 
     def add(key, value)

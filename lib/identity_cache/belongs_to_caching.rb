@@ -12,7 +12,7 @@ module IdentityCache
       def cache_belongs_to(association)
         ensure_base_model
 
-        unless reflection = reflect_on_association(association)
+        unless (reflection = reflect_on_association(association))
           raise AssociationError, "Association named '#{association}' was not found on #{self.class}"
         end
 
@@ -25,7 +25,7 @@ module IdentityCache
 
         cached_belongs_to = Cached::BelongsTo.new(association, reflection: reflection)
 
-        self.cached_belongs_tos[association] = cached_belongs_to.tap(&:build)
+        cached_belongs_tos[association] = cached_belongs_to.tap(&:build)
       end
     end
   end

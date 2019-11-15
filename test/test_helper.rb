@@ -26,7 +26,6 @@ module MemcachedStoreInstrumentation
 end
 ActiveSupport::Cache::MemcachedStore.prepend(MemcachedStoreInstrumentation)
 
-
 MiniTest::Test = MiniTest::Unit::TestCase unless defined?(MiniTest::Test)
 class IdentityCache::TestCase < Minitest::Test
   include ActiveRecordObjects
@@ -152,13 +151,13 @@ class SQLCounter
     @log = []
   end
 
-  def call(name, start, finish, message_id, values)
+  def call(_name, _start, _finish, _message_id, values)
     sql = values[:sql]
 
     # FIXME: this seems bad. we should probably have a better way to indicate
     # the query was cached
     return if 'CACHE' == values[:name] || ignore.any? { |x| x =~ sql }
-    self.log << sql
+    log << sql
   end
 end
 
@@ -169,7 +168,7 @@ class CacheCounter
     @log = []
   end
 
-  def call(name, start, finish, message_id, values)
-    self.log << "#{name} #{(values[:keys].try(:join, ', ') || values[:key])}"
+  def call(name, _start, _finish, _message_id, values)
+    log << "#{name} #{(values[:keys].try(:join, ', ') || values[:key])}"
   end
 end

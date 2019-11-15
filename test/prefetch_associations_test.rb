@@ -29,7 +29,7 @@ module IdentityCache
 
       prefetch(Item, :item, items)
 
-      assert(spy.calls.one?{ |call| call.args == [[john.id, jim.id]] })
+      assert(spy.calls.one? { |call| call.args == [[john.id, jim.id]] })
     end
 
     def test_prefetch_associations_on_db_records
@@ -48,7 +48,7 @@ module IdentityCache
           item.fetch_associated_records.each(&:fetch_deeply_associated_record_ids)
         end
         assert_memcache_operations(1) do
-          prefetch(Item, {associated_records: :deeply_associated_records}, [item])
+          prefetch(Item, { associated_records: :deeply_associated_records }, [item])
         end
         assert_memcache_operations(0) do
           item.fetch_associated_records.each(&:fetch_deeply_associated_records)
@@ -172,7 +172,9 @@ module IdentityCache
       Item.fetch_multi(@bob.id, @joe.id)
 
       assert_memcache_operations(2) do
-        cached_bob, cached_joe = Item.fetch_multi(@bob.id, @joe.id, includes: {associated: :deeply_associated_records})
+        cached_bob, cached_joe = Item.fetch_multi(
+          @bob.id, @joe.id, includes: { associated: :deeply_associated_records }
+        )
         assert_nil cached_joe.fetch_associated
         assert_equal 'deep child', cached_bob.fetch_associated.fetch_deeply_associated_records.first.name
       end
@@ -187,7 +189,7 @@ module IdentityCache
 
       assert_equal(@bob, Item.fetch(@bob.id, includes: :item))
 
-      assert(spy.calls.one?{ |call| call.args == [[john.id]] })
+      assert(spy.calls.one? { |call| call.args == [[john.id]] })
     end
 
     def test_fetch_multi_with_includes_option
@@ -201,7 +203,7 @@ module IdentityCache
 
       assert_equal([@bob, @joe, @fred], Item.fetch_multi(@bob.id, @joe.id, @fred.id, includes: :item))
 
-      assert(spy.calls.one?{ |call| call.args == [[john.id, jim.id]] })
+      assert(spy.calls.one? { |call| call.args == [[john.id, jim.id]] })
     end
 
     def test_fetch_multi_batch_fetches_non_embedded_first_level_has_many_associations
@@ -284,7 +286,7 @@ module IdentityCache
 
       assert_memcache_operations(3) do
         @cached_bob, @cached_joe = Item.fetch_multi(
-          @bob.id, @joe.id, includes: {associated_records: :deeply_associated_records}
+          @bob.id, @joe.id, includes: { associated_records: :deeply_associated_records }
         )
         bob_children = @cached_bob.fetch_associated_records.sort
         joe_children = @cached_joe.fetch_associated_records.sort
@@ -313,7 +315,7 @@ module IdentityCache
 
       assert_memcache_operations(3) do
         @cached_bob_child, @cached_fred_child = AssociatedRecord.fetch_multi(
-          @bob_child.id, @fred_child.id, includes: {item: :item}
+          @bob_child.id, @fred_child.id, includes: { item: :item }
         )
 
         @cached_bob_parent  = @cached_bob_child.fetch_item
@@ -334,7 +336,6 @@ module IdentityCache
       end
     end
 
-
     def test_fetch_multi_batch_fetches_non_embedded_second_level_associations_through_embedded_first_level_has_many_associations # rubocop:disable Metrics/LineLength
       Item.send(:cache_has_many, :associated_records, embed: true)
       AssociatedRecord.send(:cache_has_many, :deeply_associated_records, embed: :ids)
@@ -343,7 +344,7 @@ module IdentityCache
 
       assert_memcache_operations(2) do
         @cached_bob, @cached_joe = Item.fetch_multi(
-          @bob.id, @joe.id, includes: {associated_records: :deeply_associated_records}
+          @bob.id, @joe.id, includes: { associated_records: :deeply_associated_records }
         )
         bob_children = @cached_bob.fetch_associated_records.sort
         joe_children = @cached_joe.fetch_associated_records.sort
@@ -370,7 +371,7 @@ module IdentityCache
 
       assert_memcache_operations(2) do
         @cached_bob, @cached_joe = Item.fetch_multi(
-          @bob.id, @joe.id, includes: {associated: :deeply_associated_records}
+          @bob.id, @joe.id, includes: { associated: :deeply_associated_records }
         )
         bob_child = @cached_bob.fetch_associated
         joe_child = @cached_joe.fetch_associated
@@ -398,7 +399,7 @@ module IdentityCache
 
       assert_equal([@bob], Item.fetch_by_title('bob', includes: :item))
 
-      assert(spy.calls.one?{ |call| call.args == [[john.id]] })
+      assert(spy.calls.one? { |call| call.args == [[john.id]] })
     end
 
     def test_fetch_by_unique_index_with_includes_option
@@ -411,7 +412,7 @@ module IdentityCache
 
       assert_equal(@bob, Item.fetch_by_title('bob', includes: :item))
 
-      assert(spy.calls.one?{ |call| call.args == [[john.id]] })
+      assert(spy.calls.one? { |call| call.args == [[john.id]] })
     end
 
     def test_prefetch_associations

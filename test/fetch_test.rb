@@ -144,7 +144,7 @@ class FetchTest < IdentityCache::TestCase
     Item.expects(:resolve_cache_miss).with(1).once.returns(@record)
 
     results = []
-    fetch = Spy.on(IdentityCache.cache, :fetch).and_return {|_, &block| block.call.tap {|result| results << result}}
+    fetch = Spy.on(IdentityCache.cache, :fetch).and_return { |_, &block| block.call.tap { |result| results << result } }
 
     assert_equal(@record, Item.fetch(1))
     assert(fetch.has_been_called_with?(@blob_key))
@@ -222,7 +222,7 @@ class FetchTest < IdentityCache::TestCase
     fetch = Spy.on(IdentityCache.cache, :fetch).and_return do |key, &block|
       case key
       # Read record with title bob
-      when @index_key then block.call.tap {|val| values << val}
+      when @index_key then block.call.tap { |val| values << val }
       # got id, do memcache lookup on that, hit -> done
       when @blob_key then @cached_value
       end
