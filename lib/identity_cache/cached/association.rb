@@ -8,7 +8,7 @@ module IdentityCache
         @name = name
         @reflection = reflection
         @inverse_name = inverse_name
-        @cached_accessor_name = "fetch_#{name}"
+        @cached_accessor_name = :"fetch_#{name}"
         @records_variable_name = :"@cached_#{name}"
       end
 

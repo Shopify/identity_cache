@@ -29,7 +29,7 @@ module IdentityCache
       end
 
       def test_cached_accessor_name
-        assert_equal("fetch_item", association.cached_accessor_name)
+        assert_equal(:fetch_item, association.cached_accessor_name)
       end
     end
   end

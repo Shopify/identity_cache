@@ -41,7 +41,7 @@ module IdentityCache
         def fetch(records)
           fetch_embedded(records)
 
-          records.flat_map(&cached_accessor_name.to_sym).tap(&:compact!)
+          records.flat_map(&cached_accessor_name).tap(&:compact!)
         end
 
         def embedded_by_reference?
