@@ -22,8 +22,8 @@ end
 
 create_database(RUNS)
 
-if runner_name = ENV['RUNNER']
-  if runner = CACHE_RUNNERS.find { |r| r.name == runner_name }
+if (runner_name = ENV['RUNNER'])
+  if (runner = CACHE_RUNNERS.find { |r| r.name == runner_name })
     run(runner.new(RUNS), filename: ENV['FILENAME'])
   else
     puts "Couldn't find cache runner #{runner_name.inspect}"

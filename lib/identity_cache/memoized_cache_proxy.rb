@@ -50,7 +50,7 @@ module IdentityCache
       memoizing = memoizing?
       ActiveSupport::Notifications.instrument('cache_delete.identity_cache', memoizing: memoizing) do
         memoized_key_values.delete(key) if memoizing
-        if result = @cache_fetcher.delete(key)
+        if (result = @cache_fetcher.delete(key))
           IdentityCache.logger.debug { "[IdentityCache] delete recorded for #{key}" }
         else
           IdentityCache.logger.error { "[IdentityCache] delete failed for #{key}" }

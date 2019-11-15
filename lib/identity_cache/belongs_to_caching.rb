@@ -12,7 +12,7 @@ module IdentityCache
       def cache_belongs_to(association)
         ensure_base_model
 
-        unless reflection = reflect_on_association(association)
+        unless (reflection = reflect_on_association(association))
           raise AssociationError, "Association named '#{association}' was not found on #{self.class}"
         end
 

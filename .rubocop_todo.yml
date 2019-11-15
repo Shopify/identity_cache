@@ -126,16 +126,6 @@ Layout/SpaceInsideStringInterpolation:
   Exclude:
     - 'lib/identity_cache/memoized_cache_proxy.rb'
 
-# Offense count: 6
-# Configuration parameters: AllowSafeAssignment.
-Lint/AssignmentInCondition:
-  Exclude:
-    - 'lib/identity_cache/belongs_to_caching.rb'
-    - 'lib/identity_cache/configuration_dsl.rb'
-    - 'lib/identity_cache/memoized_cache_proxy.rb'
-    - 'performance/externals.rb'
-    - 'performance/profile.rb'
-
 # Offense count: 1
 Lint/ShadowingOuterLocalVariable:
   Exclude:
