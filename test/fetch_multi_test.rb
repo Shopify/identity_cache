@@ -151,12 +151,12 @@ class FetchMultiTest < IdentityCache::TestCase
     fetcher.expects(:add).with(1, IdentityCache::CACHED_NIL).once
     fetcher.expects(:add).with(2, IdentityCache::CACHED_NIL).once
 
-    results = IdentityCache.fetch_multi(1,2) do |keys|
+    results = IdentityCache.fetch_multi(1,2) do |_keys|
       [nil, nil]
     end
     assert_equal(fetch_result, results)
 
-    results = IdentityCache.fetch_multi(1,2) do |keys|
+    results = IdentityCache.fetch_multi(1,2) do |_keys|
       flunk "Contents should have been fetched from cache successfully"
     end
 
@@ -168,7 +168,7 @@ class FetchMultiTest < IdentityCache::TestCase
 
     fetcher.expects(:fetch_multi).with([1,2]).returns(cache_result)
 
-    results = IdentityCache.fetch_multi(1,2) do |keys|
+    results = IdentityCache.fetch_multi(1,2) do |_keys|
       flunk "Contents should have been fetched from cache successfully"
     end
 
@@ -405,7 +405,7 @@ class FetchMultiTest < IdentityCache::TestCase
   end
 
   def fetch_multi_stub(cache_response)
-    Spy.on(IdentityCache.cache, :fetch_multi).and_return do |*args, &block|
+    Spy.on(IdentityCache.cache, :fetch_multi).and_return do |*_args, &block|
       nil_keys = cache_response.select { |_, v| v.nil? }.keys
       cache_response.merge(Hash[nil_keys.zip(block.call(nil_keys))])
     end

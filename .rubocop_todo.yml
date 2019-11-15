@@ -152,14 +152,6 @@ Lint/ShadowingOuterLocalVariable:
   Exclude:
     - 'performance/profile.rb'
 
-# Offense count: 7
-# Cop supports --auto-correct.
-# Configuration parameters: IgnoreEmptyBlocks, AllowUnusedKeywordArguments.
-Lint/UnusedBlockArgument:
-  Exclude:
-    - 'lib/identity_cache/query_api.rb'
-    - 'test/fetch_multi_test.rb'
-
 # Offense count: 5
 Lint/UselessAssignment:
   Exclude:

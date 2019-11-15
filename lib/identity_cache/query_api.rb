@@ -241,7 +241,7 @@ module IdentityCache
       end
 
       def recursively_embedded_associations
-        all_cached_associations.select { |name, association| association.embedded_recursively? }
+        all_cached_associations.select { |_name, association| association.embedded_recursively? }
       end
 
       def all_cached_associations
@@ -249,11 +249,11 @@ module IdentityCache
       end
 
       def embedded_associations
-        all_cached_associations.select { |name, association| association.embedded? }
+        all_cached_associations.select { |_name, association| association.embedded? }
       end
 
       def cache_fetch_includes
-        associations_for_identity_cache = recursively_embedded_associations.map do |child_association, options|
+        associations_for_identity_cache = recursively_embedded_associations.map do |child_association, _options|
           child_class = reflect_on_association(child_association).try(:klass)
 
           child_includes = child_class.send(:cache_fetch_includes)
