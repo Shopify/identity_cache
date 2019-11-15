@@ -80,7 +80,6 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     assert_equal(expected, record_from_cache_hit.fetch_associated)
   end
 
-
   def test_on_cache_hit_record_must_invoke_listener
     payloads = []
     subscriber = ActiveSupport::Notifications.subscribe('hydration.identity_cache') do |_, _, _, _, payload|

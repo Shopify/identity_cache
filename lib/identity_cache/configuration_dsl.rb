@@ -77,7 +77,6 @@ module IdentityCache
         end
       end
 
-
       # Will cache an association to the class including IdentityCache.
       # The embed option, if set, will make IdentityCache keep the association
       # values in the same cache entry as the parent.

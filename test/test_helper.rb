@@ -26,7 +26,6 @@ module MemcachedStoreInstrumentation
 end
 ActiveSupport::Cache::MemcachedStore.prepend(MemcachedStoreInstrumentation)
 
-
 MiniTest::Test = MiniTest::Unit::TestCase unless defined?(MiniTest::Test)
 class IdentityCache::TestCase < Minitest::Test
   include ActiveRecordObjects

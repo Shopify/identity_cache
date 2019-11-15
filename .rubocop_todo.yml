@@ -27,17 +27,6 @@ Layout/EmptyLineBetweenDefs:
     - 'test/prefetch_associations_test.rb'
     - 'test/recursive_denormalized_has_many_test.rb'
 
-# Offense count: 6
-# Cop supports --auto-correct.
-Layout/EmptyLines:
-  Exclude:
-    - 'lib/identity_cache/configuration_dsl.rb'
-    - 'test/denormalized_has_one_test.rb'
-    - 'test/fetch_multi_test.rb'
-    - 'test/prefetch_associations_test.rb'
-    - 'test/recursive_denormalized_has_many_test.rb'
-    - 'test/test_helper.rb'
-
 # Offense count: 1
 # Cop supports --auto-correct.
 # Configuration parameters: EnforcedStyle.

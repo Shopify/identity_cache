@@ -142,7 +142,6 @@ class FetchMultiTest < IdentityCache::TestCase
     assert(fetch_multi.has_been_called_with?(@fred_blob_key, @bob_blob_key, @tenth_blob_key, @joe_blob_key))
   end
 
-
   def test_fetch_multi_works_with_nils
     cache_result = { 1 => IdentityCache::CACHED_NIL, 2 => IdentityCache::CACHED_NIL }
     fetch_result = { 1 => nil, 2 => nil }
