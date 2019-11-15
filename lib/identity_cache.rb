@@ -5,8 +5,11 @@ require 'ar_transaction_changes'
 
 require "identity_cache/version"
 require "identity_cache/encoder"
+require "identity_cache/prefetch"
+require "identity_cache/prefetch/batch"
+require "identity_cache/prefetch/segment"
+require "identity_cache/prefetch/operation"
 require "identity_cache/cached"
-require "identity_cache/cached/prefetcher"
 require "identity_cache/cached/embedded_fetching"
 require "identity_cache/cached/association"
 require "identity_cache/cached/belongs_to"
