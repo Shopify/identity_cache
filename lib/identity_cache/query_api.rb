@@ -105,6 +105,11 @@ module IdentityCache
         IdentityCache.cache.delete(rails_cache_key(id))
       end
 
+      # @api private
+      def cached_association(name) # :nodoc:
+        cached_has_manys[name] || cached_has_ones[name] || cached_belongs_tos.fetch(name)
+      end
+
       private
 
       def raise_if_scoped
@@ -226,10 +231,6 @@ module IdentityCache
         end
       end
 
-      def cached_association(name)
-        cached_has_manys[name] || cached_has_ones[name] || cached_belongs_tos.fetch(name)
-      end
-
       def each_id_embedded_association
         cached_has_manys.each_value do |association|
           yield association if association.embedded_by_reference?
@@ -318,7 +319,7 @@ module IdentityCache
 
     def set_embedded_association(association_name, association_target) #:nodoc:
       model = self.class
-      cached_association = model.send(:cached_association, association_name)
+      cached_association = model.cached_association(association_name)
 
       set_inverse_of_cached_association(cached_association, association_target)
 
