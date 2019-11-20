@@ -25,25 +25,9 @@ module IdentityCache
         raise NotImplementedError, "fetching needs the primary index enabled" unless primary_cache_index_enabled
         id = type_for_attribute(primary_key).cast(id)
         return unless id
-        record = if should_use_cache?
-          object = nil
-          coder  = IdentityCache.fetch(rails_cache_key(id)) do
-            Encoder.encode(object = resolve_cache_miss(id))
-          end
-          object ||= Encoder.decode(coder, self)
-          if object && object.id != id
-            IdentityCache.logger.error(
-              <<~MSG.squish
-                [IDC id mismatch] fetch_by_id_requested=#{id}
-                fetch_by_id_got=#{object.id}
-                for #{object.inspect[(0..100)]}
-              MSG
-            )
-          end
-          object
-        else
-          resolve_cache_miss(id)
-        end
+
+        record = cached_record_fetcher.fetch(id)
+
         prefetch_associations(includes, [record]) if record && includes
         record
       end
@@ -66,25 +50,12 @@ module IdentityCache
         ids.flatten!(1)
         id_type = type_for_attribute(primary_key)
         ids.map! { |id| id_type.cast(id) }.compact!
-        records = if should_use_cache?
-          cache_keys = ids.map { |id| rails_cache_key(id) }
-          key_to_id_map = Hash[ cache_keys.zip(ids) ]
-          key_to_record_map = {}
+        return [] if ids.empty?
 
-          coders_by_key = IdentityCache.fetch_multi(cache_keys) do |unresolved_keys|
-            ids = unresolved_keys.map { |key| key_to_id_map[key] }
-            records = find_batch(ids)
-            key_to_record_map = records.compact.index_by { |record| rails_cache_key(record.id) }
-            records.map { |record| Encoder.encode(record) }
-          end
-
-          cache_keys.map do |key|
-            key_to_record_map[key] || Encoder.decode(coders_by_key[key], self)
-          end
-        else
-          find_batch(ids)
-        end
+        records_by_id = cached_record_fetcher.fetch_multi(ids)
+        records = ids.map { |id| records_by_id.fetch(id) }
         records.compact!
+
         prefetch_associations(includes, records) if includes
         records
       end
@@ -106,6 +77,11 @@ module IdentityCache
         cached_has_manys[name] || cached_has_ones[name] || cached_belongs_tos.fetch(name)
       end
 
+      # @api private
+      def cached_record_fetcher # :nodoc:
+        @cached_record_fetcher ||= Cached::RecordFetcher.new(self)
+      end
+
       private
 
       def raise_if_scoped
@@ -124,12 +100,6 @@ module IdentityCache
             scoped with a join isn't supported
           MSG
         end
-      end
-
-      def resolve_cache_miss(id)
-        record = includes(cache_fetch_includes).where(primary_key => id).take
-        setup_embedded_associations_on_miss([record]) if record
-        record
       end
 
       def preload_id_embedded_association(records, cached_association)
@@ -244,17 +214,6 @@ module IdentityCache
         end
 
         associations_for_identity_cache.compact
-      end
-
-      def find_batch(ids)
-        return [] if ids.empty?
-
-        @id_column ||= columns.detect { |c| c.name == primary_key }
-        ids = ids.map { |id| connection.type_cast(id, @id_column) }
-        records = where(primary_key => ids).includes(cache_fetch_includes).to_a
-        setup_embedded_associations_on_miss(records)
-        records_by_id = records.index_by(&:id)
-        ids.map { |id| records_by_id[id] }
       end
     end
 

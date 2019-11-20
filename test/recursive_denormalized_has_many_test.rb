@@ -29,7 +29,7 @@ class RecursiveDenormalizedHasManyTest < IdentityCache::TestCase
         { associated_records: [:deeply_associated_records] },
         associated: [:deeply_associated_records],
       ],
-      Item.send(:cache_fetch_includes)
+      Item.cached_record_fetcher.send(:db_load_includes)
     )
   end
 

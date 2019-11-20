@@ -59,7 +59,7 @@ class SchemaChangeTest < IdentityCache::TestCase
     AddColumnToChild.new.up
     read_new_schema
 
-    Item.expects(:resolve_cache_miss).returns(@record)
+    Item.send(:cached_record_fetcher).expects(:load_from_db).returns(@record)
     record = Item.fetch(@record.id)
   end
 
@@ -71,7 +71,7 @@ class SchemaChangeTest < IdentityCache::TestCase
     AddColumnToDeepChild.new.up
     read_new_schema
 
-    Item.expects(:resolve_cache_miss).returns(@record)
+    Item.send(:cached_record_fetcher).expects(:load_from_db).returns(@record)
     record = Item.fetch(@record.id)
   end
 
@@ -82,7 +82,7 @@ class SchemaChangeTest < IdentityCache::TestCase
     Item.cache_has_many(:polymorphic_records, inverse_name: :owner, embed: true)
     read_new_schema
 
-    Item.expects(:resolve_cache_miss).returns(@record)
+    Item.send(:cached_record_fetcher).expects(:load_from_db).returns(@record)
     Item.fetch(@record.id)
   end
 
