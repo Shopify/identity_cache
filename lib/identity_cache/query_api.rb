@@ -26,23 +26,21 @@ module IdentityCache
         id = type_for_attribute(primary_key).cast(id)
         return unless id
         record = if should_use_cache?
-          require_if_necessary do
-            object = nil
-            coder  = IdentityCache.fetch(rails_cache_key(id)) do
-              Encoder.encode(object = resolve_cache_miss(id))
-            end
-            object ||= Encoder.decode(coder, self)
-            if object && object.id != id
-              IdentityCache.logger.error(
-                <<~MSG.squish
-                  [IDC id mismatch] fetch_by_id_requested=#{id}
-                  fetch_by_id_got=#{object.id}
-                  for #{object.inspect[(0..100)]}
-                MSG
-              )
-            end
-            object
+          object = nil
+          coder  = IdentityCache.fetch(rails_cache_key(id)) do
+            Encoder.encode(object = resolve_cache_miss(id))
           end
+          object ||= Encoder.decode(coder, self)
+          if object && object.id != id
+            IdentityCache.logger.error(
+              <<~MSG.squish
+                [IDC id mismatch] fetch_by_id_requested=#{id}
+                fetch_by_id_got=#{object.id}
+                for #{object.inspect[(0..100)]}
+              MSG
+            )
+          end
+          object
         else
           resolve_cache_miss(id)
         end
@@ -69,21 +67,19 @@ module IdentityCache
         id_type = type_for_attribute(primary_key)
         ids.map! { |id| id_type.cast(id) }.compact!
         records = if should_use_cache?
-          require_if_necessary do
-            cache_keys = ids.map { |id| rails_cache_key(id) }
-            key_to_id_map = Hash[ cache_keys.zip(ids) ]
-            key_to_record_map = {}
+          cache_keys = ids.map { |id| rails_cache_key(id) }
+          key_to_id_map = Hash[ cache_keys.zip(ids) ]
+          key_to_record_map = {}
 
-            coders_by_key = IdentityCache.fetch_multi(cache_keys) do |unresolved_keys|
-              ids = unresolved_keys.map { |key| key_to_id_map[key] }
-              records = find_batch(ids)
-              key_to_record_map = records.compact.index_by { |record| rails_cache_key(record.id) }
-              records.map { |record| Encoder.encode(record) }
-            end
+          coders_by_key = IdentityCache.fetch_multi(cache_keys) do |unresolved_keys|
+            ids = unresolved_keys.map { |key| key_to_id_map[key] }
+            records = find_batch(ids)
+            key_to_record_map = records.compact.index_by { |record| rails_cache_key(record.id) }
+            records.map { |record| Encoder.encode(record) }
+          end
 
-            cache_keys.map do |key|
-              key_to_record_map[key] || Encoder.decode(coders_by_key[key], self)
-            end
+          cache_keys.map do |key|
+            key_to_record_map[key] || Encoder.decode(coders_by_key[key], self)
           end
         else
           find_batch(ids)
@@ -128,24 +124,6 @@ module IdentityCache
             scoped with a join isn't supported
           MSG
         end
-      end
-
-      def require_if_necessary #:nodoc:
-        # mem_cache_store returns raw value if unmarshal fails
-        rval = yield
-        case rval
-        when String
-          rval = Marshal.load(rval)
-        when Array
-          rval.map! { |v| v.kind_of?(String) ? Marshal.load(v) : v }
-        end
-        rval
-      rescue ArgumentError => e
-        if e.message =~ /undefined [\w\/]+ (\w+)/
-          ok = Kernel.const_get($1) rescue nil
-          retry if ok
-        end
-        raise
       end
 
       def resolve_cache_miss(id)
