@@ -16,6 +16,7 @@ module IdentityCache
 
         input_to_cache_key_map = {}
         input_keys.each do |input_key|
+          input_key = cast_input_key(input_key)
           input_to_cache_key_map[input_key] = input_key_to_cache_key(input_key)
         end
 
@@ -48,6 +49,7 @@ module IdentityCache
           return load_from_db(input_key)
         end
 
+        input_key = cast_input_key(input_key)
         cache_key = input_key_to_cache_key(input_key)
 
         result_value = UNDEFINED
@@ -67,6 +69,10 @@ module IdentityCache
         raise NotImplementedError
       end
 
+      def cast_input_key(input_key)
+        input_key
+      end
+
       def input_key_to_cache_key(input_key)
         raise NotImplementedError
       end
@@ -80,7 +86,7 @@ module IdentityCache
       end
 
       def default_value
-        raise NotImplementedError
+        raise KeyError
       end
 
       # encode value for serialization

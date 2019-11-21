@@ -17,6 +17,10 @@ module IdentityCache
         model.should_use_cache?
       end
 
+      def cast_input_key(id)
+        model.type_for_attribute(model.primary_key).cast(id)
+      end
+
       def input_key_to_cache_key(id)
         model.rails_cache_key(id)
       end
@@ -34,7 +38,6 @@ module IdentityCache
       end
 
       def load_multi_from_db(ids)
-        ids = ids.map { |id| model.connection.type_cast(id, id_column) }
         records = model.where(model.primary_key => ids).includes(db_load_includes).to_a
         self.class.setup_embedded_associations_on_miss(model, records)
         records.index_by(&:id)
