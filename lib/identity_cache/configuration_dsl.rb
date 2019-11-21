@@ -40,7 +40,7 @@ module IdentityCache
       #
       def cache_index(*fields, unique: false)
         raise NotImplementedError, "Cache indexes need an enabled primary index" unless primary_cache_index_enabled
-        cache_attribute_by_alias('primary_key', 'id', by: fields, unique: unique)
+        cache_attribute_by_alias(primary_key, 'id', by: fields, unique: unique)
 
         field_list = fields.join("_and_")
         arg_list = (0...fields.size).collect { |i| "arg#{i}" }.join(',')
@@ -69,7 +69,7 @@ module IdentityCache
         if fields.length == 1
           instance_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
             def fetch_multi_by_#{field_list}(index_values, includes: nil)
-              ids = fetch_multi_id_by_#{field_list}(index_values).values.flatten(1)
+              ids = fetch_multi_id_by_#{field_list}(index_values).fetch_values(*index_values).flatten(1).compact
               return ids if ids.empty?
               fetch_multi(ids, includes: includes)
             end
@@ -185,7 +185,7 @@ module IdentityCache
       # * by: Other attribute or attributes in the model to keep values indexed. Default is :id
       # * unique: if the index would only have unique values. Default is true
       def cache_attribute(attribute, by: :id, unique: true)
-        cache_attribute_by_alias(attribute.inspect, attribute, by: by, unique: unique)
+        cache_attribute_by_alias(attribute, attribute, by: by, unique: unique)
       end
 
       private
@@ -196,98 +196,10 @@ module IdentityCache
         unique = !!unique
         fields = Array(by)
 
-        cache_indexes.push([alias_name, fields, unique])
-
-        field_list = fields.join("_and_")
-        arg_list = (0...fields.size).collect { |i| "arg#{i}" }.join(',')
-
-        instance_eval(<<-CODE, __FILE__, __LINE__ + 1)
-          def fetch_#{alias_name}_by_#{field_list}(#{arg_list})
-            attribute_dynamic_fetcher(#{attribute}, #{fields.inspect}, [#{arg_list}], #{unique})
-          end
-        CODE
-
-        if fields.length == 1
-          instance_eval(<<-CODE, __FILE__, __LINE__ + 1)
-            def fetch_multi_#{alias_name}_by_#{field_list}(index_values)
-              batch_attribute_dynamic_fetcher(#{attribute}, #{fields.first.to_s.inspect}.freeze, index_values, #{unique})
-            end
-          CODE
-        end
-      end
-
-      def attribute_dynamic_fetcher(attribute, fields, values, unique_index) #:nodoc:
-        raise_if_scoped
-
-        fields.each_with_index do |field, i|
-          values[i] = type_for_attribute(field.to_s).cast(values[i])
-        end
-
-        if should_use_cache?
-          cache_key = rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, values, unique_index)
-          IdentityCache.fetch(cache_key) do
-            dynamic_attribute_cache_miss(attribute, fields, values, unique_index)
-          end
-        else
-          dynamic_attribute_cache_miss(attribute, fields, values, unique_index)
-        end
-      end
-
-      def dynamic_attribute_cache_miss(attribute, fields, values, unique_index)
-        query = reorder(nil).where(Hash[fields.zip(values)])
-        query = query.limit(1) if unique_index
-        results = query.pluck(attribute)
-        unique_index ? results.first : results
-      end
-
-      def batch_attribute_dynamic_fetcher(attribute, field, index_values, unique_index)
-        raise_if_scoped
-
-        type = type_for_attribute(field)
-        index_values = index_values.map { |value| type.cast(value) }
-
-        unless should_use_cache?
-          return batch_dynamic_attribute_cache_miss(attribute, field, index_values, unique_index)
-        end
-
-        fields = [field]
-        index_by_cache_key = index_values.each_with_object({}) do |index_value, index_hash|
-          cache_key = rails_cache_key_for_attribute_and_fields_and_values(
-            attribute, fields, [index_value], unique_index
-          )
-          index_hash[cache_key] = index_value
-        end
-        attribute_by_cache_key = IdentityCache.fetch_multi(index_by_cache_key.keys) do |unresolved_keys|
-          unresolved_index_values = unresolved_keys.map { |cache_key| index_by_cache_key.fetch(cache_key) }
-          resolved_attributes = batch_dynamic_attribute_cache_miss(
-            attribute, field, unresolved_index_values, unique_index
-          )
-          unresolved_index_values.map { |index_value| resolved_attributes.fetch(index_value) }
-        end
-        result = {}
-        attribute_by_cache_key.each do |cache_key, attribute_value|
-          result[index_by_cache_key.fetch(cache_key)] = attribute_value
-        end
-        result
-      end
-
-      def batch_dynamic_attribute_cache_miss(attribute, index_field, values, unique_index)
-        rows = reorder(nil).where(index_field => values).pluck(index_field, attribute)
-        result = {}
-        default = unique_index ? nil : []
-        values.each do |index_value|
-          result[index_value] = default.try!(:dup)
-        end
-        if unique_index
-          rows.each do |index_value, attribute_value|
-            result[index_value] = attribute_value
-          end
-        else
-          rows.each do |index_value, attribute_value|
-            result[index_value] << attribute_value
-          end
-        end
-        result
+        klass = fields.length == 1 ? Cached::AttributeByOne : Cached::AttributeByMulti
+        cached_attribute = klass.new(self, attribute, alias_name, fields, unique)
+        cached_attribute.build
+        cache_indexes.push(cached_attribute)
       end
 
       def ensure_base_model
