@@ -41,10 +41,10 @@ module IdentityCache
 
     def expire_parent_caches
       ParentModelExpiration.install_pending_parent_expiry_hooks(cached_model)
-      parents_to_expire = {}
+      parents_to_expire = Set.new
       add_parents_to_cache_expiry_set(parents_to_expire)
-      parents_to_expire.each_value do |parent|
-        parent.send(:expire_primary_index)
+      parents_to_expire.each do |parent|
+        parent.expire_primary_index if parent.class.primary_cache_index_enabled
       end
     end
 
@@ -55,9 +55,7 @@ module IdentityCache
     end
 
     def add_record_to_cache_expiry_set(parents_to_expire, record)
-      key = record.primary_cache_index_key
-      unless parents_to_expire[key]
-        parents_to_expire[key] = record
+      if parents_to_expire.add?(record)
         record.add_parents_to_cache_expiry_set(parents_to_expire)
       end
     end

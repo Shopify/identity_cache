@@ -57,7 +57,7 @@ module IdentityCache
         parent_class = reflection.active_record
         child_class  = reflection.klass
 
-        unless child_class < IdentityCache
+        unless child_class < IdentityCache::WithoutPrimaryIndex
           if embedded_recursively?
             raise UnsupportedAssociationError, <<~MSG.squish
               cached association #{parent_class}\##{reflection.name} requires

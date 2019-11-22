@@ -7,76 +7,13 @@ module IdentityCache
       base.class_attribute(:cache_indexes)
       base.class_attribute(:cached_has_manys)
       base.class_attribute(:cached_has_ones)
-      base.class_attribute(:primary_cache_index_enabled)
 
       base.cached_has_manys = {}
       base.cached_has_ones = {}
       base.cache_indexes = []
-      base.primary_cache_index_enabled = true
     end
 
     module ClassMethods
-      # Declares a new index in the cache for the class where IdentityCache was
-      # included.
-      #
-      # IdentityCache will add a fetch_by_field1_and_field2_and_...field for every
-      # index.
-      #
-      # == Example:
-      #
-      #  class Product
-      #    include IdentityCache
-      #    cache_index :name, :vendor
-      #  end
-      #
-      # Will add Product.fetch_by_name_and_vendor
-      #
-      # == Parameters
-      #
-      # +fields+ Array of symbols or strings representing the fields in the index
-      #
-      # == Options
-      # * unique: if the index would only have unique values. Default is false
-      #
-      def cache_index(*fields, unique: false)
-        raise NotImplementedError, "Cache indexes need an enabled primary index" unless primary_cache_index_enabled
-        cache_attribute_by_alias('primary_key', 'id', by: fields, unique: unique)
-
-        field_list = fields.join("_and_")
-        arg_list = (0...fields.size).collect { |i| "arg#{i}" }.join(',')
-
-        if unique
-          instance_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
-            def fetch_by_#{field_list}(#{arg_list}, includes: nil)
-              id = fetch_id_by_#{field_list}(#{arg_list})
-              id && fetch_by_id(id, includes: includes)
-            end
-
-            # exception throwing variant
-            def fetch_by_#{field_list}!(#{arg_list}, includes: nil)
-              fetch_by_#{field_list}(#{arg_list}, includes: includes) or raise ActiveRecord::RecordNotFound
-            end
-          CODE
-        else
-          instance_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
-            def fetch_by_#{field_list}(#{arg_list}, includes: nil)
-              ids = fetch_id_by_#{field_list}(#{arg_list})
-              ids.empty? ? ids : fetch_multi(ids, includes: includes)
-            end
-          CODE
-        end
-
-        if fields.length == 1
-          instance_eval(ruby = <<-CODE, __FILE__, __LINE__ + 1)
-            def fetch_multi_by_#{field_list}(index_values, includes: nil)
-              ids = fetch_multi_id_by_#{field_list}(index_values).values.flatten(1)
-              return ids if ids.empty?
-              fetch_multi(ids, includes: includes)
-            end
-          CODE
-        end
-      end
-
       # Will cache an association to the class including IdentityCache.
       # The embed option, if set, will make IdentityCache keep the association
       # values in the same cache entry as the parent.

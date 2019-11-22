@@ -17,9 +17,13 @@ module SwitchNamespace
 end
 
 module ActiveRecordObjects
-
-  def setup_models(_base = ActiveRecord::Base)
+  def setup_models
     Kernel.load(File.expand_path('../../helpers/models.rb', __FILE__))
+    include_idc_into_associated_record
+  end
+
+  def include_idc_into_associated_record
+    AssociatedRecord.include(IdentityCache)
   end
 
   def teardown_models

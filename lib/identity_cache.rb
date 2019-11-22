@@ -29,18 +29,12 @@ require "identity_cache/cache_invalidation"
 require "identity_cache/cache_fetcher"
 require "identity_cache/fallback_fetcher"
 require 'identity_cache/without_primary_index'
+require 'identity_cache/with_primary_index'
 
 module IdentityCache
   extend ActiveSupport::Concern
 
-  include ArTransactionChanges
-  include IdentityCache::BelongsToCaching
-  include IdentityCache::CacheKeyGeneration
-  include IdentityCache::ConfigurationDSL
-  include IdentityCache::QueryAPI
-  include IdentityCache::CacheInvalidation
-  include IdentityCache::ShouldUseCache
-  include ParentModelExpiration
+  include WithPrimaryIndex
 
   CACHED_NIL = :idc_cached_nil
   BATCH_SIZE = 1000
@@ -69,10 +63,8 @@ module IdentityCache
     mattr_accessor :fetch_read_only_records
     self.fetch_read_only_records = true
 
-    def included(base) #:nodoc:
-      raise AlreadyIncludedError if base.respond_to?(:cached_model)
-      base.class_attribute(:cached_model)
-      base.cached_model = base
+    def append_features(base) #:nodoc:
+      raise AlreadyIncludedError if base.include?(IdentityCache)
       super
     end
 
