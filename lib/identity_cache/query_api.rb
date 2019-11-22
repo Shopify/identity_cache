@@ -91,7 +91,7 @@ module IdentityCache
 
       # Prefetches cached associations on a collection of records
       def prefetch_associations(includes, records)
-        Cached::Prefetcher.prefetch(self, includes, records)
+        Prefetch::Operation.new(self, includes, records).load
       end
 
       # Invalidates the primary cache index for the associated record. Will not invalidate cached attributes.
