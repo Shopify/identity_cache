@@ -50,6 +50,9 @@ module IdentityCache
             def fetch_by_#{field_list}(#{arg_list}, includes: nil)
               id = fetch_id_by_#{field_list}(#{arg_list})
               id && fetch_by_id(id, includes: includes)
+
+            rescue RangeError
+              raise ActiveRecord::RecordNotFound
             end
 
             # exception throwing variant
