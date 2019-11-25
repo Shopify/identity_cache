@@ -41,7 +41,7 @@ class ReadonlyTest < IdentityCache::TestCase
 
   def test_fetch_should_not_update_cache
     fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
-    Item.expects(:resolve_cache_miss).with(1).once.returns(@record)
+    Item.cached_primary_index.expects(:load_one_from_db).with(1).once.returns(@record)
 
     assert_readonly_fetch do
       assert_equal @record, Item.fetch(1)

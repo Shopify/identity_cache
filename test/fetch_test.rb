@@ -96,7 +96,7 @@ class FetchTest < IdentityCache::TestCase
 
   def test_exists_with_identity_cache_when_cache_miss_and_in_db
     fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
-    Item.expects(:resolve_cache_miss).with(1).once.returns(@record)
+    Item.cached_primary_index.expects(:load_one_from_db).with(1).once.returns(@record)
 
     assert(Item.exists_with_identity_cache?(1))
     assert(fetch.has_been_called_with?(@blob_key))
@@ -104,14 +104,14 @@ class FetchTest < IdentityCache::TestCase
 
   def test_exists_with_identity_cache_when_cache_miss_and_not_in_db
     fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
-    Item.expects(:resolve_cache_miss).with(1).once.returns(nil)
+    Item.cached_primary_index.expects(:load_one_from_db).with(1).once.returns(nil)
 
     assert(!Item.exists_with_identity_cache?(1))
     assert(fetch.has_been_called_with?(@blob_key))
   end
 
   def test_fetch_miss_published_dehydration_notification
-    Item.expects(:resolve_cache_miss).with(1).once.returns(@record)
+    Item.cached_primary_index.expects(:load_one_from_db).with(1).once.returns(@record)
 
     events = 0
     subscriber = ActiveSupport::Notifications.subscribe('dehydration.identity_cache') do |_, _, _, _, payload|
@@ -125,7 +125,7 @@ class FetchTest < IdentityCache::TestCase
   end
 
   def test_fetch_miss_publishes_cache_notification
-    Item.expects(:resolve_cache_miss).with(1).once.returns(@record)
+    Item.cached_primary_index.expects(:load_one_from_db).with(1).once.returns(@record)
     expected = { memoizing: false, memo_hits: 0, cache_hits: 0, cache_misses: 1 }
 
     events = 0
@@ -141,7 +141,7 @@ class FetchTest < IdentityCache::TestCase
   end
 
   def test_fetch_miss
-    Item.expects(:resolve_cache_miss).with(1).once.returns(@record)
+    Item.cached_primary_index.expects(:load_one_from_db).with(1).once.returns(@record)
 
     results = []
     fetch = Spy.on(IdentityCache.cache, :fetch).and_return { |_, &block| block.call.tap { |result| results << result } }
@@ -158,14 +158,14 @@ class FetchTest < IdentityCache::TestCase
   end
 
   def test_fetch_conflict
-    resolve_cache_miss = Spy.on(Item, :resolve_cache_miss).and_return do
+    load_one_from_db = Spy.on(Item.cached_primary_index, :load_one_from_db).and_return do
       @record.expire_cache
       @record
     end
     add = Spy.on(fetcher, :add).and_call_through
 
     assert_equal(@record, Item.fetch(1))
-    assert(resolve_cache_miss.has_been_called_with?(1))
+    assert(load_one_from_db.has_been_called_with?(1))
     assert(add.has_been_called_with?(@blob_key, @cached_value))
     assert_equal(IdentityCache::DELETED, backend.read(@record.primary_cache_index_key))
   end
@@ -174,14 +174,14 @@ class FetchTest < IdentityCache::TestCase
     @record.expire_cache
     assert_equal(IdentityCache::DELETED, backend.read(@record.primary_cache_index_key))
 
-    resolve_cache_miss = Spy.on(Item, :resolve_cache_miss).and_return do
+    load_one_from_db = Spy.on(Item.cached_primary_index, :load_one_from_db).and_return do
       @record.expire_cache
       @record
     end
     add = Spy.on(IdentityCache.cache.cache_fetcher, :add).and_call_through
 
     assert_equal(@record, Item.fetch(1))
-    assert(resolve_cache_miss.has_been_called_with?(1))
+    assert(load_one_from_db.has_been_called_with?(1))
     refute(add.has_been_called?)
     assert_equal(IdentityCache::DELETED, backend.read(@record.primary_cache_index_key))
   end
@@ -314,7 +314,7 @@ class FetchTest < IdentityCache::TestCase
   def test_returned_records_are_readonly_on_cache_miss
     IdentityCache.with_fetch_read_only_records do
       fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
-      Item.expects(:resolve_cache_miss).with(1).once.returns(@record)
+      Item.cached_primary_index.expects(:load_one_from_db).with(1).once.returns(@record)
 
       assert Item.exists_with_identity_cache?(1)
       assert fetch.has_been_called_with?(@blob_key)
@@ -327,7 +327,7 @@ class FetchTest < IdentityCache::TestCase
 
       @record.transaction do
         fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
-        Item.expects(:resolve_cache_miss).with(1).once.returns(@record)
+        Item.cached_primary_index.expects(:load_one_from_db).with(1).once.returns(@record)
 
         refute IdentityCache.should_use_cache?
         refute fetch.has_been_called_with?(@blob_key)
