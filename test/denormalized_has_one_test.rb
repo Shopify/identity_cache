@@ -7,6 +7,7 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     PolymorphicRecord.include(IdentityCache::WithoutPrimaryIndex)
     Item.cache_has_one(:associated)
     Item.cache_index(:title, unique: true)
+    @cached_attribute = Item.cache_indexes.last
     @record = Item.new(title: 'foo')
     @record.associated = AssociatedRecord.new(name: 'bar')
     @record.save
@@ -24,7 +25,7 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     assert_equal(@record.associated, record_from_cache_miss.fetch_associated)
     assert(
       fetch.has_been_called_with?(
-        @record.attribute_cache_key_for_attribute_and_current_values(:id, [:title], true)
+        @cached_attribute.input_key_to_cache_key(['foo'])
       )
     )
     assert(
@@ -52,7 +53,7 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     end
     assert(
       fetch.has_been_called_with?(
-        @record.attribute_cache_key_for_attribute_and_current_values(:id, [:title], true)
+        @cached_attribute.input_key_to_cache_key(['foo'])
       )
     )
     assert(
