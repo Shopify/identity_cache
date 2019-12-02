@@ -31,52 +31,9 @@ module IdentityCache
     end
 
     module ClassMethods
-      def rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, values, unique)
-        unique_indicator = unique ? '' : 's'
-        "#{rails_cache_key_namespace}" \
-          "attr#{unique_indicator}" \
-          ":#{base_class.name}" \
-          ":#{attribute}" \
-          ":#{rails_cache_string_for_fields_and_values(fields, values)}"
-      end
-
       def rails_cache_key_namespace
         ns = IdentityCache.cache_namespace
         ns.is_a?(Proc) ? ns.call(self) : ns
-      end
-
-      private
-      def rails_cache_string_for_fields_and_values(fields, values)
-        "#{fields.join('/')}:#{IdentityCache.memcache_hash(values.map { |v| v.try!(:to_s).inspect }.join('/'))}"
-      end
-    end
-
-    def attribute_cache_key_for_attribute_and_current_values(attribute, fields, unique) # :nodoc:
-      self.class.rails_cache_key_for_attribute_and_fields_and_values(
-        attribute, fields, current_values_for_fields(fields), unique
-      )
-    end
-
-    def attribute_cache_key_for_attribute_and_previous_values(attribute, fields, unique) # :nodoc:
-      self.class.rails_cache_key_for_attribute_and_fields_and_values(
-        attribute, fields, old_values_for_fields(fields), unique
-      )
-    end
-
-    def current_values_for_fields(fields) # :nodoc:
-      fields.collect { |field| send(field) }
-    end
-
-    def old_values_for_fields(fields) # :nodoc:
-      fields.map do |field|
-        field_string = field.to_s
-        if destroyed? && transaction_changed_attributes.has_key?(field_string)
-          transaction_changed_attributes[field_string]
-        elsif persisted? && transaction_changed_attributes.has_key?(field_string)
-          transaction_changed_attributes[field_string]
-        else
-          send(field)
-        end
       end
     end
   end

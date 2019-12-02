@@ -159,6 +159,12 @@ module IdentityCache
       true
     end
 
+    # @api private
+    def was_new_record? # :nodoc:
+      pk = self.class.primary_key
+      !destroyed? && transaction_changed_attributes.has_key?(pk) && transaction_changed_attributes[pk].nil?
+    end
+
     private
 
     def fetch_recursively_cached_association(ivar_name, dehydrated_ivar_name, association_name) # :nodoc:
@@ -219,23 +225,9 @@ module IdentityCache
     end
 
     def expire_attribute_indexes # :nodoc:
-      cache_indexes.each do |(attribute, fields, unique)|
-        unless was_new_record?
-          old_cache_attribute_key = attribute_cache_key_for_attribute_and_previous_values(attribute, fields, unique)
-          IdentityCache.cache.delete(old_cache_attribute_key)
-        end
-        unless destroyed?
-          new_cache_attribute_key = attribute_cache_key_for_attribute_and_current_values(attribute, fields, unique)
-          if new_cache_attribute_key != old_cache_attribute_key
-            IdentityCache.cache.delete(new_cache_attribute_key)
-          end
-        end
+      cache_indexes.each do |cached_attribute|
+        cached_attribute.expire(self)
       end
-    end
-
-    def was_new_record? # :nodoc:
-      pk = self.class.primary_key
-      !destroyed? && transaction_changed_attributes.has_key?(pk) && transaction_changed_attributes[pk].nil?
     end
   end
 end
