@@ -48,8 +48,8 @@ class SchemaChangeTest < IdentityCache::TestCase
     AssociatedRecord.reset_column_information
     DeeplyAssociatedRecord.reset_column_information
 
-    AssociatedRecord.send(:instance_variable_set, :@rails_cache_key_prefix, nil)
-    Item.send(:instance_variable_set, :@rails_cache_key_prefix, nil)
+    AssociatedRecord.cached_primary_index.send(:instance_variable_set, :@cache_key_prefix, nil)
+    Item.cached_primary_index.send(:instance_variable_set, :@cache_key_prefix, nil)
   end
 
   def test_schema_changes_on_embedded_association_should_cause_cache_miss_for_old_cached_objects
@@ -59,7 +59,7 @@ class SchemaChangeTest < IdentityCache::TestCase
     AddColumnToChild.new.up
     read_new_schema
 
-    Item.expects(:resolve_cache_miss).returns(@record)
+    Item.cached_primary_index.expects(:load_one_from_db).returns(@record)
     record = Item.fetch(@record.id)
   end
 
@@ -71,7 +71,7 @@ class SchemaChangeTest < IdentityCache::TestCase
     AddColumnToDeepChild.new.up
     read_new_schema
 
-    Item.expects(:resolve_cache_miss).returns(@record)
+    Item.cached_primary_index.expects(:load_one_from_db).returns(@record)
     record = Item.fetch(@record.id)
   end
 
@@ -82,7 +82,7 @@ class SchemaChangeTest < IdentityCache::TestCase
     Item.cache_has_many(:polymorphic_records, inverse_name: :owner, embed: true)
     read_new_schema
 
-    Item.expects(:resolve_cache_miss).returns(@record)
+    Item.cached_primary_index.expects(:load_one_from_db).returns(@record)
     Item.fetch(@record.id)
   end
 
