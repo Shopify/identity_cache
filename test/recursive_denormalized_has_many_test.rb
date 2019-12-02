@@ -105,8 +105,6 @@ class RecursiveDenormalizedHasManyTest < IdentityCache::TestCase
     IdentityCache.cache.expects(:delete).with(@record.primary_cache_index_key)
     if AssociatedRecord.primary_cache_index_enabled
       IdentityCache.cache.expects(:delete).with(@associated_record.primary_cache_index_key)
-    else
-      IdentityCache.cache.expects(:delete).with(@associated_record.primary_cache_index_key).never
     end
     @associated_record.name = 'different'
     @associated_record.save!
@@ -116,8 +114,6 @@ class RecursiveDenormalizedHasManyTest < IdentityCache::TestCase
     IdentityCache.cache.expects(:delete).with(@record.primary_cache_index_key)
     if AssociatedRecord.primary_cache_index_enabled
       IdentityCache.cache.expects(:delete).with(@associated_record.primary_cache_index_key)
-    else
-      IdentityCache.cache.expects(:delete).with(@associated_record.primary_cache_index_key).never
     end
     IdentityCache.cache.expects(:delete).with(@deeply_associated_record.primary_cache_index_key)
     @deeply_associated_record.name = 'different'
@@ -160,8 +156,7 @@ class RecursiveNormalizedHasManyTest < IdentityCache::TestCase
 end
 
 class DisabledPrimaryIndexTest < RecursiveDenormalizedHasManyTest
-  def setup
-    super
-    AssociatedRecord.primary_cache_index_enabled = false
+  def include_idc_into_associated_record
+    AssociatedRecord.include(IdentityCache::WithoutPrimaryIndex)
   end
 end

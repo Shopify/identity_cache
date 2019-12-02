@@ -31,18 +31,6 @@ module IdentityCache
     end
 
     module ClassMethods
-      def rails_cache_key(id)
-        "#{prefixed_rails_cache_key}#{id}"
-      end
-
-      def rails_cache_key_prefix
-        @rails_cache_key_prefix ||= IdentityCache::CacheKeyGeneration.denormalized_schema_hash(self)
-      end
-
-      def prefixed_rails_cache_key
-        "#{rails_cache_key_namespace}blob:#{base_class.name}:#{rails_cache_key_prefix}:"
-      end
-
       def rails_cache_key_for_attribute_and_fields_and_values(attribute, fields, values, unique)
         unique_indicator = unique ? '' : 's'
         "#{rails_cache_key_namespace}" \
@@ -61,10 +49,6 @@ module IdentityCache
       def rails_cache_string_for_fields_and_values(fields, values)
         "#{fields.join('/')}:#{IdentityCache.memcache_hash(values.map { |v| v.try!(:to_s).inspect }.join('/'))}"
       end
-    end
-
-    def primary_cache_index_key # :nodoc:
-      self.class.rails_cache_key(id)
     end
 
     def attribute_cache_key_for_attribute_and_current_values(attribute, fields, unique) # :nodoc:

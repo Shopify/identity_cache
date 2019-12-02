@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 class DeeplyAssociatedRecord < ActiveRecord::Base
   include IdentityCache
   belongs_to :item
@@ -7,7 +8,6 @@ class DeeplyAssociatedRecord < ActiveRecord::Base
 end
 
 class AssociatedRecord < ActiveRecord::Base
-  include IdentityCache
   belongs_to :item, inverse_of: :associated_records
   belongs_to :item_two, inverse_of: :associated_records
   has_many :deeply_associated_records
