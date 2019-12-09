@@ -32,6 +32,7 @@ class IdentityCache::TestCase < Minitest::Test
   attr_reader :backend
 
   def setup
+    ActiveRecord::Base.connection.schema_cache.clear!
     DatabaseConnection.drop_tables
     DatabaseConnection.create_tables
 
@@ -60,6 +61,13 @@ class IdentityCache::TestCase < Minitest::Test
 
   def assert_not_nil(*args)
     assert(*args)
+  end
+
+  def count_queries
+    counter = SQLCounter.new
+    subscriber = ActiveSupport::Notifications.subscribe('sql.active_record', counter)
+    yield
+    counter.log.size
   end
 
   def assert_queries(num = 1)

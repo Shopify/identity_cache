@@ -5,12 +5,20 @@ module IdentityCache
     class Attribute
       attr_reader :model, :attribute, :alias_name, :key_fields, :unique
 
-      def initialize(model, attribute, alias_name, key_fields, unique)
+      def initialize(model, attribute_or_proc, alias_name, key_fields, unique)
         @model = model
-        @attribute = attribute.to_sym
+        if attribute_or_proc.is_a?(Proc)
+          @attribute_proc = attribute_or_proc
+        else
+          @attribute = attribute_or_proc.to_sym
+        end
         @alias_name = alias_name.to_sym
         @key_fields = key_fields.map(&:to_sym)
         @unique = !!unique
+      end
+
+      def attribute
+        @attribute ||= @attribute_proc.call.to_sym
       end
 
       def build
