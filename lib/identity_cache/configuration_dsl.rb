@@ -122,16 +122,16 @@ module IdentityCache
       # * by: Other attribute or attributes in the model to keep values indexed. Default is :id
       # * unique: if the index would only have unique values. Default is true
       def cache_attribute(attribute, by: :id, unique: true)
-        cache_attribute_by_alias(attribute, attribute, by: by, unique: unique)
+        cache_attribute_by_alias(attribute, alias_name: attribute, by: by, unique: unique)
       end
 
       private
 
-      def cache_attribute_by_alias(attribute, alias_name, by:, unique:)
+      def cache_attribute_by_alias(attribute_or_proc, alias_name:, by:, unique:)
         ensure_base_model
         fields = Array(by)
 
-        cached_attribute = Cached::Attribute.new(self, attribute, alias_name, fields, unique)
+        cached_attribute = Cached::Attribute.new(self, attribute_or_proc, alias_name, fields, unique)
         cached_attribute.build
         cache_indexes.push(cached_attribute)
       end

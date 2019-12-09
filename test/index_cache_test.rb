@@ -4,6 +4,17 @@ require "test_helper"
 class IndexCacheTest < IdentityCache::TestCase
   NAMESPACE = IdentityCache::CacheKeyGeneration::DEFAULT_NAMESPACE
 
+  class WithoutSetup < IdentityCache::TestCase
+    def test_no_queries_on_definition
+      # should not do schema queries eagerly
+      assert_no_queries { Item.cache_index(:title, :id) }
+
+      # make sure schema wasn't cached
+      schema_queries = count_queries { Item.primary_key }
+      assert(schema_queries > 0)
+    end
+  end
+
   def setup
     super
     @record = Item.new
