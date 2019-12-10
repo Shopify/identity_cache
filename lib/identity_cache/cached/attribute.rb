@@ -3,7 +3,7 @@
 module IdentityCache
   module Cached
     class Attribute
-      attr_reader :model, :attribute, :alias_name, :key_fields, :unique
+      attr_reader :model, :alias_name, :key_fields, :unique
 
       def initialize(model, attribute_or_proc, alias_name, key_fields, unique)
         @model = model
