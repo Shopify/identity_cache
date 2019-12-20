@@ -70,6 +70,53 @@ module IdentityCache
         load_result
       end
 
+      # Load multiple keys for multiple cache fetchers
+      def batch_load(cache_fetcher_to_db_keys_hash)
+        cache_key_to_db_key_hash = {}
+        cache_key_to_cache_fetcher_hash = {}
+
+        batch_load_result = {}
+
+        cache_fetcher_to_db_keys_hash.each do |cache_fetcher, db_keys|
+          if db_keys.empty?
+            batch_load_result[cache_fetcher] = {}
+            next
+          end
+          db_keys.each do |db_key|
+            cache_key = cache_fetcher.cache_key(db_key)
+            cache_key_to_db_key_hash[cache_key] = db_key
+            cache_key_to_cache_fetcher_hash[cache_key] = cache_fetcher
+          end
+        end
+
+        cache_keys = cache_key_to_db_key_hash.keys
+        cache_result = cache_fetch_multi(cache_keys) do |unresolved_cache_keys|
+          cache_fetcher_to_unresolved_keys_hash = unresolved_cache_keys.group_by do |cache_key|
+            cache_key_to_cache_fetcher_hash.fetch(cache_key)
+          end
+
+          resolve_miss_result = {}
+
+          db_keys_buffer = []
+          cache_fetcher_to_unresolved_keys_hash.each do |cache_fetcher, unresolved_cache_fetcher_keys|
+            batch_load_result[cache_fetcher] = resolve_multi_on_miss(cache_fetcher, unresolved_cache_fetcher_keys,
+              cache_key_to_db_key_hash, resolve_miss_result, db_keys_buffer: db_keys_buffer)
+          end
+
+          resolve_miss_result
+        end
+
+        cache_result.each do |cache_key, cache_value|
+          cache_fetcher = cache_key_to_cache_fetcher_hash.fetch(cache_key)
+          load_result = (batch_load_result[cache_fetcher] ||= {})
+
+          db_key = cache_key_to_db_key_hash.fetch(cache_key)
+          load_result[db_key] ||= cache_fetcher.cache_decode(cache_value)
+        end
+
+        batch_load_result
+      end
+
       private
 
       def cache_fetch_multi(cache_keys)
@@ -79,12 +126,13 @@ module IdentityCache
         end
       end
 
-      def resolve_multi_on_miss(cache_fetcher, unresolved_cache_keys, cache_key_to_db_key_hash, resolve_miss_result)
-        db_keys = unresolved_cache_keys.map do |cache_key|
-          cache_key_to_db_key_hash.fetch(cache_key)
+      def resolve_multi_on_miss(cache_fetcher, unresolved_cache_keys, cache_key_to_db_key_hash, resolve_miss_result, db_keys_buffer: [])
+        db_keys_buffer.clear
+        unresolved_cache_keys.each do |cache_key|
+          db_keys_buffer << cache_key_to_db_key_hash.fetch(cache_key)
         end
 
-        load_result = cache_fetcher.load_multi_from_db(db_keys)
+        load_result = cache_fetcher.load_multi_from_db(db_keys_buffer)
 
         unresolved_cache_keys.each do |cache_key|
           db_key = cache_key_to_db_key_hash.fetch(cache_key)
