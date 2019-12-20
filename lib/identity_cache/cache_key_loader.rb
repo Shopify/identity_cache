@@ -44,30 +44,7 @@ module IdentityCache
       # @param db_key [Array] Reference to what to load from the database.
       # @return [Hash] A hash mapping each database key to its corresponding value
       def load_multi(cache_fetcher, db_keys)
-        cache_key_to_db_key_hash = {}
-
-        db_keys.each do |db_key|
-          cache_key = cache_fetcher.cache_key(db_key)
-          cache_key_to_db_key_hash[cache_key] = db_key
-        end
-
-        load_result = nil
-
-        cache_keys = cache_key_to_db_key_hash.keys
-        cache_result = cache_fetch_multi(cache_keys) do |unresolved_cache_keys|
-          resolve_miss_result = {}
-          load_result = resolve_multi_on_miss(cache_fetcher, unresolved_cache_keys,
-            cache_key_to_db_key_hash, resolve_miss_result)
-          resolve_miss_result
-        end
-
-        load_result ||= {}
-        cache_result.each do |cache_key, cache_value|
-          db_key = cache_key_to_db_key_hash.fetch(cache_key)
-          load_result[db_key] ||= cache_fetcher.cache_decode(cache_value)
-        end
-
-        load_result
+        batch_load(cache_fetcher => db_keys).fetch(cache_fetcher)
       end
 
       # Load multiple keys for multiple cache fetchers
