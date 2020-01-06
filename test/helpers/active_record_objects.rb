@@ -45,6 +45,8 @@ module ActiveRecordObjects
     Object.send(:remove_const, 'Deeply')
     Object.send(:remove_const, 'CustomMasterRecord')
     Object.send(:remove_const, 'CustomChildRecord')
+    Object.send(:remove_const, 'LazyModel')
+    $LOADED_FEATURES.reject! { |feature| feature.include?("test/helpers/lazy_model/") }
     IdentityCache.const_get(:ParentModelExpiration).send(:lazy_hooks).clear
   end
 end

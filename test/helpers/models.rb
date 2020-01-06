@@ -88,3 +88,9 @@ class CustomChildRecord < ActiveRecord::Base
   belongs_to :custom_master_record, foreign_key: :master_id
   self.primary_key = 'child_primary_key'
 end
+
+module LazyModel
+  autoload :A, "helpers/lazy_model/a.rb"
+  autoload :B, "helpers/lazy_model/b.rb"
+  autoload :C, "helpers/lazy_model/c.rb"
+end

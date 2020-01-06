@@ -59,7 +59,10 @@ module DatabaseConnection
     custom_master_records: [[:integer, :master_primary_key], id: false, primary_key: 'master_primary_key'],
     custom_child_records: [
       [:integer, :child_primary_key], [:integer, :master_id], id: false, primary_key: 'child_primary_key'
-    ]
+    ],
+    lazy_as: [[:string, :name]],
+    lazy_bs: [[:string, :name], [:integer, :a_id]],
+    lazy_cs: [[:string, :name], [:integer, :b_id]],
   }
 
   DEFAULT_CONFIG = {
