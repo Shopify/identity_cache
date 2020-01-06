@@ -88,3 +88,39 @@ class CustomChildRecord < ActiveRecord::Base
   belongs_to :custom_master_record, foreign_key: :master_id
   self.primary_key = 'child_primary_key'
 end
+
+module LazyLoad
+  @class_code = {
+    A: %q{
+      class A < ActiveRecord::Base
+        self.table_name = "lazy_as"
+        include IdentityCache
+        has_many(:bs, class_name: "::LazyLoad::B")
+        cache_has_many(:bs, embed: true)
+      end
+    },
+
+    B: %q{
+      class B < ActiveRecord::Base
+        self.table_name = "lazy_bs"
+        include IdentityCache
+        belongs_to(:a, class_name: "::LazyLoad::A", inverse_of: :bs)
+        has_one(:c, class_name: "::LazyLoad::C", inverse_of: :b)
+        cache_has_one(:c)
+      end
+    },
+
+    C: %q{
+      class C < ActiveRecord::Base
+        self.table_name = "lazy_cs"
+        include IdentityCache
+        belongs_to(:b, class_name: "::LazyLoad::B", inverse_of: :c)
+      end
+    }
+  }
+
+  def self.const_missing(name)
+    eval(@class_code.fetch(name))
+    const_get(name)
+  end
+end
