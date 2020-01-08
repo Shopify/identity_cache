@@ -53,20 +53,20 @@ module IdentityCache
   class UnsupportedAssociationError < StandardError; end
   class DerivedModelError < StandardError; end
 
+  mattr_accessor :cache_namespace
+  self.cache_namespace = "IDC:#{CACHE_VERSION}:"
+
+  # Fetched records are not read-only and this could sometimes prevent IDC from
+  # reflecting what's truly in the database when fetch_read_only_records is false.
+  # When set to true, it will only return read-only records when cache is used.
+  mattr_accessor :fetch_read_only_records
+  self.fetch_read_only_records = true
+
   class << self
     include IdentityCache::CacheHash
 
     attr_accessor :readonly
     attr_writer :logger
-
-    mattr_accessor :cache_namespace
-    self.cache_namespace = "IDC:#{CACHE_VERSION}:"
-
-    # Fetched records are not read-only and this could sometimes prevent IDC from
-    # reflecting what's truly in the database when fetch_read_only_records is false.
-    # When set to true, it will only return read-only records when cache is used.
-    mattr_accessor :fetch_read_only_records
-    self.fetch_read_only_records = true
 
     def append_features(base) #:nodoc:
       raise AlreadyIncludedError if base.include?(IdentityCache)
