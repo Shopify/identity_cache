@@ -68,7 +68,7 @@ module IdentityCache
 
             # exception throwing variant
             def fetch_by_#{field_list}!(#{arg_list}, includes: nil)
-              fetch_by_#{field_list}(#{arg_list}, includes: includes) or raise ActiveRecord::RecordNotFound
+              fetch_by_#{field_list}(#{arg_list}, includes: includes) or raise IdentityCache::RecordNotFound
             end
           CODE
         else
@@ -108,11 +108,11 @@ module IdentityCache
       end
 
       # Default fetcher added to the model on inclusion, it behaves like
-      # ActiveRecord::Base.find, will raise ActiveRecord::RecordNotFound exception
+      # ActiveRecord::Base.find, will raise IdentityCache::RecordNotFound exception
       # if id is not in the cache or the db.
       def fetch(id, includes: nil)
         fetch_by_id(id, includes: includes) || raise(
-          ActiveRecord::RecordNotFound, "Couldn't find #{name} with ID=#{id}"
+          IdentityCache::RecordNotFound, "Couldn't find #{name} with ID=#{id}"
         )
       end
 

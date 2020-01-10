@@ -197,7 +197,7 @@ class FetchTest < IdentityCache::TestCase
     nonexistent_record_id = 10
     fetcher.expects(:add).with(@blob_key + '0', IdentityCache::CACHED_NIL)
 
-    assert_raises(ActiveRecord::RecordNotFound) { Item.fetch(nonexistent_record_id) }
+    assert_raises(IdentityCache::RecordNotFound) { Item.fetch(nonexistent_record_id) }
   end
 
   def test_cached_nil_expiry_on_record_creation
@@ -260,7 +260,7 @@ class FetchTest < IdentityCache::TestCase
 
   def test_fetch_by_bang_method
     Item.connection.expects(:exec_query).returns(ActiveRecord::Result.new([], []))
-    assert_raises ActiveRecord::RecordNotFound do
+    assert_raises IdentityCache::RecordNotFound do
       Item.fetch_by_title!('bob')
     end
   end
@@ -268,7 +268,7 @@ class FetchTest < IdentityCache::TestCase
   def test_fetch_does_not_communicate_to_cache_with_nil_id
     fetcher.expects(:fetch).never
     fetcher.expects(:add).never
-    assert_raises(ActiveRecord::RecordNotFound) { Item.fetch(nil) }
+    assert_raises(IdentityCache::RecordNotFound) { Item.fetch(nil) }
   end
 
   def test_fetch_cache_hit_does_not_checkout_database_connection

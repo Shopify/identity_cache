@@ -4,6 +4,7 @@ require 'active_support/core_ext/module/attribute_accessors'
 require 'ar_transaction_changes'
 
 require "identity_cache/version"
+require "identity_cache/record_not_found"
 require "identity_cache/encoder"
 require "identity_cache/prefetch"
 require "identity_cache/prefetch/batch"
