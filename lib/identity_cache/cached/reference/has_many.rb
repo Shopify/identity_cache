@@ -49,28 +49,36 @@ module IdentityCache
         end
 
         def fetch(records)
-          fetch_embedded(records)
+          fetch_async(LoadStrategy::Eager, records) { |child_records| child_records }
+        end
 
-          ids_to_parent_record = records.each_with_object({}) do |record, hash|
-            child_ids = record.send(cached_ids_name)
-            child_ids.each do |child_id|
-              hash[child_id] = record
+        def fetch_async(load_strategy, records)
+          fetch_embedded_async(load_strategy, records) do
+            ids_to_parent_record = records.each_with_object({}) do |record, hash|
+              child_ids = record.send(cached_ids_name)
+              child_ids.each do |child_id|
+                hash[child_id] = record
+              end
+            end
+
+            load_strategy.load_multi(reflection.klass.cached_primary_index, ids_to_parent_record.keys) do |child_records_by_id|
+              parent_record_to_child_records = Hash.new { |h, k| h[k] = [] }
+              child_records = []
+
+              child_records_by_id.each do |id, child_record|
+                next unless child_record
+                child_records << child_record
+                parent_record = ids_to_parent_record[id]
+                parent_record_to_child_records[parent_record] << child_record
+              end
+
+              parent_record_to_child_records.each do |parent, children|
+                parent.instance_variable_set(records_variable_name, children)
+              end
+
+              yield child_records
             end
           end
-
-          parent_record_to_child_records = Hash.new { |h, k| h[k] = [] }
-
-          child_records = reflection.klass.fetch_multi(*ids_to_parent_record.keys)
-          child_records.each do |child_record|
-            parent_record = ids_to_parent_record[child_record.id]
-            parent_record_to_child_records[parent_record] << child_record
-          end
-
-          parent_record_to_child_records.each do |parent, children|
-            parent.instance_variable_set(records_variable_name, children)
-          end
-
-          child_records
         end
 
         private

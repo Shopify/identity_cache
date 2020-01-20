@@ -96,24 +96,6 @@ module IdentityCache
       end
     end
 
-    def test_prefetch_associations_notifies_about_fetching
-      Item.send(:cache_belongs_to, :item)
-      @bob.update_attributes!(item_id: @joe.id)
-      @joe.update_attributes!(item_id: @fred.id)
-      @bob.fetch_item
-      @joe.fetch_item
-      items = [@bob, @joe].map(&:reload)
-      events = 0
-      subscriber = ActiveSupport::Notifications.subscribe('association_fetch.identity_cache') do |_, _, _, _, payload|
-        events += 1
-        assert_equal :item, payload[:association]
-      end
-      prefetch(Item, :item, items)
-      assert_equal(1, events)
-    ensure
-      ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
-    end
-
     def test_prefetch_associations_notifies_about_hydration
       Item.send(:cache_belongs_to, :item)
       @bob.update_attributes!(item_id: @joe.id)

@@ -6,23 +6,29 @@ module IdentityCache
       ASSOCIATION_FETCH_EVENT = "association_fetch.identity_cache"
 
       class << self
-        def prefetch(klass, associations, records)
+        def prefetch(klass, associations, records, load_strategy: LoadStrategy::Eager)
+          load_strategy.lazy_load do |lazy_loader|
+            lazy_prefetch(lazy_loader, klass, associations, records)
+          end
+        end
+
+        def lazy_prefetch(lazy_loader, klass, associations, records)
           return if (records = records.to_a).empty?
 
           case associations
           when Symbol
-            prefetch_association(klass, associations, records)
+            fetch_association(lazy_loader, klass, associations, records) { }
           when Array
             associations.each do |association|
-              prefetch(klass, association, records)
+              lazy_prefetch(lazy_loader, klass, association, records)
             end
           when Hash
             associations.each do |association, sub_associations|
-              next_level_records = prefetch_association(klass, association, records)
-
-              if sub_associations.present?
-                association_class = klass.reflect_on_association(association).klass
-                prefetch(association_class, sub_associations, next_level_records)
+              fetch_association(lazy_loader, klass, association, records) do |next_level_records|
+                if sub_associations.present?
+                  association_class = klass.reflect_on_association(association).klass
+                  lazy_prefetch(lazy_loader, association_class, sub_associations, next_level_records)
+                end
               end
             end
           else
@@ -32,20 +38,14 @@ module IdentityCache
 
         private
 
-        def prefetch_association(klass, association, records)
-          ActiveSupport::Notifications.instrument(ASSOCIATION_FETCH_EVENT, association: association) do
-            fetch_association(klass, association, records)
-          end
-        end
-
-        def fetch_association(klass, association, records)
+        def fetch_association(lazy_loader, klass, association, records, &block)
           unless records.first.class.should_use_cache?
             ActiveRecord::Associations::Preloader.new.preload(records, association)
-            return
+            return yield
           end
 
           cached_association = klass.cached_association(association)
-          cached_association.fetch(records)
+          cached_association.fetch_async(lazy_loader, records, &block)
         end
       end
     end

@@ -5,23 +5,29 @@ module IdentityCache
       private
 
       def fetch_embedded(records)
-        return if embedded_fetched?(records)
+        fetch_embedded_async(LoadStrategy::Eager, records) { }
+      end
+
+      def fetch_embedded_async(load_strategy, records)
+        return yield if embedded_fetched?(records)
 
         klass = reflection.active_record
         cached_associations = klass.send(:embedded_associations)
 
-        return if cached_associations.empty?
+        return yield if cached_associations.empty?
 
-        return unless klass.primary_cache_index_enabled
+        return yield unless klass.primary_cache_index_enabled
 
-        cached_records_by_id = klass.fetch_multi(records.map(&:id)).index_by(&:id)
-
-        cached_associations.each_value do |cached_association|
-          records.each do |record|
-            next unless (cached_record = cached_records_by_id[record.id])
-            cached_valiue = cached_association.read(cached_record)
-            cached_association.write(record, cached_valiue)
+        load_strategy.load_multi(klass.cached_primary_index, records.map(&:id)) do |cached_records_by_id|
+          cached_associations.each_value do |cached_association|
+            records.each do |record|
+              next unless (cached_record = cached_records_by_id[record.id])
+              cached_value = cached_association.read(cached_record)
+              cached_association.write(record, cached_value)
+            end
           end
+
+          yield
         end
       end
 
