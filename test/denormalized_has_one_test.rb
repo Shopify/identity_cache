@@ -25,7 +25,7 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     assert_equal(@record.associated, record_from_cache_miss.fetch_associated)
     assert(
       fetch.has_been_called_with?(
-        @cached_attribute.input_key_to_cache_key(['foo'])
+        @cached_attribute.cache_key('foo')
       )
     )
     assert(
@@ -53,7 +53,7 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     end
     assert(
       fetch.has_been_called_with?(
-        @cached_attribute.input_key_to_cache_key(['foo'])
+        @cached_attribute.cache_key('foo')
       )
     )
     assert(

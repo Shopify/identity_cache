@@ -131,7 +131,8 @@ module IdentityCache
         ensure_base_model
         fields = Array(by)
 
-        cached_attribute = Cached::Attribute.new(self, attribute_or_proc, alias_name, fields, unique)
+        klass = fields.one? ? Cached::AttributeByOne : Cached::AttributeByMulti
+        cached_attribute = klass.new(self, attribute_or_proc, alias_name, fields, unique)
         cached_attribute.build
         cache_indexes.push(cached_attribute)
       end

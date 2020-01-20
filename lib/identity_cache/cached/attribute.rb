@@ -2,6 +2,7 @@
 
 module IdentityCache
   module Cached
+    # @abstract
     class Attribute
       attr_reader :model, :alias_name, :key_fields, :unique
 
@@ -21,60 +22,16 @@ module IdentityCache
         @attribute ||= @attribute_proc.call.to_sym
       end
 
-      def build
-        cached_attribute = self
-
-        model.define_singleton_method(:"fetch_#{fetch_method_suffix}") do |*key_values|
-          raise_if_scoped
-          cached_attribute.fetch(key_values)
-        end
-
-        if key_fields.length == 1
-          model.define_singleton_method(:"fetch_multi_#{fetch_method_suffix}") do |index_values|
-            raise_if_scoped
-            cached_attribute.fetch_multi(index_values)
-          end
-        end
-      end
-
-      def fetch(key_values)
-        key_fields.each_with_index do |field, i|
-          key_values[i] = model.type_for_attribute(field.to_s).cast(key_values[i])
-        end
+      def fetch(db_key)
+        db_key = cast_db_key(db_key)
 
         if model.should_use_cache?
-          IdentityCache.fetch(input_key_to_cache_key(key_values)) do
-            load_one_from_db(key_values)
+          IdentityCache.fetch(cache_key(db_key)) do
+            load_one_from_db(db_key)
           end
         else
-          load_one_from_db(key_values)
+          load_one_from_db(db_key)
         end
-      end
-
-      def fetch_multi(index_values)
-        field = key_fields.first
-
-        type = model.type_for_attribute(field)
-        index_values = index_values.map { |value| type.cast(value) }
-
-        unless model.should_use_cache?
-          return load_multi_from_db(index_values)
-        end
-
-        index_by_cache_key = index_values.each_with_object({}) do |index_value, index_hash|
-          cache_key = input_key_to_cache_key([index_value])
-          index_hash[cache_key] = index_value
-        end
-        attribute_by_cache_key = IdentityCache.fetch_multi(index_by_cache_key.keys) do |unresolved_keys|
-          unresolved_index_values = unresolved_keys.map { |cache_key| index_by_cache_key.fetch(cache_key) }
-          resolved_attributes = load_multi_from_db(unresolved_index_values)
-          unresolved_index_values.map { |index_value| resolved_attributes.fetch(index_value) }
-        end
-        result = {}
-        attribute_by_cache_key.each do |cache_key, attribute_value|
-          result[index_by_cache_key.fetch(cache_key)] = attribute_value
-        end
-        result
       end
 
       def expire(record)
@@ -90,42 +47,42 @@ module IdentityCache
         end
       end
 
-      def input_key_to_cache_key(key_values)
-        values_hash = IdentityCache.memcache_hash(unhashed_values_cache_key_string(key_values))
+      def cache_key(index_key)
+        values_hash = IdentityCache.memcache_hash(unhashed_values_cache_key_string(index_key))
         "#{model.rails_cache_key_namespace}#{cache_key_prefix}#{values_hash}"
       end
 
-      private
-
-      def load_one_from_db(key_values)
-        query = model.reorder(nil).where(Hash[key_fields.zip(key_values)])
+      def load_one_from_db(key)
+        query = model.reorder(nil).where(load_from_db_where_conditions(key))
         query = query.limit(1) if unique
         results = query.pluck(attribute)
         unique ? results.first : results
       end
 
-      def load_multi_from_db(index_values)
-        key_field = key_fields.first
-        rows = model.reorder(nil).where(key_field => index_values).pluck(key_field, attribute)
-        result = {}
-        default = unique ? nil : []
-        index_values.each do |index_value|
-          result[index_value] = default.try!(:dup)
-        end
-        if unique
-          rows.each do |index_value, attribute_value|
-            result[index_value] = attribute_value
-          end
-        else
-          rows.each do |index_value, attribute_value|
-            result[index_value] << attribute_value
-          end
-        end
-        result
+      private
+
+      # @abstract
+      def cast_db_key(index_key)
+        raise NotImplementedError
       end
 
-      def unhashed_values_cache_key_string(values)
-        values.map { |v| v.try!(:to_s).inspect }.join('/')
+      # @abstract
+      def unhashed_values_cache_key_string(index_key)
+        raise NotImplementedError
+      end
+
+      # @abstract
+      def load_from_db_where_conditions(index_key_or_keys)
+        raise NotImplementedError
+      end
+
+      # @abstract
+      def cache_key_from_key_values(key_values)
+        raise NotImplementedError
+      end
+
+      def field_types
+        @field_types ||= key_fields.map { |field| model.type_for_attribute(field.to_s) }
       end
 
       def cache_key_prefix
@@ -140,7 +97,7 @@ module IdentityCache
 
       def new_cache_key(record)
         new_key_values = key_fields.map { |field| record.send(field) }
-        input_key_to_cache_key(new_key_values)
+        cache_key_from_key_values(new_key_values)
       end
 
       def old_cache_key(record)
@@ -155,7 +112,7 @@ module IdentityCache
             record.send(field)
           end
         end
-        input_key_to_cache_key(old_key_values)
+        cache_key_from_key_values(old_key_values)
       end
 
       def fetch_method_suffix
