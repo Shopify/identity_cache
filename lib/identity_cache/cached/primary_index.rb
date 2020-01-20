@@ -13,11 +13,7 @@ module IdentityCache
         id = cast_id(id)
         return unless id
         record = if model.should_use_cache?
-          object = nil
-          cache_value = IdentityCache.fetch(cache_key(id)) do
-            cache_encode(object = load_one_from_db(id))
-          end
-          object ||= cache_decode(cache_value)
+          object = CacheKeyLoader.load(self, id)
           if object && object.id != id
             IdentityCache.logger.error(
               <<~MSG.squish
@@ -36,24 +32,12 @@ module IdentityCache
 
       def fetch_multi(ids)
         ids.map! { |id| cast_id(id) }.compact!
-        records = if model.should_use_cache?
-          cache_keys = ids.map { |id| cache_key(id) }
-          key_to_id_map = Hash[cache_keys.zip(ids)]
-          key_to_record_map = {}
-
-          coders_by_key = IdentityCache.fetch_multi(cache_keys) do |unresolved_keys|
-            ids = unresolved_keys.map { |key| key_to_id_map[key] }
-            records = load_multi_from_db(ids)
-            key_to_record_map = records.compact.index_by { |record| cache_key(record.id) }
-            records.map { |record| cache_encode(record) }
-          end
-
-          cache_keys.map do |key|
-            key_to_record_map[key] || cache_decode(coders_by_key[key])
-          end
+        id_to_record_hash = if model.should_use_cache?
+          id_to_record_hash = CacheKeyLoader.load_multi(self, ids)
         else
           load_multi_from_db(ids)
         end
+        records = ids.map { |id| id_to_record_hash[id] }
         records.compact!
         records
       end
@@ -67,12 +51,6 @@ module IdentityCache
         "#{model.rails_cache_key_namespace}#{cache_key_prefix}#{id}"
       end
 
-      private
-
-      def cast_id(id)
-        model.type_for_attribute(model.primary_key).cast(id)
-      end
-
       def load_one_from_db(id)
         record = build_query(id).take
         model.send(:setup_embedded_associations_on_miss, [record]) if record
@@ -80,13 +58,12 @@ module IdentityCache
       end
 
       def load_multi_from_db(ids)
-        return [] if ids.empty?
+        return {} if ids.empty?
 
         ids = ids.map { |id| model.connection.type_cast(id, id_column) }
         records = build_query(ids).to_a
         model.send(:setup_embedded_associations_on_miss, records)
-        records_by_id = records.index_by(&:id)
-        ids.map { |id| records_by_id[id] }
+        records.index_by(&:id)
       end
 
       def cache_encode(record)
@@ -95,6 +72,12 @@ module IdentityCache
 
       def cache_decode(cache_value)
         Encoder.decode(cache_value, model)
+      end
+
+      private
+
+      def cast_id(id)
+        model.type_for_attribute(model.primary_key).cast(id)
       end
 
       def id_column

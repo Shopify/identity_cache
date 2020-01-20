@@ -31,20 +31,13 @@ module IdentityCache
           return load_multi_from_db(keys)
         end
 
-        index_by_cache_key = keys.each_with_object({}) do |index_value, index_hash|
-          cache_key = cache_key([index_value])
-          index_hash[cache_key] = index_value
-        end
-        attribute_by_cache_key = IdentityCache.fetch_multi(index_by_cache_key.keys) do |unresolved_keys|
-          unresolved_index_values = unresolved_keys.map { |cache_key| index_by_cache_key.fetch(cache_key) }
-          resolved_attributes = load_multi_from_db(unresolved_index_values)
-          unresolved_index_values.map { |index_value| resolved_attributes.fetch(index_value) }
-        end
-        result = {}
-        attribute_by_cache_key.each do |cache_key, attribute_value|
-          result[index_by_cache_key.fetch(cache_key)] = attribute_value
-        end
-        result
+        unordered_hash = CacheKeyLoader.load_multi(self, keys)
+
+        # Calling `values` on the result is expected to return the values in the same order as their
+        # corresponding keys. The fetch_multi_by_#{field_list} generated methods depend on this.
+        ordered_hash = {}
+        keys.each { |key| ordered_hash[key] = unordered_hash.fetch(key) }
+        ordered_hash
       end
 
       def load_multi_from_db(keys)
@@ -65,6 +58,11 @@ module IdentityCache
         end
         result
       end
+
+      def cache_encode(db_value)
+        db_value
+      end
+      alias_method :cache_decode, :cache_encode
 
       private
 
