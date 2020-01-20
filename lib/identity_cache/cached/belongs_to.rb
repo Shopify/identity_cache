@@ -32,42 +32,50 @@ module IdentityCache
       end
 
       def fetch(records)
-        if reflection.polymorphic?
-          types_to_parent_ids = {}
+        fetch_async(LoadStrategy::Eager, records) { |associated_records| associated_records }
+      end
 
-          records.each do |child_record|
-            parent_id = child_record.send(reflection.foreign_key)
-            next unless parent_id && !child_record.instance_variable_defined?(records_variable_name)
-            parent_type = Object.const_get(child_record.send(reflection.foreign_type)).cached_model
-            types_to_parent_ids[parent_type] = {} unless types_to_parent_ids[parent_type]
-            types_to_parent_ids[parent_type][parent_id] = child_record
+      def fetch_async(load_strategy, records)
+        if reflection.polymorphic?
+          cache_keys_to_associated_ids = {}
+
+          records.each do |owner_record|
+            associated_id = owner_record.send(reflection.foreign_key)
+            next unless associated_id && !owner_record.instance_variable_defined?(records_variable_name)
+            associated_cache_key = Object.const_get(owner_record.send(reflection.foreign_type)).cached_model.cached_primary_index
+            cache_keys_to_associated_ids[associated_cache_key] = {} unless cache_keys_to_associated_ids[associated_cache_key]
+            cache_keys_to_associated_ids[associated_cache_key][associated_id] = owner_record
           end
 
-          parent_records = []
-
-          types_to_parent_ids.each do |type, ids_to_child_record|
-            type_parent_records = type.fetch_multi(ids_to_child_record.keys)
-            type_parent_records.each do |parent_record|
-              child_record = ids_to_child_record[parent_record.id]
-              child_record.instance_variable_set(records_variable_name, parent_record)
+          load_strategy.load_batch(cache_keys_to_associated_ids) do |associated_records_by_cache_key|
+            batch_records = []
+            associated_records_by_cache_key.each do |cache_key, associated_records|
+              associated_records.keys.each do |id, associated_record|
+                owner_record = cache_keys_to_associated_ids.fetch(cache_key).fetch(id)
+                batch_records << owner_record
+                owner_record.instance_variable_set(records_variable_name, associated_record)
+              end
             end
-            parent_records.append(type_parent_records)
+
+            yield batch_records
           end
         else
-          ids_to_child_record = records.each_with_object({}) do |child_record, hash|
-            parent_id = child_record.send(reflection.foreign_key)
-            if parent_id && !child_record.instance_variable_defined?(records_variable_name)
-              hash[parent_id] = child_record
+          ids_to_owner_record = records.each_with_object({}) do |owner_record, hash|
+            associated_id = owner_record.send(reflection.foreign_key)
+            if associated_id && !owner_record.instance_variable_defined?(records_variable_name)
+              hash[associated_id] = owner_record
             end
           end
-          parent_records = reflection.klass.fetch_multi(ids_to_child_record.keys)
-          parent_records.each do |parent_record|
-            child_record = ids_to_child_record[parent_record.id]
-            child_record.instance_variable_set(records_variable_name, parent_record)
+
+          load_strategy.load_multi(reflection.klass.cached_primary_index, ids_to_owner_record.keys) do |associated_records_by_id|
+            associated_records_by_id.each do |id, associated_record|
+              owner_record = ids_to_owner_record.fetch(id)
+              owner_record.instance_variable_set(records_variable_name, associated_record)
+            end
+
+            yield associated_records_by_id.values.compact
           end
         end
-
-        parent_records
       end
 
       def embedded_recursively?

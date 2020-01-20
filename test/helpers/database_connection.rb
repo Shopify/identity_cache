@@ -54,6 +54,7 @@ module DatabaseConnection
     not_cached_records: [[:string, :name], [:integer, :item_id], [:timestamps, null: true]],
     items: [[:integer, :item_id], [:string, :title], [:timestamps, null: true]],
     items2: [[:integer, :item_id], [:string, :title], [:timestamps, null: true]],
+    related_items: [[:integer, :owner_id], [:string, :owner_type], [:integer, :item_id], [:timestamps, null: true]],
     keyed_records: [[:string, :value], primary_key: "hashed_key"],
     sti_records: [[:string, :type], [:string, :name]],
     custom_master_records: [[:integer, :master_primary_key], id: false, primary_key: 'master_primary_key'],

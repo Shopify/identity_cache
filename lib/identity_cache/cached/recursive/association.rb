@@ -39,9 +39,13 @@ module IdentityCache
         end
 
         def fetch(records)
-          fetch_embedded(records)
+          fetch_async(LoadStrategy::Eager, records) { |child_records| child_records }
+        end
 
-          records.flat_map(&cached_accessor_name).tap(&:compact!)
+        def fetch_async(load_strategy, records)
+          fetch_embedded_async(load_strategy, records) do
+            yield records.flat_map(&cached_accessor_name).tap(&:compact!)
+          end
         end
 
         def embedded_by_reference?

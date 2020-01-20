@@ -51,6 +51,14 @@ class IdentityCache::TestCase < Minitest::Test
 
   private
 
+  def create(class_symbol)
+    class_symbol.to_s.classify.constantize.create!
+  end
+
+  def create_list(class_symbol, count)
+    count.times.map { create(class_symbol) }
+  end
+
   def fetcher
     IdentityCache.cache.cache_fetcher
   end

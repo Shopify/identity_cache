@@ -62,22 +62,22 @@ module IdentityCache
       private
 
       # @abstract
-      def cast_db_key(index_key)
+      def cast_db_key(_index_key)
         raise NotImplementedError
       end
 
       # @abstract
-      def unhashed_values_cache_key_string(index_key)
+      def unhashed_values_cache_key_string(_index_key)
         raise NotImplementedError
       end
 
       # @abstract
-      def load_from_db_where_conditions(index_key_or_keys)
+      def load_from_db_where_conditions(_index_key_or_keys)
         raise NotImplementedError
       end
 
       # @abstract
-      def cache_key_from_key_values(key_values)
+      def cache_key_from_key_values(_key_values)
         raise NotImplementedError
       end
 

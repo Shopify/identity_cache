@@ -34,6 +34,10 @@ module IdentityCache
         raise NotImplementedError
       end
 
+      def fetch_async(_load_strategy, _records)
+        raise NotImplementedError
+      end
+
       def embedded?
         embedded_by_reference? || embedded_recursively?
       end
