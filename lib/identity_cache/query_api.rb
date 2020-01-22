@@ -10,7 +10,7 @@ module IdentityCache
     module ClassMethods
       # Prefetches cached associations on a collection of records
       def prefetch_associations(includes, records)
-        Prefetch::Operation.new(self, includes, records).load
+        Cached::Prefetcher.prefetch(self, includes, records)
       end
 
       # @api private
