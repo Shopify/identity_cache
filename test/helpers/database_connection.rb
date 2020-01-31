@@ -65,15 +65,15 @@ module DatabaseConnection
 
   DEFAULT_CONFIG = {
     'mysql2' => {
-      'adapter'  => 'mysql2',
+      'adapter' => 'mysql2',
       'database' => 'identity_cache_test',
-      'host'     => ENV['MYSQL_HOST'] || '127.0.0.1',
+      'host' => ENV['MYSQL_HOST'] || '127.0.0.1',
       'username' => 'root'
     },
     'postgresql' => {
-      'adapter'  => 'postgresql',
+      'adapter' => 'postgresql',
       'database' => 'identity_cache_test',
-      'host'     => ENV['POSTGRES_HOST'] || '127.0.0.1',
+      'host' => ENV['POSTGRES_HOST'] || '127.0.0.1',
       'username' => 'postgres',
       'prepared_statements' => false,
     }

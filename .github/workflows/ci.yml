@@ -13,8 +13,14 @@ jobs:
       uses: actions/setup-ruby@v1
       with:
         ruby-version: 2.6.x
-    - name: Ruby style checks
+    - name: Install required packages
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install libmysqlclient-dev libpq-dev libsasl2-dev
+    - name: Install bundler and gems
       run: |
         gem install bundler
         bundle install --jobs 4 --retry 3
+    - name: Run rubocop
+      run: |
         bundle exec rubocop
