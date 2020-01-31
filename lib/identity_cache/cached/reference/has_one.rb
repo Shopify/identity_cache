@@ -60,7 +60,10 @@ module IdentityCache
               hash[child_id] = record if child_id
             end
 
-            load_strategy.load_multi(reflection.klass.cached_primary_index, ids_to_parent_record.keys) do |child_records_by_id|
+            load_strategy.load_multi(
+              reflection.klass.cached_primary_index,
+              ids_to_parent_record.keys
+            ) do |child_records_by_id|
               parent_record_to_child_record = {}
 
               child_records_by_id.each do |id, child_record|

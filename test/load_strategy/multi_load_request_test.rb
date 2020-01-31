@@ -11,7 +11,7 @@ module IdentityCache
           LoadRequest.new([3], proc {}),
         ])
 
-        assert_equal [1, 2, 3], multi_load_request.db_keys
+        assert_equal([1, 2, 3], multi_load_request.db_keys)
       end
 
       def test_after_load
@@ -24,7 +24,7 @@ module IdentityCache
         end
         multi_load_request = MultiLoadRequest.new(load_requests)
 
-        multi_load_request.after_load({ 1 => :a, 2 => :b, 3 => :c })
+        multi_load_request.after_load(1 => :a, 2 => :b, 3 => :c)
       end
     end
   end
