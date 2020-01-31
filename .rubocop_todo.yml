@@ -6,14 +6,6 @@
 # Note that changes in the inspected code, or installation of new
 # versions of RuboCop, may require this file to be generated again.
 
-# Offense count: 1
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: symmetrical, new_line, same_line
-Layout/MultilineMethodDefinitionBraceLayout:
-  Exclude:
-    - 'lib/identity_cache/query_api.rb'
-
 # Offense count: 4
 # Cop supports --auto-correct.
 Layout/SpaceAfterComma:
