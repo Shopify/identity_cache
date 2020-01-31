@@ -135,7 +135,6 @@ class RecursiveDenormalizedHasManyTest < IdentityCache::TestCase
       end
     end
   end
-
 end
 
 class RecursiveNormalizedHasManyTest < IdentityCache::TestCase
