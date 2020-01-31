@@ -165,7 +165,7 @@ class SQLCounter
   attr_accessor :log
 
   def initialize(ignore = self.class.ignored_sql)
-    @ignore   = ignore
+    @ignore = ignore
     @log = []
   end
 
