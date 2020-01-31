@@ -36,7 +36,6 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
   end
 
   def test_on_cache_miss_record_should_embed_nil_object
-
     @record.associated = nil
     @record.save!
     @record.reload
