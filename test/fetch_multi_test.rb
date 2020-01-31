@@ -150,12 +150,12 @@ class FetchMultiTest < IdentityCache::TestCase
     fetcher.expects(:add).with(1, IdentityCache::CACHED_NIL).once
     fetcher.expects(:add).with(2, IdentityCache::CACHED_NIL).once
 
-    results = IdentityCache.fetch_multi(1,2) do |_keys|
+    results = IdentityCache.fetch_multi(1, 2) do |_keys|
       [nil, nil]
     end
     assert_equal(fetch_result, results)
 
-    results = IdentityCache.fetch_multi(1,2) do |_keys|
+    results = IdentityCache.fetch_multi(1, 2) do |_keys|
       flunk "Contents should have been fetched from cache successfully"
     end
 
@@ -165,9 +165,9 @@ class FetchMultiTest < IdentityCache::TestCase
   def test_fetch_multi_works_with_blanks
     cache_result = { 1 => false, 2 => '   ' }
 
-    fetcher.expects(:fetch_multi).with([1,2]).returns(cache_result)
+    fetcher.expects(:fetch_multi).with([1, 2]).returns(cache_result)
 
-    results = IdentityCache.fetch_multi(1,2) do |_keys|
+    results = IdentityCache.fetch_multi(1, 2) do |_keys|
       flunk "Contents should have been fetched from cache successfully"
     end
 
