@@ -6,16 +6,6 @@
 # Note that changes in the inspected code, or installation of new
 # versions of RuboCop, may require this file to be generated again.
 
-# Offense count: 4
-# Cop supports --auto-correct.
-# Configuration parameters: AllowForAlignment.
-Layout/SpaceAroundOperators:
-  Exclude:
-    - 'performance/cache_runner.rb'
-    - 'test/fetch_test.rb'
-    - 'test/normalized_has_many_test.rb'
-    - 'test/test_helper.rb'
-
 # Offense count: 2
 # Cop supports --auto-correct.
 # Configuration parameters: EnforcedStyle.

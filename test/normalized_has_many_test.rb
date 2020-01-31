@@ -12,7 +12,7 @@ class NormalizedHasManyTest < IdentityCache::TestCase
     @record.associated_records << AssociatedRecord.new(name: 'baz')
     @record.save
     @record.reload
-    @baz, @bar  = @record.associated_records[0], @record.associated_records[1]
+    @baz, @bar = @record.associated_records[0], @record.associated_records[1]
     @not_cached = @record.not_cached_records.first
   end
 
