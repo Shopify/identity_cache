@@ -324,7 +324,6 @@ class FetchTest < IdentityCache::TestCase
 
   def test_returned_records_are_not_readonly_with_open_transactions
     IdentityCache.with_fetch_read_only_records do
-
       @record.transaction do
         fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
         Item.cached_primary_index.expects(:load_one_from_db).with(1).once.returns(@record)
