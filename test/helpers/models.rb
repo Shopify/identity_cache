@@ -10,6 +10,7 @@ end
 class AssociatedRecord < ActiveRecord::Base
   belongs_to :item, inverse_of: :associated_records
   belongs_to :item_two, inverse_of: :associated_records
+  has_many :related_items, as: :owner, inverse_of: :owner
   has_many :deeply_associated_records
   has_one :deeply_associated, class_name: "DeeplyAssociatedRecord"
   default_scope { order('id DESC') }
@@ -43,6 +44,12 @@ module Deeply
   end
 end
 
+class RelatedItem < ActiveRecord::Base
+  include IdentityCache
+  belongs_to :owner, polymorphic: true
+  belongs_to :item
+end
+
 class Item < ActiveRecord::Base
   include IdentityCache
   belongs_to :item
@@ -55,6 +62,7 @@ class Item < ActiveRecord::Base
   has_one :polymorphic_record, as: 'owner'
   has_one :associated, class_name: 'AssociatedRecord'
   has_one :no_inverse_of_record
+  has_one :related_item
 end
 
 class ItemTwo < ActiveRecord::Base

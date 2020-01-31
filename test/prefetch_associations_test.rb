@@ -25,11 +25,14 @@ module IdentityCache
       @joe.update_column(:item_id, jim.id)
       items = Item.fetch_multi(@bob.id, @joe.id, @fred.id)
 
-      spy = Spy.on(Item, :fetch_multi).and_call_through
+      spy = Spy.on(CacheKeyLoader, :load_batch).and_call_through
 
       prefetch(Item, :item, items)
 
-      assert(spy.calls.one? { |call| call.args == [[john.id, jim.id]] })
+      assert_equal(
+        spy.calls.map(&:args).last,
+        [{ Item.cached_primary_index => [john.id, jim.id] }]
+      )
     end
 
     def test_prefetch_associations_on_db_records
@@ -94,24 +97,6 @@ module IdentityCache
           prefetch(Item, :item, items)
         end
       end
-    end
-
-    def test_prefetch_associations_notifies_about_fetching
-      Item.send(:cache_belongs_to, :item)
-      @bob.update_attributes!(item_id: @joe.id)
-      @joe.update_attributes!(item_id: @fred.id)
-      @bob.fetch_item
-      @joe.fetch_item
-      items = [@bob, @joe].map(&:reload)
-      events = 0
-      subscriber = ActiveSupport::Notifications.subscribe('association_fetch.identity_cache') do |_, _, _, _, payload|
-        events += 1
-        assert_equal :item, payload[:association]
-      end
-      prefetch(Item, :item, items)
-      assert_equal(1, events)
-    ensure
-      ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
     end
 
     def test_prefetch_associations_notifies_about_hydration
@@ -185,11 +170,14 @@ module IdentityCache
       john = Item.create!(title: 'john')
       @bob.update_column(:item_id, john.id)
 
-      spy = Spy.on(Item, :fetch_multi).and_call_through
+      spy = Spy.on(CacheKeyLoader, :load_batch).and_call_through
 
       assert_equal(@bob, Item.fetch(@bob.id, includes: :item))
 
-      assert(spy.calls.one? { |call| call.args == [[john.id]] })
+      assert_equal(
+        spy.calls.map(&:args).last,
+        [{ Item.cached_primary_index => [john.id] }]
+      )
     end
 
     def test_fetch_multi_with_includes_option
@@ -199,11 +187,14 @@ module IdentityCache
       @bob.update_column(:item_id, john.id)
       @joe.update_column(:item_id, jim.id)
 
-      spy = Spy.on(Item, :fetch_multi).and_call_through
+      spy = Spy.on(CacheKeyLoader, :load_batch).and_call_through
 
       assert_equal([@bob, @joe, @fred], Item.fetch_multi(@bob.id, @joe.id, @fred.id, includes: :item))
 
-      assert(spy.calls.one? { |call| call.args == [[john.id, jim.id]] })
+      assert_equal(
+        spy.calls.map(&:args).last,
+        [{ Item.cached_primary_index => [john.id, jim.id] }]
+      )
     end
 
     def test_fetch_multi_batch_fetches_non_embedded_first_level_has_many_associations
@@ -395,11 +386,14 @@ module IdentityCache
       john = Item.create!(title: 'john')
       @bob.update_column(:item_id, john.id)
 
-      spy = Spy.on(Item, :fetch_multi).and_call_through
+      spy = Spy.on(CacheKeyLoader, :load_batch).and_call_through
 
       assert_equal([@bob], Item.fetch_by_title('bob', includes: :item))
 
-      assert(spy.calls.one? { |call| call.args == [[john.id]] })
+      assert_equal(
+        spy.calls.map(&:args).last,
+        [{ Item.cached_primary_index => [john.id] }]
+      )
     end
 
     def test_fetch_by_unique_index_with_includes_option
@@ -408,11 +402,14 @@ module IdentityCache
       john = Item.create!(title: 'john')
       @bob.update_column(:item_id, john.id)
 
-      spy = Spy.on(Item, :fetch_multi).and_call_through
+      spy = Spy.on(CacheKeyLoader, :load_batch).and_call_through
 
       assert_equal(@bob, Item.fetch_by_title('bob', includes: :item))
 
-      assert(spy.calls.one? { |call| call.args == [[john.id]] })
+      assert_equal(
+        spy.calls.map(&:args).last,
+        [{ Item.cached_primary_index => [john.id] }]
+      )
     end
 
     def test_prefetch_associations
@@ -432,10 +429,67 @@ module IdentityCache
       end
     end
 
+    def test_prefetch_batching
+      AssociatedRecord.send(:cache_belongs_to, :item)
+      AssociatedRecord.send(:cache_has_one, :deeply_associated, embed: :id)
+      AssociatedRecord.send(:cache_has_many, :related_items, embed: :ids)
+      DeeplyAssociatedRecord.send(:cache_belongs_to, :item)
+      RelatedItem.send(:cache_belongs_to, :item)
+      Item.send(:cache_has_one, :associated, embed: :id)
+
+      rocket_shoes  = Item.create!(title: "Rocket Shoes")
+      invisible_ink = Item.create!(title: "Invisible Ink")
+      ray_gun       = Item.create!(title: "Ray Gun", associated: AssociatedRecord.create!)
+
+      record = AssociatedRecord.create!(
+        item: rocket_shoes,
+        deeply_associated: DeeplyAssociatedRecord.create!(
+          item: invisible_ink
+        ),
+        related_items: [
+          RelatedItem.create!(
+            item: ray_gun
+          )
+        ]
+      )
+
+      record.reload
+
+      assert_memcache_operations(4) do
+        prefetch(
+          AssociatedRecord,
+          [
+            :item,
+            { deeply_associated: :item },
+            { related_items: { item: :associated } },
+          ],
+          [record]
+        )
+      end
+
+      assert_no_queries do
+        assert_equal(
+          rocket_shoes, record.fetch_item
+        )
+        assert_equal(
+          invisible_ink,
+          record.fetch_deeply_associated.fetch_item
+        )
+        assert_equal(
+          ray_gun,
+          record.fetch_related_items.first.fetch_item
+        )
+        assert_equal(
+          ray_gun.associated,
+          record.fetch_related_items.first.fetch_item.fetch_associated
+        )
+      end
+    end
+
     private
 
     def prefetch(klass, includes, records)
-      Prefetch::Operation.new(klass, includes, records).load
+      Cached::Prefetcher.prefetch(klass, includes, records)
     end
 
     def setup_has_many_children_and_grandchildren(*parents)

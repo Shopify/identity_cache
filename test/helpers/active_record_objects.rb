@@ -37,6 +37,7 @@ module ActiveRecordObjects
     Object.send(:remove_const, 'NoInverseOfRecord')
     Object.send(:remove_const, 'Item')
     Object.send(:remove_const, 'ItemTwo')
+    Object.send(:remove_const, 'RelatedItem')
     Object.send(:remove_const, 'KeyedRecord')
     Object.send(:remove_const, 'StiRecord')
     Object.send(:remove_const, 'StiRecordTypeA')
