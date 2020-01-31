@@ -449,7 +449,7 @@ module IdentityCache
         related_items: [
           RelatedItem.create!(
             item: ray_gun
-          )
+          ),
         ]
       )
 

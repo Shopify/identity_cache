@@ -107,8 +107,12 @@ module IdentityCache
           end
         end
 
-        set_instrumentation_payload(payload, num_keys: keys.length,
-          memo_misses: memo_miss_keys.length, cache_misses: cache_miss_keys.length)
+        set_instrumentation_payload(
+          payload,
+          num_keys: keys.length,
+          memo_misses: memo_miss_keys.length,
+          cache_misses: cache_miss_keys.length
+        )
         result
       end
 

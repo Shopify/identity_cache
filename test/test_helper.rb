@@ -76,6 +76,8 @@ class IdentityCache::TestCase < Minitest::Test
     subscriber = ActiveSupport::Notifications.subscribe('sql.active_record', counter)
     yield
     counter.log.size
+  ensure
+    ActiveSupport::Notifications.unsubscribe(subscriber)
   end
 
   def assert_queries(num = 1)

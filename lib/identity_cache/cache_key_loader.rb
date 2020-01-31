@@ -103,7 +103,10 @@ module IdentityCache
         end
       end
 
-      def resolve_multi_on_miss(cache_fetcher, unresolved_cache_keys, cache_key_to_db_key_hash, resolve_miss_result, db_keys_buffer: [])
+      def resolve_multi_on_miss(
+        cache_fetcher, unresolved_cache_keys, cache_key_to_db_key_hash, resolve_miss_result,
+        db_keys_buffer: []
+      )
         db_keys_buffer.clear
         unresolved_cache_keys.each do |cache_key|
           db_keys_buffer << cache_key_to_db_key_hash.fetch(cache_key)

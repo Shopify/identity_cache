@@ -42,8 +42,12 @@ module IdentityCache
           records.each do |owner_record|
             associated_id = owner_record.send(reflection.foreign_key)
             next unless associated_id && !owner_record.instance_variable_defined?(records_variable_name)
-            associated_cache_key = Object.const_get(owner_record.send(reflection.foreign_type)).cached_model.cached_primary_index
-            cache_keys_to_associated_ids[associated_cache_key] = {} unless cache_keys_to_associated_ids[associated_cache_key]
+            associated_cache_key = Object.const_get(
+              owner_record.send(reflection.foreign_type)
+            ).cached_model.cached_primary_index
+            unless cache_keys_to_associated_ids[associated_cache_key]
+              cache_keys_to_associated_ids[associated_cache_key] = {}
+            end
             cache_keys_to_associated_ids[associated_cache_key][associated_id] = owner_record
           end
 
@@ -67,7 +71,10 @@ module IdentityCache
             end
           end
 
-          load_strategy.load_multi(reflection.klass.cached_primary_index, ids_to_owner_record.keys) do |associated_records_by_id|
+          load_strategy.load_multi(
+            reflection.klass.cached_primary_index,
+            ids_to_owner_record.keys
+          ) do |associated_records_by_id|
             associated_records_by_id.each do |id, associated_record|
               owner_record = ids_to_owner_record.fetch(id)
               owner_record.instance_variable_set(records_variable_name, associated_record)
