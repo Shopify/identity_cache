@@ -30,7 +30,7 @@ if (runner_name = ENV['RUNNER'])
     exit(1)
   end
 else
-  CACHE_RUNNERS.each do |runner|
-    run(runner.new(RUNS))
+  CACHE_RUNNERS.each do |cache_runner|
+    run(cache_runner.new(RUNS))
   end
 end
