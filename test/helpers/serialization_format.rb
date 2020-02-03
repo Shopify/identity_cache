@@ -37,14 +37,14 @@ module SerializationFormat
     File.expand_path("../../fixtures/serialized_record.#{DatabaseConnection.db_name}", __FILE__)
   end
 
-  def serialize(record, anIO = nil)
+  def serialize(record, io = nil)
     hash = {
       version: IdentityCache::CACHE_VERSION,
       record: record
     }
 
-    if anIO
-      Marshal.dump(hash, anIO)
+    if io
+      Marshal.dump(hash, io)
     else
       Marshal.dump(hash)
     end

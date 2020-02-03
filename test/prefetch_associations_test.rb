@@ -327,7 +327,7 @@ module IdentityCache
       end
     end
 
-    def test_fetch_multi_batch_fetches_non_embedded_second_level_associations_through_embedded_first_level_has_many_associations # rubocop:disable Metrics/LineLength
+    def test_fetch_multi_batch_fetches_non_embedded_second_level_associations_through_embedded_first_level_has_many_associations # rubocop:disable Layout/LineLength
       Item.send(:cache_has_many, :associated_records, embed: true)
       AssociatedRecord.send(:cache_has_many, :deeply_associated_records, embed: :ids)
 
@@ -349,7 +349,7 @@ module IdentityCache
       end
     end
 
-    def test_fetch_multi_batch_fetches_non_embedded_second_level_associations_through_embedded_first_level_has_one_associations # rubocop:disable Metrics/LineLength
+    def test_fetch_multi_batch_fetches_non_embedded_second_level_associations_through_embedded_first_level_has_one_associations # rubocop:disable Layout/LineLength
       Item.send(:cache_has_one, :associated, embed: true)
       AssociatedRecord.send(:cache_has_many, :deeply_associated_records, embed: :ids)
 

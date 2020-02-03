@@ -6,28 +6,6 @@
 # Note that changes in the inspected code, or installation of new
 # versions of RuboCop, may require this file to be generated again.
 
-# Offense count: 1
-Lint/ShadowingOuterLocalVariable:
-  Exclude:
-    - 'performance/profile.rb'
-
-# Offense count: 2
-Lint/UselessAssignment:
-  Exclude:
-    - 'test/schema_change_test.rb'
-
-# Offense count: 1
-Naming/ConstantName:
-  Exclude:
-    - 'test/schema_change_test.rb'
-
-# Offense count: 3
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: snake_case, camelCase
-Naming/VariableName:
-  Exclude:
-    - 'test/helpers/serialization_format.rb'
-
 # Offense count: 2
 # Cop supports --auto-correct.
 # Configuration parameters: EnforcedStyle.
