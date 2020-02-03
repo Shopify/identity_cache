@@ -2,7 +2,6 @@
 require "test_helper"
 
 class IdentityCacheTest < IdentityCache::TestCase
-
   class BadModelBase < ActiveRecord::Base
     include IdentityCache
   end

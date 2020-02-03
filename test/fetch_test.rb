@@ -152,7 +152,7 @@ class FetchTest < IdentityCache::TestCase
   end
 
   def test_fetch_miss_with_non_id_primary_key
-    hashed_key = Zlib::crc32("foo") % (2 ** 30 - 1)
+    hashed_key = Zlib::crc32("foo") % (2**30 - 1)
     fixture = KeyedRecord.create!(value: "foo") { |r| r.hashed_key = hashed_key }
     assert_equal(fixture, KeyedRecord.fetch(hashed_key))
   end
@@ -324,7 +324,6 @@ class FetchTest < IdentityCache::TestCase
 
   def test_returned_records_are_not_readonly_with_open_transactions
     IdentityCache.with_fetch_read_only_records do
-
       @record.transaction do
         fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
         Item.cached_primary_index.expects(:load_one_from_db).with(1).once.returns(@record)

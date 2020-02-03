@@ -20,7 +20,6 @@ end
 
 module IdentityCache
   module CacheHash
-
     if defined?(CityHash)
 
       def memcache_hash(key) #:nodoc:

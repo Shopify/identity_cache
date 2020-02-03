@@ -83,7 +83,7 @@ module IdentityCache
         IdentityCache.logger.debug { "[IdentityCache] cache miss for #{key}" }
       else
         IdentityCache.logger.debug do
-          "[IdentityCache] #{ memo_misses > 0 ? '(cache_backend)' : '(memoized)' } cache hit for #{key}"
+          "[IdentityCache] #{memo_misses > 0 ? '(cache_backend)' : '(memoized)'} cache hit for #{key}"
         end
       end
 

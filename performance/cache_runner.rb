@@ -115,7 +115,7 @@ module ConflictRunner
     orig_resolve_cache_miss = ::Item.method(:resolve_cache_miss)
 
     ::Item.define_singleton_method(:resolve_cache_miss) do |id|
-      records[id-1].expire_cache
+      records[id - 1].expire_cache
       orig_resolve_cache_miss.call(id)
     end
     IdentityCache.cache.clear
