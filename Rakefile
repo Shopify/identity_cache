@@ -5,8 +5,8 @@ require 'bundler/gem_tasks'
 require 'rake/testtask'
 require 'rdoc/task'
 
-desc('Default: run unit tests.')
-task(default: :test)
+desc('Default: run tests and style checks.')
+task(default: [:test, :rubocop])
 
 desc('Test the identity_cache plugin.')
 Rake::TestTask.new(:test) do |t|
@@ -14,6 +14,11 @@ Rake::TestTask.new(:test) do |t|
   t.libs << 'test'
   t.pattern = 'test/**/*_test.rb'
   t.verbose = true
+end
+
+task :rubocop do
+  require 'rubocop/rake_task'
+  RuboCop::RakeTask.new
 end
 
 desc('Update serialization format test fixture.')

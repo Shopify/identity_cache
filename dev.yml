@@ -27,6 +27,14 @@ commands:
         bundle exec ruby -I test "$@"
       fi
 
+  style:
+    desc: 'Run rubocop checks'
+    run: bundle exec rubocop "$@"
+
+  check:
+    desc: 'Run tests and style checks'
+    run: bundle exec rake test && bundle exec rubocop
+
   benchmark-cpu:
     desc: 'Run the identity cache CPU benchmark'
     run: bundle exec rake benchmark:cpu
