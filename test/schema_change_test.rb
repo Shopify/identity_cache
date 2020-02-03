@@ -60,7 +60,7 @@ class SchemaChangeTest < IdentityCache::TestCase
     read_new_schema
 
     Item.cached_primary_index.expects(:load_one_from_db).returns(@record)
-    record = Item.fetch(@record.id)
+    Item.fetch(@record.id)
   end
 
   def test_schema_changes_on_deeply_embedded_association_should_cause_cache_miss_for_old_cached_objects
@@ -72,7 +72,7 @@ class SchemaChangeTest < IdentityCache::TestCase
     read_new_schema
 
     Item.cached_primary_index.expects(:load_one_from_db).returns(@record)
-    record = Item.fetch(@record.id)
+    Item.fetch(@record.id)
   end
 
   def test_schema_changes_on_new_cached_child_association
