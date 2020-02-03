@@ -2,7 +2,7 @@
 require "test_helper"
 
 class SchemaChangeTest < IdentityCache::TestCase
-  Migration = ActiveRecord::Migration.try(:[], 4.2) || ActiveRecord::Migration
+  Migration = ActiveRecord::Migration[5.0]
 
   class AddColumnToChild < Migration
     def up
