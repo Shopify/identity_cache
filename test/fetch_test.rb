@@ -152,7 +152,7 @@ class FetchTest < IdentityCache::TestCase
   end
 
   def test_fetch_miss_with_non_id_primary_key
-    hashed_key = Zlib::crc32("foo") % (2**30 - 1)
+    hashed_key = Zlib.crc32("foo") % (2**30 - 1)
     fixture = KeyedRecord.create!(value: "foo") { |r| r.hashed_key = hashed_key }
     assert_equal(fixture, KeyedRecord.fetch(hashed_key))
   end
