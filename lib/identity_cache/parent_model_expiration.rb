@@ -83,12 +83,12 @@ module IdentityCache
       end
 
       cached_associations.each do |parent_class, only_on_foreign_key_change|
-        if new_parent && new_parent.is_a?(parent_class) &&
+        if new_parent&.is_a?(parent_class) &&
            should_expire_identity_cache_parent?(foreign_key, only_on_foreign_key_change)
           add_record_to_cache_expiry_set(parents_to_expire, new_parent)
         end
 
-        if old_parent && old_parent.is_a?(parent_class)
+        if old_parent&.is_a?(parent_class)
           add_record_to_cache_expiry_set(parents_to_expire, old_parent)
         end
       end
