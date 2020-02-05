@@ -184,7 +184,7 @@ end
 class CacheCounter
   attr_accessor :log
 
-  def initialize()
+  def initialize
     @log = []
   end
 
