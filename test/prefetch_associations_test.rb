@@ -506,7 +506,7 @@ module IdentityCache
 
       Item.fetch_multi(*parents.map(&:id)) # populate the cache entries and associated children ID variables
 
-      return child_records, grandchildren
+      [child_records, grandchildren]
     end
 
     def setup_grandchildren(*children)
