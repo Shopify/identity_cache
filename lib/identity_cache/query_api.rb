@@ -160,7 +160,7 @@ module IdentityCache
     # @api private
     def was_new_record? # :nodoc:
       pk = self.class.primary_key
-      !destroyed? && transaction_changed_attributes.has_key?(pk) && transaction_changed_attributes[pk].nil?
+      !destroyed? && transaction_changed_attributes.key?(pk) && transaction_changed_attributes[pk].nil?
     end
 
     private
