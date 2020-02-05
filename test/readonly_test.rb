@@ -4,7 +4,8 @@ require "test_helper"
 class ReadonlyTest < IdentityCache::TestCase
   def setup
     super
-    @key, @value = 'foo', 'bar'
+    @key = 'foo'
+    @value = 'bar'
     @record = Item.new
     @record.id = 1
     @record.title = 'bob'
