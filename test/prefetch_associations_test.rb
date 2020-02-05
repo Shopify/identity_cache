@@ -91,7 +91,7 @@ module IdentityCache
           prefetch(Item, :item, items)
         end
         assert_memcache_operations(0) do
-          items.each { |item| item.fetch_item }
+          items.each(&:fetch_item)
         end
         assert_memcache_operations(0) do
           prefetch(Item, :item, items)
@@ -506,7 +506,7 @@ module IdentityCache
 
       Item.fetch_multi(*parents.map(&:id)) # populate the cache entries and associated children ID variables
 
-      return child_records, grandchildren
+      [child_records, grandchildren]
     end
 
     def setup_grandchildren(*children)

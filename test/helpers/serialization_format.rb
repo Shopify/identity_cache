@@ -40,7 +40,7 @@ module SerializationFormat
   def serialize(record, io = nil)
     hash = {
       version: IdentityCache::CACHE_VERSION,
-      record: record
+      record: record,
     }
 
     if io

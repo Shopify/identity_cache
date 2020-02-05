@@ -139,7 +139,7 @@ module IdentityCache
     # +keys+ A collection or array of key strings
     def fetch_multi(*keys)
       keys.flatten!(1)
-      return {} if keys.size == 0
+      return {} if keys.empty?
 
       result = if should_use_cache?
         fetch_in_batches(keys.uniq) do |missed_keys|
@@ -173,7 +173,7 @@ module IdentityCache
     private
 
     def fetch_in_batches(keys)
-      keys.each_slice(BATCH_SIZE).each_with_object(Hash.new) do |slice, result|
+      keys.each_slice(BATCH_SIZE).each_with_object({}) do |slice, result|
         result.merge!(cache.fetch_multi(*slice) { |missed_keys| yield missed_keys })
       end
     end

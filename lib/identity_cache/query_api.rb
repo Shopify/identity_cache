@@ -84,13 +84,12 @@ module IdentityCache
             record.send(:set_embedded_association, association_name, target)
             association.reset
             # reset inverse associations
-            if target && association_reflection.has_inverse?
-              inverse_name = association_reflection.inverse_of.name
-              if target.is_a?(Array)
-                target.each { |child_record| child_record.association(inverse_name).reset }
-              else
-                target.association(inverse_name).reset
-              end
+            next unless target && association_reflection.has_inverse?
+            inverse_name = association_reflection.inverse_of.name
+            if target.is_a?(Array)
+              target.each { |child_record| child_record.association(inverse_name).reset }
+            else
+              target.association(inverse_name).reset
             end
           end
 
@@ -161,7 +160,7 @@ module IdentityCache
     # @api private
     def was_new_record? # :nodoc:
       pk = self.class.primary_key
-      !destroyed? && transaction_changed_attributes.has_key?(pk) && transaction_changed_attributes[pk].nil?
+      !destroyed? && transaction_changed_attributes.key?(pk) && transaction_changed_attributes[pk].nil?
     end
 
     private
