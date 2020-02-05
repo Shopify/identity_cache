@@ -22,7 +22,7 @@ Gem::Specification.new do |gem|
                       "cannot be found in Memcached."
   gem.homepage      = "https://github.com/Shopify/identity_cache"
 
-  gem.files         = `git ls-files`.split($\)
+  gem.files         = %x(git ls-files).split($\)
   gem.executables   = gem.files.grep(%r{^bin/}).map { |f| File.basename(f) }
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
   gem.name          = "identity_cache"

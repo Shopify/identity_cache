@@ -8,14 +8,6 @@
 
 # Offense count: 1
 # Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, AllowInnerBackticks.
-# SupportedStyles: backticks, percent_x, mixed
-Style/CommandLiteral:
-  Exclude:
-    - 'identity_cache.gemspec'
-
-# Offense count: 1
-# Cop supports --auto-correct.
 Style/DefWithParentheses:
   Exclude:
     - 'test/test_helper.rb'
