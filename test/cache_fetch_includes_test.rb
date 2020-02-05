@@ -41,7 +41,7 @@ class CacheFetchIncludesTest < IdentityCache::TestCase
     assert_equal([
       { associated_records: [:deeply_associated_records] },
       :polymorphic_records,
-      { associated: [:deeply_associated_records] }
+      { associated: [:deeply_associated_records] },
     ],  Item.send(:cache_fetch_includes))
   end
 end
