@@ -27,111 +27,113 @@ end
 ActiveSupport::Cache::MemcachedStore.prepend(MemcachedStoreInstrumentation)
 
 MiniTest::Test = MiniTest::Unit::TestCase unless defined?(MiniTest::Test)
-class IdentityCache::TestCase < Minitest::Test
-  include ActiveRecordObjects
-  attr_reader :backend
+module IdentityCache
+  class TestCase < Minitest::Test
+    include ActiveRecordObjects
+    attr_reader :backend
 
-  def setup
-    ActiveRecord::Base.connection.schema_cache.clear!
-    DatabaseConnection.drop_tables
-    DatabaseConnection.create_tables
+    def setup
+      ActiveRecord::Base.connection.schema_cache.clear!
+      DatabaseConnection.drop_tables
+      DatabaseConnection.create_tables
 
-    IdentityCache.logger = Logger.new(nil)
+      IdentityCache.logger = Logger.new(nil)
 
-    @backend = CacheConnection.backend
-    IdentityCache.cache_backend = @backend
+      @backend = CacheConnection.backend
+      IdentityCache.cache_backend = @backend
 
-    setup_models
-  end
+      setup_models
+    end
 
-  def teardown
-    IdentityCache.cache.clear
-    teardown_models
-  end
+    def teardown
+      IdentityCache.cache.clear
+      teardown_models
+    end
 
-  private
+    private
 
-  def create(class_symbol)
-    class_symbol.to_s.classify.constantize.create!
-  end
+    def create(class_symbol)
+      class_symbol.to_s.classify.constantize.create!
+    end
 
-  def create_list(class_symbol, count)
-    count.times.map { create(class_symbol) }
-  end
+    def create_list(class_symbol, count)
+      count.times.map { create(class_symbol) }
+    end
 
-  def fetcher
-    IdentityCache.cache.cache_fetcher
-  end
+    def fetcher
+      IdentityCache.cache.cache_fetcher
+    end
 
-  def assert_nothing_raised
-    yield
-  end
-
-  def assert_not_nil(*args)
-    assert(*args)
-  end
-
-  def count_queries
-    counter = SQLCounter.new
-    subscriber = ActiveSupport::Notifications.subscribe('sql.active_record', counter)
-    yield
-    counter.log.size
-  ensure
-    ActiveSupport::Notifications.unsubscribe(subscriber)
-  end
-
-  def assert_queries(num = 1)
-    counter = SQLCounter.new
-    subscriber = ActiveSupport::Notifications.subscribe('sql.active_record', counter)
-    exception = false
-    yield
-  rescue
-    exception = true
-    raise
-  ensure
-    ActiveSupport::Notifications.unsubscribe(subscriber)
-    assert_equal(
-      num,
-      counter.log.size,
-      <<~MSG.squish
-        #{counter.log.size} instead of #{num} queries were executed.
-        #{counter.log.size == 0 ? '' : "\nQueries:\n#{counter.log.join("\n")}"}
-      MSG
-    ) unless exception
-  end
-
-  def assert_memcache_operations(num)
-    counter = CacheCounter.new
-    subscriber = ActiveSupport::Notifications.subscribe(/cache_.*\.active_support/, counter)
-    exception = false
-    yield
-  rescue
-    exception = true
-    raise
-  ensure
-    ActiveSupport::Notifications.unsubscribe(subscriber)
-    assert_equal(
-      num,
-      counter.log.size,
-      <<~MSG.squish
-        #{counter.log.size} instead of #{num} memcache operations were executed.
-        #{counter.log.size == 0 ? '' : "\nOperations:\n#{counter.log.join("\n")}"}
-      MSG
-    ) unless exception
-  end
-
-  def assert_no_queries
-    assert_queries(0) do
+    def assert_nothing_raised
       yield
     end
-  end
 
-  def cache_hash(key)
-    IdentityCache.memcache_hash(key)
-  end
+    def assert_not_nil(*args)
+      assert(*args)
+    end
 
-  def reflect(model, association_name)
-    model.reflect_on_association(association_name)
+    def count_queries
+      counter = SQLCounter.new
+      subscriber = ActiveSupport::Notifications.subscribe('sql.active_record', counter)
+      yield
+      counter.log.size
+    ensure
+      ActiveSupport::Notifications.unsubscribe(subscriber)
+    end
+
+    def assert_queries(num = 1)
+      counter = SQLCounter.new
+      subscriber = ActiveSupport::Notifications.subscribe('sql.active_record', counter)
+      exception = false
+      yield
+    rescue
+      exception = true
+      raise
+    ensure
+      ActiveSupport::Notifications.unsubscribe(subscriber)
+      assert_equal(
+        num,
+        counter.log.size,
+        <<~MSG.squish
+          #{counter.log.size} instead of #{num} queries were executed.
+          #{counter.log.size == 0 ? '' : "\nQueries:\n#{counter.log.join("\n")}"}
+        MSG
+      ) unless exception
+    end
+
+    def assert_memcache_operations(num)
+      counter = CacheCounter.new
+      subscriber = ActiveSupport::Notifications.subscribe(/cache_.*\.active_support/, counter)
+      exception = false
+      yield
+    rescue
+      exception = true
+      raise
+    ensure
+      ActiveSupport::Notifications.unsubscribe(subscriber)
+      assert_equal(
+        num,
+        counter.log.size,
+        <<~MSG.squish
+          #{counter.log.size} instead of #{num} memcache operations were executed.
+          #{counter.log.size == 0 ? '' : "\nOperations:\n#{counter.log.join("\n")}"}
+        MSG
+      ) unless exception
+    end
+
+    def assert_no_queries
+      assert_queries(0) do
+        yield
+      end
+    end
+
+    def cache_hash(key)
+      IdentityCache.memcache_hash(key)
+    end
+
+    def reflect(model, association_name)
+      model.reflect_on_association(association_name)
+    end
   end
 end
 
