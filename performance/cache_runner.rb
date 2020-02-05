@@ -37,17 +37,16 @@ def create_database(count)
   DatabaseConnection.create_tables
   existing = Item.all
   (1..count).to_a.each do |i|
-    unless existing.any? { |e| e.id == i }
-      a = Item.new
-      a.id = i
-      a.associated = AssociatedRecord.new(name: "Associated for #{i}")
-      a.associated_records
-      (1..5).each do |j|
-        a.associated_records << AssociatedRecord.new(name: "Has Many #{j} for #{i}")
-        a.normalized_associated_records << NormalizedAssociatedRecord.new(name: "Normalized Has Many #{j} for #{i}")
-      end
-      a.save
+    next if existing.any? { |e| e.id == i }
+    a = Item.new
+    a.id = i
+    a.associated = AssociatedRecord.new(name: "Associated for #{i}")
+    a.associated_records
+    (1..5).each do |j|
+      a.associated_records << AssociatedRecord.new(name: "Has Many #{j} for #{i}")
+      a.normalized_associated_records << NormalizedAssociatedRecord.new(name: "Normalized Has Many #{j} for #{i}")
     end
+    a.save
   end
 ensure
   helper.teardown_models

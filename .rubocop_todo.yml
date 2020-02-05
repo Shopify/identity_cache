@@ -6,15 +6,6 @@
 # Note that changes in the inspected code, or installation of new
 # versions of RuboCop, may require this file to be generated again.
 
-# Offense count: 2
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, MinBodyLength.
-# SupportedStyles: skip_modifier_ifs, always
-Style/Next:
-  Exclude:
-    - 'lib/identity_cache/query_api.rb'
-    - 'performance/cache_runner.rb'
-
 # Offense count: 3
 # Cop supports --auto-correct.
 Style/ParallelAssignment:
