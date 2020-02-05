@@ -96,7 +96,7 @@ module IdentityCache
         counter.log.size,
         <<~MSG.squish
           #{counter.log.size} instead of #{num} queries were executed.
-          #{counter.log.size == 0 ? '' : "\nQueries:\n#{counter.log.join("\n")}"}
+          #{counter.log.empty? ? '' : "\nQueries:\n#{counter.log.join("\n")}"}
         MSG
       ) unless exception
     end
@@ -116,7 +116,7 @@ module IdentityCache
         counter.log.size,
         <<~MSG.squish
           #{counter.log.size} instead of #{num} memcache operations were executed.
-          #{counter.log.size == 0 ? '' : "\nOperations:\n#{counter.log.join("\n")}"}
+          #{counter.log.empty? ? '' : "\nOperations:\n#{counter.log.join("\n")}"}
         MSG
       ) unless exception
     end
