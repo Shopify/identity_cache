@@ -6,15 +6,6 @@
 # Note that changes in the inspected code, or installation of new
 # versions of RuboCop, may require this file to be generated again.
 
-# Offense count: 4
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyleForMultiline.
-# SupportedStylesForMultiline: comma, consistent_comma, no_comma
-Style/TrailingCommaInHashLiteral:
-  Exclude:
-    - 'test/helpers/database_connection.rb'
-    - 'test/helpers/serialization_format.rb'
-
 # Offense count: 3
 # Cop supports --auto-correct.
 Style/ZeroLengthPredicate:

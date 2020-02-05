@@ -60,7 +60,7 @@ module DatabaseConnection
     custom_master_records: [[:integer, :master_primary_key], id: false, primary_key: 'master_primary_key'],
     custom_child_records: [
       [:integer, :child_primary_key], [:integer, :master_id], id: false, primary_key: 'child_primary_key'
-    ]
+    ],
   }
 
   DEFAULT_CONFIG = {
@@ -68,7 +68,7 @@ module DatabaseConnection
       'adapter' => 'mysql2',
       'database' => 'identity_cache_test',
       'host' => ENV['MYSQL_HOST'] || '127.0.0.1',
-      'username' => 'root'
+      'username' => 'root',
     },
     'postgresql' => {
       'adapter' => 'postgresql',
@@ -76,6 +76,6 @@ module DatabaseConnection
       'host' => ENV['POSTGRES_HOST'] || '127.0.0.1',
       'username' => 'postgres',
       'prepared_statements' => false,
-    }
+    },
   }
 end
