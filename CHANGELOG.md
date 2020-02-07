@@ -1,6 +1,6 @@
 # IdentityCache changelog
 
-#### 1.0.0 Unreleased
+#### 1.0.0
 
 - Remove inverse_name option. Specify inverse_of on the Active Record association instead. (#439)
 - Bump the minimum Active Record version to 5.2 (#438)
