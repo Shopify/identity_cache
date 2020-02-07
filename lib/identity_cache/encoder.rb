@@ -76,12 +76,12 @@ module IdentityCache
         end
         if coder.key?(:association_ids)
           coder[:association_ids].each do |name, ids|
-            record.instance_variable_set(record.class.cached_has_manys[name].ids_variable_name, ids)
+            record.instance_variable_set(klass.cached_has_manys.fetch(name).ids_variable_name, ids)
           end
         end
         if coder.key?(:association_id)
           coder[:association_id].each do |name, id|
-            record.instance_variable_set(record.class.cached_has_ones[name].id_variable_name, id)
+            record.instance_variable_set(klass.cached_has_ones.fetch(name).id_variable_name, id)
           end
         end
 
