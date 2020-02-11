@@ -6,7 +6,7 @@ class RecursiveDenormalizedHasManyTest < IdentityCache::TestCase
     super
     AssociatedRecord.cache_has_many(:deeply_associated_records, embed: true)
     Item.cache_has_many(:associated_records, embed: true)
-    Item.cache_has_one(:associated)
+    Item.cache_has_one(:associated, embed: true)
 
     @record = Item.new(title: 'foo')
 
