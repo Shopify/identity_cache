@@ -41,7 +41,6 @@ module IdentityCache
     def reference_cached_association
       @reference_assocaition ||= Cached::Reference::HasMany.new(
         :deeply_associated_records,
-        inverse_name: :associated_record,
         reflection: reflect(AssociatedRecord, :deeply_associated_records),
       )
     end
@@ -49,7 +48,6 @@ module IdentityCache
     def recursive_cached_association
       @recursive_association ||= Cached::Recursive::HasMany.new(
         :deeply_associated_records,
-        inverse_name: :associated_record,
         reflection: reflect(AssociatedRecord, :deeply_associated_records),
       )
     end

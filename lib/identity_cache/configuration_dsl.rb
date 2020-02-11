@@ -27,10 +27,8 @@ module IdentityCache
       #     include IdentityCache
       #     has_many :options
       #     has_many :orders
-      #     has_many :buyers
       #     cache_has_many :options, embed: :ids
       #     cache_has_many :orders
-      #     cache_has_many :buyers, inverse_name: 'line_item'
       #   end
       #
       # == Parameters
@@ -43,9 +41,7 @@ module IdentityCache
       #   associations for the associated record recursively.
       #   If `:ids` (the default), it will only embed the ids for the associated
       #   records.
-      # * inverse_name: The name of the parent in the association if the name is
-      #   not the lowercase pluralization of the parent object's class
-      def cache_has_many(association, embed: :ids, inverse_name: nil)
+      def cache_has_many(association, embed: :ids)
         ensure_base_model
         check_association_for_caching(association)
         reflection = reflect_on_association(association)
@@ -61,7 +57,6 @@ module IdentityCache
         cached_has_manys[association] = association_class.new(
           association,
           reflection: reflection,
-          inverse_name: inverse_name,
         ).tap(&:build)
       end
 
@@ -84,10 +79,7 @@ module IdentityCache
       #   in the cache entries for this model, as well as all the embedded
       #   associations for the associated record recursively.
       #   If `:id`, it will only embed the id for the associated record.
-      # * inverse_name: The name of the parent in the association ( only
-      #   necessary if the name is not the lowercase pluralization of the
-      #   parent object's class)
-      def cache_has_one(association, embed:, inverse_name: nil)
+      def cache_has_one(association, embed:)
         ensure_base_model
         check_association_for_caching(association)
         reflection = reflect_on_association(association)
@@ -103,7 +95,6 @@ module IdentityCache
         cached_has_ones[association] = association_class.new(
           association,
           reflection: reflection,
-          inverse_name: inverse_name,
         ).tap(&:build)
       end
 

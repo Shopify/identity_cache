@@ -7,11 +7,7 @@ module IdentityCache
       def setup
         super
         @reflection = reflect(AssociatedRecord, :item)
-        @association = Association.new(
-          :item,
-          inverse_name: :associated_record,
-          reflection: @reflection
-        )
+        @association = Association.new(:item, reflection: @reflection)
       end
 
       attr_reader :reflection, :association
@@ -21,7 +17,10 @@ module IdentityCache
       end
 
       def test_inverse_name
-        assert_equal(:associated_record, association.inverse_name)
+        reflection = reflect(Item, :associated_records)
+        association = Association.new(:associated_records, reflection: reflection)
+
+        assert_equal(:item, association.inverse_name)
       end
 
       def test_reflection

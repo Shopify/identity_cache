@@ -6,8 +6,8 @@ class PolymorphicHasManyTest < IdentityCache::TestCase
     super
     PolymorphicRecord.include(IdentityCache)
 
-    Item.cache_has_many(:polymorphic_records, inverse_name: :owner)
-    ItemTwo.cache_has_many(:polymorphic_records, inverse_name: :owner)
+    Item.cache_has_many(:polymorphic_records)
+    ItemTwo.cache_has_many(:polymorphic_records)
   end
 
   def test_polymorphic_has_many_filters_by_type

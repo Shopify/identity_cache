@@ -144,24 +144,21 @@ With this code, on cache miss, the product and its associated images will be loa
 
 ### Caching Polymorphic Associations
 
-IdentityCache tries to figure out both sides of an association whenever it can so it can set those up when rebuilding the object from the cache. In some cases this is hard to determine so you can tell IdentityCache what the association should be. This is most often the case when embedding polymorphic associations. The `inverse_name` option on `cache_has_many` and `cache_has_one` lets you specify the inverse name of the association.
+IdentityCache tries to figure out both sides of an association whenever it can so it can set those up when rebuilding the object from the cache. In some cases this is hard to determine so you can tell IdentityCache what the association should be. This is most often the case when embedding polymorphic associations.
 
 ``` ruby
 class Metafield < ActiveRecord::Base
   include IdentityCache
-  belongs_to :owner, :polymorphic => true
+  belongs_to :owner, polymorphic: true
   cache_belongs_to :owner
 end
 
 class Product < ActiveRecord::Base
   include IdentityCache
-  has_many :metafields, :as => 'owner'
-  cache_has_many :metafields, :inverse_name => :owner
+  has_many :metafields, as: :owner
+  cache_has_many :metafields
 end
 ```
-
-The `:inverse_name => :owner` option tells IdentityCache what the association on the other side is named so that it can correctly set the assocation when loading the metafields from the cache.
-
 
 ### Caching Attributes
 
@@ -193,17 +190,13 @@ Example:
 Options:
 _[:embed]_ When true, specifies that the association should be included with the parent when caching. This means the associated objects will be loaded already when the parent is loaded from the cache and will not need to be fetched on their own. When :ids, only the id of the associated records will be included with the parent when caching. Defaults to `:ids`.
 
-_[:inverse_name]_ Specifies the name of parent object used by the association. This is useful for polymorphic associations when the association is often named something different between the parent and child objects.
-
 Example:
-`cache_has_many :metafields, :inverse_name => :owner, :embed => true`
+`cache_has_many :metafields, embed: true`
 
 #### cache_has_one
 
 Options:
 _[:embed]_ When true, specifies that the association should be included with the parent when caching. This means the associated objects will be loaded already when the parent is loaded from the cache and will not need to be fetched on their own. No other values are currently implemented. When :id, only the id of the associated record will be included with the parent when caching.
-
-_[:inverse_name]_ Specifies the name of parent object used by the association. This is useful for polymorphic associations when the association is often named something different between the parent and child objects.
 
 Example:
 `cache_has_one :configuration, embed: :id`
