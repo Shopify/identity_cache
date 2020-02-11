@@ -2,10 +2,6 @@
 module IdentityCache
   module Cached
     class BelongsTo < Association # :nodoc:
-      def initialize(name, reflection:)
-        super(name, inverse_name: nil, reflection: reflection)
-      end
-
       attr_reader :records_variable_name
 
       def build

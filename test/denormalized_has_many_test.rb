@@ -99,16 +99,9 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     assert_nothing_raised { ar.expire_parent_caches }
   end
 
-  def test_cache_without_guessable_inverse_name_raises
+  def test_cache_association_known_inverse_raises
     assert_raises IdentityCache::InverseAssociationError do
       Item.cache_has_many(:no_inverse_of_records, embed: true)
-      IdentityCache.eager_load!
-    end
-  end
-
-  def test_cache_without_guessable_inverse_name_does_not_raise_when_inverse_name_specified
-    assert_nothing_raised do
-      Item.cache_has_many(:no_inverse_of_records, inverse_name: :owner, embed: true)
       IdentityCache.eager_load!
     end
   end
@@ -213,7 +206,7 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
 
     def test_cache_has_many_on_derived_model_raises
       assert_raises(IdentityCache::DerivedModelError) do
-        StiRecordTypeA.cache_has_many(:polymorphic_records, inverse_name: :owner, embed: true)
+        StiRecordTypeA.cache_has_many(:polymorphic_records, embed: true)
       end
     end
   end

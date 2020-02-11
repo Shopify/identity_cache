@@ -6,7 +6,7 @@ class DeeplyNestedAssociatedRecordHasOneTest < IdentityCache::TestCase
     assert_nothing_raised do
       PolymorphicRecord.include(IdentityCache::WithoutPrimaryIndex)
       Deeply::Nested::AssociatedRecord.has_one(:polymorphic_record, as: 'owner')
-      Deeply::Nested::AssociatedRecord.cache_has_one(:polymorphic_record, inverse_name: :owner, embed: true)
+      Deeply::Nested::AssociatedRecord.cache_has_one(:polymorphic_record, embed: true)
     end
   end
 
@@ -14,7 +14,7 @@ class DeeplyNestedAssociatedRecordHasOneTest < IdentityCache::TestCase
     assert_nothing_raised do
       PolymorphicRecord.include(IdentityCache)
       Deeply::Nested::AssociatedRecord.has_many(:polymorphic_records, as: 'owner')
-      Deeply::Nested::AssociatedRecord.cache_has_many(:polymorphic_records, inverse_name: :owner)
+      Deeply::Nested::AssociatedRecord.cache_has_many(:polymorphic_records)
     end
   end
 end

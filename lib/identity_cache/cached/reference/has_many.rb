@@ -3,7 +3,7 @@ module IdentityCache
   module Cached
     module Reference
       class HasMany < Association # :nodoc:
-        def initialize(name, inverse_name:, reflection:)
+        def initialize(name, reflection:)
           super
           @cached_ids_name = "fetch_#{ids_name}"
           @ids_variable_name = :"@#{ids_cached_reader_name}"

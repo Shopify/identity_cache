@@ -4,10 +4,9 @@ module IdentityCache
     class Association # :nodoc:
       include EmbeddedFetching
 
-      def initialize(name, inverse_name:, reflection:)
+      def initialize(name, reflection:)
         @name = name
         @reflection = reflection
-        @inverse_name = inverse_name
         @cached_accessor_name = :"fetch_#{name}"
         @records_variable_name = :"@cached_#{name}"
       end
@@ -79,8 +78,8 @@ module IdentityCache
         unless child_class.reflect_on_association(inverse_name)
           raise InverseAssociationError, <<~MSG.squish
             Inverse name for association #{parent_class}\##{reflection.name} could
-            not be determined. Please use the :inverse_name option to specify
-            the inverse association name for this cache.
+            not be determined. Please use the :inverse_of option on the Active Record
+            association to specify the inverse association name.
           MSG
         end
       end

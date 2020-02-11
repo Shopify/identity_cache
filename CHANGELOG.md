@@ -2,6 +2,7 @@
 
 #### 1.0.0 Unreleased
 
+- Remove inverse_name option. Specify inverse_of on the Active Record association instead. (#439)
 - Bump the minimum Active Record version to 5.2 (#438)
 - Remove the default embed option value from cache_has_one (#437)
 - Type cast values using attribute types before using in cache key (#354)

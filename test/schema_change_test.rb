@@ -79,7 +79,7 @@ class SchemaChangeTest < IdentityCache::TestCase
     Item.fetch(@record.id)
 
     PolymorphicRecord.include(IdentityCache::WithoutPrimaryIndex)
-    Item.cache_has_many(:polymorphic_records, inverse_name: :owner, embed: true)
+    Item.cache_has_many(:polymorphic_records, embed: true)
     read_new_schema
 
     Item.cached_primary_index.expects(:load_one_from_db).returns(@record)
@@ -88,7 +88,7 @@ class SchemaChangeTest < IdentityCache::TestCase
 
   def test_embed_existing_cache_has_many
     PolymorphicRecord.include(IdentityCache)
-    Item.cache_has_many(:polymorphic_records, inverse_name: :owner, embed: :ids)
+    Item.cache_has_many(:polymorphic_records, embed: :ids)
     read_new_schema
 
     Item.fetch(@record.id)
@@ -97,7 +97,7 @@ class SchemaChangeTest < IdentityCache::TestCase
     setup_models
 
     PolymorphicRecord.include(IdentityCache::WithoutPrimaryIndex)
-    Item.cache_has_many(:polymorphic_records, inverse_name: :owner, embed: true)
+    Item.cache_has_many(:polymorphic_records, embed: true)
     read_new_schema
 
     Item.fetch(@record.id)
@@ -148,7 +148,7 @@ class SchemaChangeTest < IdentityCache::TestCase
     PolymorphicRecord.include(IdentityCache)
     Item.fetch(@record.id)
 
-    Item.cache_has_many(:polymorphic_records, inverse_name: :owner, embed: :ids)
+    Item.cache_has_many(:polymorphic_records, embed: :ids)
     read_new_schema
 
     Item.fetch(@record.id)

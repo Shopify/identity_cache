@@ -3,7 +3,7 @@ module IdentityCache
   module Cached
     module Recursive
       class Association < Cached::Association # :nodoc:
-        def initialize(name, inverse_name:, reflection:)
+        def initialize(name, reflection:)
           super
           @dehydrated_variable_name = :"@dehydrated_#{name}"
         end

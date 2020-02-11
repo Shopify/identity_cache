@@ -8,11 +8,7 @@ module IdentityCache
         def setup
           super
           @reflection = reflect(AssociatedRecord, :deeply_associated_records)
-          @has_many = HasMany.new(
-            :deeply_associated_records,
-            inverse_name: :associated_record,
-            reflection: @reflection
-          )
+          @has_many = HasMany.new(:deeply_associated_records, reflection: @reflection)
         end
 
         attr_reader :reflection, :has_many
