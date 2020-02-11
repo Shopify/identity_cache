@@ -76,10 +76,9 @@ module IdentityCache
         end
 
         unless child_class.reflect_on_association(inverse_name)
-          raise InverseAssociationError, <<~MSG.squish
-            Inverse name for association #{parent_class}\##{reflection.name} could
-            not be determined. Please use the :inverse_of option on the Active Record
-            association to specify the inverse association name.
+          raise InverseAssociationError, <<~MSG
+            Inverse name for association #{parent_class}\##{reflection.name} could not be determined.
+            Use the :inverse_of option on the Active Record association to specify the inverse association name.
           MSG
         end
       end

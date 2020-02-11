@@ -100,10 +100,11 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
   end
 
   def test_cache_association_known_inverse_raises
-    assert_raises IdentityCache::InverseAssociationError do
+    exc = assert_raises IdentityCache::InverseAssociationError do
       Item.cache_has_many(:no_inverse_of_records, embed: true)
       IdentityCache.eager_load!
     end
+    assert_match(/\AInverse name for association Item#no_inverse_of_records could not be determined./, exc.message)
   end
 
   def test_cache_uses_inverse_of_on_association
