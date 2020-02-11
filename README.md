@@ -51,7 +51,7 @@ class Product < ActiveRecord::Base
 
   has_many :images
 
-  cache_has_many :images, :embed => true
+  cache_has_many :images, embed: true
 end
 
 # Fetch the product by its id using the primary index as well as the embedded images association.
@@ -70,7 +70,7 @@ IdentityCache lets you lookup records by fields other than `id`. You can have mu
 ``` ruby
 class Product < ActiveRecord::Base
   include IdentityCache
-  cache_index :handle, :unique => true
+  cache_index :handle, unique: true
   cache_index :vendor, :product_type
 end
 
@@ -133,7 +133,7 @@ class Product < ActiveRecord::Base
   include IdentityCache
 
   has_many :images
-  cache_has_many :images, :embed => true
+  cache_has_many :images, embed: true
 end
 
 @product = Product.fetch(id)
@@ -166,7 +166,7 @@ For cases where you may not need the entire object to be cached, just an attribu
 
 ``` ruby
 class Redirect < ActiveRecord::Base
-  cache_attribute :target, :by => [:shop_id, :path]
+  cache_attribute :target, by: [:shop_id, :path]
 end
 
 Redirect.fetch_target_by_shop_id_and_path(shop_id, path)
@@ -212,7 +212,7 @@ Options:
 _[:by]_ Specifies what key(s) you want the attribute cached by. Defaults to :id.
 
 Example:
-`cache_attribute :target, :by => [:shop_id, :path]`
+`cache_attribute :target, by: [:shop_id, :path]`
 
 ## Memoized Cache Proxy
 
@@ -222,8 +222,8 @@ Cache reads and writes can be memoized for a block of code to serve duplicate id
 class ApplicationController < ActionController::Base
   around_filter :identity_cache_memoization
 
-  def identity_cache_memoization
-    IdentityCache.cache.with_memoization{ yield }
+  def identity_cache_memoization(&block)
+    IdentityCache.cache.with_memoization(&block)
   end
 end
 ```
