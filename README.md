@@ -155,7 +155,7 @@ end
 
 class Product < ActiveRecord::Base
   include IdentityCache
-  has_many :metafields, as: 'owner'
+  has_many :metafields, as: :owner
   cache_has_many :metafields
 end
 ```
