@@ -4,7 +4,7 @@ module SerializationFormat
     AssociatedRecord.cache_has_many(:deeply_associated_records, embed: true)
     AssociatedRecord.cache_belongs_to(:item)
     Item.cache_has_many(:associated_records, embed: true)
-    Item.cache_has_one(:associated)
+    Item.cache_has_one(:associated, embed: true)
     time = Time.parse('1970-01-01T00:00:00 UTC')
 
     record = Item.new(title: 'foo')

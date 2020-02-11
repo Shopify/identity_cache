@@ -5,7 +5,7 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
   def setup
     super
     PolymorphicRecord.include(IdentityCache::WithoutPrimaryIndex)
-    Item.cache_has_one(:associated)
+    Item.cache_has_one(:associated, embed: true)
     Item.cache_index(:title, unique: true)
     @cached_attribute = Item.cache_indexes.last
     @record = Item.new(title: 'foo')

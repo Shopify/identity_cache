@@ -17,7 +17,7 @@ class CacheFetchIncludesTest < IdentityCache::TestCase
   end
 
   def test_cached_has_ones_are_included_in_includes
-    Item.send(:cache_has_one, :associated)
+    Item.send(:cache_has_one, :associated, embed: true)
     assert_equal([:associated], Item.send(:cache_fetch_includes))
   end
 

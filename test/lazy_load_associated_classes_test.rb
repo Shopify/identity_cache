@@ -14,7 +14,7 @@ class LazyLoadAssociatedClassesTest < IdentityCache::TestCase
 
   def test_cache_has_one_does_not_load_associated_class
     Item.has_one(:missing_model)
-    Item.cache_has_one(:missing_model)
+    Item.cache_has_one(:missing_model, embed: true)
   end
 
   def test_cache_invalidation

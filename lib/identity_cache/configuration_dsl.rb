@@ -38,9 +38,11 @@ module IdentityCache
       #
       # == Options
       #
-      # * embed: If set to true, will cause IdentityCache to keep the
-      #   values for this association in the same cache entry as the parent,
-      #   instead of its own.
+      # * embed: If `true`, IdentityCache will embed the associated records
+      #   in the cache entries for this model, as well as all the embedded
+      #   associations for the associated record recursively.
+      #   If `:ids` (the default), it will only embed the ids for the associated
+      #   records.
       # * inverse_name: The name of the parent in the association if the name is
       #   not the lowercase pluralization of the parent object's class
       def cache_has_many(association, embed: :ids, inverse_name: nil)
@@ -70,7 +72,7 @@ module IdentityCache
       # == Example:
       #   class Product
       #     cache_has_one :store, embed: true
-      #     cache_has_one :vendor
+      #     cache_has_one :vendor, embed: :id
       #   end
       #
       # == Parameters
@@ -78,13 +80,14 @@ module IdentityCache
       #
       # == Options
       #
-      # * embed: Only true is supported, which is also the default, so
-      #   IdentityCache will keep the values for this association in the same
-      #   cache entry as the parent, instead of its own.
+      # * embed: If `true`, IdentityCache will embed the associated record
+      #   in the cache entries for this model, as well as all the embedded
+      #   associations for the associated record recursively.
+      #   If `:id`, it will only embed the id for the associated record.
       # * inverse_name: The name of the parent in the association ( only
       #   necessary if the name is not the lowercase pluralization of the
       #   parent object's class)
-      def cache_has_one(association, embed: true, inverse_name: nil)
+      def cache_has_one(association, embed:, inverse_name: nil)
         ensure_base_model
         check_association_for_caching(association)
         reflection = reflect_on_association(association)
