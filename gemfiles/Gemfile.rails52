@@ -1,0 +1,6 @@
+source 'https://rubygems.org'
+gemspec path: '..'
+
+gem 'activerecord', '~> 5.2'
+gem 'activesupport', '~> 5.2'
+gem 'mysql2', '>= 0.4.4', '< 0.6.0'

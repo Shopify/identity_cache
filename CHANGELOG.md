@@ -2,6 +2,7 @@
 
 #### 1.0.0 Unreleased
 
+- Bump the minimum Active Record version to 5.2 (#438)
 - Remove the default embed option value from cache_has_one (#437)
 - Type cast values using attribute types before using in cache key (#354)
 - Remove support for rails 4.2 (#355)

@@ -14,7 +14,6 @@ require File.dirname(__FILE__) + '/../lib/identity_cache'
 
 DatabaseConnection.setup
 CacheConnection.setup
-ActiveSupport::Cache::Store.instrument = true if ActiveSupport.version < Gem::Version.new("4.2.0")
 
 # This patches AR::MemcacheStore to notify AS::Notifications upon read_multis like the rest of rails does
 module MemcachedStoreInstrumentation
