@@ -5,7 +5,7 @@ rvm:
   - 2.6
 
 gemfile:
-  - gemfiles/Gemfile.rails50
+  - gemfiles/Gemfile.rails52
   - gemfiles/Gemfile.latest-release
   - gemfiles/Gemfile.rails-edge
 
