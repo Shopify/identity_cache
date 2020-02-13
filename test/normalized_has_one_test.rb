@@ -162,4 +162,16 @@ class NormalizedHasOneTest < IdentityCache::TestCase
       end
     end
   end
+
+  def test_expiry_of_scoped_association
+    Item.has_one(:associated_scoped, -> { where(name: 'bar') }, class_name: 'AssociatedRecord')
+    Item.cache_has_one(:associated_scoped, embed: :id)
+
+    item = Item.fetch(@record.id) # fill cache
+    assert_equal(item.associated.item_id, item.cached_associated_scoped_id)
+    item.associated.update!(name: 'foo')
+
+    item = Item.fetch(@record.id)
+    assert_nil(item.cached_associated_scoped_id)
+  end
 end

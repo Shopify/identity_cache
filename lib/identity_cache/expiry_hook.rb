@@ -16,7 +16,7 @@ module IdentityCache
     attr_reader :cached_association
 
     def only_on_foreign_key_change?
-      cached_association.embedded_by_reference?
+      cached_association.embedded_by_reference? && !cached_association.reflection.has_scope?
     end
 
     def inverse_name
