@@ -1,19 +1,25 @@
 # IdentityCache changelog
 
-#### 1.0.0 Unreleased
+#### 1.0.0
 
 - Remove inverse_name option. Specify inverse_of on the Active Record association instead. (#439)
 - Bump the minimum Active Record version to 5.2 (#438)
 - Remove the default embed option value from cache_has_one (#437)
-- Type cast values using attribute types before using in cache key (#354)
+- Lazily evaluate nested includes to fetch blobs in batches (#427)
+- Only cache embedded association IDs when present (#397)
+- Add support for ID embedded `has_one` cached associations (#393)
+- Add support for polymorphic `belongs_to` cached associations (#387)
+- Add `fetch_multi_by_*` support for cache_index with a single field (#368)
 - Remove support for rails 4.2 (#355)
+- Type cast values using attribute types before using in cache key (#354)
 - Set inverse cached association for cache_has_one on cache hit (#345)
-- Lazy load associated classes (#306)
-- Remove disable_primary_cache_index
-- Remove deprecated `embed: false` cache_has_many option
+- Use `ActiveSupport:Notifications` to notify subscribers of hydration events (#341)
+- Remove disable_primary_cache_index (#335)
+- Remove deprecated `embed: false` cache_has_many option (#335)
+- Fix column name in the preload association query when using custom primary keys (#338)
 - Raise when trying to cache a belong_to association with a scope. Previously the scope was ignored on a cache hit (#323)
 - Remove deprecated `never_set_inverse_association` option (#319)
-- Fix column name in the preload association query when using custom primary keys (#338)
+- Lazy load associated classes (#306)
 
 #### 0.5.1
 
