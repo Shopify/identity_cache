@@ -1,5 +1,9 @@
 # IdentityCache changelog
 
+#### 1.0.1
+
+- Fix expiry of cache_has_one association with scope and `embed: :id` (#442)
+
 #### 1.0.0
 
 - Remove inverse_name option. Specify inverse_of on the Active Record association instead. (#439)
