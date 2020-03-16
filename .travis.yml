@@ -36,10 +36,5 @@ script:
 
 cache: bundler
 
-matrix:
-  exclude:
-    - rvm: 2.2.6
-      gemfile: gemfiles/Gemfile.rails-edge
-
 notifications:
   email: false
