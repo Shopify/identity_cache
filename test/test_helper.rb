@@ -49,6 +49,16 @@ module IdentityCache
       teardown_models
     end
 
+    def with_expiration_strategy(new_strategy, &b)
+      old_strategy = IdentityCache.expiration_strategy
+      IdentityCache.reset_expiration_strategy(new_strategy)
+      yield
+
+    ensure
+
+      IdentityCache.reset_expiration_strategy(old_strategy)
+    end
+
     private
 
     def create(class_symbol)

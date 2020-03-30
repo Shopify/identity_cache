@@ -26,4 +26,24 @@ class IdentityCacheTest < IdentityCache::TestCase
       assert_equal false, IdentityCache.should_use_cache?
     end
   end
+
+  def test_should_use_inline_expirator_by_default
+    assert_instance_of IdentityCache::InlineExpirator, IdentityCache.expirator
+  end
+
+  def test_should_be_able_to_set_expirator_to_worker
+    with_expiration_strategy(:worker) do
+      assert_instance_of IdentityCache::NoopExpirator, IdentityCache.expirator
+    end
+  end
+
+  def test_should_raise_when_expiration_strategy_is_not_supported
+    error = assert_raises(IdentityCache::ExpirationStrategyNotFound) do 
+      with_expiration_strategy(:hope) do
+        IdentityCache.expirator
+      end
+    end
+
+    assert_equal "hope is not a valid expiration strategy", error.message
+  end
 end

@@ -37,12 +37,13 @@ module IdentityCache
       def expire(record)
         unless record.send(:was_new_record?)
           old_key = old_cache_key(record)
-          IdentityCache.cache.delete(old_key)
+          IdentityCache.expirator.expire(old_key)
         end
+
         unless record.destroyed?
           new_key = new_cache_key(record)
           if new_key != old_key
-            IdentityCache.cache.delete(new_key)
+            IdentityCache.expirator.expire(new_key)
           end
         end
       end
