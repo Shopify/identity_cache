@@ -3,7 +3,7 @@ name: identity-cache
 up:
   - homebrew:
     - postgresql
-  - ruby: 2.4.1
+  - ruby: 2.4.10
   - railgun
   - bundler
 
