@@ -244,4 +244,11 @@ class NormalizedHasManyTest < IdentityCache::TestCase
       end
     end
   end
+
+  def test_fetch_association_after_adding_to_it
+    item = Item.fetch(@record.id)
+    item.associated_records.create!(name: 'foo')
+    fetched_associated_records = item.fetch_associated_records
+    assert_equal(item.associated_records.length, fetched_associated_records.length)
+  end
 end
