@@ -134,7 +134,7 @@ module IdentityCache
 
       setup_has_many_children_and_grandchildren(@bob)
 
-      associated_records = @bob.associated_records
+      associated_records = Item.find(@bob.id).associated_records
 
       assert_queries(1) do
         assert_memcache_operations(1) do
