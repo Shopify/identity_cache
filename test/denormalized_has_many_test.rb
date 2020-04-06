@@ -180,6 +180,13 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     end
   end
 
+  def test_fetch_association_after_adding_to_it
+    item = Item.fetch(@record.id)
+    item.associated_records.create!(name: 'foo')
+    fetched_associated_records = item.fetch_associated_records
+    assert_equal(item.associated_records.length, fetched_associated_records.length)
+  end
+
   class CheckAssociationTest < IdentityCache::TestCase
     def test_unsupported_through_assocation
       assert_raises IdentityCache::UnsupportedAssociationError, "caching through associations isn't supported" do

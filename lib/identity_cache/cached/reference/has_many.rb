@@ -20,8 +20,8 @@ module IdentityCache
             end
 
             def #{cached_accessor_name}
-              association_klass = association(:#{name}).klass
-              if association_klass.should_use_cache? && !#{name}.loaded?
+              assoc = association(:#{name})
+              if assoc.klass.should_use_cache? && !assoc.loaded? && assoc.target.blank?
                 #{records_variable_name} ||= #{reflection.class_name}.fetch_multi(#{cached_ids_name})
               else
                 #{name}.to_a
