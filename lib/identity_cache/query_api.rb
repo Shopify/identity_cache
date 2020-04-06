@@ -18,6 +18,11 @@ module IdentityCache
         cached_has_manys[name] || cached_has_ones[name] || cached_belongs_tos.fetch(name)
       end
 
+      # @api private
+      def all_cached_associations # :nodoc:
+        cached_has_manys.merge(cached_has_ones).merge(cached_belongs_tos)
+      end
+
       private
 
       def raise_if_scoped
@@ -124,10 +129,6 @@ module IdentityCache
 
       def recursively_embedded_associations
         all_cached_associations.select { |_name, association| association.embedded_recursively? }
-      end
-
-      def all_cached_associations
-        cached_has_manys.merge(cached_has_ones).merge(cached_belongs_tos)
       end
 
       def embedded_associations

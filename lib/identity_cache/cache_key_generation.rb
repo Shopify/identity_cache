@@ -10,7 +10,7 @@ module IdentityCache
 
     def self.denormalized_schema_string(klass)
       schema_to_string(klass.columns).tap do |schema_string|
-        klass.send(:all_cached_associations).sort.each do |name, association|
+        klass.all_cached_associations.sort.each do |name, association|
           klass.send(:check_association_scope, name)
           association.validate if association.embedded?
           case association
