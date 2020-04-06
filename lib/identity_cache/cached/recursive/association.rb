@@ -11,15 +11,16 @@ module IdentityCache
         attr_reader :dehydrated_variable_name
 
         def build
-          reflection.active_record.class_eval(<<-RUBY, __FILE__, __LINE__ + 1)
-            def #{cached_accessor_name}
-              fetch_recursively_cached_association(
-                :#{records_variable_name},
-                :#{dehydrated_variable_name},
-                :#{name}
-              )
-            end
-          RUBY
+          cached_association = self
+
+          model = reflection.active_record
+          model.send(:define_method, cached_accessor_name) do
+            fetch_recursively_cached_association(
+              cached_association.records_variable_name,
+              cached_association.dehydrated_variable_name,
+              cached_association.name
+            )
+          end
 
           ParentModelExpiration.add_parent_expiry_hook(self)
         end
