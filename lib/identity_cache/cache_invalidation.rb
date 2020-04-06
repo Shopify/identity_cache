@@ -11,7 +11,7 @@ module IdentityCache
     private
 
     def clear_cached_associations
-      self.class.send(:all_cached_associations).each_value do |association|
+      self.class.all_cached_associations.each_value do |association|
         association.clear(self)
       end
     end
