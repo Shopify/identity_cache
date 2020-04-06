@@ -103,6 +103,7 @@ module IdentityCache
         ensure_base_model
         raise_if_scoped
         record = cached_primary_index.fetch(id)
+        IdentityCache::Tracking.track_object(record, includes) if record
         prefetch_associations(includes, [record]) if record && includes
         record
       end
@@ -123,6 +124,7 @@ module IdentityCache
         raise_if_scoped
         ids.flatten!(1)
         records = cached_primary_index.fetch_multi(ids)
+        records.each { |record| IdentityCache::Tracking.track_object(record, includes) }
         prefetch_associations(includes, records) if includes
         records
       end
