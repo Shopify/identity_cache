@@ -169,6 +169,7 @@ module IdentityCache
     def fetch_recursively_cached_association(ivar_name, dehydrated_ivar_name, association_name) # :nodoc:
       assoc = association(association_name)
 
+      IdentityCache::Tracking.track_association_accessed(self, association_name)
       if assoc.klass.should_use_cache? && !assoc.loaded?
         if instance_variable_defined?(ivar_name)
           instance_variable_get(ivar_name)

@@ -40,6 +40,7 @@ require "identity_cache/cache_fetcher"
 require "identity_cache/fallback_fetcher"
 require 'identity_cache/without_primary_index'
 require 'identity_cache/with_primary_index'
+require "identity_cache/tracking"
 
 module IdentityCache
   extend ActiveSupport::Concern

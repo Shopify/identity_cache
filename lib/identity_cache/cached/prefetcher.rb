@@ -42,8 +42,10 @@ module IdentityCache
             return yield
           end
 
-          cached_association = klass.cached_association(association)
-          cached_association.fetch_async(load_strategy, records, &block)
+          IdentityCache::Tracking.skip_object_tracking do
+            cached_association = klass.cached_association(association)
+            cached_association.fetch_async(load_strategy, records, &block)
+          end
         end
       end
     end
