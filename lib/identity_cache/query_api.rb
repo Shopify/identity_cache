@@ -86,7 +86,7 @@ module IdentityCache
             association = record.association(association_name)
             target = association.target
             target = readonly_copy(target) if readonly
-            record.send(:set_embedded_association, association_name, target)
+            cached_association.set_with_inverse(record, target)
             association.reset
             # reset inverse associations
             next unless target && association_reflection.has_inverse?
@@ -165,63 +165,6 @@ module IdentityCache
     end
 
     private
-
-    def fetch_recursively_cached_association(ivar_name, dehydrated_ivar_name, association_name) # :nodoc:
-      assoc = association(association_name)
-
-      if assoc.klass.should_use_cache? && !assoc.loaded? && assoc.target.blank?
-        if instance_variable_defined?(ivar_name)
-          instance_variable_get(ivar_name)
-        elsif instance_variable_defined?(dehydrated_ivar_name)
-          associated_records = hydrate_association_target(assoc.klass, instance_variable_get(dehydrated_ivar_name))
-          set_embedded_association(association_name, associated_records)
-          remove_instance_variable(dehydrated_ivar_name)
-          instance_variable_set(ivar_name, associated_records)
-        else
-          assoc.load_target
-        end
-      else
-        assoc.load_target
-      end
-    end
-
-    def hydrate_association_target(associated_class, dehydrated_value) # :nodoc:
-      dehydrated_value = IdentityCache.unmap_cached_nil_for(dehydrated_value)
-      if dehydrated_value.is_a?(Array)
-        dehydrated_value.map { |coder| Encoder.decode(coder, associated_class) }
-      else
-        Encoder.decode(dehydrated_value, associated_class)
-      end
-    end
-
-    def set_embedded_association(association_name, association_target) #:nodoc:
-      model = self.class
-      cached_association = model.cached_association(association_name)
-
-      set_inverse_of_cached_association(cached_association, association_target)
-
-      instance_variable_set(cached_association.records_variable_name, association_target)
-    end
-
-    def set_inverse_of_cached_association(cached_association, association_target)
-      return if association_target.nil?
-      associated_class = cached_association.reflection.klass
-      inverse_name = cached_association.inverse_name
-      inverse_cached_association = associated_class.cached_belongs_tos[inverse_name]
-      return unless inverse_cached_association
-
-      if association_target.is_a?(Array)
-        association_target.each do |child_record|
-          child_record.instance_variable_set(
-            inverse_cached_association.records_variable_name, self
-          )
-        end
-      else
-        association_target.instance_variable_set(
-          inverse_cached_association.records_variable_name, self
-        )
-      end
-    end
 
     def expire_attribute_indexes # :nodoc:
       cache_indexes.each do |cached_attribute|

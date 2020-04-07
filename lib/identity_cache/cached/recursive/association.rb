@@ -11,25 +11,42 @@ module IdentityCache
         attr_reader :dehydrated_variable_name
 
         def build
-          reflection.active_record.class_eval(<<-RUBY, __FILE__, __LINE__ + 1)
-            def #{cached_accessor_name}
-              fetch_recursively_cached_association(
-                :#{records_variable_name},
-                :#{dehydrated_variable_name},
-                :#{name}
-              )
-            end
-          RUBY
+          cached_association = self
+
+          model = reflection.active_record
+          model.send(:define_method, cached_accessor_name) do
+            cached_association.read(self)
+          end
 
           ParentModelExpiration.add_parent_expiry_hook(self)
         end
 
         def read(record)
-          record.public_send(cached_accessor_name)
+          assoc = record.association(name)
+
+          if assoc.klass.should_use_cache? && !assoc.loaded? && assoc.target.blank?
+            if record.instance_variable_defined?(records_variable_name)
+              record.instance_variable_get(records_variable_name)
+            elsif record.instance_variable_defined?(dehydrated_variable_name)
+              dehydrated_target = record.instance_variable_get(dehydrated_variable_name)
+              association_target = hydrate_association_target(assoc.klass, dehydrated_target)
+              record.remove_instance_variable(dehydrated_variable_name)
+              set_with_inverse(record, association_target)
+            else
+              assoc.load_target
+            end
+          else
+            assoc.load_target
+          end
         end
 
-        def write(record, records)
-          record.instance_variable_set(records_variable_name, records)
+        def write(record, association_target)
+          record.instance_variable_set(records_variable_name, association_target)
+        end
+
+        def set_with_inverse(record, association_target)
+          set_inverse(record, association_target)
+          write(record, association_target)
         end
 
         def clear(record)
@@ -57,6 +74,30 @@ module IdentityCache
         end
 
         private
+
+        def set_inverse(record, association_target)
+          return if association_target.nil?
+          associated_class = reflection.klass
+          inverse_cached_association = associated_class.cached_belongs_tos[inverse_name]
+          return unless inverse_cached_association
+
+          if association_target.is_a?(Array)
+            association_target.each do |child_record|
+              inverse_cached_association.write(child_record, record)
+            end
+          else
+            inverse_cached_association.write(association_target, record)
+          end
+        end
+
+        def hydrate_association_target(associated_class, dehydrated_value)
+          dehydrated_value = IdentityCache.unmap_cached_nil_for(dehydrated_value)
+          if dehydrated_value.is_a?(Array)
+            dehydrated_value.map { |coder| Encoder.decode(coder, associated_class) }
+          else
+            Encoder.decode(dehydrated_value, associated_class)
+          end
+        end
 
         def embedded_fetched?(records)
           record = records.first

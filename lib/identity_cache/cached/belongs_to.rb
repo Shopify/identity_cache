@@ -27,6 +27,10 @@ module IdentityCache
         end
       end
 
+      def write(owner_record, associated_record)
+        owner_record.instance_variable_set(records_variable_name, associated_record)
+      end
+
       def fetch(records)
         fetch_async(LoadStrategy::Eager, records) { |associated_records| associated_records }
       end
@@ -53,7 +57,7 @@ module IdentityCache
               associated_records.keys.each do |id, associated_record|
                 owner_record = cache_keys_to_associated_ids.fetch(cache_key).fetch(id)
                 batch_records << owner_record
-                owner_record.instance_variable_set(records_variable_name, associated_record)
+                write(owner_record, associated_record)
               end
             end
 
@@ -73,7 +77,7 @@ module IdentityCache
           ) do |associated_records_by_id|
             associated_records_by_id.each do |id, associated_record|
               owner_record = ids_to_owner_record.fetch(id)
-              owner_record.instance_variable_set(records_variable_name, associated_record)
+              write(owner_record, associated_record)
             end
 
             yield associated_records_by_id.values.compact
