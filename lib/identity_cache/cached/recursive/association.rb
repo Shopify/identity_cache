@@ -28,7 +28,8 @@ module IdentityCache
             if record.instance_variable_defined?(records_variable_name)
               record.instance_variable_get(records_variable_name)
             elsif record.instance_variable_defined?(dehydrated_variable_name)
-              association_target = hydrate_association_target(assoc.klass, record.instance_variable_get(dehydrated_variable_name))
+              dehydrated_target = record.instance_variable_get(dehydrated_variable_name)
+              association_target = hydrate_association_target(assoc.klass, dehydrated_target)
               record.remove_instance_variable(dehydrated_variable_name)
               set_with_inverse(record, association_target)
             else
