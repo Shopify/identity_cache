@@ -44,7 +44,16 @@ class FetchTest < IdentityCache::TestCase
 
   def test_fetch_cache_hit_publishes_cache_notification
     IdentityCache.cache.cache_fetcher.expects(:fetch).with(@blob_key).returns(@cached_value)
-    expected = { memoizing: false, resolve_miss_time: 0, memo_hits: 0, cache_hits: 1, cache_misses: 0 }
+    expected = {
+      memoizing: false,
+      resolve_miss_time: 0,
+      memo_hits: 0,
+      memo_hit_keys: [],
+      cache_hits: 1,
+      cache_hit_keys: [@blob_key],
+      cache_misses: 0,
+      cache_miss_keys: [],
+    }
 
     events = 0
     subscriber = ActiveSupport::Notifications.subscribe('cache_fetch.identity_cache') do |_, _, _, _, payload|
@@ -60,7 +69,16 @@ class FetchTest < IdentityCache::TestCase
   def test_fetch_memoized_hit_publishes_cache_notification
     subscriber = nil
     IdentityCache.cache.cache_fetcher.expects(:fetch).with(@blob_key).returns(@cached_value)
-    expected = { memoizing: true, resolve_miss_time: 0, memo_hits: 1, cache_hits: 0, cache_misses: 0 }
+    expected = {
+      memoizing: true,
+      resolve_miss_time: 0,
+      memo_hits: 1,
+      memo_hit_keys: [@blob_key],
+      cache_hits: 0,
+      cache_hit_keys: [],
+      cache_misses: 0,
+      cache_miss_keys: [],
+    }
 
     IdentityCache.cache.with_memoization do
       Item.fetch(1)
@@ -126,7 +144,15 @@ class FetchTest < IdentityCache::TestCase
 
   def test_fetch_miss_publishes_cache_notification
     Item.cached_primary_index.expects(:load_one_from_db).with(1).once.returns(@record)
-    expected = { memoizing: false, memo_hits: 0, cache_hits: 0, cache_misses: 1 }
+    expected = {
+      memoizing: false,
+      memo_hits: 0,
+      memo_hit_keys: [],
+      cache_hits: 0,
+      cache_hit_keys: [],
+      cache_misses: 1,
+      cache_miss_keys: [@blob_key],
+    }
 
     events = 0
     subscriber = ActiveSupport::Notifications.subscribe('cache_fetch.identity_cache') do |_, _, _, _, payload|

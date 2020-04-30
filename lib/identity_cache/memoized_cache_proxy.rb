@@ -60,30 +60,35 @@ module IdentityCache
     end
 
     def fetch(key)
-      memo_misses = 0
-      cache_misses = 0
+      memo_miss_keys = EMPTY_ARRAY
+      cache_miss_keys = EMPTY_ARRAY
 
       value = ActiveSupport::Notifications.instrument('cache_fetch.identity_cache') do |payload|
         payload[:resolve_miss_time] = 0.0
 
         value = fetch_memoized(key) do
-          memo_misses = 1
+          memo_miss_keys = [key]
           @cache_fetcher.fetch(key) do
-            cache_misses = 1
+            cache_miss_keys = [key]
             instrument_duration(payload, :resolve_miss_time) do
               yield
             end
           end
         end
-        set_instrumentation_payload(payload, num_keys: 1, memo_misses: memo_misses, cache_misses: cache_misses)
+        set_instrumentation_payload(
+          payload,
+          keys: [key],
+          memo_miss_keys: memo_miss_keys,
+          cache_miss_keys: cache_miss_keys
+        )
         value
       end
 
-      if cache_misses > 0
+      if cache_miss_keys.present?
         IdentityCache.logger.debug { "[IdentityCache] cache miss for #{key}" }
       else
         IdentityCache.logger.debug do
-          "[IdentityCache] #{memo_misses > 0 ? '(cache_backend)' : '(memoized)'} cache hit for #{key}"
+          "[IdentityCache] #{memo_miss_keys.present? ? '(cache_backend)' : '(memoized)'} cache hit for #{key}"
         end
       end
 
@@ -109,9 +114,9 @@ module IdentityCache
 
         set_instrumentation_payload(
           payload,
-          num_keys: keys.length,
-          memo_misses: memo_miss_keys.length,
-          cache_misses: cache_miss_keys.length
+          keys: keys,
+          memo_miss_keys: memo_miss_keys,
+          cache_miss_keys: cache_miss_keys,
         )
         result
       end
@@ -133,11 +138,20 @@ module IdentityCache
     EMPTY_ARRAY = [].freeze
     private_constant :EMPTY_ARRAY
 
-    def set_instrumentation_payload(payload, num_keys:, memo_misses:, cache_misses:)
+    def set_instrumentation_payload(payload, keys:, memo_miss_keys:, cache_miss_keys:)
+      num_keys = keys.length
+      memo_misses = memo_miss_keys.length
+      cache_misses = cache_miss_keys.length
+      memo_hit_keys = keys - memo_miss_keys
+      cache_hit_keys = memo_miss_keys - cache_miss_keys
+
       payload[:memoizing] = memoizing?
       payload[:memo_hits] = num_keys - memo_misses
+      payload[:memo_hit_keys] = memo_hit_keys
       payload[:cache_hits] = memo_misses - cache_misses
+      payload[:cache_hit_keys] = cache_hit_keys
       payload[:cache_misses] = cache_misses
+      payload[:cache_miss_keys] = cache_miss_keys
     end
 
     def fetch_memoized(key)

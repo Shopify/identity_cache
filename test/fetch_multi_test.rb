@@ -102,7 +102,15 @@ class FetchMultiTest < IdentityCache::TestCase
 
     IdentityCache.cache.with_memoization do
       Item.fetch(@fred.id)
-      expected = { memoizing: true, memo_hits: 1, cache_hits: 1, cache_misses: 1 }
+      expected = {
+        memoizing: true,
+        memo_hits: 1,
+        memo_hit_keys: [@fred_blob_key],
+        cache_hits: 1,
+        cache_hit_keys: [@bob_blob_key],
+        cache_misses: 1,
+        cache_miss_keys: [@joe_blob_key],
+      }
       events = 0
       subscriber = ActiveSupport::Notifications.subscribe('cache_fetch_multi.identity_cache') do |_, _, _, _, payload|
         events += 1
