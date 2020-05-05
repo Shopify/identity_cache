@@ -48,7 +48,7 @@ Gem::Specification.new do |gem|
   else
     gem.add_development_dependency('cityhash', '0.6.0')
     gem.add_development_dependency('mysql2')
-    gem.add_development_dependency('pg', '~> 0.18')
+    gem.add_development_dependency('pg')
     gem.add_development_dependency('stackprof')
   end
 end

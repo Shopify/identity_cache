@@ -270,7 +270,7 @@ class FetchMultiTest < IdentityCache::TestCase
 
   def test_fetch_multi_id_coercion
     assert_equal(@joe.title, Item.fetch_multi(@joe.id.to_f).first.title)
-    @joe.update_attributes!(title: "#{@joe.title} changed")
+    @joe.update!(title: "#{@joe.title} changed")
 
     assert_equal(@joe.title, Item.fetch_multi(@joe.id.to_f).first.title)
   end

@@ -28,7 +28,7 @@ class LazyLoadAssociatedClassesTest < IdentityCache::TestCase
     assert_queries(0) do
       assert_equal 'baz', Item.fetch(item.id).fetch_associated_records.first.name
     end
-    associated_record.update_attributes!(name: 'buzz')
+    associated_record.update!(name: 'buzz')
     assert_queries(2) do
       assert_equal 'buzz', Item.fetch(item.id).fetch_associated_records.first.name
     end
