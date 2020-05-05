@@ -80,16 +80,16 @@ class AttributeCacheTest < IdentityCache::TestCase
   def test_value_coercion
     assert_queries(1) { assert_equal 'foo', AssociatedRecord.fetch_name_by_id(@record.id.to_f) }
     assert_no_queries { assert_equal 'foo', AssociatedRecord.fetch_name_by_id(@record.id) }
-    @record.update_attributes!(name: 'bar')
+    @record.update!(name: 'bar')
     assert_queries(1) { assert_equal 'bar', AssociatedRecord.fetch_name_by_id(@record.id.to_f) }
   end
 
   def test_no_nil_empty_string_cache_key_conflict
     Item.cache_attribute(:id, by: [:title])
-    @parent.update_attributes!(title: "")
+    @parent.update!(title: "")
     assert_queries(1) { assert_equal @parent.id, Item.fetch_id_by_title("") }
     assert_queries(1) { assert_nil Item.fetch_id_by_title(nil) }
-    @parent.update_attributes!(title: nil)
+    @parent.update!(title: nil)
     assert_queries(1) { assert_nil Item.fetch_id_by_title("") }
     assert_queries(1) { assert_equal @parent.id, Item.fetch_id_by_title(nil) }
   end

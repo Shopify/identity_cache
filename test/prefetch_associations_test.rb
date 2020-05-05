@@ -80,8 +80,8 @@ module IdentityCache
 
     def test_prefetch_associations_cached_belongs_to
       Item.send(:cache_belongs_to, :item)
-      @bob.update_attributes!(item_id: @joe.id)
-      @joe.update_attributes!(item_id: @fred.id)
+      @bob.update!(item_id: @joe.id)
+      @joe.update!(item_id: @fred.id)
       @bob.fetch_item
       @joe.fetch_item
       items = [@bob, @joe].map(&:reload)
@@ -101,8 +101,8 @@ module IdentityCache
 
     def test_prefetch_associations_notifies_about_hydration
       Item.send(:cache_belongs_to, :item)
-      @bob.update_attributes!(item_id: @joe.id)
-      @joe.update_attributes!(item_id: @fred.id)
+      @bob.update!(item_id: @joe.id)
+      @joe.update!(item_id: @fred.id)
       @bob.fetch_item
       @joe.fetch_item
       items = [@bob, @joe].map(&:reload)
@@ -119,7 +119,7 @@ module IdentityCache
 
     def test_prefetch_associations_with_nil_cached_belongs_to
       Item.send(:cache_belongs_to, :item)
-      @bob.update_attributes!(item_id: 1234)
+      @bob.update!(item_id: 1234)
       assert_nil(@bob.fetch_item)
 
       assert_no_queries do

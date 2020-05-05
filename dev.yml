@@ -3,7 +3,10 @@ name: identity-cache
 up:
   - homebrew:
     - postgresql
-  - ruby: 2.4.10
+    - mysql-client@5.7:
+        or:        [mysql@5.7]
+        conflicts: [mysql-connector-c, mysql, mysql-client]
+  - ruby: 2.6.5
   - railgun
   - bundler
 
