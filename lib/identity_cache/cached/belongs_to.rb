@@ -37,28 +37,31 @@ module IdentityCache
 
       def fetch_async(load_strategy, records)
         if reflection.polymorphic?
-          cache_keys_to_associated_ids = {}
+          type_fetcher_to_db_ids_hash = {}
 
           records.each do |owner_record|
             associated_id = owner_record.send(reflection.foreign_key)
             next unless associated_id && !owner_record.instance_variable_defined?(records_variable_name)
-            associated_cache_key = Object.const_get(
+            foreign_type_fetcher = Object.const_get(
               owner_record.send(reflection.foreign_type)
             ).cached_model.cached_primary_index
-            unless cache_keys_to_associated_ids[associated_cache_key]
-              cache_keys_to_associated_ids[associated_cache_key] = {}
-            end
-            cache_keys_to_associated_ids[associated_cache_key][associated_id] = owner_record
+            db_ids = type_fetcher_to_db_ids_hash[foreign_type_fetcher] ||= []
+            db_ids << associated_id
           end
 
-          load_strategy.load_batch(cache_keys_to_associated_ids) do |associated_records_by_cache_key|
+          load_strategy.load_batch(type_fetcher_to_db_ids_hash) do |batch_load_result|
             batch_records = []
-            associated_records_by_cache_key.each do |cache_key, associated_records|
-              associated_records.keys.each do |id, associated_record|
-                owner_record = cache_keys_to_associated_ids.fetch(cache_key).fetch(id)
-                batch_records << owner_record
-                write(owner_record, associated_record)
-              end
+
+            records.each do |owner_record|
+              associated_id = owner_record.send(reflection.foreign_key)
+              next unless associated_id && !owner_record.instance_variable_defined?(records_variable_name)
+              foreign_type_fetcher = Object.const_get(
+                owner_record.send(reflection.foreign_type)
+              ).cached_model.cached_primary_index
+
+              associated_record = batch_load_result.fetch(foreign_type_fetcher).fetch(associated_id)
+              batch_records << owner_record
+              write(owner_record, associated_record)
             end
 
             yield batch_records

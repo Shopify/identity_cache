@@ -292,12 +292,16 @@ class FetchMultiTest < IdentityCache::TestCase
     PolymorphicRecord.send(:cache_belongs_to, :owner)
 
     item = Item.create!
+    item2 = ItemTwo.create!
 
-    poly1 = item.polymorphic_record = PolymorphicRecord.create!
+    poly1 = PolymorphicRecord.create!(owner: item)
+    poly2 = PolymorphicRecord.create!(owner: item2)
 
-    assert_queries(2) do
-      PolymorphicRecord.fetch_multi(poly1.id, includes: :owner)
+    poly_records = assert_queries(3) do
+      PolymorphicRecord.fetch_multi([poly1.id, poly2.id], includes: :owner)
     end
+    assert_equal([poly1, poly2], poly_records)
+    assert_equal([item, item2], poly_records.map(&:fetch_owner))
   end
 
   def test_fetch_multi_with_polymorphic_has_many
@@ -311,9 +315,11 @@ class FetchMultiTest < IdentityCache::TestCase
     poly2 = item.polymorphic_records.create
     poly3 = item2.polymorphic_records.create
 
-    assert_queries(3) do
+    poly_records = assert_queries(3) do
       PolymorphicRecord.fetch_multi([poly1.id, poly2.id, poly3.id], includes: :owner)
     end
+    assert_equal([poly1, poly2, poly3], poly_records)
+    assert_equal([item, item, item2], poly_records.map(&:fetch_owner))
   end
 
   def test_fetch_multi_with_polymorphic_has_one_with_nil
