@@ -372,14 +372,6 @@ module IdentityCache
       end
     end
 
-    def test_load_multi_from_db_coerces_ids_to_primary_key_type
-      mock_relation = mock("ActiveRecord::Relation")
-      Item.expects(:where).returns(mock_relation)
-      mock_relation.expects(:includes).returns(stub(to_a: [@bob, @joe, @fred]))
-
-      Item.cached_primary_index.send(:load_multi_from_db, [@bob, @joe, @fred].map(&:id).map(&:to_s))
-    end
-
     def test_fetch_by_index_with_includes_option
       Item.send(:cache_belongs_to, :item)
       Item.cache_index(:title)
