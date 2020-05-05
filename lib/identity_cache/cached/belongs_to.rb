@@ -45,7 +45,8 @@ module IdentityCache
             foreign_type_fetcher = Object.const_get(
               owner_record.send(reflection.foreign_type)
             ).cached_model.cached_primary_index
-            (type_fetcher_to_db_ids_hash[foreign_type_fetcher] ||= []) << associated_id
+            db_ids = type_fetcher_to_db_ids_hash[foreign_type_fetcher] ||= []
+            db_ids << associated_id
           end
 
           load_strategy.load_batch(type_fetcher_to_db_ids_hash) do |batch_load_result|
