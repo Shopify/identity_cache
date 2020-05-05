@@ -60,7 +60,6 @@ module IdentityCache
       def load_multi_from_db(ids)
         return {} if ids.empty?
 
-        ids = ids.map { |id| model.connection.type_cast(id, id_column) }
         records = build_query(ids).to_a
         model.send(:setup_embedded_associations_on_miss, records)
         records.index_by(&:id)
