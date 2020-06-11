@@ -134,7 +134,7 @@ class NormalizedHasOneTest < IdentityCache::TestCase
 
   def test_saving_a_child_record_should_expire_only_itself
     IdentityCache.cache.expects(:delete).with(@baz.primary_cache_index_key).once
-    @baz.save!
+    @baz.update!(updated_at: @baz.updated_at + 1)
   end
 
   def test_returned_records_should_be_readonly_on_cache_hit

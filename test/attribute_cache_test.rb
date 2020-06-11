@@ -43,7 +43,7 @@ class AttributeCacheTest < IdentityCache::TestCase
     assert_queries(1) { assert_equal 'foo', AssociatedRecord.fetch_name_by_id(1) }
     assert_queries(0) { assert_equal 'foo', AssociatedRecord.fetch_name_by_id(1) }
 
-    @record.save!
+    @record.update!(updated_at: @record.updated_at + 1)
 
     assert_queries(1) { assert_equal 'foo', AssociatedRecord.fetch_name_by_id(1) }
   end

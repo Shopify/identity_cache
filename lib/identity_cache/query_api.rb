@@ -4,7 +4,9 @@ module IdentityCache
     extend ActiveSupport::Concern
 
     included do |base|
-      base.after_commit(:expire_cache)
+      base.after_commit do
+        expire_cache if destroyed? || transaction_changed_attributes.present?
+      end
     end
 
     module ClassMethods

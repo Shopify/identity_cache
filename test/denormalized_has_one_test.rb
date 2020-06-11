@@ -125,7 +125,7 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     IdentityCache.cache.expects(:delete).at_least(1).with(key)
     IdentityCache.cache.expects(:delete).with(@record.associated.primary_cache_index_key)
 
-    @record.associated.save
+    @record.associated.update!(updated_at: @record.associated.updated_at + 1)
   end
 
   def test_cached_associations_after_commit_hook_will_not_fail_on_undefined_parent_association
