@@ -250,7 +250,7 @@ class FetchMultiTest < IdentityCache::TestCase
 
   def test_fetch_multi_after_expiring_a_record
     Item.fetch_multi(@joe.id, @fred.id)
-    @bob.expire_cache
+    @bob.expire_cache(force: true)
     assert_equal(IdentityCache::DELETED, backend.read(@bob.primary_cache_index_key))
 
     add = Spy.on(IdentityCache.cache.cache_fetcher, :add).and_call_through

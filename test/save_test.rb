@@ -41,6 +41,15 @@ class SaveTest < IdentityCache::TestCase
     @record.save
   end
 
+  def test_update_no_change
+    # Regular flow, write index id, write index id/tile, delete data blob since Record has changed
+    expect_cache_delete("#{NAMESPACE}attr:Item:id:id/title:#{cache_hash('"1"/"bob"')}").never
+    expect_cache_delete("#{NAMESPACE}attr:Item:id:title:#{cache_hash('"bob"')}").never
+    expect_cache_delete(@blob_key).never
+
+    @record.save
+  end
+
   def test_destroy
     # Regular flow: delete data blob, delete index id, delete index id/tile
     expect_cache_delete("#{NAMESPACE}attr:Item:id:id/title:#{cache_hash('"1"/"bob"')}")
@@ -69,10 +78,20 @@ class SaveTest < IdentityCache::TestCase
     @record.touch
   end
 
-  def test_expire_cache_works_in_a_transaction
+  def test_expire_cache_works_in_a_transaction_when_forced
     expect_cache_delete("#{NAMESPACE}attr:Item:id:id/title:#{cache_hash('"1"/"bob"')}")
     expect_cache_delete("#{NAMESPACE}attr:Item:id:title:#{cache_hash('"bob"')}")
     expect_cache_delete(@blob_key)
+
+    ActiveRecord::Base.transaction do
+      @record.expire_cache(force: true)
+    end
+  end
+
+  def test_expire_cache_does_not_expire_with_no_changes
+    expect_cache_delete("#{NAMESPACE}attr:Item:id:id/title:#{cache_hash('"1"/"bob"')}").never
+    expect_cache_delete("#{NAMESPACE}attr:Item:id:title:#{cache_hash('"bob"')}").never
+    expect_cache_delete(@blob_key).never
 
     ActiveRecord::Base.transaction do
       @record.expire_cache

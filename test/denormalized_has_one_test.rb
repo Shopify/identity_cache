@@ -124,7 +124,7 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
 
     IdentityCache.cache.expects(:delete).at_least(1).with(key)
     IdentityCache.cache.expects(:delete).with(@record.associated.primary_cache_index_key)
-
+    @record.associated.name = 'baz'
     @record.associated.save
   end
 

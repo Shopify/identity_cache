@@ -39,13 +39,13 @@ class AttributeCacheTest < IdentityCache::TestCase
     end
   end
 
-  def test_cached_attribute_values_are_expired_from_the_cache_when_an_existing_record_is_saved
+  def test_cached_attribute_values_are_not_expired_from_the_cache_when_an_existing_record_is_saved_with_no_changes
     assert_queries(1) { assert_equal 'foo', AssociatedRecord.fetch_name_by_id(1) }
     assert_queries(0) { assert_equal 'foo', AssociatedRecord.fetch_name_by_id(1) }
-
+    
     @record.save!
 
-    assert_queries(1) { assert_equal 'foo', AssociatedRecord.fetch_name_by_id(1) }
+    assert_queries(0) { assert_equal 'foo', AssociatedRecord.fetch_name_by_id(1) }
   end
 
   def test_cached_attribute_values_are_expired_from_the_cache_when_an_existing_record_with_changed_attributes_is_saved

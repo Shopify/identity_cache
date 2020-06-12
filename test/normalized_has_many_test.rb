@@ -199,6 +199,7 @@ class NormalizedHasManyTest < IdentityCache::TestCase
 
   def test_saving_a_child_record_should_expire_only_itself
     IdentityCache.cache.expects(:delete).with(@baz.primary_cache_index_key).once
+    @baz.name = 'baz2'
     @baz.save!
   end
 

@@ -5,9 +5,9 @@ module IdentityCache
 
     include WithoutPrimaryIndex
 
-    def expire_cache
-      expire_primary_index
-      super
+    def expire_cache(force: false)
+      expire_primary_index if force || transaction_changed_attributes.any? || destroyed?
+      super(force: force)
     end
 
     # @api private

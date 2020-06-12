@@ -2,6 +2,7 @@
 module IdentityCache
   module QueryAPI
     extend ActiveSupport::Concern
+    include ArTransactionChanges
 
     included do |base|
       base.after_commit(:expire_cache)
@@ -153,8 +154,8 @@ module IdentityCache
     end
 
     # Invalidate the cache data associated with the record.
-    def expire_cache
-      expire_attribute_indexes
+    def expire_cache(force: false)
+      expire_attribute_indexes if force || transaction_changed_attributes.any? || destroyed?
       true
     end
 
