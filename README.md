@@ -12,7 +12,10 @@ Add this line to your application's Gemfile:
 ```ruby
 gem 'identity_cache'
 gem 'cityhash'        # optional, for faster hashing (C-Ruby only)
-gem 'memcached_store' # for CAS support, needed for cache consistency
+
+gem 'dalli' # To use :mem_cache_store
+# alternatively
+gem 'memcached_store' # to use the old libmemcached based client
 ```
 
 And then execute:
@@ -21,6 +24,24 @@ And then execute:
 
 
 Add the following to all your environment/*.rb files (production/development/test):
+
+### If you use Dalli (recommended)
+
+```ruby
+config.identity_cache_store = :mem_cache_store, "mem1.server.com", "mem2.server.com", {
+  expires_in: 6.hours.to_i, # in case of network errors when sending a delete
+  failover: false, # avoids more cache consistency issues
+}
+```
+
+Add an initializer with this code:
+
+```ruby
+IdentityCache.cache_backend = ActiveSupport::Cache.lookup_store(*Rails.configuration.identity_cache_store)
+```
+
+
+### If you use Memcached (old client)
 
 ```ruby
 config.identity_cache_store = :memcached_store,

@@ -35,9 +35,14 @@ module DatabaseConnection
     TABLES.each do |table, fields|
       fields = fields.dup
       options = fields.last.is_a?(Hash) ? fields.pop : {}
-      ActiveRecord::Base.connection.create_table(table, options) do |t|
+      ActiveRecord::Base.connection.create_table(table, **options) do |t|
         fields.each do |column_type, *args|
-          t.send(column_type, *args)
+          if args.last.is_a?(Hash)
+            kwargs = args.pop
+            t.send(column_type, *args, **kwargs)
+          else
+            t.send(column_type, *args)
+          end
         end
       end
     end
