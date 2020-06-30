@@ -44,6 +44,8 @@ require 'identity_cache/with_primary_index'
 module IdentityCache
   extend ActiveSupport::Concern
 
+  autoload :MemCacheStoreCAS, 'identity_cache/mem_cache_store_cas'
+
   include WithPrimaryIndex
 
   CACHED_NIL = :idc_cached_nil

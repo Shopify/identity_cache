@@ -12,6 +12,16 @@ module IdentityCache
     end
 
     def cache_backend=(cache_adaptor)
+      if cache_adaptor.class.name == 'ActiveSupport::Cache::MemCacheStore'
+        if cache_adaptor.respond_to?(:cas) || cache_adaptor.respond_to?(:cas_multi)
+          unless cache_adaptor.is_a?(MemCacheStoreCAS)
+            raise "#{cache_adaptor} respond to :cas or :cas_multi, that's unexpected"
+          end
+        else
+          cache_adaptor.extend(MemCacheStoreCAS)
+        end
+      end
+
       if cache_adaptor.respond_to?(:cas) && cache_adaptor.respond_to?(:cas_multi)
         @cache_fetcher = CacheFetcher.new(cache_adaptor)
       else
