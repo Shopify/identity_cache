@@ -1,26 +1,27 @@
 language: ruby
 
-rvm:
-  - 2.5
-  - 2.6
-  - 2.7
-
-gemfile:
-  - gemfiles/Gemfile.rails52
-  - gemfiles/Gemfile.latest-release
-  - gemfiles/Gemfile.rails-edge
-
-env:
-  - DB=mysql2
-  - DB=postgresql
-  - DB=mysql2 ADAPTER=memcached
-
 jobs:
-  exclude:
-    - rvm: 2.5
-      gemfile: gemfiles/Gemfile.rails-edge
-    - rvm: 2.5
-      gemfile: gemfiles/Gemfile.latest-release
+  include:
+  - name: "Minimum supported with mysql & dalli"
+    ruby: 2.5
+    gemfile: gemfiles/Gemfile.min-supported
+    env: DB=mysql2
+  - name: "Minimum supported with pg & memcached_store"
+    ruby: 2.5
+    gemfile: gemfiles/Gemfile.min-supported
+    env: DB=postgresql ADAPTER=memcached
+  - name: "Latest released with mysql & dalli"
+    ruby: 2.7
+    gemfile: gemfiles/Gemfile.latest-release
+    env: DB=mysql2
+  - name: "Latest released with pg & memcached_store"
+    ruby: 2.7
+    gemfile: gemfiles/Gemfile.latest-release
+    env: DB=postgresql ADAPTER=memcached
+  - name: "Rails master"
+    ruby: 2.7
+    gemfile: gemfiles/Gemfile.rails-edge
+    env: DB=mysql2
 
 services:
   - memcache
