@@ -6,11 +6,12 @@ class NormalizedHasManyTest < IdentityCache::TestCase
     super
     Item.cache_has_many(:associated_records, embed: :ids)
 
-    @record = Item.new(title: 'foo')
+    @record = Item.new(title: 'foo', created_at: 1.second.ago)
     @record.not_cached_records << NotCachedRecord.new(name: 'NoCache')
     @record.associated_records << AssociatedRecord.new(name: 'bar')
     @record.associated_records << AssociatedRecord.new(name: 'baz')
     @record.save
+    @record.update!(updated_at: 1.second.ago)
     @record.reload
     @baz = @record.associated_records[0]
     @bar = @record.associated_records[1]
@@ -199,7 +200,7 @@ class NormalizedHasManyTest < IdentityCache::TestCase
 
   def test_saving_a_child_record_should_expire_only_itself
     IdentityCache.cache.expects(:delete).with(@baz.primary_cache_index_key).once
-    @baz.save!
+    @baz.update!(updated_at: @baz.updated_at + 1)
   end
 
   def test_touching_child_with_touch_true_on_parent_expires_parent

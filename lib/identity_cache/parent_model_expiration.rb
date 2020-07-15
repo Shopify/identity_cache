@@ -2,6 +2,7 @@
 module IdentityCache
   module ParentModelExpiration # :nodoc:
     extend ActiveSupport::Concern
+    include ArTransactionChanges
 
     class << self
       def add_parent_expiry_hook(cached_association)
@@ -36,7 +37,9 @@ module IdentityCache
     included do
       class_attribute(:parent_expiration_entries)
       self.parent_expiration_entries = Hash.new { |hash, key| hash[key] = [] }
-      after_commit(:expire_parent_caches)
+      after_commit do
+        expire_parent_caches if destroyed? || transaction_changed_attributes.present?
+      end
     end
 
     def expire_parent_caches

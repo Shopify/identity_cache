@@ -8,7 +8,7 @@ class CacheInvalidationTest < IdentityCache::TestCase
     @record = Item.new(title: 'foo')
     @record.associated_records << AssociatedRecord.new(name: 'bar')
     @record.associated_records << AssociatedRecord.new(name: 'baz')
-    @record.save
+    @record.save!
     @record.reload
     @baz = @record.associated_records[0]
     @bar = @record.associated_records[1]
@@ -97,7 +97,7 @@ class CacheInvalidationTest < IdentityCache::TestCase
       assert IdentityCache.cache.fetch(expected_key) { nil }
     end
 
-    baz.save!
+    baz.update!(updated_at: baz.updated_at + 1)
 
     expected_keys.each do |expected_key|
       refute IdentityCache.cache.fetch(expected_key) { nil }
@@ -161,5 +161,25 @@ class CacheInvalidationTest < IdentityCache::TestCase
 
     deeply_associated_record.name = "deep2"
     deeply_associated_record.save!
+  end
+
+  def test_cache_invalidation_skipped_if_no_columns_change
+    @record.class.fetch(@record.id) # fill cache
+    @record.update!(title: @record.title)
+    assert_no_queries do
+      @record.class.fetch(@record.id)
+    end
+  end
+
+  def test_cache_parent_invalidation_skipped_if_no_columns_change
+    Item.cache_has_many(:associated_records, embed: true)
+    @record.class.fetch(@record.id) # fill cache
+
+    child = @record.associated_records.first
+    child.update!(name: child.name)
+
+    assert_no_queries do
+      @record.class.fetch(@record.id)
+    end
   end
 end

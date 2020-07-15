@@ -10,7 +10,7 @@ class SaveTest < IdentityCache::TestCase
     Item.cache_index(:title, unique: true)
     Item.cache_index(:id, :title, unique: true)
 
-    @record = Item.create(title: 'bob')
+    @record = Item.create(title: 'bob', created_at: 1.second.ago, updated_at: 1.second.ago)
     @blob_key_prefix = [
       NAMESPACE, "blob:", "Item:", "#{cache_hash(ATTR_STRING)}:"
     ].join

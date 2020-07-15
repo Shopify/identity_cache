@@ -4,3 +4,4 @@ gemspec path: '..'
 gem 'activerecord'
 gem 'activesupport'
 gem "mysql2", ">= 0.4.4"
+gem "pg", ">= 0.18", "< 2.0"

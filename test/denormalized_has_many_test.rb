@@ -77,7 +77,8 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
 
     IdentityCache.cache.expects(:delete).with(@record.associated_records.first.primary_cache_index_key)
     IdentityCache.cache.expects(:delete).with(key)
-    @record.associated_records.first.save
+    child = @record.associated_records.first
+    child.update!(updated_at: child.updated_at + 1)
   end
 
   def test_changes_in_associated_records_foreign_keys_should_expire_new_parent_and_old_parents_cache
@@ -117,7 +118,7 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     child = @record.associated_records.first
     IdentityCache.cache.expects(:delete).with(child.primary_cache_index_key).once
     IdentityCache.cache.expects(:delete).with(@record.primary_cache_index_key)
-    child.save!
+    child.update!(updated_at: child.updated_at + 1)
   end
 
   def test_fetch_association_does_not_allow_chaining
