@@ -12,7 +12,13 @@ module CacheConnection
   end
 
   def host
-    ENV['MEMCACHED_HOST'] || "127.0.0.1"
+    default = "127.0.0.1"
+    case ENV['ADAPTER']
+    when 'redis'
+      ENV['REDIS_URL'] || default
+    else
+      ENV['MEMCACHED_HOST'] || default
+    end
   end
 
   def backend
@@ -25,6 +31,15 @@ module CacheConnection
       require 'active_support/cache/memcached_store'
       ActiveSupport::Cache::MemcachedStore.prepend(MemcachedStoreInstrumentation)
       ActiveSupport::Cache::MemcachedStore.new("#{host}:11211", support_cas: true, auto_eject_hosts: false)
+    when 'redis'
+      require 'hiredis'
+      require 'redis'
+      require 'identity_cache/redis_cas'
+      require 'active_support/cache/redis_cache_store'
+      puts 'here'
+      Redis.include(IdentityCache::RedisCAS)
+      ActiveSupport::Cache::RedisCacheStore.include(MemcachedStoreInstrumentation)
+      ActiveSupport::Cache::RedisCacheStore.new(expires_in: 90.minutes, url: host)
     else
       raise "Unknown adapter: #{ENV['ADAPTER']}"
     end

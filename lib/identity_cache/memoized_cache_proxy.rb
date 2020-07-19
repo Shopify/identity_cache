@@ -20,6 +20,16 @@ module IdentityCache
         else
           cache_adaptor.extend(MemCacheStoreCAS)
         end
+      elsif cache_adaptor.class.name == 'ActiveSupport::Cache::RedisCacheStore'
+        if cache_adaptor.respond_to?(:cas) || cache_adaptor.respond_to?(:cas_multi)
+          unless cache_adaptor.is_a?(MemCacheStoreCAS)
+            raise "#{cache_adaptor} respond to :cas or :cas_multi, that's unexpected"
+          end
+        else
+          puts 'here2'
+          require 'identity_cache/redis_cache_store_cas'
+          cache_adaptor.extend(RedisCacheStoreCAS)
+        end
       end
 
       if cache_adaptor.respond_to?(:cas) && cache_adaptor.respond_to?(:cas_multi)

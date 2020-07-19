@@ -14,3 +14,4 @@ services:
   - mysql
   - postgresql
   - memcached
+  - redis

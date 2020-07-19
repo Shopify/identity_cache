@@ -6,21 +6,21 @@ require 'ruby-prof'
 require_relative 'cache_runner'
 
 RUNS = 1000
-RubyProf.measure_mode = RubyProf::CPU_TIME
+RubyProf.measure_mode = RubyProf::PROCESS_TIME
 
-EXTERNALS = { "Memcache" => ["MemCache#set", "MemCache#get"],
+EXTERNALS = { "Redis" => ["Redis#set", "Redis#get"],
               "Database" => ["Mysql2::Client#query"] }
 
 def run(obj)
   obj.prepare
-  RubyProf.start
+  # RubyProf.start
   obj.run
-  result = RubyProf.stop
-  puts "Results for #{obj.class.name}:"
-  results = StringIO.new
-  printer = RubyProf::FlatPrinter.new(result)
-  printer.print(results)
-  count_externals(results.string)
+  # result = RubyProf.stop
+  # puts "Results for #{obj.class.name}:"
+  # results = StringIO.new
+  # printer = RubyProf::FlatPrinter.new(result)
+  # printer.print(results)
+  # count_externals(results.string)
 end
 
 def count_externals(results)
@@ -39,12 +39,14 @@ end
 
 create_database(RUNS)
 
-run(FindRunner.new(RUNS))
-
-run(FetchHitRunner.new(RUNS))
-
-run(FetchMissRunner.new(RUNS))
-
-run(DoubleFetchHitRunner.new(RUNS))
-
-run(DoubleFetchMissRunner.new(RUNS))
+# CACHE_RUNNERS.each { |r| run(r.new(RUNS)) }
+#
+# run(FindRunner.new(RUNS))
+#
+run(FetchNormalizedHitRunner.new(RUNS))
+#
+# run(FetchMissRunner.new(RUNS))
+#
+# run(DoubleFetchHitRunner.new(RUNS))
+#
+# run(DoubleFetchMissRunner.new(RUNS))
