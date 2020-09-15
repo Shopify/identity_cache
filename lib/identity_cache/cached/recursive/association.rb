@@ -14,7 +14,7 @@ module IdentityCache
           cached_association = self
 
           model = reflection.active_record
-          model.send(:define_method, cached_accessor_name) do
+          model.define_method(cached_accessor_name) do
             cached_association.read(self)
           end
 
