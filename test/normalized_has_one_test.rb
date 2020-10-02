@@ -36,7 +36,7 @@ class NormalizedHasOneTest < IdentityCache::TestCase
     assert_equal([1, 2], fetched_records.map(&:cached_associated_id))
 
     fetched_records.each do |record|
-      refute_predicate record.association(:associated), :loaded?
+      refute_predicate(record.association(:associated), :loaded?)
     end
   end
 
@@ -53,8 +53,8 @@ class NormalizedHasOneTest < IdentityCache::TestCase
     end
 
     assert_no_queries do
-      assert_equal 1, fetched_record.fetch_denormalized_associated.cached_deeply_associated_id
-      refute_predicate fetched_record.fetch_denormalized_associated.association(:deeply_associated), :loaded?
+      assert_equal(1, fetched_record.fetch_denormalized_associated.cached_deeply_associated_id)
+      refute_predicate(fetched_record.fetch_denormalized_associated.association(:deeply_associated), :loaded?)
     end
   end
 
@@ -65,7 +65,7 @@ class NormalizedHasOneTest < IdentityCache::TestCase
   def test_fetching_associated_id_will_use_the_cached_value_if_the_record_is_from_the_cache
     @record = Item.fetch(@record.id)
     assert_queries(0) do
-      assert_equal 1, @record.fetch_associated_id
+      assert_equal(1, @record.fetch_associated_id)
     end
   end
 
@@ -83,7 +83,7 @@ class NormalizedHasOneTest < IdentityCache::TestCase
     @record.fetch_associated
     assert_queries(0) do
       @record = Item.fetch(@record.id)
-      assert_equal @baz, @record.fetch_associated
+      assert_equal(@baz, @record.fetch_associated)
     end
   end
 
@@ -92,7 +92,7 @@ class NormalizedHasOneTest < IdentityCache::TestCase
 
     assert_memcache_operations(0) do
       @record.transaction do
-        assert_equal @baz, @record.fetch_associated
+        assert_equal(@baz, @record.fetch_associated)
       end
     end
   end
@@ -102,7 +102,7 @@ class NormalizedHasOneTest < IdentityCache::TestCase
     @record.associated
 
     assert_memcache_operations(0) do
-      assert_equal @baz, @record.fetch_associated
+      assert_equal(@baz, @record.fetch_associated)
     end
   end
 
@@ -148,7 +148,7 @@ class NormalizedHasOneTest < IdentityCache::TestCase
   def test_returned_record_should_be_readonly_on_cache_miss
     IdentityCache.with_fetch_read_only_records do
       record_from_cache_miss = Item.fetch(@record.id)
-      assert record_from_cache_miss.fetch_associated.readonly?
+      assert(record_from_cache_miss.fetch_associated.readonly?)
     end
   end
 

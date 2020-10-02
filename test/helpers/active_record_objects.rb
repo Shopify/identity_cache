@@ -9,7 +9,7 @@ module SwitchNamespace
   def self.included(base)
     base.extend(ClassMethods)
     base.class_eval do
-      class_attribute :namespace
+      class_attribute(:namespace)
       self.namespace = 'ns'
     end
   end

@@ -65,7 +65,7 @@ class RecursiveDenormalizedHasManyTest < IdentityCache::TestCase
     events = 0
     subscriber = ActiveSupport::Notifications.subscribe('dehydration.identity_cache') do |_, _, _, _, payload|
       events += 1
-      assert_equal "Item", payload[:class]
+      assert_equal("Item", payload[:class])
     end
     Item.fetch(@record.id)
     assert_equal(1, events)
@@ -82,7 +82,7 @@ class RecursiveDenormalizedHasManyTest < IdentityCache::TestCase
     events = 0
     subscriber = ActiveSupport::Notifications.subscribe('hydration.identity_cache') do |_, _, _, _, payload|
       events += 1
-      assert_equal "Item", payload[:class]
+      assert_equal("Item", payload[:class])
     end
     Item.fetch(@record.id)
     assert_equal(1, events)
@@ -131,7 +131,7 @@ class RecursiveDenormalizedHasManyTest < IdentityCache::TestCase
       assert_memcache_operations(0) do
         associated_record = item.fetch_associated_records.to_a.first
         deeply_associated_record = associated_record.fetch_deeply_associated_records.first
-        assert_equal item.id, deeply_associated_record.fetch_associated_record.fetch_item.id
+        assert_equal(item.id, deeply_associated_record.fetch_associated_record.fetch_item.id)
       end
     end
   end

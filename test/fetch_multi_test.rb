@@ -50,7 +50,7 @@ class FetchMultiTest < IdentityCache::TestCase
     events = 0
     subscriber = ActiveSupport::Notifications.subscribe('hydration.identity_cache') do |_, _, _, _, payload|
       events += 1
-      assert_equal "Item", payload[:class]
+      assert_equal("Item", payload[:class])
     end
     Item.fetch_multi(@bob.id, @joe.id, @fred.id)
     assert_equal(3, events)
@@ -78,7 +78,7 @@ class FetchMultiTest < IdentityCache::TestCase
     events = 0
     subscriber = ActiveSupport::Notifications.subscribe('dehydration.identity_cache') do |_, _, _, _, payload|
       events += 1
-      assert_equal "Item", payload[:class]
+      assert_equal("Item", payload[:class])
     end
     Item.fetch_multi(@bob.id, @joe.id, @fred.id)
     assert_equal(3, events)
@@ -106,11 +106,11 @@ class FetchMultiTest < IdentityCache::TestCase
       events = 0
       subscriber = ActiveSupport::Notifications.subscribe('cache_fetch_multi.identity_cache') do |_, _, _, _, payload|
         events += 1
-        assert payload.delete(:resolve_miss_time) > 0
-        assert_equal expected, payload
+        assert(payload.delete(:resolve_miss_time) > 0)
+        assert_equal(expected, payload)
       end
       Item.fetch_multi(@bob.id, @joe.id, @fred.id)
-      assert_equal 1, events
+      assert_equal(1, events)
     end
   ensure
     ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
@@ -156,7 +156,7 @@ class FetchMultiTest < IdentityCache::TestCase
     assert_equal(fetch_result, results)
 
     results = IdentityCache.fetch_multi(1, 2) do |_keys|
-      flunk "Contents should have been fetched from cache successfully"
+      flunk("Contents should have been fetched from cache successfully")
     end
 
     assert_equal(fetch_result, results)
@@ -168,7 +168,7 @@ class FetchMultiTest < IdentityCache::TestCase
     fetcher.expects(:fetch_multi).with([1, 2]).returns(cache_result)
 
     results = IdentityCache.fetch_multi(1, 2) do |_keys|
-      flunk "Contents should have been fetched from cache successfully"
+      flunk("Contents should have been fetched from cache successfully")
     end
 
     assert_equal(cache_result, results)
@@ -230,10 +230,10 @@ class FetchMultiTest < IdentityCache::TestCase
     cache_response[@bob_blob_key] = cache_response_for(@bob)
     cache_response[@joe_blob_key] = cache_response_for(@joe)
 
-    with_batch_size 1 do
+    with_batch_size(1) do
       fetcher.expects(:fetch_multi).with([@bob_blob_key]).returns(cache_response).once
       fetcher.expects(:fetch_multi).with([@joe_blob_key]).returns(cache_response).once
-      assert_equal [@bob, @joe], Item.fetch_multi(@bob.id, @joe.id)
+      assert_equal([@bob, @joe], Item.fetch_multi(@bob.id, @joe.id))
     end
   end
 
@@ -334,10 +334,10 @@ class FetchMultiTest < IdentityCache::TestCase
       fetch_multi = fetch_multi_stub(cache_response)
 
       response = Item.fetch_multi(@bob.id, @joe.id, @fred.id)
-      assert fetch_multi.has_been_called_with?(@bob_blob_key, @joe_blob_key, @fred_blob_key)
-      assert_equal [@bob, @joe, @fred], response
+      assert(fetch_multi.has_been_called_with?(@bob_blob_key, @joe_blob_key, @fred_blob_key))
+      assert_equal([@bob, @joe, @fred], response)
 
-      assert response.all?(&:readonly?)
+      assert(response.all?(&:readonly?))
     end
   end
 
@@ -350,19 +350,19 @@ class FetchMultiTest < IdentityCache::TestCase
       fetch_multi = fetch_multi_stub(cache_response)
 
       response = Item.fetch_multi(@bob.id, @joe.id, @fred.id)
-      assert fetch_multi.has_been_called_with?(@bob_blob_key, @joe_blob_key, @fred_blob_key)
-      assert_equal [@bob, @joe, @fred], response
+      assert(fetch_multi.has_been_called_with?(@bob_blob_key, @joe_blob_key, @fred_blob_key))
+      assert_equal([@bob, @joe, @fred], response)
 
-      assert response.all?(&:readonly?)
+      assert(response.all?(&:readonly?))
     end
   end
 
   def test_fetch_multi_with_open_transactions_returns_non_readonly_records
     IdentityCache.with_fetch_read_only_records do
       Item.transaction do
-        assert_equal IdentityCache.should_use_cache?, false
+        assert_equal(IdentityCache.should_use_cache?, false)
         IdentityCache.cache.expects(:fetch_multi).never
-        assert Item.fetch_multi(@bob.id, @joe.id, @fred.id).none?(&:readonly?)
+        assert(Item.fetch_multi(@bob.id, @joe.id, @fred.id).none?(&:readonly?))
       end
     end
   end

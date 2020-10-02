@@ -7,7 +7,7 @@ module IdentityCache
       def test_load
         record = AssociatedRecord.create!
         Eager.load(AssociatedRecord.cached_primary_index, record.id) do |loaded_record|
-          assert_equal record, loaded_record
+          assert_equal(record, loaded_record)
         end
       end
 
@@ -15,7 +15,7 @@ module IdentityCache
         records = create_list(:associated_record, 3)
         records_by_id = records.map { |record| [record.id, record] }.to_h
         Eager.load_multi(AssociatedRecord.cached_primary_index, records.map(&:id)) do |loaded_records_by_id|
-          assert_equal records_by_id, loaded_records_by_id
+          assert_equal(records_by_id, loaded_records_by_id)
         end
       end
 
@@ -31,8 +31,8 @@ module IdentityCache
         Eager.load_batch(ids_by_cache_fetcher) do |loaded_records_by_id_by_cache_fetcher|
           ids_by_cache_fetcher.each do |cache_fetcher, ids|
             loaded_records_by_id = loaded_records_by_id_by_cache_fetcher.fetch(cache_fetcher)
-            assert_equal ids, loaded_records_by_id.keys.sort
-            assert_equal ids, loaded_records_by_id.values.map(&:id).sort
+            assert_equal(ids, loaded_records_by_id.keys.sort)
+            assert_equal(ids, loaded_records_by_id.values.map(&:id).sort)
           end
         end
       end

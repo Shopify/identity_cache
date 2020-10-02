@@ -72,7 +72,7 @@ module IdentityCache
             prefetch(Item, :associated_records, items)
           end
           assert_no_queries do
-            assert_equal [[associated1], [associated2]], items.map(&:fetch_associated_records)
+            assert_equal([[associated1], [associated2]], items.map(&:fetch_associated_records))
           end
         end
       end
@@ -109,7 +109,7 @@ module IdentityCache
       events = 0
       subscriber = ActiveSupport::Notifications.subscribe('hydration.identity_cache') do |_, _, _, _, payload|
         events += 1
-        assert_equal "Item", payload[:class]
+        assert_equal("Item", payload[:class])
       end
       prefetch(Item, :item, items)
       assert_equal(2, events)
@@ -160,8 +160,8 @@ module IdentityCache
         cached_bob, cached_joe = Item.fetch_multi(
           @bob.id, @joe.id, includes: { associated: :deeply_associated_records }
         )
-        assert_nil cached_joe.fetch_associated
-        assert_equal 'deep child', cached_bob.fetch_associated.fetch_deeply_associated_records.first.name
+        assert_nil(cached_joe.fetch_associated)
+        assert_equal('deep child', cached_bob.fetch_associated.fetch_deeply_associated_records.first.name)
       end
     end
 
@@ -212,8 +212,8 @@ module IdentityCache
 
       assert_memcache_operations(2) do
         @cached_bob, @cached_joe = Item.fetch_multi(@bob.id, @joe.id, includes: :associated_records)
-        assert_equal child_records[0..2].sort, @cached_bob.fetch_associated_records.sort
-        assert_equal child_records[3..5].sort, @cached_joe.fetch_associated_records.sort
+        assert_equal(child_records[0..2].sort, @cached_bob.fetch_associated_records.sort)
+        assert_equal(child_records[3..5].sort, @cached_joe.fetch_associated_records.sort)
       end
     end
 
@@ -230,8 +230,8 @@ module IdentityCache
 
       assert_memcache_operations(2) do
         @cached_bob, @cached_joe = Item.fetch_multi(@bob.id, @joe.id, includes: :associated)
-        assert_equal child_records.first, @cached_bob.fetch_associated
-        assert_equal child_records.second, @cached_joe.fetch_associated
+        assert_equal(child_records.first, @cached_bob.fetch_associated)
+        assert_equal(child_records.second, @cached_joe.fetch_associated)
       end
     end
 
@@ -249,8 +249,8 @@ module IdentityCache
         @cached_bob_child, @cached_fred_child = AssociatedRecord.fetch_multi(
           @bob_child.id, @fred_child.id, includes: :item
         )
-        assert_equal @bob,  @cached_bob_child.fetch_item
-        assert_equal @fred, @cached_fred_child.fetch_item
+        assert_equal(@bob,  @cached_bob_child.fetch_item)
+        assert_equal(@fred, @cached_fred_child.fetch_item)
       end
     end
 
@@ -282,12 +282,12 @@ module IdentityCache
         bob_children = @cached_bob.fetch_associated_records.sort
         joe_children = @cached_joe.fetch_associated_records.sort
 
-        assert_equal grandchildren[0..2].sort,   bob_children[0].fetch_deeply_associated_records.sort
-        assert_equal grandchildren[3..5].sort,   bob_children[1].fetch_deeply_associated_records.sort
-        assert_equal grandchildren[6..8].sort,   bob_children[2].fetch_deeply_associated_records.sort
-        assert_equal grandchildren[9..11].sort,  joe_children[0].fetch_deeply_associated_records.sort
-        assert_equal grandchildren[12..14].sort, joe_children[1].fetch_deeply_associated_records.sort
-        assert_equal grandchildren[15..17].sort, joe_children[2].fetch_deeply_associated_records.sort
+        assert_equal(grandchildren[0..2].sort,   bob_children[0].fetch_deeply_associated_records.sort)
+        assert_equal(grandchildren[3..5].sort,   bob_children[1].fetch_deeply_associated_records.sort)
+        assert_equal(grandchildren[6..8].sort,   bob_children[2].fetch_deeply_associated_records.sort)
+        assert_equal(grandchildren[9..11].sort,  joe_children[0].fetch_deeply_associated_records.sort)
+        assert_equal(grandchildren[12..14].sort, joe_children[1].fetch_deeply_associated_records.sort)
+        assert_equal(grandchildren[15..17].sort, joe_children[2].fetch_deeply_associated_records.sort)
       end
     end
 
@@ -311,8 +311,8 @@ module IdentityCache
 
         @cached_bob_parent  = @cached_bob_child.fetch_item
         @cached_fred_parent = @cached_fred_child.fetch_item
-        assert_equal @bob,  @cached_bob_parent.fetch_item
-        assert_equal @fred, @cached_fred_parent.fetch_item
+        assert_equal(@bob,  @cached_bob_parent.fetch_item)
+        assert_equal(@fred, @cached_fred_parent.fetch_item)
       end
     end
 
@@ -340,12 +340,12 @@ module IdentityCache
         bob_children = @cached_bob.fetch_associated_records.sort
         joe_children = @cached_joe.fetch_associated_records.sort
 
-        assert_equal grandchildren[0..2].sort,   bob_children[0].fetch_deeply_associated_records.sort
-        assert_equal grandchildren[3..5].sort,   bob_children[1].fetch_deeply_associated_records.sort
-        assert_equal grandchildren[6..8].sort,   bob_children[2].fetch_deeply_associated_records.sort
-        assert_equal grandchildren[9..11].sort,  joe_children[0].fetch_deeply_associated_records.sort
-        assert_equal grandchildren[12..14].sort, joe_children[1].fetch_deeply_associated_records.sort
-        assert_equal grandchildren[15..17].sort, joe_children[2].fetch_deeply_associated_records.sort
+        assert_equal(grandchildren[0..2].sort,   bob_children[0].fetch_deeply_associated_records.sort)
+        assert_equal(grandchildren[3..5].sort,   bob_children[1].fetch_deeply_associated_records.sort)
+        assert_equal(grandchildren[6..8].sort,   bob_children[2].fetch_deeply_associated_records.sort)
+        assert_equal(grandchildren[9..11].sort,  joe_children[0].fetch_deeply_associated_records.sort)
+        assert_equal(grandchildren[12..14].sort, joe_children[1].fetch_deeply_associated_records.sort)
+        assert_equal(grandchildren[15..17].sort, joe_children[2].fetch_deeply_associated_records.sort)
       end
     end
 
@@ -367,8 +367,8 @@ module IdentityCache
         bob_child = @cached_bob.fetch_associated
         joe_child = @cached_joe.fetch_associated
 
-        assert_equal grandchildren[0..2].sort,   bob_child.fetch_deeply_associated_records.sort
-        assert_equal grandchildren[3..5].sort,   joe_child.fetch_deeply_associated_records.sort
+        assert_equal(grandchildren[0..2].sort,   bob_child.fetch_deeply_associated_records.sort)
+        assert_equal(grandchildren[3..5].sort,   joe_child.fetch_deeply_associated_records.sort)
       end
     end
 

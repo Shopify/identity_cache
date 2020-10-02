@@ -18,7 +18,7 @@ class NormalizedBelongsToTest < IdentityCache::TestCase
   def test_fetching_the_association_should_delegate_to_the_normal_association_fetcher_if_any_transactions_are_open
     Item.expects(:fetch_by_id).never
     @record.transaction do
-      assert_equal @parent_record, @record.fetch_item
+      assert_equal(@parent_record, @record.fetch_item)
     end
   end
 
@@ -65,32 +65,32 @@ class NormalizedBelongsToTest < IdentityCache::TestCase
   def test_returned_record_should_be_readonly_on_cache_hit
     IdentityCache.with_fetch_read_only_records do
       @record.fetch_item # warm cache
-      assert @record.fetch_item.readonly?
-      refute @record.item.readonly?
+      assert(@record.fetch_item.readonly?)
+      refute(@record.item.readonly?)
     end
   end
 
   def test_returned_record_should_be_readonly_on_cache_miss
     IdentityCache.with_fetch_read_only_records do
-      assert @record.fetch_item.readonly?
-      refute @record.item.readonly?
+      assert(@record.fetch_item.readonly?)
+      refute(@record.item.readonly?)
     end
   end
 
   def test_db_returned_record_should_never_be_readonly
     IdentityCache.with_fetch_read_only_records do
       uncached_record = @record.item
-      refute uncached_record.readonly?
+      refute(uncached_record.readonly?)
       @record.fetch_item
-      refute uncached_record.readonly?
+      refute(uncached_record.readonly?)
     end
   end
 
   def test_returned_record_with_open_transactions_should_not_be_readonly
     IdentityCache.with_fetch_read_only_records do
       Item.transaction do
-        refute IdentityCache.should_use_cache?
-        refute @record.fetch_item.readonly?
+        refute(IdentityCache.should_use_cache?)
+        refute(@record.fetch_item.readonly?)
       end
     end
   end

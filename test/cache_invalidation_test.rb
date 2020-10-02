@@ -94,13 +94,13 @@ class CacheInvalidationTest < IdentityCache::TestCase
     ]
 
     expected_keys.each do |expected_key|
-      assert IdentityCache.cache.fetch(expected_key) { nil }
+      assert(IdentityCache.cache.fetch(expected_key) { nil })
     end
 
     baz.update!(updated_at: baz.updated_at + 1)
 
     expected_keys.each do |expected_key|
-      refute IdentityCache.cache.fetch(expected_key) { nil }
+      refute(IdentityCache.cache.fetch(expected_key) { nil })
     end
   end
 
@@ -125,7 +125,7 @@ class CacheInvalidationTest < IdentityCache::TestCase
     ]
 
     expected_keys.each do |expected_key|
-      assert IdentityCache.cache.fetch(expected_key) { nil }
+      assert(IdentityCache.cache.fetch(expected_key) { nil })
     end
 
     baz.item = record1
@@ -133,7 +133,7 @@ class CacheInvalidationTest < IdentityCache::TestCase
     baz.save!
 
     expected_keys.each do |expected_key|
-      refute IdentityCache.cache.fetch(expected_key) { nil }
+      refute(IdentityCache.cache.fetch(expected_key) { nil })
     end
   end
 

@@ -111,15 +111,15 @@ class SchemaChangeTest < IdentityCache::TestCase
 
         associated_class.class_eval do
           self.table_name = 'associated_records'
-          include IdentityCache::WithoutPrimaryIndex
-          belongs_to :item, class_name: item_class.name
+          include(IdentityCache::WithoutPrimaryIndex)
+          belongs_to(:item, class_name: item_class.name)
         end
 
         item_class.class_eval do
           self.table_name = 'items'
-          include IdentityCache
-          has_many :associated_records, class_name: associated_class_name
-          cache_has_many :associated_records, embed: true
+          include(IdentityCache)
+          has_many(:associated_records, class_name: associated_class_name)
+          cache_has_many(:associated_records, embed: true)
         end
       end
     end
@@ -135,7 +135,7 @@ class SchemaChangeTest < IdentityCache::TestCase
 
     assert_no_queries do
       record = self.class::Item.fetch(@record.id)
-      assert_equal ['bar'], record.fetch_associated_records.map(&:name)
+      assert_equal(['bar'], record.fetch_associated_records.map(&:name))
     end
   ensure
     self.class.send(:remove_const, :Item) if self.class.const_defined?(:Item, false)

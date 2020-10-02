@@ -120,7 +120,7 @@ module IdentityCache
     #
     def fetch(key)
       if should_use_cache?
-        unmap_cached_nil_for(cache.fetch(key) { map_cached_nil_for yield })
+        unmap_cached_nil_for(cache.fetch(key) { map_cached_nil_for(yield) })
       else
         yield
       end
@@ -146,7 +146,7 @@ module IdentityCache
       result = if should_use_cache?
         fetch_in_batches(keys.uniq) do |missed_keys|
           results = yield missed_keys
-          results.map { |e| map_cached_nil_for e }
+          results.map { |e| map_cached_nil_for(e) }
         end
       else
         results = yield keys

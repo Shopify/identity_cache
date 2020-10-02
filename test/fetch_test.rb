@@ -34,7 +34,7 @@ class FetchTest < IdentityCache::TestCase
     events = 0
     subscriber = ActiveSupport::Notifications.subscribe('hydration.identity_cache') do |_, _, _, _, payload|
       events += 1
-      assert_equal "Item", payload[:class]
+      assert_equal("Item", payload[:class])
     end
     Item.fetch(1)
     assert_equal(1, events)
@@ -49,7 +49,7 @@ class FetchTest < IdentityCache::TestCase
     events = 0
     subscriber = ActiveSupport::Notifications.subscribe('cache_fetch.identity_cache') do |_, _, _, _, payload|
       events += 1
-      assert_equal expected, payload
+      assert_equal(expected, payload)
     end
     Item.fetch(1)
     assert_equal(1, events)
@@ -67,10 +67,10 @@ class FetchTest < IdentityCache::TestCase
       events = 0
       subscriber = ActiveSupport::Notifications.subscribe('cache_fetch.identity_cache') do |_, _, _, _, payload|
         events += 1
-        assert_equal expected, payload
+        assert_equal(expected, payload)
       end
       Item.fetch(1)
-      assert_equal 1, events
+      assert_equal(1, events)
     end
   ensure
     ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
@@ -116,7 +116,7 @@ class FetchTest < IdentityCache::TestCase
     events = 0
     subscriber = ActiveSupport::Notifications.subscribe('dehydration.identity_cache') do |_, _, _, _, payload|
       events += 1
-      assert_equal "Item", payload[:class]
+      assert_equal("Item", payload[:class])
     end
     Item.fetch(1)
     assert_equal(1, events)
@@ -131,8 +131,8 @@ class FetchTest < IdentityCache::TestCase
     events = 0
     subscriber = ActiveSupport::Notifications.subscribe('cache_fetch.identity_cache') do |_, _, _, _, payload|
       events += 1
-      assert payload.delete(:resolve_miss_time) > 0
-      assert_equal expected, payload
+      assert(payload.delete(:resolve_miss_time) > 0)
+      assert_equal(expected, payload)
     end
     Item.fetch(1)
     assert_equal(1, events)
@@ -260,7 +260,7 @@ class FetchTest < IdentityCache::TestCase
 
   def test_fetch_by_bang_method
     Item.connection.expects(:exec_query).returns(ActiveRecord::Result.new([], []))
-    assert_raises IdentityCache::RecordNotFound do
+    assert_raises(IdentityCache::RecordNotFound) do
       Item.fetch_by_title!('bob')
     end
   end
@@ -307,7 +307,7 @@ class FetchTest < IdentityCache::TestCase
   def test_returned_records_are_readonly_on_cache_hit
     IdentityCache.with_fetch_read_only_records do
       IdentityCache.cache.expects(:fetch).with(@blob_key).returns(@cached_value)
-      assert Item.fetch(1).readonly?
+      assert(Item.fetch(1).readonly?)
     end
   end
 
@@ -316,9 +316,9 @@ class FetchTest < IdentityCache::TestCase
       fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
       Item.cached_primary_index.expects(:load_one_from_db).with(1).once.returns(@record)
 
-      assert Item.exists_with_identity_cache?(1)
-      assert fetch.has_been_called_with?(@blob_key)
-      assert Item.fetch(1).readonly?
+      assert(Item.exists_with_identity_cache?(1))
+      assert(fetch.has_been_called_with?(@blob_key))
+      assert(Item.fetch(1).readonly?)
     end
   end
 
@@ -328,9 +328,9 @@ class FetchTest < IdentityCache::TestCase
         fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
         Item.cached_primary_index.expects(:load_one_from_db).with(1).once.returns(@record)
 
-        refute IdentityCache.should_use_cache?
-        refute fetch.has_been_called_with?(@blob_key)
-        refute Item.fetch(1).readonly?, "Fetched item was read-only"
+        refute(IdentityCache.should_use_cache?)
+        refute(fetch.has_been_called_with?(@blob_key))
+        refute(Item.fetch(1).readonly?, "Fetched item was read-only")
       end
     end
   end

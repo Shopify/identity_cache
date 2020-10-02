@@ -23,7 +23,7 @@ end
 def benchmark(runners, label_width = 0)
   IdentityCache.cache.clear
   runners.each do |runner|
-    print "#{runner.name}: ".ljust(label_width)
+    print("#{runner.name}: ".ljust(label_width))
     puts run(runner.new(RUNS))
   end
 end
