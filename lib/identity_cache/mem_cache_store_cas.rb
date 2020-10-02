@@ -44,7 +44,7 @@ module IdentityCache
             cas_id = raw_values[key].last
             entry = ActiveSupport::Cache::Entry.new(value, **options)
             payload = options[:raw] ? entry.value.to_s : entry
-            @data.replace_cas(key, payload, options[:expires_in].to_i, cas_id, options)
+            @data.replace_cas(key, payload, cas_id, options[:expires_in].to_i, options)
           end
         end
       end
