@@ -3,12 +3,6 @@ module IdentityCache
   module QueryAPI
     extend ActiveSupport::Concern
 
-    included do |base|
-      base.after_commit do
-        expire_cache if destroyed? || transaction_changed_attributes.present?
-      end
-    end
-
     module ClassMethods
       # Prefetches cached associations on a collection of records
       def prefetch_associations(includes, records)
@@ -152,6 +146,25 @@ module IdentityCache
 
         associations_for_identity_cache.compact
       end
+    end
+
+    included do |base|
+      # Make sure there is at least once after_commit callback so that _run_commit_callbacks
+      # is called, which is overridden to do an early after_commit callback
+      base.after_commit {}
+    end
+
+    # Override the method that is used to call after_commit callbacks so that we can
+    # expire the caches before other after_commit callbacks. This way we can avoid stale
+    # cache reads that happen from the ordering of callbacks. For example, if an after_commit
+    # callback enqueues a background job, then we don't want it to be possible for the
+    # background job to run and load data from the cache before it is invalidated.
+    def _run_commit_callbacks
+      if destroyed? || transaction_changed_attributes.present?
+        expire_cache
+        expire_parent_caches
+      end
+      super
     end
 
     # Invalidate the cache data associated with the record.

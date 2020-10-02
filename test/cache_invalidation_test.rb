@@ -182,4 +182,17 @@ class CacheInvalidationTest < IdentityCache::TestCase
       @record.class.fetch(@record.id)
     end
   end
+
+  def test_cache_expiry_before_other_after_commit_callbacks
+    Item.fetch(@record.id) # fill cache
+
+    record_id = @record.id
+    after_commit_fetched = nil
+    Item.after_commit do
+      after_commit_fetched = Item.fetch(record_id)
+    end
+    @record.update!(updated_at: @record.updated_at + 1)
+
+    assert_equal(after_commit_fetched.updated_at, @record.updated_at)
+  end
 end
