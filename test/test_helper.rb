@@ -148,11 +148,9 @@ class SQLCounter
   end
 
   def call(_name, _start, _finish, _message_id, values)
+    return if values[:cached]
     sql = values[:sql]
-
-    # FIXME: this seems bad. we should probably have a better way to indicate
-    # the query was cached
-    return if 'CACHE' == values[:name] || IGNORED_SQL.any? { |x| x.match?(sql) }
+    return if IGNORED_SQL.any? { |p| p.match?(sql) }
     log << sql
   end
 end
