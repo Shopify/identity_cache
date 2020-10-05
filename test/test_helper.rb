@@ -59,30 +59,33 @@ module IdentityCache
       assert(*args)
     end
 
-    def count_queries(**subscribe_opts)
-      counter = SQLCounter.new(**subscribe_opts)
-      subscriber = ActiveSupport::Notifications.subscribe('sql.active_record', counter)
+    def subscribe_to_sql_queries(subscriber, all: false)
+      filtering_subscriber = ->(_name, _start, _finish, _message_id, values) { subscriber.call(values.fetch(:sql)) }
+      filtering_subscriber = IgnoredQueryFilter.new(filtering_subscriber) unless all
+      subscription = ActiveSupport::Notifications.subscribe('sql.active_record', filtering_subscriber)
       yield
-      counter.log.size
     ensure
-      ActiveSupport::Notifications.unsubscribe(subscriber)
+      ActiveSupport::Notifications.unsubscribe(subscription)
     end
 
-    def assert_queries(num = 1, **subscribe_opts)
-      counter = SQLCounter.new(**subscribe_opts)
-      subscriber = ActiveSupport::Notifications.subscribe('sql.active_record', counter)
-      ret = yield
+    def count_queries(**subscribe_opts, &block)
+      count = 0
+      subscribe_to_sql_queries(->(_sql) { count += 1 }, **subscribe_opts, &block)
+      count
+    end
+
+    def assert_queries(num = 1, **subscribe_opts, &block)
+      log = []
+      ret = subscribe_to_sql_queries(->(sql) { log << sql }, **subscribe_opts, &block)
       assert_equal(
         num,
-        counter.log.size,
+        log.size,
         <<~MSG.squish
-          #{counter.log.size} instead of #{num} queries were executed.
-          #{counter.log.empty? ? '' : "\nQueries:\n#{counter.log.join("\n")}"}
+          #{log.size} instead of #{num} queries were executed.
+          #{log.empty? ? '' : "\nQueries:\n#{log.join("\n")}"}
         MSG
       )
       ret
-    ensure
-      ActiveSupport::Notifications.unsubscribe(subscriber)
     end
 
     def assert_memcache_operations(num)
@@ -102,10 +105,8 @@ module IdentityCache
       ActiveSupport::Notifications.unsubscribe(subscriber)
     end
 
-    def assert_no_queries(**subscribe_opts)
-      assert_queries(0, **subscribe_opts) do
-        yield
-      end
+    def assert_no_queries(**subscribe_opts, &block)
+      subscribe_to_sql_queries(->(sql) { raise "Unexpected SQL query: #{sql}" }, **subscribe_opts, &block)
     end
 
     def cache_hash(key)
@@ -119,7 +120,7 @@ module IdentityCache
 end
 
 # Based on SQLCounter in the active record test suite
-class SQLCounter
+class IgnoredQueryFilter
   IGNORED_SQL = [
     /^SAVEPOINT/,
     /^ROLLBACK TO/,
@@ -128,20 +129,15 @@ class SQLCounter
     /^COMMIT/,
   ]
 
-  attr_accessor :log, :all
-
-  def initialize(all: false)
-    @log = []
-    @all = all
+  def initialize(subscriber)
+    @subscriber = subscriber
   end
 
-  def call(_name, _start, _finish, _message_id, values)
+  def call(name, start, finish, message_id, values)
     sql = values[:sql]
-    unless all
-      return if values[:cached]
-      return if (values[:name] == 'SCHEMA' || IGNORED_SQL.any? { |p| p.match?(sql) })
-    end
-    log << sql
+    return if values[:cached]
+    return if values[:name] == 'SCHEMA' || IGNORED_SQL.any? { |p| p.match?(sql) }
+    @subscriber.call(name, start, finish, message_id, values)
   end
 end
 
