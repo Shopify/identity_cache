@@ -88,21 +88,29 @@ module IdentityCache
       ret
     end
 
-    def assert_memcache_operations(num)
-      counter = CacheCounter.new
-      subscriber = ActiveSupport::Notifications.subscribe(/cache_.*\.active_support/, counter)
-      ret = yield
+    def subscribe_to_cache_operations(subscriber)
+      formatting_subscriber = lambda do |name, _start, _finish, _message_id, values|
+        operation = "#{name} #{(values[:keys].try(:join, ', ') || values[:key])}"
+        subscriber.call(operation)
+      end
+      subscription = ActiveSupport::Notifications.subscribe(/cache_.*\.active_support/, formatting_subscriber)
+      yield
+    ensure
+      ActiveSupport::Notifications.unsubscribe(subscription)
+    end
+
+    def assert_memcache_operations(num, &block)
+      log = []
+      ret = subscribe_to_cache_operations(->(operation) { log << operation }, &block)
       assert_equal(
         num,
-        counter.log.size,
+        log.size,
         <<~MSG.squish
-          #{counter.log.size} instead of #{num} memcache operations were executed.
-          #{counter.log.empty? ? '' : "\nOperations:\n#{counter.log.join("\n")}"}
+          #{log.size} instead of #{num} memcache operations were executed.
+          #{log.empty? ? '' : "\nOperations:\n#{log.join("\n")}"}
         MSG
       )
       ret
-    ensure
-      ActiveSupport::Notifications.unsubscribe(subscriber)
     end
 
     def assert_no_queries(**subscribe_opts, &block)
@@ -138,17 +146,5 @@ class IgnoredQueryFilter
     return if values[:cached]
     return if values[:name] == 'SCHEMA' || IGNORED_SQL.any? { |p| p.match?(sql) }
     @subscriber.call(name, start, finish, message_id, values)
-  end
-end
-
-class CacheCounter
-  attr_accessor :log
-
-  def initialize
-    @log = []
-  end
-
-  def call(name, _start, _finish, _message_id, values)
-    log << "#{name} #{(values[:keys].try(:join, ', ') || values[:key])}"
   end
 end
