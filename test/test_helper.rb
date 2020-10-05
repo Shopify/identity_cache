@@ -118,9 +118,9 @@ module IdentityCache
   end
 end
 
+# Based on SQLCounter in the active record test suite
 class SQLCounter
-  cattr_accessor :ignored_sql
-  self.ignored_sql = [
+  IGNORED_SQL = [
     /^PRAGMA (?!(table_info))/,
     /^SELECT currval/,
     /^SELECT CAST/,
@@ -133,22 +133,17 @@ class SQLCounter
     /^BEGIN/,
     /^COMMIT/,
     /^SHOW /,
-  ]
 
-  # FIXME: this needs to be refactored so specific database can add their own
-  # ignored SQL.  This ignored SQL is for Oracle.
-  ignored_sql.concat([
+    # Oracle ignored SQL
     /^select .*nextval/i,
     /^SAVEPOINT/,
     /^ROLLBACK TO/,
     /^\s*select .* from all_triggers/im,
-  ])
+  ]
 
-  attr_reader :ignore
   attr_accessor :log
 
-  def initialize(ignore = self.class.ignored_sql)
-    @ignore = ignore
+  def initialize
     @log = []
   end
 
@@ -157,7 +152,7 @@ class SQLCounter
 
     # FIXME: this seems bad. we should probably have a better way to indicate
     # the query was cached
-    return if 'CACHE' == values[:name] || ignore.any? { |x| x =~ sql }
+    return if 'CACHE' == values[:name] || IGNORED_SQL.any? { |x| x.match?(sql) }
     log << sql
   end
 end
