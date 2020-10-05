@@ -71,13 +71,7 @@ module IdentityCache
     def assert_queries(num = 1)
       counter = SQLCounter.new
       subscriber = ActiveSupport::Notifications.subscribe('sql.active_record', counter)
-      exception = false
-      yield
-    rescue
-      exception = true
-      raise
-    ensure
-      ActiveSupport::Notifications.unsubscribe(subscriber)
+      ret = yield
       assert_equal(
         num,
         counter.log.size,
@@ -85,19 +79,16 @@ module IdentityCache
           #{counter.log.size} instead of #{num} queries were executed.
           #{counter.log.empty? ? '' : "\nQueries:\n#{counter.log.join("\n")}"}
         MSG
-      ) unless exception
+      )
+      ret
+    ensure
+      ActiveSupport::Notifications.unsubscribe(subscriber)
     end
 
     def assert_memcache_operations(num)
       counter = CacheCounter.new
       subscriber = ActiveSupport::Notifications.subscribe(/cache_.*\.active_support/, counter)
-      exception = false
-      yield
-    rescue
-      exception = true
-      raise
-    ensure
-      ActiveSupport::Notifications.unsubscribe(subscriber)
+      ret = yield
       assert_equal(
         num,
         counter.log.size,
@@ -105,7 +96,10 @@ module IdentityCache
           #{counter.log.size} instead of #{num} memcache operations were executed.
           #{counter.log.empty? ? '' : "\nOperations:\n#{counter.log.join("\n")}"}
         MSG
-      ) unless exception
+      )
+      ret
+    ensure
+      ActiveSupport::Notifications.unsubscribe(subscriber)
     end
 
     def assert_no_queries
