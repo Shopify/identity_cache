@@ -19,6 +19,8 @@ module IdentityCache
     include ActiveRecordObjects
     attr_reader :backend
 
+    HAVE_LAZY_BEGIN = ActiveRecord.gem_version >= Gem::Version.new('6.0.0')
+
     def setup
       ActiveRecord::Base.connection.schema_cache.clear!
       DatabaseConnection.drop_tables
@@ -61,7 +63,7 @@ module IdentityCache
 
     def subscribe_to_sql_queries(subscriber, all: false)
       filtering_subscriber = ->(_name, _start, _finish, _message_id, values) { subscriber.call(values.fetch(:sql)) }
-      filtering_subscriber = IgnoredQueryFilter.new(filtering_subscriber) unless all
+      filtering_subscriber = IgnoreSchemaQueryFilter.new(filtering_subscriber) unless all
       subscription = ActiveSupport::Notifications.subscribe('sql.active_record', filtering_subscriber)
       yield
     ensure
@@ -128,23 +130,14 @@ module IdentityCache
 end
 
 # Based on SQLCounter in the active record test suite
-class IgnoredQueryFilter
-  IGNORED_SQL = [
-    /^SAVEPOINT/,
-    /^ROLLBACK TO/,
-    /^RELEASE SAVEPOINT/,
-    /^BEGIN/,
-    /^COMMIT/,
-  ]
-
+class IgnoreSchemaQueryFilter
   def initialize(subscriber)
     @subscriber = subscriber
   end
 
   def call(name, start, finish, message_id, values)
-    sql = values[:sql]
     return if values[:cached]
-    return if values[:name] == 'SCHEMA' || IGNORED_SQL.any? { |p| p.match?(sql) }
+    return if values[:name] == 'SCHEMA'
     @subscriber.call(name, start, finish, message_id, values)
   end
 end

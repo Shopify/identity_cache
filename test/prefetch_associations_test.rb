@@ -68,7 +68,7 @@ module IdentityCache
 
       Item.transaction do
         assert_memcache_operations(0) do
-          assert_queries(1) do
+          assert_queries(HAVE_LAZY_BEGIN ? 2 : 1) do
             prefetch(Item, :associated_records, items)
           end
           assert_no_queries do
