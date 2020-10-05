@@ -59,8 +59,8 @@ module IdentityCache
       assert(*args)
     end
 
-    def count_queries
-      counter = SQLCounter.new
+    def count_queries(**subscribe_opts)
+      counter = SQLCounter.new(**subscribe_opts)
       subscriber = ActiveSupport::Notifications.subscribe('sql.active_record', counter)
       yield
       counter.log.size
@@ -68,8 +68,8 @@ module IdentityCache
       ActiveSupport::Notifications.unsubscribe(subscriber)
     end
 
-    def assert_queries(num = 1)
-      counter = SQLCounter.new
+    def assert_queries(num = 1, **subscribe_opts)
+      counter = SQLCounter.new(**subscribe_opts)
       subscriber = ActiveSupport::Notifications.subscribe('sql.active_record', counter)
       ret = yield
       assert_equal(
@@ -102,8 +102,8 @@ module IdentityCache
       ActiveSupport::Notifications.unsubscribe(subscriber)
     end
 
-    def assert_no_queries
-      assert_queries(0) do
+    def assert_no_queries(**subscribe_opts)
+      assert_queries(0, **subscribe_opts) do
         yield
       end
     end
@@ -121,36 +121,26 @@ end
 # Based on SQLCounter in the active record test suite
 class SQLCounter
   IGNORED_SQL = [
-    /^PRAGMA (?!(table_info))/,
-    /^SELECT currval/,
-    /^SELECT CAST/,
-    /^SELECT @@IDENTITY/,
-    /^SELECT @@ROWCOUNT/,
-    /^SAVEPOINT/,
-    /^ROLLBACK TO SAVEPOINT/,
-    /^RELEASE SAVEPOINT/,
-    /^SHOW max_identifier_length/,
-    /^BEGIN/,
-    /^COMMIT/,
-    /^SHOW /,
-
-    # Oracle ignored SQL
-    /^select .*nextval/i,
     /^SAVEPOINT/,
     /^ROLLBACK TO/,
-    /^\s*select .* from all_triggers/im,
+    /^RELEASE SAVEPOINT/,
+    /^BEGIN/,
+    /^COMMIT/,
   ]
 
-  attr_accessor :log
+  attr_accessor :log, :all
 
-  def initialize
+  def initialize(all: false)
     @log = []
+    @all = all
   end
 
   def call(_name, _start, _finish, _message_id, values)
-    return if values[:cached]
     sql = values[:sql]
-    return if IGNORED_SQL.any? { |p| p.match?(sql) }
+    unless all
+      return if values[:cached]
+      return if (values[:name] == 'SCHEMA' || IGNORED_SQL.any? { |p| p.match?(sql) })
+    end
     log << sql
   end
 end
