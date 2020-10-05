@@ -85,8 +85,8 @@ class NormalizedHasManyTest < IdentityCache::TestCase
       Item.fetch(@record.id)
     end
     assert_no_queries do
-      assert_equal @record, fetched_records
-      assert_nil fetched_records.fetch_associated
+      assert_equal(@record, fetched_records)
+      assert_nil(fetched_records.fetch_associated)
     end
   end
 
@@ -97,7 +97,7 @@ class NormalizedHasManyTest < IdentityCache::TestCase
   def test_fetching_associated_ids_will_use_the_cached_value_if_the_record_is_from_the_cache
     @record = Item.fetch(@record.id)
     assert_queries(0) do
-      assert_equal [2, 1], @record.fetch_associated_record_ids
+      assert_equal([2, 1], @record.fetch_associated_record_ids)
     end
   end
 
@@ -115,7 +115,7 @@ class NormalizedHasManyTest < IdentityCache::TestCase
     @record.fetch_associated_records
     assert_queries(0) do
       @record = Item.fetch(@record.id)
-      assert_equal [@baz, @bar], @record.fetch_associated_records
+      assert_equal([@baz, @bar], @record.fetch_associated_records)
     end
   end
 
@@ -130,7 +130,7 @@ class NormalizedHasManyTest < IdentityCache::TestCase
 
     assert_memcache_operations(0) do
       @record.transaction do
-        assert_equal [@baz, @bar], @record.fetch_associated_records
+        assert_equal([@baz, @bar], @record.fetch_associated_records)
       end
     end
   end
@@ -140,7 +140,7 @@ class NormalizedHasManyTest < IdentityCache::TestCase
     @record.associated_records.to_a
 
     assert_memcache_operations(0) do
-      assert_equal [@baz, @bar], @record.fetch_associated_records
+      assert_equal([@baz, @bar], @record.fetch_associated_records)
     end
   end
 
@@ -215,7 +215,7 @@ class NormalizedHasManyTest < IdentityCache::TestCase
   end
 
   def test_fetch_association_does_not_allow_chaining
-    check = proc { assert_equal false, Item.fetch(@record.id).fetch_associated_records.respond_to?(:where) }
+    check = proc { assert_equal(false, Item.fetch(@record.id).fetch_associated_records.respond_to?(:where)) }
     2.times { check.call } # for miss and hit
     Item.transaction { check.call }
   end
@@ -231,7 +231,7 @@ class NormalizedHasManyTest < IdentityCache::TestCase
   def test_returned_records_should_be_readonly_on_cache_miss
     IdentityCache.with_fetch_read_only_records do
       record_from_cache_miss = Item.fetch(@record.id)
-      assert record_from_cache_miss.fetch_associated_records.all?(&:readonly?)
+      assert(record_from_cache_miss.fetch_associated_records.all?(&:readonly?))
     end
   end
 

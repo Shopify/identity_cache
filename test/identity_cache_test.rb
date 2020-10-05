@@ -12,7 +12,7 @@ class IdentityCacheTest < IdentityCache::TestCase
   def test_identity_cache_raises_if_loaded_twice
     assert_raises(IdentityCache::AlreadyIncludedError) do
       BadModel.class_eval do
-        include IdentityCache
+        include(IdentityCache)
       end
     end
   end
@@ -23,7 +23,7 @@ class IdentityCacheTest < IdentityCache::TestCase
 
   def test_should_use_cache_in_transaction
     ActiveRecord::Base.transaction do
-      assert_equal false, IdentityCache.should_use_cache?
+      assert_equal(false, IdentityCache.should_use_cache?)
     end
   end
 end

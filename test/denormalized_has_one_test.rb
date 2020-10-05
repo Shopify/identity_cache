@@ -48,7 +48,7 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
 
     assert_equal(@record, record_from_cache_miss)
     5.times do
-      assert_nil record_from_cache_miss.fetch_associated
+      assert_nil(record_from_cache_miss.fetch_associated)
     end
     assert(
       fetch.has_been_called_with?(
@@ -113,7 +113,7 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
 
     assert_equal(@record, record_from_cache_hit)
     5.times do
-      assert_nil record_from_cache_hit.fetch_associated
+      assert_nil(record_from_cache_hit.fetch_associated)
     end
   end
 
@@ -147,14 +147,14 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
   end
 
   def test_cache_association_known_inverse_raises
-    assert_raises IdentityCache::InverseAssociationError do
+    assert_raises(IdentityCache::InverseAssociationError) do
       Item.cache_has_one(:no_inverse_of_record, embed: true)
       IdentityCache.eager_load!
     end
   end
 
   def test_unsupported_through_assocation
-    assert_raises IdentityCache::UnsupportedAssociationError, "caching through associations isn't supported" do
+    assert_raises(IdentityCache::UnsupportedAssociationError, "caching through associations isn't supported") do
       Item.has_one(:deeply_associated, through: :associated, class_name: 'DeeplyAssociatedRecord')
       Item.cache_has_one(:deeply_associated, embed: true)
     end
@@ -170,16 +170,16 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     IdentityCache.with_fetch_read_only_records do
       Item.fetch_by_title('foo')
       record_from_cache_hit = Item.fetch_by_title('foo')
-      assert record_from_cache_hit.fetch_associated.readonly?
-      refute record_from_cache_hit.associated.readonly?
+      assert(record_from_cache_hit.fetch_associated.readonly?)
+      refute(record_from_cache_hit.associated.readonly?)
     end
   end
 
   def test_returned_record_should_be_readonly_on_cache_miss
     IdentityCache.with_fetch_read_only_records do
-      assert IdentityCache.should_use_cache?
+      assert(IdentityCache.should_use_cache?)
       record_from_cache_miss = Item.fetch_by_title('foo')
-      assert record_from_cache_miss.fetch_associated.readonly?
+      assert(record_from_cache_miss.fetch_associated.readonly?)
     end
   end
 
@@ -187,17 +187,17 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     IdentityCache.with_fetch_read_only_records do
       record_from_db = Item.find_by_title('foo')
       uncached_record = record_from_db.associated
-      refute uncached_record.readonly?
+      refute(uncached_record.readonly?)
       record_from_db.fetch_associated
-      refute uncached_record.readonly?
+      refute(uncached_record.readonly?)
     end
   end
 
   def test_returned_record_with_open_transactions_should_not_be_readonly
     IdentityCache.with_fetch_read_only_records do
       Item.transaction do
-        refute IdentityCache.should_use_cache?
-        refute Item.fetch_by_title('foo').fetch_associated.readonly?
+        refute(IdentityCache.should_use_cache?)
+        refute(Item.fetch_by_title('foo').fetch_associated.readonly?)
       end
     end
   end

@@ -45,7 +45,7 @@ class ReadonlyTest < IdentityCache::TestCase
     Item.cached_primary_index.expects(:load_one_from_db).with(1).once.returns(@record)
 
     assert_readonly_fetch do
-      assert_equal @record, Item.fetch(1)
+      assert_equal(@record, Item.fetch(1))
     end
     assert_nil(backend.read(@record.primary_cache_index_key))
     assert(fetch.has_been_called_with?(@record.primary_cache_index_key))
@@ -55,7 +55,7 @@ class ReadonlyTest < IdentityCache::TestCase
     fetch_multi = Spy.on(IdentityCache.cache, :fetch_multi).and_call_through
 
     assert_readonly_fetch_multi do
-      assert_equal [@bob, @joe, @fred], Item.fetch_multi(@bob.id, @joe.id, @fred.id)
+      assert_equal([@bob, @joe, @fred], Item.fetch_multi(@bob.id, @joe.id, @fred.id))
     end
     keys = [@bob, @joe, @fred].map(&:primary_cache_index_key)
     assert_empty(backend.read_multi(*keys))

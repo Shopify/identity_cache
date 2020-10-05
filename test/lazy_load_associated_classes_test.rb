@@ -26,11 +26,11 @@ class LazyLoadAssociatedClassesTest < IdentityCache::TestCase
     Item.fetch(item.id)
 
     assert_queries(0) do
-      assert_equal 'baz', Item.fetch(item.id).fetch_associated_records.first.name
+      assert_equal('baz', Item.fetch(item.id).fetch_associated_records.first.name)
     end
     associated_record.update!(name: 'buzz')
     assert_queries(2) do
-      assert_equal 'buzz', Item.fetch(item.id).fetch_associated_records.first.name
+      assert_equal('buzz', Item.fetch(item.id).fetch_associated_records.first.name)
     end
   end
 
@@ -50,7 +50,7 @@ class LazyLoadAssociatedClassesTest < IdentityCache::TestCase
       err2 = assert_raises(IdentityCache::UnsupportedAssociationError) do
         Item.fetch_multi([1])
       end
-      assert_equal err1.message, err2.message
+      assert_equal(err1.message, err2.message)
     end
   end
 
@@ -69,7 +69,7 @@ class LazyLoadAssociatedClassesTest < IdentityCache::TestCase
       err2 = assert_raises(IdentityCache::UnsupportedAssociationError) do
         Item.fetch_multi([1])
       end
-      assert_equal err1.message, err2.message
+      assert_equal(err1.message, err2.message)
     end
   end
 end

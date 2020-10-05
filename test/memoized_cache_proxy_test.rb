@@ -25,7 +25,7 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
 
     IdentityCache.cache.with_memoization do
       IdentityCache.cache.write('foo', 'bar')
-      assert_equal 'bar', IdentityCache.cache.fetch('foo')
+      assert_equal('bar', IdentityCache.cache.fetch('foo'))
     end
   end
 
@@ -34,9 +34,9 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
 
     IdentityCache.cache.with_memoization do
       IdentityCache.cache.write('foo', nil)
-      assert_nil IdentityCache.cache.fetch('foo')
+      assert_nil(IdentityCache.cache.fetch('foo'))
       IdentityCache.cache.write('bar', false)
-      assert_equal false, IdentityCache.cache.fetch('bar')
+      assert_equal(false, IdentityCache.cache.fetch('bar'))
     end
   end
 
@@ -44,7 +44,7 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
     fetcher.expects(:fetch).with('foo').returns('bar')
 
     IdentityCache.cache.with_memoization do
-      assert_equal 'bar', IdentityCache.cache.fetch('foo')
+      assert_equal('bar', IdentityCache.cache.fetch('foo'))
     end
   end
 
@@ -54,7 +54,7 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
 
     IdentityCache.cache.with_memoization do
       IdentityCache.cache.write('foo', 'bar')
-      assert_equal 'bar', IdentityCache.cache.fetch('foo')
+      assert_equal('bar', IdentityCache.cache.fetch('foo'))
     end
   end
 
@@ -62,9 +62,9 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
     backend.write('foo', 'bar')
 
     IdentityCache.cache.with_memoization do
-      assert_equal 'bar', IdentityCache.cache.fetch('foo')
+      assert_equal('bar', IdentityCache.cache.fetch('foo'))
       backend.delete('foo')
-      assert_equal 'bar', IdentityCache.cache.fetch('foo')
+      assert_equal('bar', IdentityCache.cache.fetch('foo'))
     end
   end
 
@@ -114,7 +114,7 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
     expected = { memoizing: false }
     subscriber = ActiveSupport::Notifications.subscribe('cache_write.identity_cache') do |_, _, _, _, payload|
       events += 1
-      assert_equal expected, payload
+      assert_equal(expected, payload)
     end
     IdentityCache.cache.write('foo', 'bar')
     assert_equal(1, events)
@@ -127,7 +127,7 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
     expected = { memoizing: false }
     subscriber = ActiveSupport::Notifications.subscribe('cache_delete.identity_cache') do |_, _, _, _, payload|
       events += 1
-      assert_equal expected, payload
+      assert_equal(expected, payload)
     end
     IdentityCache.cache.delete('foo')
     assert_equal(1, events)
@@ -139,7 +139,7 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
     events = 0
     subscriber = ActiveSupport::Notifications.subscribe('cache_clear.identity_cache') do |_, _, _, _, payload|
       events += 1
-      assert payload.empty?
+      assert(payload.empty?)
     end
     IdentityCache.cache.clear
     assert_equal(1, events)
