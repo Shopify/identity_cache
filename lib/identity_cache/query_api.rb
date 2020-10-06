@@ -148,10 +148,11 @@ module IdentityCache
       end
     end
 
+    no_op_callback = proc {}
     included do |base|
       # Make sure there is at least once after_commit callback so that _run_commit_callbacks
       # is called, which is overridden to do an early after_commit callback
-      base.after_commit {}
+      base.after_commit(&no_op_callback)
     end
 
     # Override the method that is used to call after_commit callbacks so that we can
