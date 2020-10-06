@@ -98,8 +98,10 @@ class AttributeCacheTest < IdentityCache::TestCase
     IdentityCache.cache.expects(:read).never
 
     @record.transaction do
-      assert_queries(1) do
-        assert_equal('foo', AssociatedRecord.fetch_name_by_id(1))
+      assert_queries(HAVE_LAZY_BEGIN ? 2 : 1) do
+        assert_memcache_operations(0) do
+          assert_equal('foo', AssociatedRecord.fetch_name_by_id(1))
+        end
       end
     end
   end
