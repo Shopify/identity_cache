@@ -182,4 +182,32 @@ class CacheInvalidationTest < IdentityCache::TestCase
       @record.class.fetch(@record.id)
     end
   end
+
+  def test_cache_expiry_before_other_after_commit_callbacks
+    Item.fetch(@record.id) # fill cache
+
+    record_id = @record.id
+    after_commit_fetched = nil
+    Item.after_commit do
+      after_commit_fetched = Item.fetch(record_id)
+    end
+    @record.update!(updated_at: @record.updated_at + 1)
+
+    assert_equal(after_commit_fetched.updated_at, @record.updated_at)
+  end
+
+  def test_cache_not_expired_until_after_transaction
+    log = []
+    subscribe_to_sql_queries(->(sql) { log << [:sql, sql] }) do
+      subscribe_to_cache_operations(->(op) { log << [:cache, op] }) do
+        @record.update!(title: 'foo2')
+      end
+    end
+    assert_equal([:sql, :sql, :sql, :cache], log.map(&:first))
+    sql_queries = log.first(3).map(&:last)
+    assert_match(/^BEGIN\b/, sql_queries[0])
+    assert_match(/^UPDATE\b/, sql_queries[1])
+    assert_match(/^COMMIT\b/, sql_queries[2])
+    assert_match(/^cache_write.active_support /, log.last.last)
+  end
 end
