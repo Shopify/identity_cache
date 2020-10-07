@@ -33,7 +33,7 @@ Gem::Specification.new do |gem|
 
   gem.required_ruby_version = '>= 2.5.0'
 
-  gem.add_dependency('ar_transaction_changes', '~> 1.0')
+  gem.add_dependency('ar_transaction_changes', '~> 1.1')
   gem.add_dependency('activerecord', '>= 5.2')
 
   gem.add_development_dependency('memcached', '~> 1.8.0')
