@@ -195,15 +195,15 @@ module IdentityCache
     end
 
     def log_multi_result(keys, memo_miss_keys, cache_miss_keys)
-      IdentityCache.logger.debug do
-        memoized_keys = keys - memo_miss_keys
-        cache_hit_keys = memo_miss_keys - cache_miss_keys
-        missed_keys = cache_miss_keys
+      return unless IdentityCache.logger.level == Logger::DEBUG
 
-        memoized_keys.each { |k| IdentityCache.logger.debug("[IdentityCache] (memoized) cache hit for #{k} (multi)") }
-        cache_hit_keys.each { |k| IdentityCache.logger.debug("[IdentityCache] (backend) cache hit for #{k} (multi)") }
-        missed_keys.each { |k| IdentityCache.logger.debug("[IdentityCache] cache miss for #{k} (multi)") }
-      end
+      memoized_keys = keys - memo_miss_keys
+      cache_hit_keys = memo_miss_keys - cache_miss_keys
+      missed_keys = cache_miss_keys
+
+      memoized_keys.each { |k| IdentityCache.logger.debug("[IdentityCache] (memoized) cache hit for #{k} (multi)") }
+      cache_hit_keys.each { |k| IdentityCache.logger.debug("[IdentityCache] (backend) cache hit for #{k} (multi)") }
+      missed_keys.each { |k| IdentityCache.logger.debug("[IdentityCache] cache miss for #{k} (multi)") }
     end
   end
 end
