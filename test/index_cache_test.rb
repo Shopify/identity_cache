@@ -165,6 +165,15 @@ class IndexCacheTest < IdentityCache::TestCase
     assert_equal(123, KeyedRecord.fetch_by_value('a').id)
   end
 
+  def test_cache_invalidation_of_case_insensitive_text_column
+    Item.cache_index(:title, unique: true)
+    @record.title = 'bob'
+    @record.save!
+    assert(Item.fetch_by_title('Bob'))
+    @record.update!(title: 'Robert')
+    assert_nil(Item.fetch_by_title('Bob'))
+  end
+
   private
 
   def cache_key(unique: false)
