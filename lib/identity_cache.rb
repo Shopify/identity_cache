@@ -54,10 +54,15 @@ module IdentityCache
   DELETED_TTL = 1000
 
   class AlreadyIncludedError < StandardError; end
+
   class AssociationError < StandardError; end
+
   class InverseAssociationError < StandardError; end
+
   class UnsupportedScopeError < StandardError; end
+
   class UnsupportedAssociationError < StandardError; end
+
   class DerivedModelError < StandardError; end
 
   mattr_accessor :cache_namespace
