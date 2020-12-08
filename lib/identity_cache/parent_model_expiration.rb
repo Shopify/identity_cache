@@ -21,6 +21,7 @@ module IdentityCache
       end
 
       def install_pending_parent_expiry_hooks(model)
+        return if lazy_hooks.empty?
         name = model.name.demodulize
         if (hooks = lazy_hooks.delete(name))
           hooks.each(&:install)
@@ -40,7 +41,6 @@ module IdentityCache
     end
 
     def expire_parent_caches
-      ParentModelExpiration.install_pending_parent_expiry_hooks(cached_model)
       parents_to_expire = Set.new
       add_parents_to_cache_expiry_set(parents_to_expire)
       parents_to_expire.each do |parent|
@@ -49,6 +49,7 @@ module IdentityCache
     end
 
     def add_parents_to_cache_expiry_set(parents_to_expire)
+      ParentModelExpiration.install_pending_parent_expiry_hooks(cached_model)
       self.class.parent_expiration_entries.each do |association_name, cached_associations|
         parents_to_expire_on_changes(parents_to_expire, association_name, cached_associations)
       end
