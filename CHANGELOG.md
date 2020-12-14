@@ -4,16 +4,16 @@
 
 ### Fixes
 - Recursively install parent expiry hooks when expiring parent caches (#476)
-- Expire caches before other after_commit callbacks (#471)
+- Expire caches before other `after_commit` callbacks (#471)
 - Avoid unnecessary record cache expiry on save with no DB update (#464)
-- Fix an Active Record deprecation warning by not using Connection#type_cast (#459)
-- Fix broken prefetch_associations of a polymorphic cache_belongs_to (#461)
-- Fix should_use_cache check to avoid calling it on the wrong class (#454)
-- Fix fetch has_many embedded association on record after adding to it (#449)
+- Fix an Active Record deprecation warning by not using `Connection#type_cast` (#459)
+- Fix broken `prefetch_associations` of a polymorphic `cache_belongs_to` (#461)
+- Fix `should_use_cache?` check to avoid calling it on the wrong class (#454)
+- Fix fetch `has_many` embedded association on record after adding to it (#449)
 
 ### Features
-- Support multiple databases and transactional tests in IdentityCache.should_use_cache? (#293)
-- Add support for the default MemCacheStore from ActiveSupport (#465)
+- Support multiple databases and transactional tests in `IdentityCache.should_use_cache?` (#293)
+- Add support for the default `MemCacheStore` from `ActiveSupport` (#465)
 
 ### Breaking Changes
 - Drop ruby 2.4 support, since it is no longer supported upstream (#468)
