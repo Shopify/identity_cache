@@ -32,13 +32,13 @@ class IdentityCacheWithTransactionalFixturesTest < ActiveSupport::TestCase
 
   def test_should_use_cache_in_transaction
     ActiveRecord::Base.transaction do
-      assert_equal false, IdentityCache.should_use_cache?
+      assert_equal(false, IdentityCache.should_use_cache?)
     end
   end
 
   def test_should_use_cache_in_transaction_on_specific_model
     ModelWithConnection.transaction do
-      assert_equal false, IdentityCache.should_use_cache?
+      assert_equal(false, IdentityCache.should_use_cache?)
     end
   end
 end
@@ -63,7 +63,7 @@ class IdentityCacheWithoutTransactionalFixturesTest < ActiveSupport::TestCase
 
   def test_should_use_cache_in_transaction_on_specific_model
     ModelWithConnection.transaction do
-      assert_equal false, IdentityCache.should_use_cache?
+      assert_equal(false, IdentityCache.should_use_cache?)
     end
   end
 end
