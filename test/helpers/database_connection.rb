@@ -5,7 +5,7 @@ module DatabaseConnection
   end
 
   def self.setup
-    db_config = ENV['DATABASE_URL'] || DEFAULT_CONFIG[db_name]
+    db_config = ENV['DATABASE_URL'] || DEFAULT_CONFIG.fetch(db_name)
     begin
       ActiveRecord::Base.establish_connection(db_config)
       ActiveRecord::Base.connection
@@ -80,6 +80,7 @@ module DatabaseConnection
       'database' => 'identity_cache_test',
       'host' => ENV['POSTGRES_HOST'] || '127.0.0.1',
       'username' => 'postgres',
+      'password' => ENV['POSTGRES_PASSWORD'],
       'prepared_statements' => false,
     },
   }

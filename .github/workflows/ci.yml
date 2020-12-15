@@ -1,26 +1,92 @@
 name: CI
 
-on: [push]
+on:
+  push: {}
+  pull_request:
+    types: [opened, synchronize]
 
 jobs:
   build:
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.owner.login != 'Shopify'
 
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        entry:
+          - name: 'Minimum supported'
+            ruby: 2.5
+            gemfile: "Gemfile.min-supported"
+          - name: 'Latest released & run rubocop'
+            ruby: 2.7
+            gemfile: "Gemfile.latest-release"
+            rubocop: true
+          - name: 'Rails edge'
+            ruby: 2.7
+            gemfile: "Gemfile.rails-edge"
+            edge: true
+
+    name: ${{ matrix.entry.name }}
+
+    continue-on-error: ${{ matrix.entry.edge || false }}
+
+    env:
+      BUNDLE_GEMFILE: gemfiles/${{ matrix.entry.gemfile }}
+
+    services:
+      memcached:
+        image: memcached
+        ports:
+          - 11211:11211
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_DATABASE: identity_cache_test
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+        ports:
+          - 3306:3306
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: identity_cache_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Ruby 2.6
-      uses: actions/setup-ruby@v1
-      with:
-        ruby-version: 2.6.x
     - name: Install required packages
       run: |
         sudo apt-get update
-        sudo apt-get -y install libmysqlclient-dev libpq-dev libsasl2-dev
+        sudo apt-get -y install libmemcached-dev libmysqlclient-dev libpq-dev libsasl2-dev
+    - uses: actions/checkout@v2
+    - name: Set up Ruby
+      uses: actions/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.entry.ruby }}
     - name: Install bundler and gems
       run: |
         gem install bundler
         bundle install --jobs 4 --retry 3
+    - name: Test with mysql
+      env:
+        DB: mysql2
+      run: bundle exec rake test
+    - name: Test with postgres and memcached_store
+      env:
+        DB: postgresql
+        POSTGRES_PASSWORD: postgres
+        ADAPTER: memcached
+      run: bundle exec rake test
     - name: Run rubocop
-      run: |
-        bundle exec rubocop
+      if: matrix.entry.rubocop
+      run: bundle exec rubocop
