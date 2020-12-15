@@ -80,6 +80,7 @@ module DatabaseConnection
       'database' => 'identity_cache_test',
       'host' => ENV['POSTGRES_HOST'] || '127.0.0.1',
       'username' => 'postgres',
+      'password' => ENV['POSTGRES_PASSWORD'],
       'prepared_statements' => false,
     },
   }
