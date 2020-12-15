@@ -1,9 +1,14 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push: {}
+  pull_request:
+    types: [opened, synchronize]
 
 jobs:
   build:
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.owner.login != 'Shopify'
+
     runs-on: ubuntu-latest
 
     strategy:
