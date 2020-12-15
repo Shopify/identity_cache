@@ -38,7 +38,8 @@ module IdentityCache
 
         def fetch_association(load_strategy, klass, association, records, &block)
           unless klass.should_use_cache?
-            ActiveRecord::Associations::Preloader.new.preload(records, association)
+            preload_scope = nil
+            ActiveRecord::Associations::Preloader.new.preload(records, association, preload_scope)
             return yield
           end
 
