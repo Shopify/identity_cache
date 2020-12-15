@@ -5,7 +5,7 @@ module DatabaseConnection
   end
 
   def self.setup
-    db_config = ENV['DATABASE_URL'] || DEFAULT_CONFIG[db_name]
+    db_config = ENV['DATABASE_URL'] || DEFAULT_CONFIG.fetch(db_name)
     begin
       ActiveRecord::Base.establish_connection(db_config)
       ActiveRecord::Base.connection
