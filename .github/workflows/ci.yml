@@ -14,9 +14,19 @@ jobs:
     strategy:
       matrix:
         entry:
-          - { ruby: 2.5, gemfile: "Gemfile.min-supported" }
-          - { ruby: 2.7, gemfile: "Gemfile.latest-release", rubocop: true }
-          - { ruby: 2.7, gemfile: "Gemfile.rails-edge", edge: true }
+          - name: 'Minimum supported'
+            ruby: 2.5
+            gemfile: "Gemfile.min-supported"
+          - name: 'Latest released & run rubocop'
+            ruby: 2.7
+            gemfile: "Gemfile.latest-release"
+            rubocop: true
+          - name: 'Rails edge'
+            ruby: 2.7
+            gemfile: "Gemfile.rails-edge"
+            edge: true
+
+    name: ${{ matrix.entry.name }}
 
     continue-on-error: ${{ matrix.entry.edge || false }}
 
