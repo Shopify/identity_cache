@@ -3,6 +3,8 @@
 ## Unreleased
 
 ### Fixes
+- Fix double debug logging of cache hits and misses (#474)
+- Fix a Rails 6.1 deprecation warning for Rails 7.0 compatibility (#482)
 - Recursively install parent expiry hooks when expiring parent caches (#476)
 - Expire caches before other `after_commit` callbacks (#471)
 - Avoid unnecessary record cache expiry on save with no DB update (#464)
