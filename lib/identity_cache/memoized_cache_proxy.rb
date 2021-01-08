@@ -195,7 +195,7 @@ module IdentityCache
     end
 
     def log_multi_result(keys, memo_miss_keys, cache_miss_keys)
-      return unless IdentityCache.logger.level == Logger::DEBUG
+      return unless IdentityCache.logger.debug?
 
       memoized_keys = keys - memo_miss_keys
       cache_hit_keys = memo_miss_keys - cache_miss_keys
