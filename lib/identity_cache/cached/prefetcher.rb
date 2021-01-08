@@ -38,13 +38,22 @@ module IdentityCache
 
         def fetch_association(load_strategy, klass, association, records, &block)
           unless klass.should_use_cache?
-            preload_scope = nil
-            ActiveRecord::Associations::Preloader.new.preload(records, association, preload_scope)
+            preload_records(records, association)
             return yield
           end
 
           cached_association = klass.cached_association(association)
           cached_association.fetch_async(load_strategy, records, &block)
+        end
+
+        if ActiveRecord.gem_version < Gem::Version.new("6.2.0.alpha")
+          def preload_records(records, association)
+            ActiveRecord::Associations::Preloader.new.preload(records, association)
+          end
+        else
+          def preload_records(records, association)
+            ActiveRecord::Associations::Preloader.new(records: records, associations: association).call
+          end
         end
       end
     end

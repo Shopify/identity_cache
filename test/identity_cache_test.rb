@@ -23,7 +23,11 @@ class IdentityCacheWithTransactionalFixturesTest < ActiveSupport::TestCase
   self.use_transactional_tests = true
 
   class ModelWithConnection < ActiveRecord::Base
-    establish_connection ActiveRecord::Base.connection_config
+    if ActiveRecord.gem_version < Gem::Version.new('6.1.0.alpha')
+      establish_connection ActiveRecord::Base.connection_config
+    else
+      establish_connection ActiveRecord::Base.connection_db_config
+    end
   end
 
   def test_should_use_cache_outside_transaction
@@ -48,7 +52,11 @@ class IdentityCacheWithoutTransactionalFixturesTest < ActiveSupport::TestCase
   self.use_transactional_tests = false
 
   class ModelWithConnection < ActiveRecord::Base
-    establish_connection ActiveRecord::Base.connection_config
+    if ActiveRecord.gem_version < Gem::Version.new('6.1.0.alpha')
+      establish_connection ActiveRecord::Base.connection_config
+    else
+      establish_connection ActiveRecord::Base.connection_db_config
+    end
   end
 
   def test_should_use_cache_outside_transaction
