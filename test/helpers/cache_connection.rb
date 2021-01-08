@@ -19,7 +19,7 @@ module CacheConnection
     @backend ||= case ENV['ADAPTER']
     when nil, 'dalli'
       require 'active_support/cache/mem_cache_store'
-      ActiveSupport::Cache::MemCacheStore.new("#{host}:11211", failover: false)
+      ActiveSupport::Cache::MemCacheStore.new("#{host}:11211", failover: false, expires_in: 6.hours.to_i)
     when 'memcached'
       require 'memcached_store'
       require 'active_support/cache/memcached_store'
