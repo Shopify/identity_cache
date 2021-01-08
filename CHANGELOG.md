@@ -1,6 +1,6 @@
-# IdentityCache changelog
+# Identity Cache Changelog
 
-## Unreleased
+## 1.1.0
 
 ### Fixes
 - Fix double debug logging of cache hits and misses (#474)
