@@ -66,16 +66,46 @@ class CacheFetcherTest < IdentityCache::TestCase
     # invalidate during lock wait
     other_client_operations = 1
     cache_fetcher.expects(:sleep).with do |duration|
-      assert_memcache_operations(other_client_operations) do # get+cas
+      assert_memcache_operations(other_client_operations) do
         other_cache_fetcher.delete(key)
       end
       duration == 0.9
     end
 
-    assert_memcache_operations(3 + other_client_operations) do # get (miss), get (invalidated), get (fallback key)
+    assert_memcache_operations(3 + other_client_operations) do # get (miss), get (invalidated), get+cas (fallback key)
       assert_equal(:fill_data, cache_fetcher.fetch(key, fill_lock_duration: 0.9) { :fill_data })
     end
     assert_equal(IdentityCache::DELETED, backend.read(key))
+  end
+
+  def test_fetch_lock_wait_with_cache_invalidation_and_relock
+    second_client = other_cache_fetcher
+    third_client = IdentityCache::CacheFetcher.new(backend)
+
+    second_client_fiber = Fiber.new do
+      second_client.fetch(key, fill_lock_duration: 0.9) do
+        Fiber.yield
+        :second_client_data
+      end
+    end
+    second_client_fiber.resume
+
+    # invalidate during lock wait
+    other_client_operations = 4
+    cache_fetcher.expects(:sleep).with do |duration|
+      assert_memcache_operations(other_client_operations) do
+        third_client.delete(key)
+        other_client_takes_lock(third_client) # get+cas
+        second_client_fiber.resume # get (new lock), get+cas (fallback key)
+      end
+      duration == 0.9
+    end
+
+    assert_memcache_operations(3 + other_client_operations) do # get (other lock), get (new lock), get (fallback key)
+      assert_equal(:second_client_data, cache_fetcher.fetch(key, fill_lock_duration: 0.9) { flunk("unexpected yield") })
+    end
+    key_value = backend.read(key)
+    assert_equal([:fill_locked, third_client.send(:client_id)], key_value.first(2))
   end
 
   def test_fetch_lock_wait_limit_reached
@@ -137,8 +167,8 @@ class CacheFetcherTest < IdentityCache::TestCase
     lock
   end
 
-  def other_client_takes_lock
-    other_cache_fetcher.fetch(key, fill_lock_duration: 0.9) do
+  def other_client_takes_lock(cache_fetcher = other_cache_fetcher)
+    cache_fetcher.fetch(key, fill_lock_duration: 0.9) do
       break # skip filling
     end
   end

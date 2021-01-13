@@ -192,6 +192,11 @@ module IdentityCache
           if old_lock == fetched_lock
             # preserve data version since there hasn't been any cache invalidations
             new_lock = FillLock.new(client_id: client_id, data_version: old_lock.data_version)
+          elsif old_lock && fetched_lock.data_version != old_lock.data_version
+            # Cache was invalidated, then another lock was taken during a lock wait.
+            # Treat it as any other cache invalidation, where the caller will switch
+            # to the fallback key.
+            return IdentityCache::DELETED
           else
             return fetched_lock
           end
