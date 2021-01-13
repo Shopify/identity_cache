@@ -136,7 +136,9 @@ module IdentityCache
             # loop around to retry fetch_or_take_lock
           end
         when IdentityCache::DELETED # interrupted by cache invalidation
-          if lock && !using_fallback_key
+          if using_fallback_key
+            raise "unexpected cache invalidation of versioned fallback key"
+          elsif lock
             # cache invalidated during lock wait, try fallback key
             using_fallback_key = true
             key = lock_fill_fallback_key(key, lock)
