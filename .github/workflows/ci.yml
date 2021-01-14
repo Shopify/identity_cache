@@ -25,6 +25,10 @@ jobs:
             ruby: 2.7
             gemfile: "Gemfile.rails-edge"
             edge: true
+          - name: 'Ruby 3 - Rails edge'
+            ruby: 3.0
+            gemfile: "Gemfile.rails-edge"
+            edge: true
 
     name: ${{ matrix.entry.name }}
 
