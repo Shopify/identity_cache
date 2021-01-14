@@ -139,13 +139,20 @@ module IdentityCache
           if using_fallback_key
             raise "unexpected cache invalidation of versioned fallback key"
           elsif lock
-            # cache invalidated during lock wait, try fallback key
+            # Cache invalidated during lock wait, use a versioned fallback key
+            # to avoid further cache invalidation interruptions.
             using_fallback_key = true
             key = lock_fill_fallback_key(key, lock)
             expiration_options = fallback_key_expiration_options(fill_lock_duration)
             # loop around to retry with fallback key
           else
-            # cache invalidation prevented lock from being taken
+            # Cache invalidation prevented lock from being taken or read, so we don't
+            # have a data version to use to build a shared fallback key. In the future
+            # we could add the data version to the cache invalidation value so a fallback
+            # key could be used here. For now, we assume that a cache invalidation occuring
+            # just after the cache wasn't filled is more likely a sign of a key that is
+            # written more than read (which this cache isn't a good fit for), rather than
+            # a thundering herd or reads.
             return yield
           end
         when nil # Errors talking to memcached
