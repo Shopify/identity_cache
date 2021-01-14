@@ -43,8 +43,8 @@ module IdentityCache
       end
 
       def expire(id)
-        id = cast_id(id)
-        IdentityCache.cache.delete(cache_key(id))
+        key = cache_key(cast_id(id))
+        IdentityCache.expirator.expire(key)
       end
 
       def cache_key(id)

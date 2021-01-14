@@ -40,6 +40,8 @@ require "identity_cache/cache_fetcher"
 require "identity_cache/fallback_fetcher"
 require 'identity_cache/without_primary_index'
 require 'identity_cache/with_primary_index'
+require 'identity_cache/noop_expirator'
+require 'identity_cache/inline_expirator'
 
 module IdentityCache
   extend ActiveSupport::Concern
@@ -52,6 +54,7 @@ module IdentityCache
   BATCH_SIZE = 1000
   DELETED = :idc_cached_deleted
   DELETED_TTL = 1000
+  EXPIRATION_STRATEGIES = {inline: InlineExpirator, worker: NoopExpirator}
 
   class AlreadyIncludedError < StandardError; end
 
@@ -64,6 +67,14 @@ module IdentityCache
   class UnsupportedAssociationError < StandardError; end
 
   class DerivedModelError < StandardError; end
+  class ExpirationStrategyNotFound  < StandardError
+    attr_reader :strategy
+    def initialize(strategy=nil)
+      msg = "#{strategy.to_s} is not a valid expiration strategy"
+      super(msg)
+    end
+  end
+
 
   mattr_accessor :cache_namespace
   self.cache_namespace = "IDC:#{CACHE_VERSION}:"
@@ -73,6 +84,9 @@ module IdentityCache
   # When set to true, it will only return read-only records when cache is used.
   mattr_accessor :fetch_read_only_records
   self.fetch_read_only_records = true
+
+  mattr_accessor :expiration_strategy
+  self.expiration_strategy = :inline
 
   class << self
     include IdentityCache::CacheHash
@@ -156,6 +170,24 @@ module IdentityCache
 
     def unmap_cached_nil_for(value)
       value == IdentityCache::CACHED_NIL ? nil : value
+    end
+
+    def reset_expiration_strategy(strategy)
+      @expirator = nil
+      self.expiration_strategy = strategy
+    end
+
+    def expirator
+      return @expirator if defined?(@expirator) and @expirator
+
+      strategy = self.expiration_strategy
+
+      unless  EXPIRATION_STRATEGIES[strategy] 
+        raise ExpirationStrategyNotFound.new(strategy) 
+      end
+
+      @expirator = EXPIRATION_STRATEGIES[strategy].new
+    
     end
 
     # Same as +fetch+, except that it will try a collection of keys, using the

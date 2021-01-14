@@ -1,0 +1,13 @@
+#!/usr/bin/env ruby
+
+require 'identity_cache'
+
+# This is meant to run a long lived process along these lines 
+# Parse args from command line / env then call
+#
+# IdentityCache::BinlogExpirationWorker.new(*args).run
+#
+# BinlongExpiration worker should be able to receive binlog events
+# and based on those events expire the cache
+
+

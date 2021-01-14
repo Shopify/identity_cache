@@ -31,6 +31,7 @@ module IdentityCache
         db_value = nil
 
         cache_value = IdentityCache.fetch(cache_key) do
+          IdentityCache.logger.debug "Resolving miss key=#{self.name} db_key=#{db_key}"
           db_value = cache_fetcher.load_one_from_db(db_key)
           cache_fetcher.cache_encode(db_value)
         end
