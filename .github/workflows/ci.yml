@@ -74,7 +74,7 @@ jobs:
         sudo apt-get -y install libmemcached-dev libmysqlclient-dev libpq-dev libsasl2-dev
     - uses: actions/checkout@v2
     - name: Set up Ruby
-      uses: actions/setup-ruby@v1
+      uses: ruby/setup-ruby@v1
       with:
         ruby-version: ${{ matrix.entry.ruby }}
     - name: Install bundler and gems
