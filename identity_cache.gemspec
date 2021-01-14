@@ -39,7 +39,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency('activerecord', '>= 5.2')
 
   gem.add_development_dependency('memcached', '~> 1.8.0')
-  gem.add_development_dependency('memcached_store', '~> 1.0.0')
+  gem.add_development_dependency('memcached_store', '>= 2.1.5')
   gem.add_development_dependency('dalli')
   gem.add_development_dependency('rake')
   gem.add_development_dependency('mocha', '0.14.0')
