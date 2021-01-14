@@ -355,7 +355,7 @@ class FetchTest < IdentityCache::TestCase
         assert_queries(1) { Item.fetch(@record.id) }
         duration == 0.1
       end
-      Item.fetch(@record.id, fill_lock_duration: 0.1, lock_wait_limit: 1)
+      Item.fetch(@record.id, fill_lock_duration: 0.1, lock_wait_tries: 1)
 
       assert_equal(@record, Item.fetch(@record.id))
     end

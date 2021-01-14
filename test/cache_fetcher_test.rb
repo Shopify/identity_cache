@@ -108,7 +108,7 @@ class CacheFetcherTest < IdentityCache::TestCase
     assert_equal([:fill_locked, third_client.send(:client_id)], key_value.first(2))
   end
 
-  def test_fetch_lock_wait_limit_reached
+  def test_fetch_lock_wait_tries_reached
     data_version = SecureRandom.uuid
     lock = write_lock(data_version: data_version)
     other_client_operations = 3
@@ -118,7 +118,7 @@ class CacheFetcherTest < IdentityCache::TestCase
     end
     assert_memcache_operations(4 + other_client_operations) do # get (miss) * 4
       assert_raises(IdentityCache::LockWaitTimeout) do
-        cache_fetcher.fetch(key, fill_lock_duration: 0.9, lock_wait_limit: 3)
+        cache_fetcher.fetch(key, fill_lock_duration: 0.9, lock_wait_tries: 3)
       end
     end
     assert_equal(lock, backend.read(key))

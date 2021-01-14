@@ -109,15 +109,15 @@ module IdentityCache
       #   by another client. Defaults to not setting the fill lock and trying to fill the
       #   cache from the database regardless of the presence of another client's fill lock.
       #   Set this to just above the typical amount of time it takes to do a cache fill.
-      # @param lock_wait_limit [Integer] Only applicable if fill_lock_duration is provided,
+      # @param lock_wait_tries [Integer] Only applicable if fill_lock_duration is provided,
       #   in which case it specifies the number of times to do a lock wait. After the first
       #   lock wait it will try to take the lock, so will only do following lock waits due
       #   to another client taking the lock first. If another lock wait would be needed after
       #   reaching the limit, then a `LockWaitTimeout` exception is raised. Default is 2. Use
       #   this to control the maximum total lock wait duration
-      #   (`lock_wait_limit * fill_lock_duration`).
-      # @raise [LockWaitTimeout] Timeout after waiting `lock_wait_limit * fill_lock_duration`
-      #   seconds for `lock_wait_limit` other clients to fill the cache.
+      #   (`lock_wait_tries * fill_lock_duration`).
+      # @raise [LockWaitTimeout] Timeout after waiting `lock_wait_tries * fill_lock_duration`
+      #   seconds for `lock_wait_tries` other clients to fill the cache.
       # @return [self|nil] An instance of this model for the record with the specified id or
       #   `nil` if no record with this `id` exists in the database
       def fetch_by_id(id, includes: nil, **cache_fetcher_options)

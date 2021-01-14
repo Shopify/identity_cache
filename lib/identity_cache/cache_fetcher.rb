@@ -69,9 +69,9 @@ module IdentityCache
       results
     end
 
-    def fetch(key, fill_lock_duration: nil, lock_wait_limit: 2)
+    def fetch(key, fill_lock_duration: nil, lock_wait_tries: 2)
       if fill_lock_duration && IdentityCache.should_fill_cache?
-        fetch_with_fill_lock(key, fill_lock_duration, lock_wait_limit) do
+        fetch_with_fill_lock(key, fill_lock_duration, lock_wait_tries) do
           yield
         end
       else
@@ -95,13 +95,13 @@ module IdentityCache
       data
     end
 
-    def fetch_with_fill_lock(key, fill_lock_duration, lock_wait_limit)
+    def fetch_with_fill_lock(key, fill_lock_duration, lock_wait_tries)
       raise ArgumentError, 'fill_lock_duration must be greater than 0.0' unless fill_lock_duration > 0.0
-      raise ArgumentError, 'lock_wait_limit must be greater than 0' unless lock_wait_limit > 0
+      raise ArgumentError, 'lock_wait_tries must be greater than 0' unless lock_wait_tries > 0
       lock = nil
       using_fallback_key = false
       expiration_options = EMPTY_HASH
-      (lock_wait_limit + 2).times do # +2 is for first attempt and retry with fallback key
+      (lock_wait_tries + 2).times do # +2 is for first attempt and retry with fallback key
         result = fetch_or_take_lock(key, old_lock: lock, **expiration_options)
         case result
         when FillLock
@@ -121,8 +121,8 @@ module IdentityCache
             end
             return data
           else
-            raise LockWaitTimeout if lock_wait_limit <= 0
-            lock_wait_limit -= 1
+            raise LockWaitTimeout if lock_wait_tries <= 0
+            lock_wait_tries -= 1
 
             # If fill failed in the other client, then it might be failing fast
             # so avoid waiting the typical amount of time for a lock wait. The
