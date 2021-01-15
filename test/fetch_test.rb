@@ -43,7 +43,8 @@ class FetchTest < IdentityCache::TestCase
   end
 
   def test_fetch_cache_hit_publishes_cache_notification
-    IdentityCache.cache.cache_fetcher.expects(:fetch).with(@blob_key, {}).returns(@cached_value)
+    expected_kwargs = {}
+    IdentityCache.cache.cache_fetcher.expects(:fetch).with(@blob_key, **expected_kwargs).returns(@cached_value)
     expected = { memoizing: false, resolve_miss_time: 0, memo_hits: 0, cache_hits: 1, cache_misses: 0 }
 
     events = 0
@@ -59,7 +60,8 @@ class FetchTest < IdentityCache::TestCase
 
   def test_fetch_memoized_hit_publishes_cache_notification
     subscriber = nil
-    IdentityCache.cache.cache_fetcher.expects(:fetch).with(@blob_key, {}).returns(@cached_value)
+    expected_kwargs = {}
+    IdentityCache.cache.cache_fetcher.expects(:fetch).with(@blob_key, **expected_kwargs).returns(@cached_value)
     expected = { memoizing: true, resolve_miss_time: 0, memo_hits: 1, cache_hits: 0, cache_misses: 0 }
 
     IdentityCache.cache.with_memoization do

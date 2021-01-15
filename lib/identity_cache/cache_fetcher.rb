@@ -117,7 +117,7 @@ module IdentityCache
             if !fill_with_lock(key, data, lock, expiration_options) && !using_fallback_key
               # fallback to storing data in the fallback key so it is available to clients waiting on the lock
               expiration_options = fallback_key_expiration_options(fill_lock_duration)
-              @cache_backend.write(lock_fill_fallback_key(key, lock), data, **expiration_options)
+              @cache_backend.write(lock_fill_fallback_key(key, lock), data, expiration_options)
             end
             return data
           else
@@ -296,7 +296,7 @@ module IdentityCache
       result.each { |k, v| add(k, v) }
     end
 
-    def add(key, value, **expiration_options)
+    def add(key, value, expiration_options = EMPTY_HASH)
       return false unless IdentityCache.should_fill_cache?
       @cache_backend.write(key, value, { unless_exist: true, **expiration_options })
     end
