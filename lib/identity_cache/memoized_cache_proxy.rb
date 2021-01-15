@@ -69,7 +69,7 @@ module IdentityCache
       end
     end
 
-    def fetch(key)
+    def fetch(key, cache_fetcher_options = {})
       memo_misses = 0
       cache_misses = 0
 
@@ -78,7 +78,7 @@ module IdentityCache
 
         value = fetch_memoized(key) do
           memo_misses = 1
-          @cache_fetcher.fetch(key) do
+          @cache_fetcher.fetch(key, **cache_fetcher_options) do
             cache_misses = 1
             instrument_duration(payload, :resolve_miss_time) do
               yield

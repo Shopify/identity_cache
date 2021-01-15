@@ -20,7 +20,7 @@ class AttributeCacheTest < IdentityCache::TestCase
     assert_queries(1) do
       assert_equal('foo', AssociatedRecord.fetch_name_by_id(1))
     end
-    assert(fetch.has_been_called_with?(@name_attribute_key))
+    assert(fetch.has_been_called_with?(@name_attribute_key, {}))
   end
 
   def test_attribute_values_are_returned_on_cache_hits

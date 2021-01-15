@@ -6,7 +6,7 @@ up:
     - mysql-client@5.7:
         or:        [mysql@5.7]
         conflicts: [mysql-connector-c, mysql, mysql-client]
-  - ruby: 2.6.5
+  - ruby: 2.7.2
   - railgun
   - bundler
 

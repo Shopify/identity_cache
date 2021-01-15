@@ -41,7 +41,8 @@ class MemoizedCacheProxyTest < IdentityCache::TestCase
   end
 
   def test_fetch_should_try_memcached_on_not_memoized_values
-    fetcher.expects(:fetch).with('foo').returns('bar')
+    expected_kwargs = {}
+    fetcher.expects(:fetch).with('foo', **expected_kwargs).returns('bar')
 
     IdentityCache.cache.with_memoization do
       assert_equal('bar', IdentityCache.cache.fetch('foo'))

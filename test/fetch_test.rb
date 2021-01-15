@@ -23,13 +23,13 @@ class FetchTest < IdentityCache::TestCase
   end
 
   def test_fetch_cache_hit
-    IdentityCache.cache.expects(:fetch).with(@blob_key).returns(@cached_value)
+    IdentityCache.cache.expects(:fetch).with(@blob_key, {}).returns(@cached_value)
 
     assert_equal(@record, Item.fetch(1))
   end
 
   def test_fetch_cache_hit_publishes_hydration_notification
-    IdentityCache.cache.expects(:fetch).with(@blob_key).returns(@cached_value)
+    IdentityCache.cache.expects(:fetch).with(@blob_key, {}).returns(@cached_value)
 
     events = 0
     subscriber = ActiveSupport::Notifications.subscribe('hydration.identity_cache') do |_, _, _, _, payload|
@@ -43,7 +43,8 @@ class FetchTest < IdentityCache::TestCase
   end
 
   def test_fetch_cache_hit_publishes_cache_notification
-    IdentityCache.cache.cache_fetcher.expects(:fetch).with(@blob_key).returns(@cached_value)
+    expected_kwargs = {}
+    IdentityCache.cache.cache_fetcher.expects(:fetch).with(@blob_key, **expected_kwargs).returns(@cached_value)
     expected = { memoizing: false, resolve_miss_time: 0, memo_hits: 0, cache_hits: 1, cache_misses: 0 }
 
     events = 0
@@ -59,7 +60,8 @@ class FetchTest < IdentityCache::TestCase
 
   def test_fetch_memoized_hit_publishes_cache_notification
     subscriber = nil
-    IdentityCache.cache.cache_fetcher.expects(:fetch).with(@blob_key).returns(@cached_value)
+    expected_kwargs = {}
+    IdentityCache.cache.cache_fetcher.expects(:fetch).with(@blob_key, **expected_kwargs).returns(@cached_value)
     expected = { memoizing: true, resolve_miss_time: 0, memo_hits: 1, cache_hits: 0, cache_misses: 0 }
 
     IdentityCache.cache.with_memoization do
@@ -81,7 +83,7 @@ class FetchTest < IdentityCache::TestCase
     IdentityCache.cache_namespace = proc { |model| "#{model.table_name}:#{old_ns}" }
 
     new_blob_key = "items:#{@blob_key}"
-    IdentityCache.cache.expects(:fetch).with(new_blob_key).returns(@cached_value)
+    IdentityCache.cache.expects(:fetch).with(new_blob_key, {}).returns(@cached_value)
 
     assert_equal(@record, Item.fetch(1))
   ensure
@@ -89,7 +91,7 @@ class FetchTest < IdentityCache::TestCase
   end
 
   def test_exists_with_identity_cache_when_cache_hit
-    IdentityCache.cache.expects(:fetch).with(@blob_key).returns(@cached_value)
+    IdentityCache.cache.expects(:fetch).with(@blob_key, {}).returns(@cached_value)
 
     assert(Item.exists_with_identity_cache?(1))
   end
@@ -99,7 +101,7 @@ class FetchTest < IdentityCache::TestCase
     Item.cached_primary_index.expects(:load_one_from_db).with(1).once.returns(@record)
 
     assert(Item.exists_with_identity_cache?(1))
-    assert(fetch.has_been_called_with?(@blob_key))
+    assert(fetch.has_been_called_with?(@blob_key, {}))
   end
 
   def test_exists_with_identity_cache_when_cache_miss_and_not_in_db
@@ -107,7 +109,7 @@ class FetchTest < IdentityCache::TestCase
     Item.cached_primary_index.expects(:load_one_from_db).with(1).once.returns(nil)
 
     assert(!Item.exists_with_identity_cache?(1))
-    assert(fetch.has_been_called_with?(@blob_key))
+    assert(fetch.has_been_called_with?(@blob_key, {}))
   end
 
   def test_fetch_miss_published_dehydration_notification
@@ -147,7 +149,7 @@ class FetchTest < IdentityCache::TestCase
     fetch = Spy.on(IdentityCache.cache, :fetch).and_return { |_, &block| block.call.tap { |result| results << result } }
 
     assert_equal(@record, Item.fetch(1))
-    assert(fetch.has_been_called_with?(@blob_key))
+    assert(fetch.has_been_called_with?(@blob_key, {}))
     assert_equal([@cached_value], results)
   end
 
@@ -162,11 +164,11 @@ class FetchTest < IdentityCache::TestCase
       @record.expire_cache
       @record
     end
-    add = Spy.on(fetcher, :add).and_call_through
+    write = Spy.on(backend, :write).and_call_through
 
     assert_equal(@record, Item.fetch(1))
     assert(load_one_from_db.has_been_called_with?(1))
-    assert(add.has_been_called_with?(@blob_key, @cached_value))
+    assert(write.has_been_called_with?(@blob_key, @cached_value, unless_exist: true))
     assert_equal(IdentityCache::DELETED, backend.read(@record.primary_cache_index_key))
   end
 
@@ -178,24 +180,24 @@ class FetchTest < IdentityCache::TestCase
       @record.expire_cache
       @record
     end
-    add = Spy.on(IdentityCache.cache.cache_fetcher, :add).and_call_through
+    write = Spy.on(backend, :write).and_call_through
 
     assert_equal(@record, Item.fetch(1))
     assert(load_one_from_db.has_been_called_with?(1))
-    refute(add.has_been_called?)
+    refute(write.calls.any? { |call| call.args.last.key?(unless_exist: true) })
     assert_equal(IdentityCache::DELETED, backend.read(@record.primary_cache_index_key))
   end
 
   def test_fetch_by_id_not_found_should_return_nil
     nonexistent_record_id = 10
-    fetcher.expects(:add).with(@blob_key + '0', IdentityCache::CACHED_NIL)
+    fetcher.expects(:add).with(@blob_key + '0', IdentityCache::CACHED_NIL, {})
 
     assert_nil(Item.fetch_by_id(nonexistent_record_id))
   end
 
   def test_fetch_not_found_should_raise
     nonexistent_record_id = 10
-    fetcher.expects(:add).with(@blob_key + '0', IdentityCache::CACHED_NIL)
+    fetcher.expects(:add).with(@blob_key + '0', IdentityCache::CACHED_NIL, {})
 
     assert_raises(IdentityCache::RecordNotFound) { Item.fetch(nonexistent_record_id) }
   end
@@ -219,7 +221,7 @@ class FetchTest < IdentityCache::TestCase
 
   def test_fetch_by_title_hit
     values = []
-    fetch = Spy.on(IdentityCache.cache, :fetch).and_return do |key, &block|
+    fetch = Spy.on(IdentityCache.cache, :fetch, {}).and_return do |key, &block|
       case key
       # Read record with title bob
       when @index_key then block.call.tap { |val| values << val }
@@ -233,35 +235,28 @@ class FetchTest < IdentityCache::TestCase
 
     assert_equal(@record, Item.fetch_by_title('bob'))
     assert_equal([1], values)
-    assert(fetch.has_been_called_with?(@index_key))
-    assert(fetch.has_been_called_with?(@blob_key))
+    assert(fetch.has_been_called_with?(@index_key, {}))
+    assert(fetch.has_been_called_with?(@blob_key, {}))
   end
 
   def test_fetch_by_title_cache_namespace
     Item.send(:include, SwitchNamespace)
-    IdentityCache.cache.expects(:fetch).with("ns:#{@index_key}").returns(1)
-    IdentityCache.cache.expects(:fetch).with("ns:#{@blob_key}").returns(@cached_value)
+    IdentityCache.cache.expects(:fetch).with("ns:#{@index_key}", {}).returns(1)
+    IdentityCache.cache.expects(:fetch).with("ns:#{@blob_key}", {}).returns(@cached_value)
 
     assert_equal(@record, Item.fetch_by_title('bob'))
   end
 
-  def test_fetch_by_title_stores_idcnil
-    Item.connection.expects(:exec_query).once.returns(ActiveRecord::Result.new([], []))
-    add = Spy.on(fetcher, :add).and_call_through
-    fetch = Spy.on(fetcher, :fetch).and_call_through
-    assert_nil(Item.fetch_by_title('bob')) # exec_query => nil
-
-    assert_nil(Item.fetch_by_title('bob')) # returns cached nil
-    assert_nil(Item.fetch_by_title('bob')) # returns cached nil
-
-    assert(add.has_been_called_with?(@index_key, IdentityCache::CACHED_NIL))
-    assert_equal(3, fetch.calls.length)
+  def test_fetch_by_title_caches_nil
+    assert_nil(Item.fetch_by_title('missing'))
+    assert_no_queries do
+      assert_nil(Item.fetch_by_title('missing'))
+    end
   end
 
   def test_fetch_by_bang_method
-    Item.connection.expects(:exec_query).returns(ActiveRecord::Result.new([], []))
     assert_raises(IdentityCache::RecordNotFound) do
-      Item.fetch_by_title!('bob')
+      Item.fetch_by_title!('missing')
     end
   end
 
@@ -306,7 +301,7 @@ class FetchTest < IdentityCache::TestCase
 
   def test_returned_records_are_readonly_on_cache_hit
     IdentityCache.with_fetch_read_only_records do
-      IdentityCache.cache.expects(:fetch).with(@blob_key).returns(@cached_value)
+      IdentityCache.cache.expects(:fetch).with(@blob_key, {}).returns(@cached_value)
       assert(Item.fetch(1).readonly?)
     end
   end
@@ -317,7 +312,7 @@ class FetchTest < IdentityCache::TestCase
       Item.cached_primary_index.expects(:load_one_from_db).with(1).once.returns(@record)
 
       assert(Item.exists_with_identity_cache?(1))
-      assert(fetch.has_been_called_with?(@blob_key))
+      assert(fetch.has_been_called_with?(@blob_key, {}))
       assert(Item.fetch(1).readonly?)
     end
   end
@@ -329,7 +324,7 @@ class FetchTest < IdentityCache::TestCase
         Item.cached_primary_index.expects(:load_one_from_db).with(1).once.returns(@record)
 
         refute(IdentityCache.should_use_cache?)
-        refute(fetch.has_been_called_with?(@blob_key))
+        refute(fetch.has_been_called_with?(@blob_key, {}))
         refute(Item.fetch(1).readonly?, "Fetched item was read-only")
       end
     end
@@ -343,6 +338,28 @@ class FetchTest < IdentityCache::TestCase
       assert_queries(1) do
         Item.fetch_by_id(@record.id)
       end
+    end
+  end
+
+  def test_fetch_supports_lock_wait_options
+    @record.save
+
+    # only one client reads from the database on concurrent fetch with lock wait
+    assert_queries(1) do
+      # other client takes fill lock
+      cache_key = Item.cached_primary_index.cache_key(@record.id)
+      lock = IdentityCache::CacheFetcher::FillLock.new(client_id: SecureRandom.uuid, data_version: SecureRandom.uuid)
+      IdentityCache.cache.cache_fetcher.write(cache_key, lock.cache_value)
+
+      # fetch waits on lock
+      IdentityCache.cache.cache_fetcher.expects(:sleep).with do |duration|
+        # other client fills cache
+        assert_queries(1) { Item.fetch(@record.id) }
+        duration == 0.1
+      end
+      Item.fetch(@record.id, fill_lock_duration: 0.1, lock_wait_tries: 1)
+
+      assert_equal(@record, Item.fetch(@record.id))
     end
   end
 end
