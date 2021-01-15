@@ -42,16 +42,4 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency('mocha', '~> 1.12')
   gem.add_development_dependency('spy', '~> 1.0')
   gem.add_development_dependency('minitest', '~> 5.14')
-
-  gem.add_development_dependency('memcached', '~> 1.8.0')
-  gem.add_development_dependency('memcached_store', '~> 1.0.0')
-  gem.add_development_dependency('dalli')
-
-  if RUBY_PLATFORM == 'java'
-    raise NotImplementedError
-  else
-    gem.add_development_dependency('cityhash', '0.6.0')
-    gem.add_development_dependency('mysql2')
-    gem.add_development_dependency('pg')
-  end
 end
