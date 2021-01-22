@@ -1,7 +1,10 @@
 source 'https://rubygems.org'
 gemspec path: '..'
 
-gem 'activerecord', github: 'rails/rails'
+gem 'activerecord', github: 'rails/rails', branch: 'main'
 gem 'activesupport', github: 'rails/rails'
-gem "mysql2", ">= 0.4.4"
+gem "mysql2", "~> 0.5"
 gem "pg", "~> 1.1"
+gem 'memcached_store'
+gem 'dalli'
+gem 'cityhash'

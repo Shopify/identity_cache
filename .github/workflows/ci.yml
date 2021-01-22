@@ -18,11 +18,11 @@ jobs:
             ruby: 2.5
             gemfile: "Gemfile.min-supported"
           - name: 'Latest released & run rubocop'
-            ruby: 2.7
+            ruby: 3.0
             gemfile: "Gemfile.latest-release"
             rubocop: true
           - name: 'Rails edge'
-            ruby: 2.7
+            ruby: 3.0
             gemfile: "Gemfile.rails-edge"
             edge: true
 

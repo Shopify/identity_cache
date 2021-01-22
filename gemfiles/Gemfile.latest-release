@@ -1,8 +1,12 @@
 source 'https://rubygems.org'
 gemspec path: '..'
 
+gem 'rubocop', '~> 1.5'
+
 gem 'activerecord'
 gem 'activesupport'
-gem "mysql2", ">= 0.4.4"
-gem "pg", ">= 0.18", "< 2.0"
-gem 'rubocop', '~> 1.5'
+gem "mysql2", "~> 0.5"
+gem "pg", "~> 1.1"
+gem 'memcached_store'
+gem 'dalli'
+gem 'cityhash'
