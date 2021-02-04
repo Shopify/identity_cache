@@ -70,7 +70,10 @@ module IdentityCache
         readonly: IdentityCache.fetch_read_only_records && should_use_cache?
       )
         return if records.empty?
-        records.each(&:readonly!) if readonly
+        records.each do |record|
+          record.loaded_from_identity_cache = true
+          record.readonly! if readonly
+        end
         each_id_embedded_association do |cached_association|
           preload_id_embedded_association(records, cached_association)
         end
@@ -84,6 +87,7 @@ module IdentityCache
             association = record.association(association_name)
             target = association.target
             target = readonly_copy(target) if readonly
+            mark_loaded_from_identity_cache(target)
             cached_association.set_with_inverse(record, target)
             association.reset
             # reset inverse associations
@@ -113,6 +117,14 @@ module IdentityCache
           record_or_records.map { |record| readonly_record_copy(record) }
         elsif record_or_records
           readonly_record_copy(record_or_records)
+        end
+      end
+
+      def mark_loaded_from_identity_cache(record_or_records)
+        if record_or_records.is_a?(Array)
+          record_or_records.each { |record| record.loaded_from_identity_cache = true }
+        elsif record_or_records
+          record_or_records.loaded_from_identity_cache = true
         end
       end
 

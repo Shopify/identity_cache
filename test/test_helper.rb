@@ -3,6 +3,7 @@ require 'logger'
 require 'minitest/autorun'
 require 'mocha/setup'
 require 'active_record'
+require 'active_support/test_case'
 require 'helpers/database_connection'
 require 'helpers/cache_connection'
 require 'helpers/active_record_objects'
@@ -13,10 +14,10 @@ require File.dirname(__FILE__) + '/../lib/identity_cache'
 DatabaseConnection.setup
 CacheConnection.setup
 
-MiniTest::Test = MiniTest::Unit::TestCase unless defined?(MiniTest::Test)
 module IdentityCache
-  class TestCase < Minitest::Test
+  class TestCase < ActiveSupport::TestCase
     include ActiveRecordObjects
+
     attr_reader :backend
 
     HAVE_LAZY_BEGIN = ActiveRecord.gem_version >= Gem::Version.new('6.0.0')

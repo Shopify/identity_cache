@@ -299,6 +299,22 @@ class FetchTest < IdentityCache::TestCase
     end
   end
 
+  def test_save_cache_loaded_mutable_record
+    @record.save!
+    IdentityCache.with_fetch_read_only_records(false) do
+      item = Item.fetch(@record.id)
+      assert_deprecated { item.save }
+    end
+  end
+
+  def test_destroy_cache_loaded_mutable_record
+    @record.save!
+    IdentityCache.with_fetch_read_only_records(false) do
+      item = Item.fetch(@record.id)
+      assert_deprecated { item.destroy }
+    end
+  end
+
   def test_returned_records_are_readonly_on_cache_hit
     IdentityCache.with_fetch_read_only_records do
       IdentityCache.cache.expects(:fetch).with(@blob_key, {}).returns(@cached_value)
