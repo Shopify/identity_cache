@@ -29,7 +29,7 @@ module IdentityCache
       keys = keys_to_names.keys
       rescue_error_with(false) do
         instrument(:cas_multi, keys, options) do
-          raw_values = @data.get_multi_cas(keys)
+          raw_values = @data.with { |c| c.get_multi_cas(keys) }
 
           values = {}
           raw_values.each do |key, raw_value|
@@ -44,7 +44,7 @@ module IdentityCache
             cas_id = raw_values[key].last
             entry = ActiveSupport::Cache::Entry.new(value, **options)
             payload = options[:raw] ? entry.value.to_s : entry
-            @data.replace_cas(key, payload, cas_id, options[:expires_in].to_i, options)
+            @data.with { |c| c.replace_cas(key, payload, cas_id, options[:expires_in].to_i, options) }
           end
         end
       end
