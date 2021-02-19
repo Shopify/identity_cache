@@ -96,7 +96,7 @@ module IdentityCache
       end
 
       def new_cache_key(record)
-        new_key_values = key_fields.map { |field| record.send(field) }
+        new_key_values = key_fields.map { |field| record.attributes[field.to_s] }
         cache_key_from_key_values(new_key_values)
       end
 
@@ -109,7 +109,7 @@ module IdentityCache
           elsif record.persisted? && changes.key?(field_string)
             changes[field_string]
           else
-            record.send(field)
+            record.attributes[field.to_s]
           end
         end
         cache_key_from_key_values(old_key_values)
