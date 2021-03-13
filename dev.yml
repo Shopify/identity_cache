@@ -27,7 +27,7 @@ commands:
       if [[ $# -eq 0 ]]; then
         bundle exec rake test
       else
-        bundle exec ruby -I test "$@"
+        bundle exec m "$@"
       fi
 
   style:

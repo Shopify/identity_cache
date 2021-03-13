@@ -13,3 +13,7 @@ gem 'cityhash', '~> 0.6.0', platform: :mri
 
 gem 'byebug', platform: :mri
 gem 'stackprof', platform: :mri
+
+group :development do
+  gem 'm'
+end
