@@ -87,7 +87,7 @@ module IdentityCache
 
       def cache_key_prefix
         @cache_key_prefix ||= begin
-          unique_indicator = unique ? '' : 's'
+          unique_indicator = unique ? "" : "s"
           "attr#{unique_indicator}" \
             ":#{model.base_class.name}" \
             ":#{attribute}" \

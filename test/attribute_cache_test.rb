@@ -8,8 +8,8 @@ class AttributeCacheTest < IdentityCache::TestCase
     super
     AssociatedRecord.cache_attribute(:name)
 
-    @parent = Item.create!(title: 'bob')
-    @record = @parent.associated_records.create!(name: 'foo')
+    @parent = Item.create!(title: "bob")
+    @record = @parent.associated_records.create!(name: "foo")
     @name_attribute_key = "#{NAMESPACE}attr:AssociatedRecord:name:id:#{cache_hash(@record.id.to_s.inspect)}"
     IdentityCache.cache.clear
   end
@@ -18,16 +18,16 @@ class AttributeCacheTest < IdentityCache::TestCase
     fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
 
     assert_queries(1) do
-      assert_equal('foo', AssociatedRecord.fetch_name_by_id(1))
+      assert_equal("foo", AssociatedRecord.fetch_name_by_id(1))
     end
     assert(fetch.has_been_called_with?(@name_attribute_key, {}))
   end
 
   def test_attribute_values_are_returned_on_cache_hits
-    assert_equal('foo', AssociatedRecord.fetch_name_by_id(1))
+    assert_equal("foo", AssociatedRecord.fetch_name_by_id(1))
 
     assert_queries(0) do
-      assert_equal('foo', AssociatedRecord.fetch_name_by_id(1))
+      assert_equal("foo", AssociatedRecord.fetch_name_by_id(1))
     end
   end
 
@@ -40,27 +40,27 @@ class AttributeCacheTest < IdentityCache::TestCase
   end
 
   def test_cached_attribute_values_are_expired_from_the_cache_when_an_existing_record_is_saved
-    assert_queries(1) { assert_equal('foo', AssociatedRecord.fetch_name_by_id(1)) }
-    assert_queries(0) { assert_equal('foo', AssociatedRecord.fetch_name_by_id(1)) }
+    assert_queries(1) { assert_equal("foo", AssociatedRecord.fetch_name_by_id(1)) }
+    assert_queries(0) { assert_equal("foo", AssociatedRecord.fetch_name_by_id(1)) }
 
     @record.update!(updated_at: @record.updated_at + 1)
 
-    assert_queries(1) { assert_equal('foo', AssociatedRecord.fetch_name_by_id(1)) }
+    assert_queries(1) { assert_equal("foo", AssociatedRecord.fetch_name_by_id(1)) }
   end
 
   def test_cached_attribute_values_are_expired_from_the_cache_when_an_existing_record_with_changed_attributes_is_saved
-    assert_queries(1) { assert_equal('foo', AssociatedRecord.fetch_name_by_id(1)) }
-    assert_queries(0) { assert_equal('foo', AssociatedRecord.fetch_name_by_id(1)) }
+    assert_queries(1) { assert_equal("foo", AssociatedRecord.fetch_name_by_id(1)) }
+    assert_queries(0) { assert_equal("foo", AssociatedRecord.fetch_name_by_id(1)) }
 
-    @record.name = 'bar'
+    @record.name = "bar"
     @record.save!
 
-    assert_queries(1) { assert_equal('bar', AssociatedRecord.fetch_name_by_id(1)) }
+    assert_queries(1) { assert_equal("bar", AssociatedRecord.fetch_name_by_id(1)) }
   end
 
   def test_cached_attribute_values_are_expired_from_the_cache_when_an_existing_record_is_destroyed
-    assert_queries(1) { assert_equal('foo', AssociatedRecord.fetch_name_by_id(1)) }
-    assert_queries(0) { assert_equal('foo', AssociatedRecord.fetch_name_by_id(1)) }
+    assert_queries(1) { assert_equal("foo", AssociatedRecord.fetch_name_by_id(1)) }
+    assert_queries(0) { assert_equal("foo", AssociatedRecord.fetch_name_by_id(1)) }
 
     @record.destroy
 
@@ -72,16 +72,16 @@ class AttributeCacheTest < IdentityCache::TestCase
     assert_queries(1) { assert_nil(AssociatedRecord.fetch_name_by_id(new_id)) }
     assert_queries(0) { assert_nil(AssociatedRecord.fetch_name_by_id(new_id)) }
 
-    @parent.associated_records.create(name: 'bar')
+    @parent.associated_records.create(name: "bar")
 
-    assert_queries(1) { assert_equal('bar', AssociatedRecord.fetch_name_by_id(new_id)) }
+    assert_queries(1) { assert_equal("bar", AssociatedRecord.fetch_name_by_id(new_id)) }
   end
 
   def test_value_coercion
-    assert_queries(1) { assert_equal('foo', AssociatedRecord.fetch_name_by_id(@record.id.to_f)) }
-    assert_no_queries { assert_equal('foo', AssociatedRecord.fetch_name_by_id(@record.id)) }
-    @record.update!(name: 'bar')
-    assert_queries(1) { assert_equal('bar', AssociatedRecord.fetch_name_by_id(@record.id.to_f)) }
+    assert_queries(1) { assert_equal("foo", AssociatedRecord.fetch_name_by_id(@record.id.to_f)) }
+    assert_no_queries { assert_equal("foo", AssociatedRecord.fetch_name_by_id(@record.id)) }
+    @record.update!(name: "bar")
+    assert_queries(1) { assert_equal("bar", AssociatedRecord.fetch_name_by_id(@record.id.to_f)) }
   end
 
   def test_no_nil_empty_string_cache_key_conflict
@@ -100,7 +100,7 @@ class AttributeCacheTest < IdentityCache::TestCase
     @record.transaction do
       assert_queries(HAVE_LAZY_BEGIN ? 2 : 1) do
         assert_memcache_operations(0) do
-          assert_equal('foo', AssociatedRecord.fetch_name_by_id(1))
+          assert_equal("foo", AssociatedRecord.fetch_name_by_id(1))
         end
       end
     end

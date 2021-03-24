@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
-require 'active_record'
-require 'active_support/core_ext'
-require 'active_support/cache'
-require 'identity_cache'
-require 'memcached_store'
-require 'active_support/cache/memcached_store'
+require "active_record"
+require "active_support/core_ext"
+require "active_support/cache"
+require "identity_cache"
+require "memcached_store"
+require "active_support/cache/memcached_store"
 
-require File.dirname(__FILE__) + '/../test/helpers/active_record_objects'
-require File.dirname(__FILE__) + '/../test/helpers/database_connection'
-require File.dirname(__FILE__) + '/../test/helpers/cache_connection'
+require File.dirname(__FILE__) + "/../test/helpers/active_record_objects"
+require File.dirname(__FILE__) + "/../test/helpers/database_connection"
+require File.dirname(__FILE__) + "/../test/helpers/cache_connection"
 
 IdentityCache.logger = Logger.new(nil)
 CacheConnection.setup

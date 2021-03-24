@@ -4,14 +4,14 @@ require "test_helper"
 class ReadonlyTest < IdentityCache::TestCase
   def setup
     super
-    @key = 'foo'
-    @value = 'bar'
+    @key = "foo"
+    @value = "bar"
     @record = Item.new
     @record.id = 1
-    @record.title = 'bob'
-    @bob = Item.create!(title: 'bob')
-    @joe = Item.create!(title: 'joe')
-    @fred = Item.create!(title: 'fred')
+    @record.title = "bob"
+    @bob = Item.create!(title: "bob")
+    @joe = Item.create!(title: "joe")
+    @fred = Item.create!(title: "fred")
     IdentityCache.cache.clear
     IdentityCache.readonly = true
   end

@@ -7,9 +7,9 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     PolymorphicRecord.include(IdentityCache::WithoutPrimaryIndex)
     Item.cache_has_many(:associated_records, embed: true)
 
-    @record = Item.new(title: 'foo')
-    @record.associated_records << AssociatedRecord.new(name: 'bar')
-    @record.associated_records << AssociatedRecord.new(name: 'baz')
+    @record = Item.new(title: "foo")
+    @record.associated_records << AssociatedRecord.new(name: "bar")
+    @record.associated_records << AssociatedRecord.new(name: "baz")
     @record.save
     @record.reload
   end
@@ -66,7 +66,7 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     item = Item.fetch(@record.id)
     item.fetch_associated_records
 
-    item.associated_records << AssociatedRecord.new(name: 'buzz')
+    item.associated_records << AssociatedRecord.new(name: "buzz")
     assert_equal(item.associated_records.to_a, item.fetch_associated_records)
   end
 
@@ -109,7 +109,7 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
   end
 
   def test_cache_uses_inverse_of_on_association
-    Item.has_many(:invertable_association, inverse_of: :owner, class_name: 'PolymorphicRecord', as: "owner")
+    Item.has_many(:invertable_association, inverse_of: :owner, class_name: "PolymorphicRecord", as: "owner")
     Item.cache_has_many(:invertable_association, embed: true)
     IdentityCache.eager_load!
   end
@@ -183,7 +183,7 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
 
   def test_fetch_association_after_adding_to_it
     item = Item.fetch(@record.id)
-    item.associated_records.create!(name: 'foo')
+    item.associated_records.create!(name: "foo")
     fetched_associated_records = item.fetch_associated_records
     assert_equal(item.associated_records.length, fetched_associated_records.length)
   end
@@ -194,17 +194,17 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
         Item.has_many(
           :deeply_through_associated_records,
           through: :associated_records,
-          foreign_key: 'associated_record_id',
+          foreign_key: "associated_record_id",
           inverse_of: :item,
-          class_name: 'DeeplyAssociatedRecord'
+          class_name: "DeeplyAssociatedRecord"
         )
         Item.cache_has_many(:deeply_through_associated_records, embed: true)
       end
     end
 
     def test_unsupported_joins_in_assocation_scope
-      scope = -> { joins(:associated_record).where(associated_records: { name: 'contrived example' }) }
-      Item.has_many(:deeply_joined_associated_records, scope, inverse_of: :item, class_name: 'DeeplyAssociatedRecord')
+      scope = -> { joins(:associated_record).where(associated_records: { name: "contrived example" }) }
+      Item.has_many(:deeply_joined_associated_records, scope, inverse_of: :item, class_name: "DeeplyAssociatedRecord")
       Item.cache_has_many(:deeply_joined_associated_records, embed: true)
 
       message = "caching association Item.deeply_joined_associated_records scoped with a join isn't supported"

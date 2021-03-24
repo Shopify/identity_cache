@@ -10,9 +10,9 @@ class ParentModelExpirationTest < IdentityCache::TestCase
     define_cache_indexes.call
 
     # setup fixtures
-    item = Item.new(title: 'grandparent')
+    item = Item.new(title: "grandparent")
 
-    associated_record = AssociatedRecord.new(name: 'parent')
+    associated_record = AssociatedRecord.new(name: "parent")
     item.associated_records << associated_record
 
     deeply_associated_record = DeeplyAssociatedRecord.new(name: "child")
@@ -27,9 +27,9 @@ class ParentModelExpirationTest < IdentityCache::TestCase
     setup_models
     define_cache_indexes.call
 
-    DeeplyAssociatedRecord.find(deeply_associated_record.id).update(name: 'updated child')
+    DeeplyAssociatedRecord.find(deeply_associated_record.id).update(name: "updated child")
 
     fetched_name = Item.fetch(item.id).fetch_associated_records.first.fetch_deeply_associated_records.first.name
-    assert_equal('updated child', fetched_name)
+    assert_equal("updated child", fetched_name)
   end
 end

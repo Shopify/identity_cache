@@ -6,8 +6,8 @@ class NormalizedBelongsToTest < IdentityCache::TestCase
     super
     AssociatedRecord.cache_belongs_to(:item)
 
-    @parent_record = Item.new(title: 'foo')
-    @parent_record.associated_records << AssociatedRecord.new(name: 'bar')
+    @parent_record = Item.new(title: "foo")
+    @parent_record.associated_records << AssociatedRecord.new(name: "bar")
     @parent_record.save
     @parent_record.reload
     @record = @parent_record.associated_records.first
@@ -108,7 +108,7 @@ class NormalizedBelongsToTest < IdentityCache::TestCase
 
   def test_cache_belongs_to_with_scope
     AssociatedRecord.belongs_to(:item_with_scope, -> { where.not(timestamp: nil) },
-      class_name: 'Item', foreign_key: 'item_id')
+      class_name: "Item", foreign_key: "item_id")
     assert_raises(IdentityCache::UnsupportedAssociationError) do
       AssociatedRecord.cache_belongs_to(:item_with_scope)
     end

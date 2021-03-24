@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 # Use CityHash for fast hashing if it is available; use Digest::MD5 otherwise
 begin
-  require 'cityhash'
+  require "cityhash"
 rescue LoadError
-  unless RUBY_PLATFORM == 'java'
+  unless RUBY_PLATFORM == "java"
     warn(<<-NOTICE)
       ** Notice: CityHash was not loaded. **
 
@@ -15,7 +15,7 @@ rescue LoadError
     NOTICE
   end
 
-  require 'digest/md5'
+  require "digest/md5"
 end
 
 module IdentityCache
@@ -28,7 +28,7 @@ module IdentityCache
     else
 
       def memcache_hash(key) #:nodoc:
-        a = Digest::MD5.digest(key).unpack('LL')
+        a = Digest::MD5.digest(key).unpack("LL")
         (a[0] << 32) | a[1]
       end
     end

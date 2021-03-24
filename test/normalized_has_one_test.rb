@@ -6,8 +6,8 @@ class NormalizedHasOneTest < IdentityCache::TestCase
     super
     Item.cache_has_one(:associated, embed: :id)
 
-    @record = Item.new(title: 'foo')
-    @record.build_associated(name: 'bar')
+    @record = Item.new(title: "foo")
+    @record.build_associated(name: "bar")
     @record.save!
     @record.reload
     @baz = @record.associated
@@ -26,8 +26,8 @@ class NormalizedHasOneTest < IdentityCache::TestCase
   end
 
   def test_batch_fetching_of_association_for_multiple_parent_records
-    record2 = Item.new(title: 'two')
-    record2.build_associated(name: 'a')
+    record2 = Item.new(title: "two")
+    record2.build_associated(name: "a")
     record2.save!
 
     fetched_records = assert_queries(2) do
@@ -41,11 +41,11 @@ class NormalizedHasOneTest < IdentityCache::TestCase
   end
 
   def test_batch_fetching_of_deeply_associated_records
-    Item.has_one(:denormalized_associated, class_name: 'AssociatedRecord')
+    Item.has_one(:denormalized_associated, class_name: "AssociatedRecord")
     Item.cache_has_one(:denormalized_associated, embed: true)
     AssociatedRecord.cache_has_one(:deeply_associated, embed: :id)
 
-    @record.associated.build_deeply_associated(name: 'deep1')
+    @record.associated.build_deeply_associated(name: "deep1")
     @record.associated.save!
 
     fetched_record = assert_queries(4) do
@@ -109,7 +109,7 @@ class NormalizedHasOneTest < IdentityCache::TestCase
   def test_saving_the_child_shouldnt_expire_the_parent_blob_if_the_foreign_key_hasnt_changed
     IdentityCache.cache.expects(:delete).with(@record.primary_cache_index_key).never
     IdentityCache.cache.expects(:delete).with(@baz.primary_cache_index_key)
-    @baz.name = 'foo'
+    @baz.name = "foo"
     @baz.save!
     assert_equal(@baz.id, Item.fetch(@record.id).cached_associated_id)
     assert_equal(@baz, Item.fetch(@record.id).fetch_associated)
@@ -164,12 +164,12 @@ class NormalizedHasOneTest < IdentityCache::TestCase
   end
 
   def test_expiry_of_scoped_association
-    Item.has_one(:associated_scoped, -> { where(name: 'bar') }, class_name: 'AssociatedRecord')
+    Item.has_one(:associated_scoped, -> { where(name: "bar") }, class_name: "AssociatedRecord")
     Item.cache_has_one(:associated_scoped, embed: :id)
 
     item = Item.fetch(@record.id) # fill cache
     assert_equal(item.associated.item_id, item.cached_associated_scoped_id)
-    item.associated.update!(name: 'foo')
+    item.associated.update!(name: "foo")
 
     item = Item.fetch(@record.id)
     assert_nil(item.cached_associated_scoped_id)

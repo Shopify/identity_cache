@@ -1,7 +1,7 @@
 # frozen_string_literal: true
-require 'active_record'
-require 'active_support/core_ext/module/attribute_accessors'
-require 'ar_transaction_changes'
+require "active_record"
+require "active_support/core_ext/module/attribute_accessors"
+require "ar_transaction_changes"
 
 require "identity_cache/version"
 require "identity_cache/record_not_found"
@@ -27,24 +27,24 @@ require "identity_cache/cached/reference/association"
 require "identity_cache/cached/reference/has_one"
 require "identity_cache/cached/reference/has_many"
 require "identity_cache/expiry_hook"
-require 'identity_cache/memoized_cache_proxy'
-require 'identity_cache/belongs_to_caching'
-require 'identity_cache/cache_key_generation'
-require 'identity_cache/configuration_dsl'
-require 'identity_cache/should_use_cache'
-require 'identity_cache/parent_model_expiration'
-require 'identity_cache/query_api'
+require "identity_cache/memoized_cache_proxy"
+require "identity_cache/belongs_to_caching"
+require "identity_cache/cache_key_generation"
+require "identity_cache/configuration_dsl"
+require "identity_cache/should_use_cache"
+require "identity_cache/parent_model_expiration"
+require "identity_cache/query_api"
 require "identity_cache/cache_hash"
 require "identity_cache/cache_invalidation"
 require "identity_cache/cache_fetcher"
 require "identity_cache/fallback_fetcher"
-require 'identity_cache/without_primary_index'
-require 'identity_cache/with_primary_index'
+require "identity_cache/without_primary_index"
+require "identity_cache/with_primary_index"
 
 module IdentityCache
   extend ActiveSupport::Concern
 
-  autoload :MemCacheStoreCAS, 'identity_cache/mem_cache_store_cas'
+  autoload :MemCacheStoreCAS, "identity_cache/mem_cache_store_cas"
 
   include WithPrimaryIndex
 
@@ -211,4 +211,4 @@ module IdentityCache
   end
 end
 
-require 'identity_cache/railtie' if defined?(Rails)
+require "identity_cache/railtie" if defined?(Rails)

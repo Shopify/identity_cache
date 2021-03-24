@@ -1,9 +1,9 @@
 # frozen_string_literal: true
-require 'rubygems'
-require 'benchmark'
-require 'stackprof'
+require "rubygems"
+require "benchmark"
+require "stackprof"
 
-require_relative 'cache_runner'
+require_relative "cache_runner"
 
 RUNS = 1000
 
@@ -22,9 +22,9 @@ end
 
 create_database(RUNS)
 
-if (runner_name = ENV['RUNNER'])
+if (runner_name = ENV["RUNNER"])
   if (runner = CACHE_RUNNERS.find { |r| r.name == runner_name })
-    run(runner.new(RUNS), filename: ENV['FILENAME'])
+    run(runner.new(RUNS), filename: ENV["FILENAME"])
   else
     puts "Couldn't find cache runner #{runner_name.inspect}"
     exit(1)

@@ -24,11 +24,11 @@ class SchemaChangeTest < IdentityCache::TestCase
     Item.cache_has_one(:associated, embed: true)
     AssociatedRecord.cache_has_many(:deeply_associated_records, embed: true)
 
-    @associated_record = AssociatedRecord.new(name: 'bar')
+    @associated_record = AssociatedRecord.new(name: "bar")
     @deeply_associated_record = DeeplyAssociatedRecord.new(name: "corge")
     @associated_record.deeply_associated_records << @deeply_associated_record
     @associated_record.deeply_associated_records << DeeplyAssociatedRecord.new(name: "qux")
-    @record = Item.new(title: 'foo')
+    @record = Item.new(title: "foo")
     @record.associated = @associated_record
 
     @associated_record.save!
@@ -110,13 +110,13 @@ class SchemaChangeTest < IdentityCache::TestCase
         item_class = const_set(:Item, Class.new(ActiveRecord::Base))
 
         associated_class.class_eval do
-          self.table_name = 'associated_records'
+          self.table_name = "associated_records"
           include(IdentityCache::WithoutPrimaryIndex)
           belongs_to(:item, class_name: item_class.name)
         end
 
         item_class.class_eval do
-          self.table_name = 'items'
+          self.table_name = "items"
           include(IdentityCache)
           has_many(:associated_records, class_name: associated_class_name)
           cache_has_many(:associated_records, embed: true)
@@ -127,7 +127,7 @@ class SchemaChangeTest < IdentityCache::TestCase
     define_models.call(:AssociatedRecord)
 
     record = self.class::Item.fetch(@record.id) # warm cache
-    assert_equal(['bar'], record.fetch_associated_records.map(&:name))
+    assert_equal(["bar"], record.fetch_associated_records.map(&:name))
 
     self.class.send(:remove_const, :Item)
     self.class.send(:remove_const, :AssociatedRecord)
@@ -135,7 +135,7 @@ class SchemaChangeTest < IdentityCache::TestCase
 
     assert_no_queries do
       record = self.class::Item.fetch(@record.id)
-      assert_equal(['bar'], record.fetch_associated_records.map(&:name))
+      assert_equal(["bar"], record.fetch_associated_records.map(&:name))
     end
   ensure
     self.class.send(:remove_const, :Item) if self.class.const_defined?(:Item, false)

@@ -7,9 +7,9 @@ module IdentityCache
 
     def setup
       super
-      @bob = Item.create!(title: 'bob')
-      @joe = Item.create!(title: 'joe')
-      @fred = Item.create!(title: 'fred')
+      @bob = Item.create!(title: "bob")
+      @joe = Item.create!(title: "joe")
+      @fred = Item.create!(title: "fred")
       attr_string = "created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime"
       @bob_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash(attr_string)}:1"
       @joe_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash(attr_string)}:2"
@@ -19,8 +19,8 @@ module IdentityCache
 
     def test_prefetch_associations_on_fetched_records
       Item.send(:cache_belongs_to, :item)
-      john = Item.create!(title: 'john')
-      jim = Item.create!(title: 'jim')
+      john = Item.create!(title: "john")
+      jim = Item.create!(title: "jim")
       @bob.update_column(:item_id, john.id)
       @joe.update_column(:item_id, jim.id)
       items = Item.fetch_multi(@bob.id, @joe.id, @fred.id)
@@ -62,8 +62,8 @@ module IdentityCache
     def test_prefetch_associations_without_using_cache
       Item.send(:cache_has_many, :associated_records, embed: true)
 
-      associated1 = @bob.associated_records.create!(name: 'foo')
-      associated2 = @joe.associated_records.create!(name: 'bar')
+      associated1 = @bob.associated_records.create!(name: "foo")
+      associated2 = @joe.associated_records.create!(name: "bar")
       items = [@bob, @joe].map(&:reload)
 
       Item.transaction do
@@ -107,7 +107,7 @@ module IdentityCache
       @joe.fetch_item
       items = [@bob, @joe].map(&:reload)
       events = 0
-      subscriber = ActiveSupport::Notifications.subscribe('hydration.identity_cache') do |_, _, _, _, payload|
+      subscriber = ActiveSupport::Notifications.subscribe("hydration.identity_cache") do |_, _, _, _, payload|
         events += 1
         assert_equal("Item", payload[:class])
       end
@@ -161,13 +161,13 @@ module IdentityCache
           @bob.id, @joe.id, includes: { associated: :deeply_associated_records }
         )
         assert_nil(cached_joe.fetch_associated)
-        assert_equal('deep child', cached_bob.fetch_associated.fetch_deeply_associated_records.first.name)
+        assert_equal("deep child", cached_bob.fetch_associated.fetch_deeply_associated_records.first.name)
       end
     end
 
     def test_fetch_with_includes_option
       Item.send(:cache_belongs_to, :item)
-      john = Item.create!(title: 'john')
+      john = Item.create!(title: "john")
       @bob.update_column(:item_id, john.id)
 
       spy = Spy.on(CacheKeyLoader, :load_batch).and_call_through
@@ -182,8 +182,8 @@ module IdentityCache
 
     def test_fetch_multi_with_includes_option
       Item.send(:cache_belongs_to, :item)
-      john = Item.create!(title: 'john')
-      jim = Item.create!(title: 'jim')
+      john = Item.create!(title: "john")
+      jim = Item.create!(title: "jim")
       @bob.update_column(:item_id, john.id)
       @joe.update_column(:item_id, jim.id)
 
@@ -375,12 +375,12 @@ module IdentityCache
     def test_fetch_by_index_with_includes_option
       Item.send(:cache_belongs_to, :item)
       Item.cache_index(:title)
-      john = Item.create!(title: 'john')
+      john = Item.create!(title: "john")
       @bob.update_column(:item_id, john.id)
 
       spy = Spy.on(CacheKeyLoader, :load_batch).and_call_through
 
-      assert_equal([@bob], Item.fetch_by_title('bob', includes: :item))
+      assert_equal([@bob], Item.fetch_by_title("bob", includes: :item))
 
       assert_equal(
         spy.calls.map(&:args).last,
@@ -391,12 +391,12 @@ module IdentityCache
     def test_fetch_by_unique_index_with_includes_option
       Item.send(:cache_belongs_to, :item)
       Item.cache_index(:title, unique: true)
-      john = Item.create!(title: 'john')
+      john = Item.create!(title: "john")
       @bob.update_column(:item_id, john.id)
 
       spy = Spy.on(CacheKeyLoader, :load_batch).and_call_through
 
-      assert_equal(@bob, Item.fetch_by_title('bob', includes: :item))
+      assert_equal(@bob, Item.fetch_by_title("bob", includes: :item))
 
       assert_equal(
         spy.calls.map(&:args).last,

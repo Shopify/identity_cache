@@ -5,9 +5,9 @@ class CacheInvalidationTest < IdentityCache::TestCase
   def setup
     super
 
-    @record = Item.new(title: 'foo')
-    @record.associated_records << AssociatedRecord.new(name: 'bar')
-    @record.associated_records << AssociatedRecord.new(name: 'baz')
+    @record = Item.new(title: "foo")
+    @record.associated_records << AssociatedRecord.new(name: "bar")
+    @record.associated_records << AssociatedRecord.new(name: "baz")
     @record.save!
     @record.reload
     @baz = @record.associated_records[0]
@@ -75,13 +75,13 @@ class CacheInvalidationTest < IdentityCache::TestCase
     Item.cache_has_many(:associated_records, embed: true)
     ItemTwo.cache_has_many(:associated_records, embed: true)
 
-    baz = AssociatedRecord.new(name: 'baz')
+    baz = AssociatedRecord.new(name: "baz")
 
-    record1 = Item.new(title: 'foo')
+    record1 = Item.new(title: "foo")
     record1.associated_records << baz
     record1.save!
 
-    record2 = ItemTwo.new(title: 'bar')
+    record2 = ItemTwo.new(title: "bar")
     record2.associated_records << baz
     record2.save!
 
@@ -108,12 +108,12 @@ class CacheInvalidationTest < IdentityCache::TestCase
     Item.cache_has_many(:associated_records, embed: :ids)
     ItemTwo.cache_has_many(:associated_records, embed: :ids)
 
-    baz = AssociatedRecord.new(name: 'baz')
+    baz = AssociatedRecord.new(name: "baz")
 
-    record1 = Item.new(title: 'foo')
+    record1 = Item.new(title: "foo")
     record1.save
 
-    record2 = ItemTwo.new(title: 'bar')
+    record2 = ItemTwo.new(title: "bar")
     record2.save
 
     record1.class.fetch(record1.id)
@@ -138,7 +138,7 @@ class CacheInvalidationTest < IdentityCache::TestCase
   end
 
   def test_cache_invalidation_expire_properly_when_expired_via_class_method
-    record = Item.create(title: 'foo')
+    record = Item.create(title: "foo")
     record.class.fetch(record.id)
 
     refute_nil(IdentityCache.cache.fetch(record.primary_cache_index_key) { nil })
@@ -153,7 +153,7 @@ class CacheInvalidationTest < IdentityCache::TestCase
     AssociatedRecord.cache_has_many(:deeply_associated_records, embed: true)
     Item.cache_has_many(:deeply_associated_records, embed: true)
 
-    deeply_associated_record = DeeplyAssociatedRecord.new(name: 'deep', item_id: @record.id)
+    deeply_associated_record = DeeplyAssociatedRecord.new(name: "deep", item_id: @record.id)
     @record.associated_records[0].deeply_associated_records << deeply_associated_record
     deeply_associated_record.reload
 
@@ -200,7 +200,7 @@ class CacheInvalidationTest < IdentityCache::TestCase
     log = []
     subscribe_to_sql_queries(->(sql) { log << [:sql, sql] }) do
       subscribe_to_cache_operations(->(op) { log << [:cache, op] }) do
-        @record.update!(title: 'foo2')
+        @record.update!(title: "foo2")
       end
     end
     assert_equal([:sql, :sql, :sql, :cache], log.map(&:first))

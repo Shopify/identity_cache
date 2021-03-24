@@ -1,8 +1,8 @@
 # frozen_string_literal: true
-require 'rubygems'
-require 'benchmark'
+require "rubygems"
+require "benchmark"
 
-require_relative 'cache_runner'
+require_relative "cache_runner"
 
 RUNS = 400
 
@@ -32,9 +32,9 @@ def bmbm(runners)
   label_width = runners.map { |r| r.name.size }.max + 2
   width = label_width + Benchmark::CAPTION.size
 
-  puts 'Rehearsal: '.ljust(width, '-')
+  puts "Rehearsal: ".ljust(width, "-")
   benchmark(runners, label_width)
-  puts '-' * width
+  puts "-" * width
 
   benchmark(runners, label_width)
 end

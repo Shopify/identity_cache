@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-require 'dalli/cas/client'
+require "dalli/cas/client"
 
 module IdentityCache
   module MemCacheStoreCAS

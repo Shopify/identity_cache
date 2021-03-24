@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'securerandom'
+require "securerandom"
 
 module IdentityCache
   class CacheFetcher
@@ -10,7 +10,7 @@ module IdentityCache
 
     class FillLock
       FILL_LOCKED = :fill_locked
-      FAILED_CLIENT_ID = 'fill_failed'
+      FAILED_CLIENT_ID = "fill_failed"
 
       class << self
         def from_cache(marker, client_id, data_version)
@@ -96,8 +96,8 @@ module IdentityCache
     end
 
     def fetch_with_fill_lock(key, fill_lock_duration, lock_wait_tries)
-      raise ArgumentError, 'fill_lock_duration must be greater than 0.0' unless fill_lock_duration > 0.0
-      raise ArgumentError, 'lock_wait_tries must be greater than 0' unless lock_wait_tries > 0
+      raise ArgumentError, "fill_lock_duration must be greater than 0.0" unless fill_lock_duration > 0.0
+      raise ArgumentError, "lock_wait_tries must be greater than 0" unless lock_wait_tries > 0
       lock = nil
       using_fallback_key = false
       expiration_options = EMPTY_HASH

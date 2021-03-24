@@ -24,7 +24,7 @@ module IdentityCache
       end
 
       def unhashed_values_cache_key_string(key_values)
-        key_values.map { |v| v.try!(:to_s).inspect }.join('/')
+        key_values.map { |v| v.try!(:to_s).inspect }.join("/")
       end
 
       def load_from_db_where_conditions(key_values)

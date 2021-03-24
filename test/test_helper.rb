@@ -1,14 +1,14 @@
 # frozen_string_literal: true
-require 'logger'
-require 'minitest/autorun'
-require 'mocha/setup'
-require 'active_record'
-require 'helpers/database_connection'
-require 'helpers/cache_connection'
-require 'helpers/active_record_objects'
-require 'spy/integration'
+require "logger"
+require "minitest/autorun"
+require "mocha/setup"
+require "active_record"
+require "helpers/database_connection"
+require "helpers/cache_connection"
+require "helpers/active_record_objects"
+require "spy/integration"
 
-require File.dirname(__FILE__) + '/../lib/identity_cache'
+require File.dirname(__FILE__) + "/../lib/identity_cache"
 
 DatabaseConnection.setup
 CacheConnection.setup
@@ -19,7 +19,7 @@ module IdentityCache
     include ActiveRecordObjects
     attr_reader :backend
 
-    HAVE_LAZY_BEGIN = ActiveRecord.gem_version >= Gem::Version.new('6.0.0')
+    HAVE_LAZY_BEGIN = ActiveRecord.gem_version >= Gem::Version.new("6.0.0")
 
     def setup
       ActiveRecord::Base.connection.schema_cache.clear!
@@ -64,7 +64,7 @@ module IdentityCache
     def subscribe_to_sql_queries(subscriber, all: false)
       filtering_subscriber = ->(_name, _start, _finish, _message_id, values) { subscriber.call(values.fetch(:sql)) }
       filtering_subscriber = IgnoreSchemaQueryFilter.new(filtering_subscriber) unless all
-      subscription = ActiveSupport::Notifications.subscribe('sql.active_record', filtering_subscriber)
+      subscription = ActiveSupport::Notifications.subscribe("sql.active_record", filtering_subscriber)
       yield
     ensure
       ActiveSupport::Notifications.unsubscribe(subscription)
@@ -137,7 +137,7 @@ class IgnoreSchemaQueryFilter
 
   def call(name, start, finish, message_id, values)
     return if values[:cached]
-    return if values[:name] == 'SCHEMA'
+    return if values[:name] == "SCHEMA"
     @subscriber.call(name, start, finish, message_id, values)
   end
 end

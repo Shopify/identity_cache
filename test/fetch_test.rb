@@ -11,7 +11,7 @@ class FetchTest < IdentityCache::TestCase
 
     @record = Item.new
     @record.id = 1
-    @record.title = 'bob'
+    @record.title = "bob"
     @cached_value = { attributes: @record.attributes_before_type_cast }
     attrs = "created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime"
     @blob_key = "#{NAMESPACE}blob:Item:#{cache_hash(attrs)}:1"
@@ -19,7 +19,7 @@ class FetchTest < IdentityCache::TestCase
   end
 
   def test_fetch_with_garbage_input
-    assert_nil(Item.fetch_by_id('garbage'))
+    assert_nil(Item.fetch_by_id("garbage"))
   end
 
   def test_fetch_cache_hit
@@ -32,7 +32,7 @@ class FetchTest < IdentityCache::TestCase
     IdentityCache.cache.expects(:fetch).with(@blob_key, {}).returns(@cached_value)
 
     events = 0
-    subscriber = ActiveSupport::Notifications.subscribe('hydration.identity_cache') do |_, _, _, _, payload|
+    subscriber = ActiveSupport::Notifications.subscribe("hydration.identity_cache") do |_, _, _, _, payload|
       events += 1
       assert_equal("Item", payload[:class])
     end
@@ -48,7 +48,7 @@ class FetchTest < IdentityCache::TestCase
     expected = { memoizing: false, resolve_miss_time: 0, memo_hits: 0, cache_hits: 1, cache_misses: 0 }
 
     events = 0
-    subscriber = ActiveSupport::Notifications.subscribe('cache_fetch.identity_cache') do |_, _, _, _, payload|
+    subscriber = ActiveSupport::Notifications.subscribe("cache_fetch.identity_cache") do |_, _, _, _, payload|
       events += 1
       assert_equal(expected, payload)
     end
@@ -67,7 +67,7 @@ class FetchTest < IdentityCache::TestCase
     IdentityCache.cache.with_memoization do
       Item.fetch(1)
       events = 0
-      subscriber = ActiveSupport::Notifications.subscribe('cache_fetch.identity_cache') do |_, _, _, _, payload|
+      subscriber = ActiveSupport::Notifications.subscribe("cache_fetch.identity_cache") do |_, _, _, _, payload|
         events += 1
         assert_equal(expected, payload)
       end
@@ -116,7 +116,7 @@ class FetchTest < IdentityCache::TestCase
     Item.cached_primary_index.expects(:load_one_from_db).with(1).once.returns(@record)
 
     events = 0
-    subscriber = ActiveSupport::Notifications.subscribe('dehydration.identity_cache') do |_, _, _, _, payload|
+    subscriber = ActiveSupport::Notifications.subscribe("dehydration.identity_cache") do |_, _, _, _, payload|
       events += 1
       assert_equal("Item", payload[:class])
     end
@@ -131,7 +131,7 @@ class FetchTest < IdentityCache::TestCase
     expected = { memoizing: false, memo_hits: 0, cache_hits: 0, cache_misses: 1 }
 
     events = 0
-    subscriber = ActiveSupport::Notifications.subscribe('cache_fetch.identity_cache') do |_, _, _, _, payload|
+    subscriber = ActiveSupport::Notifications.subscribe("cache_fetch.identity_cache") do |_, _, _, _, payload|
       events += 1
       assert(payload.delete(:resolve_miss_time) > 0)
       assert_equal(expected, payload)
@@ -190,14 +190,14 @@ class FetchTest < IdentityCache::TestCase
 
   def test_fetch_by_id_not_found_should_return_nil
     nonexistent_record_id = 10
-    fetcher.expects(:add).with(@blob_key + '0', IdentityCache::CACHED_NIL, {})
+    fetcher.expects(:add).with(@blob_key + "0", IdentityCache::CACHED_NIL, {})
 
     assert_nil(Item.fetch_by_id(nonexistent_record_id))
   end
 
   def test_fetch_not_found_should_raise
     nonexistent_record_id = 10
-    fetcher.expects(:add).with(@blob_key + '0', IdentityCache::CACHED_NIL, {})
+    fetcher.expects(:add).with(@blob_key + "0", IdentityCache::CACHED_NIL, {})
 
     assert_raises(IdentityCache::RecordNotFound) { Item.fetch(nonexistent_record_id) }
   end
@@ -231,9 +231,9 @@ class FetchTest < IdentityCache::TestCase
     end
 
     # Id not found, use sql, SELECT id FROM records WHERE title = '...' LIMIT 1"
-    Item.connection.expects(:exec_query).returns(ActiveRecord::Result.new(['id'], [[1]]))
+    Item.connection.expects(:exec_query).returns(ActiveRecord::Result.new(["id"], [[1]]))
 
-    assert_equal(@record, Item.fetch_by_title('bob'))
+    assert_equal(@record, Item.fetch_by_title("bob"))
     assert_equal([1], values)
     assert(fetch.has_been_called_with?(@index_key, {}))
     assert(fetch.has_been_called_with?(@blob_key, {}))
@@ -244,19 +244,19 @@ class FetchTest < IdentityCache::TestCase
     IdentityCache.cache.expects(:fetch).with("ns:#{@index_key}", {}).returns(1)
     IdentityCache.cache.expects(:fetch).with("ns:#{@blob_key}", {}).returns(@cached_value)
 
-    assert_equal(@record, Item.fetch_by_title('bob'))
+    assert_equal(@record, Item.fetch_by_title("bob"))
   end
 
   def test_fetch_by_title_caches_nil
-    assert_nil(Item.fetch_by_title('missing'))
+    assert_nil(Item.fetch_by_title("missing"))
     assert_no_queries do
-      assert_nil(Item.fetch_by_title('missing'))
+      assert_nil(Item.fetch_by_title("missing"))
     end
   end
 
   def test_fetch_by_bang_method
     assert_raises(IdentityCache::RecordNotFound) do
-      Item.fetch_by_title!('missing')
+      Item.fetch_by_title!("missing")
     end
   end
 

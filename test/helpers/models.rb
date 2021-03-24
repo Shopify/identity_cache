@@ -4,7 +4,7 @@ class DeeplyAssociatedRecord < ActiveRecord::Base
   include IdentityCache
   belongs_to :item
   belongs_to :associated_record
-  default_scope { order('name DESC') }
+  default_scope { order("name DESC") }
 end
 
 class AssociatedRecord < ActiveRecord::Base
@@ -13,18 +13,18 @@ class AssociatedRecord < ActiveRecord::Base
   has_many :related_items, as: :owner, inverse_of: :owner
   has_many :deeply_associated_records
   has_one :deeply_associated, class_name: "DeeplyAssociatedRecord"
-  default_scope { order('id DESC') }
+  default_scope { order("id DESC") }
 end
 
 class NormalizedAssociatedRecord < ActiveRecord::Base
   include IdentityCache
   belongs_to :item
-  default_scope { order('id DESC') }
+  default_scope { order("id DESC") }
 end
 
 class NotCachedRecord < ActiveRecord::Base
   belongs_to :item, touch: true
-  default_scope { order('id DESC') }
+  default_scope { order("id DESC") }
 end
 
 class PolymorphicRecord < ActiveRecord::Base
@@ -57,10 +57,10 @@ class Item < ActiveRecord::Base
   has_many :deeply_associated_records, inverse_of: :item
   has_many :normalized_associated_records
   has_many :not_cached_records
-  has_many :polymorphic_records, as: 'owner', inverse_of: :owner
+  has_many :polymorphic_records, as: "owner", inverse_of: :owner
   has_many :no_inverse_of_records
-  has_one :polymorphic_record, as: 'owner'
-  has_one :associated, class_name: 'AssociatedRecord'
+  has_one :polymorphic_record, as: "owner"
+  has_one :associated, class_name: "AssociatedRecord"
   has_one :no_inverse_of_record
   has_one :related_item
 end
@@ -68,8 +68,8 @@ end
 class ItemTwo < ActiveRecord::Base
   include IdentityCache
   has_many :associated_records, inverse_of: :item_two, foreign_key: :item_two_id
-  has_many :polymorphic_records, as: 'owner', inverse_of: :owner
-  self.table_name = 'items2'
+  has_many :polymorphic_records, as: "owner", inverse_of: :owner
+  self.table_name = "items2"
 end
 
 class KeyedRecord < ActiveRecord::Base
@@ -79,7 +79,7 @@ end
 
 class StiRecord < ActiveRecord::Base
   include IdentityCache
-  has_many :polymorphic_records, as: 'owner', inverse_of: :owner
+  has_many :polymorphic_records, as: "owner", inverse_of: :owner
 end
 
 class StiRecordTypeA < StiRecord
@@ -88,11 +88,11 @@ end
 class CustomMasterRecord < ActiveRecord::Base
   include IdentityCache
   has_many :custom_child_record, foreign_key: :master_id
-  self.primary_key = 'master_primary_key'
+  self.primary_key = "master_primary_key"
 end
 
 class CustomChildRecord < ActiveRecord::Base
   include IdentityCache
   belongs_to :custom_master_record, foreign_key: :master_id
-  self.primary_key = 'child_primary_key'
+  self.primary_key = "child_primary_key"
 end

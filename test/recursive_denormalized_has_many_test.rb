@@ -8,10 +8,10 @@ class RecursiveDenormalizedHasManyTest < IdentityCache::TestCase
     Item.cache_has_many(:associated_records, embed: true)
     Item.cache_has_one(:associated, embed: true)
 
-    @record = Item.new(title: 'foo')
+    @record = Item.new(title: "foo")
 
-    @associated_record = AssociatedRecord.new(name: 'bar')
-    @record.associated_records << AssociatedRecord.new(name: 'baz')
+    @associated_record = AssociatedRecord.new(name: "bar")
+    @record.associated_records << AssociatedRecord.new(name: "baz")
     @record.associated_records << @associated_record
 
     @deeply_associated_record = DeeplyAssociatedRecord.new(name: "corge")
@@ -63,7 +63,7 @@ class RecursiveDenormalizedHasManyTest < IdentityCache::TestCase
 
   def test_on_cache_hit_record_should_publish_one_dehydration_notification
     events = 0
-    subscriber = ActiveSupport::Notifications.subscribe('dehydration.identity_cache') do |_, _, _, _, payload|
+    subscriber = ActiveSupport::Notifications.subscribe("dehydration.identity_cache") do |_, _, _, _, payload|
       events += 1
       assert_equal("Item", payload[:class])
     end
@@ -80,7 +80,7 @@ class RecursiveDenormalizedHasManyTest < IdentityCache::TestCase
     AssociatedRecord.any_instance.expects(:deeply_associated_records).never
 
     events = 0
-    subscriber = ActiveSupport::Notifications.subscribe('hydration.identity_cache') do |_, _, _, _, payload|
+    subscriber = ActiveSupport::Notifications.subscribe("hydration.identity_cache") do |_, _, _, _, payload|
       events += 1
       assert_equal("Item", payload[:class])
     end
@@ -106,7 +106,7 @@ class RecursiveDenormalizedHasManyTest < IdentityCache::TestCase
     if AssociatedRecord.primary_cache_index_enabled
       IdentityCache.cache.expects(:delete).with(@associated_record.primary_cache_index_key)
     end
-    @associated_record.name = 'different'
+    @associated_record.name = "different"
     @associated_record.save!
   end
 
@@ -116,7 +116,7 @@ class RecursiveDenormalizedHasManyTest < IdentityCache::TestCase
       IdentityCache.cache.expects(:delete).with(@associated_record.primary_cache_index_key)
     end
     IdentityCache.cache.expects(:delete).with(@deeply_associated_record.primary_cache_index_key)
-    @deeply_associated_record.name = 'different'
+    @deeply_associated_record.name = "different"
     @deeply_associated_record.save!
   end
 
@@ -143,7 +143,7 @@ class RecursiveNormalizedHasManyTest < IdentityCache::TestCase
     AssociatedRecord.cache_has_many(:deeply_associated_records, embed: true)
     Item.cache_has_many(:associated_records, embed: :ids)
 
-    @record = Item.new(title: 'foo')
+    @record = Item.new(title: "foo")
     @record.save
     @record.reload
   end

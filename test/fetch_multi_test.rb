@@ -6,9 +6,9 @@ class FetchMultiTest < IdentityCache::TestCase
 
   def setup
     super
-    @bob = Item.create!(title: 'bob')
-    @joe = Item.create!(title: 'joe')
-    @fred = Item.create!(title: 'fred')
+    @bob = Item.create!(title: "bob")
+    @joe = Item.create!(title: "joe")
+    @fred = Item.create!(title: "fred")
     attr_string = "created_at:datetime,id:integer,item_id:integer,title:string,updated_at:datetime"
     @bob_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash(attr_string)}:1"
     @joe_blob_key = "#{NAMESPACE}blob:Item:#{cache_hash(attr_string)}:2"
@@ -48,7 +48,7 @@ class FetchMultiTest < IdentityCache::TestCase
     IdentityCache.cache.expects(:fetch_multi).with(@bob_blob_key, @joe_blob_key, @fred_blob_key).returns(cache_response)
 
     events = 0
-    subscriber = ActiveSupport::Notifications.subscribe('hydration.identity_cache') do |_, _, _, _, payload|
+    subscriber = ActiveSupport::Notifications.subscribe("hydration.identity_cache") do |_, _, _, _, payload|
       events += 1
       assert_equal("Item", payload[:class])
     end
@@ -76,7 +76,7 @@ class FetchMultiTest < IdentityCache::TestCase
     fetch_multi_stub(cache_response)
 
     events = 0
-    subscriber = ActiveSupport::Notifications.subscribe('dehydration.identity_cache') do |_, _, _, _, payload|
+    subscriber = ActiveSupport::Notifications.subscribe("dehydration.identity_cache") do |_, _, _, _, payload|
       events += 1
       assert_equal("Item", payload[:class])
     end
@@ -104,7 +104,7 @@ class FetchMultiTest < IdentityCache::TestCase
       Item.fetch(@fred.id)
       expected = { memoizing: true, memo_hits: 1, cache_hits: 1, cache_misses: 1 }
       events = 0
-      subscriber = ActiveSupport::Notifications.subscribe('cache_fetch_multi.identity_cache') do |_, _, _, _, payload|
+      subscriber = ActiveSupport::Notifications.subscribe("cache_fetch_multi.identity_cache") do |_, _, _, _, payload|
         events += 1
         assert(payload.delete(:resolve_miss_time) > 0)
         assert_equal(expected, payload)
@@ -163,7 +163,7 @@ class FetchMultiTest < IdentityCache::TestCase
   end
 
   def test_fetch_multi_works_with_blanks
-    cache_result = { 1 => false, 2 => '   ' }
+    cache_result = { 1 => false, 2 => "   " }
 
     fetcher.expects(:fetch_multi).with([1, 2]).returns(cache_result)
 

@@ -19,18 +19,18 @@ class LazyLoadAssociatedClassesTest < IdentityCache::TestCase
 
   def test_cache_invalidation
     Item.cache_has_many(:associated_records, embed: true)
-    associated_record = AssociatedRecord.new(name: 'baz')
-    item = Item.new(title: 'foo')
+    associated_record = AssociatedRecord.new(name: "baz")
+    item = Item.new(title: "foo")
     item.associated_records << associated_record
     item.save!
     Item.fetch(item.id)
 
     assert_queries(0) do
-      assert_equal('baz', Item.fetch(item.id).fetch_associated_records.first.name)
+      assert_equal("baz", Item.fetch(item.id).fetch_associated_records.first.name)
     end
-    associated_record.update!(name: 'buzz')
+    associated_record.update!(name: "buzz")
     assert_queries(2) do
-      assert_equal('buzz', Item.fetch(item.id).fetch_associated_records.first.name)
+      assert_equal("buzz", Item.fetch(item.id).fetch_associated_records.first.name)
     end
   end
 

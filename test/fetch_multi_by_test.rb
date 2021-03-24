@@ -8,11 +8,11 @@ class FetchMultiByTest < IdentityCache::TestCase
     super
     @bob = Item.new
     @bob.id = 1
-    @bob.title = 'bob'
+    @bob.title = "bob"
 
     @bertha = Item.new
     @bertha.id = 2
-    @bertha.title = 'bertha'
+    @bertha.title = "bertha"
   end
 
   def test_fetch_multi_by_cache_key
@@ -21,9 +21,9 @@ class FetchMultiByTest < IdentityCache::TestCase
     @bob.save!
     @bertha.save!
 
-    assert_equal([@bob], Item.fetch_by_title('bob'))
+    assert_equal([@bob], Item.fetch_by_title("bob"))
 
-    assert_equal([@bob, @bertha], Item.fetch_multi_by_title(['bob', 'bertha']))
+    assert_equal([@bob, @bertha], Item.fetch_multi_by_title(["bob", "bertha"]))
   end
 
   def test_fetch_multi_by_cache_key_with_unknown_key
@@ -32,7 +32,7 @@ class FetchMultiByTest < IdentityCache::TestCase
     @bob.save!
     @bertha.save!
 
-    assert_equal([@bob], Item.fetch_multi_by_title(['bob', 'garbage_title']))
+    assert_equal([@bob], Item.fetch_multi_by_title(["bob", "garbage_title"]))
   end
 
   def test_fetch_multi_by_unique_cache_key
@@ -41,9 +41,9 @@ class FetchMultiByTest < IdentityCache::TestCase
     @bob.save!
     @bertha.save!
 
-    assert_equal(@bob, Item.fetch_by_title('bob'))
+    assert_equal(@bob, Item.fetch_by_title("bob"))
 
-    assert_equal([@bob, @bertha], Item.fetch_multi_by_title(['bob', 'bertha']))
+    assert_equal([@bob, @bertha], Item.fetch_multi_by_title(["bob", "bertha"]))
   end
 
   def test_fetch_multi_attribute_by_cache_key
@@ -52,9 +52,9 @@ class FetchMultiByTest < IdentityCache::TestCase
     @bob.save!
     @bertha.save!
 
-    assert_equal(['bob'], Item.fetch_title_by_id(1))
+    assert_equal(["bob"], Item.fetch_title_by_id(1))
 
-    assert_equal({ 1 => ['bob'], 2 => ['bertha'] }, Item.fetch_multi_title_by_id([1, 2]))
+    assert_equal({ 1 => ["bob"], 2 => ["bertha"] }, Item.fetch_multi_title_by_id([1, 2]))
   end
 
   def test_fetch_multi_attribute_by_cache_key_with_unknown_key
@@ -63,7 +63,7 @@ class FetchMultiByTest < IdentityCache::TestCase
     @bob.save!
     @bertha.save!
 
-    assert_equal({ 1 => ['bob'], 999 => [] }, Item.fetch_multi_title_by_id([1, 999]))
+    assert_equal({ 1 => ["bob"], 999 => [] }, Item.fetch_multi_title_by_id([1, 999]))
   end
 
   def test_fetch_multi_attribute_by_unique_cache_key
@@ -72,9 +72,9 @@ class FetchMultiByTest < IdentityCache::TestCase
     @bob.save!
     @bertha.save!
 
-    assert_equal('bob', Item.fetch_title_by_id(1))
+    assert_equal("bob", Item.fetch_title_by_id(1))
 
-    assert_equal({ 1 => 'bob', 2 => 'bertha' }, Item.fetch_multi_title_by_id([1, 2]))
+    assert_equal({ 1 => "bob", 2 => "bertha" }, Item.fetch_multi_title_by_id([1, 2]))
   end
 
   def test_fetch_multi_attribute_by_unique_cache_key_with_unknown_key
@@ -83,6 +83,6 @@ class FetchMultiByTest < IdentityCache::TestCase
     @bob.save!
     @bertha.save!
 
-    assert_equal({ 1 => 'bob', 999 => nil }, Item.fetch_multi_title_by_id([1, 999]))
+    assert_equal({ 1 => "bob", 999 => nil }, Item.fetch_multi_title_by_id([1, 999]))
   end
 end

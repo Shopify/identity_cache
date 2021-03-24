@@ -1,18 +1,18 @@
 # frozen_string_literal: true
 module DatabaseConnection
   def self.db_name
-    ENV.fetch('DB', 'mysql2')
+    ENV.fetch("DB", "mysql2")
   end
 
   def self.setup
-    db_config = ENV['DATABASE_URL'] || DEFAULT_CONFIG.fetch(db_name)
+    db_config = ENV["DATABASE_URL"] || DEFAULT_CONFIG.fetch(db_name)
     begin
       ActiveRecord::Base.establish_connection(db_config)
       ActiveRecord::Base.connection
     rescue
       raise unless db_config.is_a?(Hash)
-      ActiveRecord::Base.establish_connection(db_config.merge('database' => nil))
-      ActiveRecord::Base.connection.create_database(db_config['database'])
+      ActiveRecord::Base.establish_connection(db_config.merge("database" => nil))
+      ActiveRecord::Base.connection.create_database(db_config["database"])
       ActiveRecord::Base.establish_connection(db_config)
     end
   end
@@ -62,26 +62,26 @@ module DatabaseConnection
     related_items: [[:integer, :owner_id], [:string, :owner_type], [:integer, :item_id], [:timestamps, null: true]],
     keyed_records: [[:string, :value], primary_key: "hashed_key"],
     sti_records: [[:string, :type], [:string, :name]],
-    custom_master_records: [[:integer, :master_primary_key], id: false, primary_key: 'master_primary_key'],
+    custom_master_records: [[:integer, :master_primary_key], id: false, primary_key: "master_primary_key"],
     custom_child_records: [
-      [:integer, :child_primary_key], [:integer, :master_id], id: false, primary_key: 'child_primary_key'
+      [:integer, :child_primary_key], [:integer, :master_id], id: false, primary_key: "child_primary_key"
     ],
   }
 
   DEFAULT_CONFIG = {
-    'mysql2' => {
-      'adapter' => 'mysql2',
-      'database' => 'identity_cache_test',
-      'host' => ENV['MYSQL_HOST'] || '127.0.0.1',
-      'username' => 'root',
+    "mysql2" => {
+      "adapter" => "mysql2",
+      "database" => "identity_cache_test",
+      "host" => ENV["MYSQL_HOST"] || "127.0.0.1",
+      "username" => "root",
     },
-    'postgresql' => {
-      'adapter' => 'postgresql',
-      'database' => 'identity_cache_test',
-      'host' => ENV['POSTGRES_HOST'] || '127.0.0.1',
-      'username' => 'postgres',
-      'password' => ENV['POSTGRES_PASSWORD'],
-      'prepared_statements' => false,
+    "postgresql" => {
+      "adapter" => "postgresql",
+      "database" => "identity_cache_test",
+      "host" => ENV["POSTGRES_HOST"] || "127.0.0.1",
+      "username" => "postgres",
+      "password" => ENV["POSTGRES_PASSWORD"],
+      "prepared_statements" => false,
     },
   }
 end

@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-require 'test_helper'
+require "test_helper"
 
 class CacheHashTest < IdentityCache::TestCase
   def test_memcache_hash

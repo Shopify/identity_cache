@@ -1,9 +1,9 @@
 # frozen_string_literal: true
-require 'rubygems'
-require 'benchmark'
-require 'ruby-prof'
+require "rubygems"
+require "benchmark"
+require "ruby-prof"
 
-require_relative 'cache_runner'
+require_relative "cache_runner"
 
 RUNS = 1000
 RubyProf.measure_mode = RubyProf::CPU_TIME

@@ -1,12 +1,12 @@
-source 'https://rubygems.org'
-gemspec path: '..'
+source "https://rubygems.org"
+gemspec path: ".."
 
-gem 'ar_transaction_changes', '~> 1.1.0'
+gem "ar_transaction_changes", "~> 1.1.0"
 
-gem 'activerecord', '~> 5.2.0'
-gem 'mysql2', '~> 0.4.4'
-gem 'pg', '~> 0.18.0'
-gem 'memcached', '~> 1.8.0'
-gem 'memcached_store', '~> 1.0.0'
-gem 'dalli', '~> 2.7.11'
-gem 'cityhash', '~> 0.6.0'
+gem "activerecord", "~> 5.2.0"
+gem "mysql2", "~> 0.4.4"
+gem "pg", "~> 0.18.0"
+gem "memcached", "~> 1.8.0"
+gem "memcached_store", "~> 1.0.0"
+gem "dalli", "~> 2.7.11"
+gem "cityhash", "~> 0.6.0"

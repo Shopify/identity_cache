@@ -150,13 +150,13 @@ class CacheFetcherTest < IdentityCache::TestCase
   def test_fetch_with_database_down
     IdentityCache::CacheFetcher.any_instance.expects(:sleep).never
     exc = assert_raises(RuntimeError) do
-      other_cache_fetcher.fetch(key, fill_lock_duration: 0.9) { raise 'database down' }
+      other_cache_fetcher.fetch(key, fill_lock_duration: 0.9) { raise "database down" }
     end
-    assert_equal('database down', exc.message)
+    assert_equal("database down", exc.message)
     exc = assert_raises(RuntimeError) do
-      cache_fetcher.fetch(key, fill_lock_duration: 0.9) { raise 'database still down' }
+      cache_fetcher.fetch(key, fill_lock_duration: 0.9) { raise "database still down" }
     end
-    assert_equal('database still down', exc.message)
+    assert_equal("database still down", exc.message)
   end
 
   private
@@ -185,7 +185,7 @@ class CacheFetcherTest < IdentityCache::TestCase
 
   def open_port
     socket = Socket.new(:INET, :STREAM)
-    socket.bind(Addrinfo.tcp('127.0.0.1', 0))
+    socket.bind(Addrinfo.tcp("127.0.0.1", 0))
     socket.local_address.ip_port
   ensure
     socket&.close

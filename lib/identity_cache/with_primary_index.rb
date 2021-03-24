@@ -57,7 +57,7 @@ module IdentityCache
         cache_attribute_by_alias(attribute_proc, alias_name: :id, by: fields, unique: unique)
 
         field_list = fields.join("_and_")
-        arg_list = (0...fields.size).collect { |i| "arg#{i}" }.join(',')
+        arg_list = (0...fields.size).collect { |i| "arg#{i}" }.join(",")
 
         if unique
           instance_eval(<<-CODE, __FILE__, __LINE__ + 1)

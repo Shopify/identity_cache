@@ -10,7 +10,7 @@ class SaveTest < IdentityCache::TestCase
     Item.cache_index(:title, unique: true)
     Item.cache_index(:id, :title, unique: true)
 
-    @record = Item.create(title: 'bob', created_at: 1.second.ago, updated_at: 1.second.ago)
+    @record = Item.create(title: "bob", created_at: 1.second.ago, updated_at: 1.second.ago)
     @blob_key_prefix = [
       NAMESPACE, "blob:", "Item:", "#{cache_hash(ATTR_STRING)}:"
     ].join
@@ -19,7 +19,7 @@ class SaveTest < IdentityCache::TestCase
 
   def test_create
     @record = Item.new
-    @record.title = 'bob'
+    @record.title = "bob"
 
     expect_cache_delete("#{NAMESPACE}attr:Item:id:id/title:#{cache_hash('"2"/"bob"')}")
     expect_cache_delete("#{NAMESPACE}attr:Item:id:title:#{cache_hash('"bob"')}")
@@ -37,7 +37,7 @@ class SaveTest < IdentityCache::TestCase
     expect_cache_delete("#{NAMESPACE}attr:Item:id:id/title:#{cache_hash('"1"/"bob"')}")
     expect_cache_delete("#{NAMESPACE}attr:Item:id:title:#{cache_hash('"bob"')}")
 
-    @record.title = 'fred'
+    @record.title = "fred"
     @record.save
   end
 
@@ -56,7 +56,7 @@ class SaveTest < IdentityCache::TestCase
     expect_cache_delete("#{NAMESPACE}attr:Item:id:title:#{cache_hash('"bob"')}")
     expect_cache_delete(@blob_key)
 
-    @record.title = 'fred'
+    @record.title = "fred"
     @record.destroy
   end
 

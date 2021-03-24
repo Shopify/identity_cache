@@ -8,8 +8,8 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     Item.cache_has_one(:associated, embed: true)
     Item.cache_index(:title, unique: true)
     @cached_attribute = Item.cache_indexes.last
-    @record = Item.new(title: 'foo')
-    @record.associated = AssociatedRecord.new(name: 'bar')
+    @record = Item.new(title: "foo")
+    @record.associated = AssociatedRecord.new(name: "bar")
     @record.save
 
     @record.reload
@@ -18,12 +18,12 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
   def test_on_cache_miss_record_should_embed_associated_object
     fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
 
-    record_from_cache_miss = Item.fetch_by_title('foo')
+    record_from_cache_miss = Item.fetch_by_title("foo")
 
     assert_equal(@record, record_from_cache_miss)
     assert_not_nil(@record.fetch_associated)
     assert_equal(@record.associated, record_from_cache_miss.fetch_associated)
-    assert(fetch.has_been_called_with?(@cached_attribute.cache_key('foo'), {}))
+    assert(fetch.has_been_called_with?(@cached_attribute.cache_key("foo"), {}))
     assert(fetch.has_been_called_with?(@record.primary_cache_index_key, {}))
   end
 
@@ -35,19 +35,19 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
 
     fetch = Spy.on(IdentityCache.cache, :fetch).and_call_through
 
-    record_from_cache_miss = Item.fetch_by_title('foo')
+    record_from_cache_miss = Item.fetch_by_title("foo")
     record_from_cache_miss.expects(:associated).never
 
     assert_equal(@record, record_from_cache_miss)
     5.times do
       assert_nil(record_from_cache_miss.fetch_associated)
     end
-    assert(fetch.has_been_called_with?(@cached_attribute.cache_key('foo'), {}))
+    assert(fetch.has_been_called_with?(@cached_attribute.cache_key("foo"), {}))
     assert(fetch.has_been_called_with?(@record.primary_cache_index_key, {}))
   end
 
   def test_on_record_from_the_db_will_use_normal_association
-    record_from_db = Item.find_by_title('foo')
+    record_from_db = Item.find_by_title("foo")
 
     assert_equal(@record, record_from_db)
     assert_not_nil(record_from_db.fetch_associated)
@@ -55,9 +55,9 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
 
   def test_on_cache_hit_record_should_come_back_with_cached_association
     Item.cached_primary_index.expects(:load_one_from_db).with(1).once.returns(@record)
-    Item.fetch_by_title('foo')
+    Item.fetch_by_title("foo")
 
-    record_from_cache_hit = Item.fetch_by_title('foo')
+    record_from_cache_hit = Item.fetch_by_title("foo")
     expected = @record.associated
 
     assert_equal(@record, record_from_cache_hit)
@@ -66,14 +66,14 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
 
   def test_on_cache_hit_record_must_invoke_listener
     payloads = []
-    subscriber = ActiveSupport::Notifications.subscribe('hydration.identity_cache') do |_, _, _, _, payload|
+    subscriber = ActiveSupport::Notifications.subscribe("hydration.identity_cache") do |_, _, _, _, payload|
       payloads << payload
     end
 
-    _miss = Item.fetch_by_title('foo')
+    _miss = Item.fetch_by_title("foo")
     assert_equal(0, payloads.length)
 
-    hit = Item.fetch_by_title('foo')
+    hit = Item.fetch_by_title("foo")
     assert_equal(1, payloads.length)
     assert_equal({ class: "Item" }, payloads.pop)
 
@@ -90,9 +90,9 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     @record.reload
 
     Item.cached_primary_index.expects(:load_one_from_db).with(1).once.returns(@record)
-    Item.fetch_by_title('foo')
+    Item.fetch_by_title("foo")
 
-    record_from_cache_hit = Item.fetch_by_title('foo')
+    record_from_cache_hit = Item.fetch_by_title("foo")
     record_from_cache_hit.expects(:associated).never
 
     assert_equal(@record, record_from_cache_hit)
@@ -102,7 +102,7 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
   end
 
   def test_changes_in_associated_record_should_expire_the_parents_cache
-    Item.fetch_by_title('foo')
+    Item.fetch_by_title("foo")
     key = @record.primary_cache_index_key
     assert_not_nil(IdentityCache.cache.fetch(key))
 
@@ -139,7 +139,7 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
 
   def test_unsupported_through_assocation
     assert_raises(IdentityCache::UnsupportedAssociationError, "caching through associations isn't supported") do
-      Item.has_one(:deeply_associated, through: :associated, class_name: 'DeeplyAssociatedRecord')
+      Item.has_one(:deeply_associated, through: :associated, class_name: "DeeplyAssociatedRecord")
       Item.cache_has_one(:deeply_associated, embed: true)
     end
   end
@@ -152,8 +152,8 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
 
   def test_returned_record_should_be_readonly_on_cache_hit
     IdentityCache.with_fetch_read_only_records do
-      Item.fetch_by_title('foo')
-      record_from_cache_hit = Item.fetch_by_title('foo')
+      Item.fetch_by_title("foo")
+      record_from_cache_hit = Item.fetch_by_title("foo")
       assert(record_from_cache_hit.fetch_associated.readonly?)
       refute(record_from_cache_hit.associated.readonly?)
     end
@@ -162,14 +162,14 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
   def test_returned_record_should_be_readonly_on_cache_miss
     IdentityCache.with_fetch_read_only_records do
       assert(IdentityCache.should_use_cache?)
-      record_from_cache_miss = Item.fetch_by_title('foo')
+      record_from_cache_miss = Item.fetch_by_title("foo")
       assert(record_from_cache_miss.fetch_associated.readonly?)
     end
   end
 
   def test_db_returned_record_should_never_be_readonly
     IdentityCache.with_fetch_read_only_records do
-      record_from_db = Item.find_by_title('foo')
+      record_from_db = Item.find_by_title("foo")
       uncached_record = record_from_db.associated
       refute(uncached_record.readonly?)
       record_from_db.fetch_associated
@@ -181,7 +181,7 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     IdentityCache.with_fetch_read_only_records do
       Item.transaction do
         refute(IdentityCache.should_use_cache?)
-        refute(Item.fetch_by_title('foo').fetch_associated.readonly?)
+        refute(Item.fetch_by_title("foo").fetch_associated.readonly?)
       end
     end
   end

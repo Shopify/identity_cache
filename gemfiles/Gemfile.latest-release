@@ -1,13 +1,13 @@
-source 'https://rubygems.org'
-gemspec path: '..'
+source "https://rubygems.org"
+gemspec path: ".."
 
-gem 'rubocop', '~> 1.5'
-gem "rubocop-shopify", '~> 1.0.7', require: false
+gem "rubocop", "~> 1.5"
+gem "rubocop-shopify", "~> 1.0.7", require: false
 
-gem 'activerecord'
-gem 'activesupport'
+gem "activerecord"
+gem "activesupport"
 gem "mysql2", "~> 0.5"
 gem "pg", "~> 1.1"
-gem 'memcached_store'
-gem 'dalli'
-gem 'cityhash'
+gem "memcached_store"
+gem "dalli"
+gem "cityhash"

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
-require 'monitor'
-require 'benchmark'
+require "monitor"
+require "benchmark"
 
 module IdentityCache
   class MemoizedCacheProxy
@@ -12,7 +12,7 @@ module IdentityCache
     end
 
     def cache_backend=(cache_adaptor)
-      if cache_adaptor.class.name == 'ActiveSupport::Cache::MemCacheStore'
+      if cache_adaptor.class.name == "ActiveSupport::Cache::MemCacheStore"
         if cache_adaptor.respond_to?(:cas) || cache_adaptor.respond_to?(:cas_multi)
           unless cache_adaptor.is_a?(MemCacheStoreCAS)
             raise "#{cache_adaptor} respond to :cas or :cas_multi, that's unexpected"
@@ -50,7 +50,7 @@ module IdentityCache
 
     def write(key, value)
       memoizing = memoizing?
-      ActiveSupport::Notifications.instrument('cache_write.identity_cache', memoizing: memoizing) do
+      ActiveSupport::Notifications.instrument("cache_write.identity_cache", memoizing: memoizing) do
         memoized_key_values[key] = value if memoizing
         @cache_fetcher.write(key, value)
       end
@@ -58,7 +58,7 @@ module IdentityCache
 
     def delete(key)
       memoizing = memoizing?
-      ActiveSupport::Notifications.instrument('cache_delete.identity_cache', memoizing: memoizing) do
+      ActiveSupport::Notifications.instrument("cache_delete.identity_cache", memoizing: memoizing) do
         memoized_key_values.delete(key) if memoizing
         if (result = @cache_fetcher.delete(key))
           IdentityCache.logger.debug { "[IdentityCache] delete recorded for #{key}" }
@@ -73,7 +73,7 @@ module IdentityCache
       memo_misses = 0
       cache_misses = 0
 
-      value = ActiveSupport::Notifications.instrument('cache_fetch.identity_cache') do |payload|
+      value = ActiveSupport::Notifications.instrument("cache_fetch.identity_cache") do |payload|
         payload[:resolve_miss_time] = 0.0
 
         value = fetch_memoized(key) do
@@ -104,7 +104,7 @@ module IdentityCache
       memo_miss_keys = EMPTY_ARRAY
       cache_miss_keys = EMPTY_ARRAY
 
-      result = ActiveSupport::Notifications.instrument('cache_fetch_multi.identity_cache') do |payload|
+      result = ActiveSupport::Notifications.instrument("cache_fetch_multi.identity_cache") do |payload|
         payload[:resolve_miss_time] = 0.0
 
         result = fetch_multi_memoized(keys) do |non_memoized_keys|
@@ -132,7 +132,7 @@ module IdentityCache
     end
 
     def clear
-      ActiveSupport::Notifications.instrument('cache_clear.identity_cache') do
+      ActiveSupport::Notifications.instrument("cache_clear.identity_cache") do
         clear_memoization
         @cache_fetcher.clear
       end

@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-require 'test_helper'
+require "test_helper"
 
 class PolymorphicHasManyTest < IdentityCache::TestCase
   def setup
