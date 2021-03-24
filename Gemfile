@@ -3,7 +3,7 @@ source "https://rubygems.org"
 gemspec
 
 gem "rubocop", "~> 1.5"
-gem "rubocop-shopify", "~> 1.0.7", require: false
+gem "rubocop-shopify", "~> 2.0.1", require: false
 
 gem "mysql2", "~> 0.5.3", platform: :mri
 gem "pg", ">= 0.18", "< 2.0", platform: :mri
