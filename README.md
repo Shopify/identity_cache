@@ -29,7 +29,7 @@ Add the following to all your environment/*.rb files (production/development/tes
 
 ```ruby
 config.identity_cache_store = :mem_cache_store, "mem1.server.com", "mem2.server.com", {
-  expires_in: 6.hours.to_i, # in case of network errors when sending a delete
+  expires_in: 6.hours.to_i, # in case of network errors when sending a cache invalidation
   failover: false, # avoids more cache consistency issues
 }
 ```
@@ -48,7 +48,7 @@ config.identity_cache_store = :memcached_store,
   Memcached.new(["mem1.server.com"],
     support_cas: true,
     auto_eject_hosts: false,  # avoids more cache consistency issues
-  ), { expires_in: 6.hours.to_i } # in case of network errors when sending a delete
+  ), { expires_in: 6.hours.to_i } # in case of network errors when sending a cache invalidation
 ```
 
 Add an initializer with this code:
@@ -258,7 +258,7 @@ A word of warning. Some versions of rails will silently rescue all exceptions in
 
 Since everything is being marshalled and unmarshalled from Memcached changing Ruby or Rails versions could mean your objects cannot be unmarshalled from Memcached. There are a number of ways to get around this such as namespacing keys when you upgrade or rescuing marshal load errors and treating it as a cache miss. Just something to be aware of if you are using IdentityCache and upgrade Ruby or Rails.
 
-IdentityCache is also very much _opt-in_ by deliberate design. This means IdentityCache does not mess with the way normal Rails associations work, and including it in a model won't change any clients of that model until you switch them to use `fetch` instead of `find`. This is because there is no way IdentityCache is ever going to be 100% consistent. Processes die, exceptions happen, and network blips occur, which means there is a chance that some database transaction might commit but the corresponding memcached DEL operation does not make it. This means that you need to think carefully about when you use `fetch` and when you use `find`. For example, at Shopify, we never use any `fetch`ers on the path which moves money around, because IdentityCache could simply be wrong, and we want to charge people the right amount of money. We do however use the fetchers on performance critical paths where absolute correctness isn't the most important thing, and this is what IdentityCache is intended for.
+IdentityCache is also very much _opt-in_ by deliberate design. This means IdentityCache does not mess with the way normal Rails associations work, and including it in a model won't change any clients of that model until you switch them to use `fetch` instead of `find`. This is because there is no way IdentityCache is ever going to be 100% consistent. Processes die, exceptions happen, and network blips occur, which means there is a chance that some database transaction might commit but the corresponding memcached cache invalidation operation does not make it. This means that you need to think carefully about when you use `fetch` and when you use `find`. For example, at Shopify, we never use any `fetch`ers on the path which moves money around, because IdentityCache could simply be wrong, and we want to charge people the right amount of money. We do however use the fetchers on performance critical paths where absolute correctness isn't the most important thing, and this is what IdentityCache is intended for.
 
 ## Notes
 
