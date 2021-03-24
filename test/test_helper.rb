@@ -84,7 +84,7 @@ module IdentityCache
         log.size,
         <<~MSG.squish
           #{log.size} instead of #{num} queries were executed.
-          #{log.empty? ? '' : "\nQueries:\n#{log.join("\n")}"}
+          #{log.empty? ? "" : "\nQueries:\n#{log.join("\n")}"}
         MSG
       )
       ret
@@ -92,7 +92,7 @@ module IdentityCache
 
     def subscribe_to_cache_operations(subscriber)
       formatting_subscriber = lambda do |name, _start, _finish, _message_id, values|
-        operation = "#{name} #{values[:keys].try(:join, ', ') || values[:key]}"
+        operation = "#{name} #{values[:keys].try(:join, ", ") || values[:key]}"
         subscriber.call(operation)
       end
       subscription = ActiveSupport::Notifications.subscribe(/cache_.*\.active_support/, formatting_subscriber)
@@ -109,7 +109,7 @@ module IdentityCache
         log.size,
         <<~MSG.squish
           #{log.size} instead of #{num} memcache operations were executed.
-          #{log.empty? ? '' : "\nOperations:\n#{log.join("\n")}"}
+          #{log.empty? ? "" : "\nOperations:\n#{log.join("\n")}"}
         MSG
       )
       ret

@@ -30,7 +30,7 @@ module CacheConnection
       ActiveSupport::Cache::MemcachedStore.prepend(MemcachedStoreInstrumentation)
       ActiveSupport::Cache::MemcachedStore.new(address, support_cas: true, auto_eject_hosts: false)
     else
-      raise "Unknown adapter: #{ENV['ADAPTER']}"
+      raise "Unknown adapter: #{ENV["ADAPTER"]}"
     end
   end
 

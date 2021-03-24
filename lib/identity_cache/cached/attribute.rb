@@ -91,7 +91,7 @@ module IdentityCache
           "attr#{unique_indicator}" \
             ":#{model.base_class.name}" \
             ":#{attribute}" \
-            ":#{key_fields.join('/')}:"
+            ":#{key_fields.join("/")}:"
         end
       end
 
@@ -116,7 +116,7 @@ module IdentityCache
       end
 
       def fetch_method_suffix
-        "#{alias_name}_by_#{key_fields.join('_and_')}"
+        "#{alias_name}_by_#{key_fields.join("_and_")}"
       end
     end
   end
