@@ -50,10 +50,7 @@ module IdentityCache
       end
 
       def inverse_name
-        @inverse_name ||= begin
-          reflection.inverse_of&.name ||
-          reflection.active_record.name.underscore
-        end
+        @inverse_name ||= reflection.inverse_of&.name || reflection.active_record.name.underscore
       end
 
       def validate
