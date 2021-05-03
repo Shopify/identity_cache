@@ -11,7 +11,7 @@ module IdentityCache
         instrument(:cas, key, options) do
           @data.with do |connection|
             connection.cas(key, options[:expires_in].to_i, options) do |raw_value|
-              entry = deserialize_entry(raw_value)
+              entry = deserialize_entry(raw_value, raw: options[:raw])
               value = yield entry.value
               entry = ActiveSupport::Cache::Entry.new(value, **options)
               options[:raw] ? entry.value.to_s : entry
@@ -33,7 +33,7 @@ module IdentityCache
 
           values = {}
           raw_values.each do |key, raw_value|
-            entry = deserialize_entry(raw_value.first)
+            entry = deserialize_entry(raw_value.first, raw: options[:raw])
             values[keys_to_names[key]] = entry.value unless entry.expired?
           end
 
@@ -47,6 +47,15 @@ module IdentityCache
             @data.with { |c| c.replace_cas(key, payload, cas_id, options[:expires_in].to_i, options) }
           end
         end
+      end
+    end
+
+    if ActiveSupport::Cache::MemCacheStore.instance_method(:deserialize_entry).arity == 1
+
+      private
+
+      def deserialize_entry(payload, raw: nil) # rubocop:disable Lint/UnusedMethodArgument
+        super(payload)
       end
     end
   end
