@@ -47,6 +47,19 @@ module IdentityCache
         end
       end
 
+      def expire_by_key_value(key_values)
+        missing_keys = missing_keys(key_values)
+        unless missing_keys.empty?
+          raise MissingKeyName,
+            "#{model.name} attribute #{alias_name} expire_by_key_value - "\
+            "required fields: #{key_fields.join(", ")}. "\
+            "missing: #{missing_keys.join(", ")}"
+        end
+
+        key = cache_key_by_values(key_values)
+        IdentityCache.cache.delete(key)
+      end
+
       def cache_key(index_key)
         values_hash = IdentityCache.memcache_hash(unhashed_values_cache_key_string(index_key))
         "#{model.rails_cache_key_namespace}#{cache_key_prefix}#{values_hash}"
@@ -100,6 +113,11 @@ module IdentityCache
         cache_key_from_key_values(new_key_values)
       end
 
+      def cache_key_by_values(key_values)
+        new_key_values = key_fields.map { |field| key_values[field] }
+        cache_key_from_key_values(new_key_values)
+      end
+
       def old_cache_key(record)
         old_key_values = key_fields.map do |field|
           field_string = field.to_s
@@ -117,6 +135,10 @@ module IdentityCache
 
       def fetch_method_suffix
         "#{alias_name}_by_#{key_fields.join("_and_")}"
+      end
+
+      def missing_keys(key_values)
+        key_fields - key_values.keys
       end
     end
   end

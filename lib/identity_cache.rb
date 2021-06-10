@@ -67,6 +67,8 @@ module IdentityCache
 
   class LockWaitTimeout < StandardError; end
 
+  class MissingKeyName < StandardError; end
+
   mattr_accessor :cache_namespace
   self.cache_namespace = "IDC:#{CACHE_VERSION}:"
 
