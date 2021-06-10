@@ -90,4 +90,4 @@ jobs:
       run: bundle exec rake test
     - name: Run rubocop
       if: matrix.entry.rubocop
-      run: bundle exec rubocop
+      run: bundle exec rubocop --debug
