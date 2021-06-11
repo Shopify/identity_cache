@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 module IdentityCache
-  module Cached
-    class Association # :nodoc:
+  module Internal
+    class Association
       include EmbeddedFetching
 
       def initialize(name, reflection:)

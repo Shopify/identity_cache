@@ -1,8 +1,9 @@
 # frozen_string_literal: true
+
 module IdentityCache
-  module Cached
+  module Internal
     module Recursive
-      class Association < Cached::Association # :nodoc:
+      class Association < Internal::Association
         def initialize(name, reflection:)
           super
           @dehydrated_variable_name = :"@dehydrated_#{name}"

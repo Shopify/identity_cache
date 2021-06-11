@@ -1,8 +1,9 @@
 # frozen_string_literal: true
+
 module IdentityCache
-  module Cached
+  module Internal
     module Reference
-      class HasMany < Association # :nodoc:
+      class HasMany < Association
         def initialize(name, reflection:)
           super
           @cached_ids_name = "fetch_#{ids_name}"

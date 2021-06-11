@@ -1,8 +1,9 @@
 # frozen_string_literal: true
+
 module IdentityCache
-  module Cached
+  module Internal
     module Reference
-      class Association < Cached::Association # :nodoc:
+      class Association < Internal::Association
         def embedded_by_reference?
           true
         end

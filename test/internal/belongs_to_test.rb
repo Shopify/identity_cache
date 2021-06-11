@@ -2,7 +2,7 @@
 require "test_helper"
 
 module IdentityCache
-  module Cached
+  module Internal
     class BelongsToTest < IdentityCache::TestCase
       def setup
         super
@@ -13,7 +13,7 @@ module IdentityCache
       attr_reader :reflection, :belongs_to
 
       def test_is_cached_association
-        assert_equal(Cached::Association, BelongsTo.superclass)
+        assert_equal(Internal::Association, BelongsTo.superclass)
       end
 
       def test_build

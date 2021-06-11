@@ -2,7 +2,7 @@
 require "test_helper"
 
 module IdentityCache
-  module Cached
+  module Internal
     module Reference
       class HasOneTest < IdentityCache::TestCase
         def setup
@@ -14,7 +14,7 @@ module IdentityCache
         attr_reader :reflection, :has_one
 
         def test_is_cached_association
-          assert_equal(Cached::Association, HasOne.superclass.superclass)
+          assert_equal(Internal::Association, HasOne.superclass.superclass)
         end
 
         def test_build

@@ -2,7 +2,7 @@
 require "test_helper"
 
 module IdentityCache
-  module Cached
+  module Internal
     class AssociationTest < IdentityCache::TestCase
       def setup
         super

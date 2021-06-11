@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 module IdentityCache
-  module Cached
-    class BelongsTo < Association # :nodoc:
+  module Internal
+    class BelongsTo < Association
       attr_reader :records_variable_name
 
       def build

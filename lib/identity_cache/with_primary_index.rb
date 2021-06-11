@@ -23,7 +23,7 @@ module IdentityCache
     module ClassMethods
       # @api private
       def cached_primary_index
-        @cached_primary_index ||= Cached::PrimaryIndex.new(self)
+        @cached_primary_index ||= Internal::PrimaryIndex.new(self)
       end
 
       def primary_cache_index_enabled

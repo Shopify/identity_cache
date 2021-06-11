@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module IdentityCache
-  module Cached
+  module Internal
     # @abstract
     class Attribute
       attr_reader :model, :alias_name, :key_fields, :unique

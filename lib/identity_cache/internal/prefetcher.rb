@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module IdentityCache
-  module Cached
+  module Internal
     module Prefetcher
       ASSOCIATION_FETCH_EVENT = "association_fetch.identity_cache"
 

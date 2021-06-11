@@ -2,8 +2,8 @@
 require "test_helper"
 
 module IdentityCache
-  module Cached
-    module Recursive
+  module Internal
+    module Reference
       class HasManyTest < IdentityCache::TestCase
         def setup
           super
@@ -14,22 +14,26 @@ module IdentityCache
         attr_reader :reflection, :has_many
 
         def test_is_cached_association
-          assert_equal(Cached::Association, HasMany.superclass.superclass)
+          assert_equal(Internal::Association, HasMany.superclass.superclass)
         end
 
         def test_build
           has_many.build
           record = AssociatedRecord.new
 
+          assert_operator(record, :respond_to?, :fetch_deeply_associated_record_ids)
+          assert_operator(record, :respond_to?, :cached_deeply_associated_record_ids)
           assert_operator(record, :respond_to?, :fetch_deeply_associated_records)
         end
 
         def test_clear
           record = AssociatedRecord.new
+          record.instance_variable_set(:@cached_deeply_associated_record_ids, [])
           record.instance_variable_set(:@cached_deeply_associated_records, [])
 
           has_many.clear(record)
 
+          refute_operator(record, :instance_variable_defined?, :@cached_deeply_associated_record_ids)
           refute_operator(record, :instance_variable_defined?, :@cached_deeply_associated_records)
         end
 
@@ -38,11 +42,11 @@ module IdentityCache
         end
 
         def test_embedded_recursively
-          assert_predicate(has_many, :embedded_recursively?)
+          refute_predicate(has_many, :embedded_recursively?)
         end
 
         def test_embedded_by_reference
-          refute_predicate(has_many, :embedded_by_reference?)
+          assert_predicate(has_many, :embedded_by_reference?)
         end
       end
     end

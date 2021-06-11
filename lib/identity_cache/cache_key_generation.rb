@@ -14,11 +14,11 @@ module IdentityCache
           klass.send(:check_association_scope, name)
           association.validate if association.embedded?
           case association
-          when Cached::Recursive::Association
+          when Internal::Recursive::Association
             schema_string << ",#{name}:(#{denormalized_schema_hash(association.reflection.klass)})"
-          when Cached::Reference::HasMany
+          when Internal::Reference::HasMany
             schema_string << ",#{name}:ids"
-          when Cached::Reference::HasOne
+          when Internal::Reference::HasOne
             schema_string << ",#{name}:id"
           end
         end

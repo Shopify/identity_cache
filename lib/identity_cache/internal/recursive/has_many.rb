@@ -1,8 +1,9 @@
 # frozen_string_literal: true
+
 module IdentityCache
-  module Cached
+  module Internal
     module Recursive
-      class HasMany < Association # :nodoc:
+      class HasMany < Association
       end
     end
   end

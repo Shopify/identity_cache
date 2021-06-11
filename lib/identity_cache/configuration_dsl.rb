@@ -47,9 +47,9 @@ module IdentityCache
         reflection = reflect_on_association(association)
         association_class = case embed
         when :ids
-          Cached::Reference::HasMany
+          Internal::Reference::HasMany
         when true
-          Cached::Recursive::HasMany
+          Internal::Recursive::HasMany
         else
           raise NotImplementedError
         end
@@ -85,9 +85,9 @@ module IdentityCache
         reflection = reflect_on_association(association)
         association_class = case embed
         when :id
-          Cached::Reference::HasOne
+          Internal::Reference::HasOne
         when true
-          Cached::Recursive::HasOne
+          Internal::Recursive::HasOne
         else
           raise NotImplementedError
         end
@@ -125,7 +125,7 @@ module IdentityCache
         ensure_base_model
         fields = Array(by)
 
-        klass = fields.one? ? Cached::AttributeByOne : Cached::AttributeByMulti
+        klass = fields.one? ? Internal::AttributeByOne : Internal::AttributeByMulti
         cached_attribute = klass.new(self, attribute_or_proc, alias_name, fields, unique)
         cached_attribute.build
         cache_indexes.push(cached_attribute)

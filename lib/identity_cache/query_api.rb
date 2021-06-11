@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module IdentityCache
   module QueryAPI
     extend ActiveSupport::Concern
@@ -6,7 +7,7 @@ module IdentityCache
     module ClassMethods
       # Prefetches cached associations on a collection of records
       def prefetch_associations(includes, records)
-        Cached::Prefetcher.prefetch(self, includes, records)
+        Internal::Prefetcher.prefetch(self, includes, records)
       end
 
       # @api private
@@ -57,9 +58,9 @@ module IdentityCache
         records.each do |parent|
           child_ids = ids_by_parent[parent.id]
           case cached_association
-          when Cached::Reference::HasMany
+          when Internal::Reference::HasMany
             parent.instance_variable_set(cached_association.ids_variable_name, child_ids)
-          when Cached::Reference::HasOne
+          when Internal::Reference::HasOne
             parent.instance_variable_set(cached_association.id_variable_name, child_ids.first)
           end
         end

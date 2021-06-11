@@ -481,7 +481,7 @@ module IdentityCache
     private
 
     def prefetch(klass, includes, records)
-      Cached::Prefetcher.prefetch(klass, includes, records)
+      Internal::Prefetcher.prefetch(klass, includes, records)
     end
 
     def setup_has_many_children_and_grandchildren(*parents)

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 module IdentityCache
-  module Cached
+  module Internal
   end
 
-  private_constant :Cached
+  private_constant :Internal
 end

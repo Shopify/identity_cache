@@ -39,21 +39,21 @@ module IdentityCache
     private
 
     def reference_cached_association
-      @reference_assocaition ||= Cached::Reference::HasMany.new(
+      @reference_assocaition ||= Internal::Reference::HasMany.new(
         :deeply_associated_records,
         reflection: reflect(AssociatedRecord, :deeply_associated_records),
       )
     end
 
     def recursive_cached_association
-      @recursive_association ||= Cached::Recursive::HasMany.new(
+      @recursive_association ||= Internal::Recursive::HasMany.new(
         :deeply_associated_records,
         reflection: reflect(AssociatedRecord, :deeply_associated_records),
       )
     end
 
     def belongs_to_cached_association
-      @reference_assocaition ||= Cached::BelongsTo.new(
+      @reference_assocaition ||= Internal::BelongsTo.new(
         :item,
         reflection: reflect(AssociatedRecord, :item),
       )
