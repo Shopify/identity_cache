@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 module IdentityCache
-  module ParentModelExpiration # :nodoc:
+  # @api private
+  module ParentModelExpiration
     extend ActiveSupport::Concern
     include ArTransactionChanges
 
@@ -35,9 +36,27 @@ module IdentityCache
       end
     end
 
+    module ClassMethods
+      def parent_expiration_entries
+        ParentModelExpiration.install_pending_parent_expiry_hooks(cached_model)
+        _parent_expiration_entries
+      end
+
+      def check_for_unsupported_parent_expiration_entries
+        return unless parent_expiration_entries.any?
+        msg = "Unsupported manual expiration of record embedded in parent associations:\n"
+        parent_expiration_entries.each do |association_name, cached_associations|
+          cached_associations.each do |parent_class, _only_on_foreign_key_change|
+            msg << "- #{parent_class}\##{association_name}"
+          end
+        end
+        raise msg
+      end
+    end
+
     included do
-      class_attribute(:parent_expiration_entries)
-      self.parent_expiration_entries = Hash.new { |hash, key| hash[key] = [] }
+      class_attribute(:_parent_expiration_entries)
+      self._parent_expiration_entries = Hash.new { |hash, key| hash[key] = [] }
     end
 
     def expire_parent_caches
@@ -49,7 +68,6 @@ module IdentityCache
     end
 
     def add_parents_to_cache_expiry_set(parents_to_expire)
-      ParentModelExpiration.install_pending_parent_expiry_hooks(cached_model)
       self.class.parent_expiration_entries.each do |association_name, cached_associations|
         parents_to_expire_on_changes(parents_to_expire, association_name, cached_associations)
       end
