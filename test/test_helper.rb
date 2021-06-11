@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require "logger"
 require "minitest/autorun"
-require "mocha/setup"
+require "mocha/minitest"
 require "active_record"
 require "helpers/database_connection"
 require "helpers/cache_connection"
