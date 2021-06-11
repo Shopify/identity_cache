@@ -34,13 +34,13 @@ module IdentityCache
         end
       end
 
-      def expire(record)
+      def expire_for_save(record)
         unless record.send(:was_new_record?)
-          old_key = old_cache_key(record)
+          old_key = old_cache_key_for_record(record)
           IdentityCache.cache.delete(old_key)
         end
         unless record.destroyed?
-          new_key = new_cache_key(record)
+          new_key = new_cache_key_for_record(record)
           if new_key != old_key
             IdentityCache.cache.delete(new_key)
           end
@@ -95,12 +95,12 @@ module IdentityCache
         end
       end
 
-      def new_cache_key(record)
+      def new_cache_key_for_record(record)
         new_key_values = key_fields.map { |field| record.send(field) }
         cache_key_from_key_values(new_key_values)
       end
 
-      def old_cache_key(record)
+      def old_cache_key_for_record(record)
         old_key_values = key_fields.map do |field|
           field_string = field.to_s
           changes = record.transaction_changed_attributes
