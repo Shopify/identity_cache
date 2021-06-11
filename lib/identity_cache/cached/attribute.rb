@@ -47,6 +47,20 @@ module IdentityCache
         end
       end
 
+      def expire_for_values(values_hash)
+        key_values = key_fields.map { |name| values_hash.fetch(name) }
+        IdentityCache.cache.delete(cache_key_from_key_values(key_values))
+      end
+
+      def expire_for_update(old_values_hash, changes)
+        expire_for_values(old_values_hash)
+
+        if key_fields.any? { |name| changes.key?(name) }
+          key_values = key_fields.map { |name| changes.fetch(name) { old_values_hash.fetch(name) } }
+          IdentityCache.cache.delete(cache_key_from_key_values(key_values))
+        end
+      end
+
       def cache_key(index_key)
         values_hash = IdentityCache.memcache_hash(unhashed_values_cache_key_string(index_key))
         "#{model.rails_cache_key_namespace}#{cache_key_prefix}#{values_hash}"
