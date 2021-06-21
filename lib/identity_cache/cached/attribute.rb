@@ -53,7 +53,7 @@ module IdentityCache
       end
 
       def expire_for_update(old_values_hash, changes)
-        expire_for_values(old_values_hash, changes)
+        expire_for_values(old_values_hash)
 
         if key_fields.any? { |name| changes.key?(name) }
           key_values = key_fields.map { |name| changes.fetch(name) { old_values_hash.fetch(name) } }
