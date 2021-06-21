@@ -36,9 +36,9 @@ class ParentModelExpirationTest < IdentityCache::TestCase
   def test_check_for_unsupported_parent_expiration_entries
     Item.cache_has_many(:associated_records, embed: true)
 
-    Item.check_for_unsupported_parent_expiration_entries
+    Item.send(:check_for_unsupported_parent_expiration_entries)
     exc = assert_raises do
-      AssociatedRecord.check_for_unsupported_parent_expiration_entries
+      AssociatedRecord.send(:check_for_unsupported_parent_expiration_entries)
     end
     assert_equal(
       "Unsupported manual expiration of AssociatedRecord record that is embedded in parent associations:\n- item",
