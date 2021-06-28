@@ -61,7 +61,7 @@ module IdentityCache
         check_for_unsupported_parent_expiration_entries
       end
 
-      private def expire_cache_for_insert_or_delete(indexed_values)
+      def expire_cache_for_insert_or_delete(indexed_values)
         if primary_cache_index_enabled
           id = indexed_values.fetch(primary_key.to_sym)
           expire_primary_key_cache_index(id)
@@ -76,13 +76,15 @@ module IdentityCache
 
       alias_method :expire_cache_for_delete, :expire_cache_for_insert_or_delete
 
+      private :expire_cache_for_insert_or_delete
+
       private
 
       def check_for_unsupported_parent_expiration_entries
         return unless parent_expiration_entries.any?
         msg = +"Unsupported manual expiration of #{name} record that is embedded in parent associations:\n"
         parent_expiration_entries.each do |association_name, cached_associations|
-          cached_associations.each do |parent_class, _only_on_foreign_key_change|
+          cached_associations.each do |_parent_class, _only_on_foreign_key_change|
             msg << "- #{association_name}"
           end
         end
