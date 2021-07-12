@@ -129,6 +129,7 @@ module IdentityCache
         cached_attribute = klass.new(self, attribute_or_proc, alias_name, fields, unique)
         cached_attribute.build
         cache_indexes.push(cached_attribute)
+        @cache_indexed_columns = nil
       end
 
       def ensure_base_model
