@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 require "test_helper"
+require "byebug"
 
 module IdentityCache
-  class CacheManualExpireTest < IdentityCache::TestCase
+  class WithoutPrimaryIndexTest < IdentityCache::TestCase
     def setup
       super
       AssociatedRecord.cache_attribute(:name)
 
       @parent = Item.create!(title: "bob")
       @record = @parent.associated_records.create!(name: "foo")
-      IdentityCache.cache.clear
     end
 
     def test_cache_indexed_columns_returns_the_correct_columns_for_expiration
@@ -18,7 +18,7 @@ module IdentityCache
       assert_equal(expected_result, AssociatedRecord.cache_indexed_columns)
     end
 
-    def test_expire_cache_for_udate
+    def test_expire_cache_for_update
       id = 1
       item_id = 1
       AssociatedRecord.cache_attribute(:item_id, by: :name)
@@ -44,7 +44,7 @@ module IdentityCache
       end
     end
 
-    def test_expire_cache_for_udate_raises_when_a_hash_is_missing_an_index_key
+    def test_expire_cache_for_update_raises_when_a_hash_is_missing_an_index_key
       expected_error_message = "key not found: :id"
       old_values = {
         name: "foo",
@@ -53,7 +53,7 @@ module IdentityCache
         name: "bar",
       }
 
-      error = assert_raises do
+      error = assert_raises(KeyError) do
         AssociatedRecord.expire_cache_for_update(old_values, new_values)
       end
 
@@ -61,28 +61,32 @@ module IdentityCache
     end
 
     def test_expire_cache_for_insert
-      id = 1
-      AssociatedRecord.fetch_name_by_id(id)
+      test_record_name = "Test Record"
+      AssociatedRecord.insert_all([{name: test_record_name}])
+      test_record = AssociatedRecord.find_by(name: test_record_name)
       expire_hash_keys = {
-        id: id,
+        id: test_record.id,
       }
-
+      
+      assert_equal(test_record_name, AssociatedRecord.fetch_name_by_id(test_record.id))
       AssociatedRecord.expire_cache_for_insert(expire_hash_keys)
       assert_queries(1) do
-        assert_equal("foo", AssociatedRecord.fetch_name_by_id(id))
+        assert_equal(test_record_name, AssociatedRecord.fetch_name_by_id(test_record.id))
       end
     end
 
     def test_expire_cache_for_delete
-      id = 1
-      AssociatedRecord.fetch_name_by_id(1)
+      assert_equal("foo", AssociatedRecord.fetch_name_by_id(@record.id))
       expire_hash_keys = {
-        id: id,
+        id: @record.id,
       }
 
+      AssociatedRecord.delete(@record.id)
+      assert_equal("foo", AssociatedRecord.fetch_name_by_id(@record.id))
+      
       AssociatedRecord.expire_cache_for_delete(expire_hash_keys)
       assert_queries(1) do
-        assert_equal("foo", AssociatedRecord.fetch_name_by_id(id))
+        assert_nil(AssociatedRecord.fetch_name_by_id(@record.id))
       end
     end
   end
