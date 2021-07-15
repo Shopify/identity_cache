@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 require "test_helper"
-require "byebug"
 
 module IdentityCache
   class WithoutPrimaryIndexTest < IdentityCache::TestCase
