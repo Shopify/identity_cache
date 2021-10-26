@@ -26,8 +26,10 @@ module ActiveRecordObjects
   end
 
   def teardown_models
-    ActiveSupport::DescendantsTracker.clear
-    ActiveSupport::Dependencies.clear
+    if ActiveRecord::VERSION::MAJOR < 7
+      ActiveSupport::DescendantsTracker.clear
+      ActiveSupport::Dependencies.clear
+    end
     Object.send(:remove_const, "DeeplyAssociatedRecord")
     Object.send(:remove_const, "PolymorphicRecord")
     Object.send(:remove_const, "NormalizedAssociatedRecord")
