@@ -66,7 +66,7 @@ module IdentityCache
         end
       end
 
-      def record_from_coder(coder, klass) #:nodoc:
+      def record_from_coder(coder, klass) # :nodoc:
         record = klass.instantiate(coder[:attributes].dup)
 
         if coder.key?(:associations)
