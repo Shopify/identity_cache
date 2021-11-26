@@ -5,7 +5,7 @@ module DatabaseConnection
   end
 
   def self.setup
-    db_config = ENV["DATABASE_URL"] || DEFAULT_CONFIG.fetch(db_name)
+    db_config = DEFAULT_CONFIG.fetch(db_name)
     begin
       ActiveRecord::Base.establish_connection(db_config)
       ActiveRecord::Base.connection
@@ -74,6 +74,7 @@ module DatabaseConnection
       "database" => "identity_cache_test",
       "host" => ENV["MYSQL_HOST"] || "127.0.0.1",
       "username" => "root",
+      "port" => ENV["MYSQL_PORT"] ? Integer(ENV["MYSQL_PORT"]) : 3306,
     },
     "postgresql" => {
       "adapter" => "postgresql",
