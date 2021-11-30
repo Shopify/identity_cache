@@ -73,12 +73,12 @@ module IdentityCache
   # Fetched records are not read-only and this could sometimes prevent IDC from
   # reflecting what's truly in the database when fetch_read_only_records is false.
   # When set to true, it will only return read-only records when cache is used.
-  mattr_writer :fetch_read_only_records
-  self.fetch_read_only_records = true
+  @fetch_read_only_records = true
 
   class << self
     include IdentityCache::CacheHash
 
+    attr_writer :fetch_read_only_records
     attr_accessor :readonly
     attr_writer :logger
 
@@ -190,7 +190,7 @@ module IdentityCache
     end
 
     def with_fetch_read_only_records(value = true)
-      old_value = fetch_read_only_records
+      old_value = Thread.current[:identity_cache_fetch_read_only_records]
       Thread.current[:identity_cache_fetch_read_only_records] = value
       yield
     ensure
