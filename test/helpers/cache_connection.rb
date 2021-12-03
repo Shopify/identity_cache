@@ -15,11 +15,15 @@ module CacheConnection
     ENV["MEMCACHED_HOST"] || "127.0.0.1"
   end
 
+  def port
+    ENV["MEMCACHED_PORT"] || "11211"
+  end
+
   def backend
     @backend ||= build_backend
   end
 
-  def build_backend(address: "#{host}:11211")
+  def build_backend(address: "#{host}:#{port}")
     case ENV["ADAPTER"]
     when nil, "dalli"
       require "active_support/cache/mem_cache_store"
