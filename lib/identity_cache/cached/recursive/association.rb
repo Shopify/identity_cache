@@ -6,9 +6,10 @@ module IdentityCache
         def initialize(name, reflection:)
           super
           @dehydrated_variable_name = :"@dehydrated_#{name}"
+          @association_loaded_accessor_name = :"cached_#{name}_loaded?"
         end
 
-        attr_reader :dehydrated_variable_name
+        attr_reader :dehydrated_variable_name, :association_loaded_accessor_name
 
         def build
           cached_association = self
@@ -16,6 +17,9 @@ module IdentityCache
           model = reflection.active_record
           model.define_method(cached_accessor_name) do
             cached_association.read(self)
+          end
+          model.define_method(association_loaded_accessor_name) do
+            cached_association.loaded?(self)
           end
 
           ParentModelExpiration.add_parent_expiry_hook(self)
@@ -42,6 +46,11 @@ module IdentityCache
 
         def write(record, association_target)
           record.instance_variable_set(records_variable_name, association_target)
+        end
+
+        def loaded?(record)
+          record.instance_variable_defined?(records_variable_name) ||
+            record.instance_variable_defined?(dehydrated_variable_name)
         end
 
         def set_with_inverse(record, association_target)

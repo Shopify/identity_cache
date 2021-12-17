@@ -21,6 +21,7 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     record_from_cache_miss = Item.fetch_by_title("foo")
 
     assert_equal(@record, record_from_cache_miss)
+    assert_equal(true, record_from_cache_miss.cached_associated_loaded?)
     assert_not_nil(@record.fetch_associated)
     assert_equal(@record.associated, record_from_cache_miss.fetch_associated)
     assert(fetch.has_been_called_with?(@cached_attribute.cache_key("foo"), {}))
@@ -50,6 +51,7 @@ class DenormalizedHasOneTest < IdentityCache::TestCase
     record_from_db = Item.find_by_title("foo")
 
     assert_equal(@record, record_from_db)
+    assert_equal(false, record_from_db.cached_associated_loaded?)
     assert_not_nil(record_from_db.fetch_associated)
   end
 

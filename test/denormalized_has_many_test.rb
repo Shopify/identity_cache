@@ -26,6 +26,7 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     Item.any_instance.expects(:association).with(:associated_records).returns(expected)
 
     assert_equal(@record, record_from_db)
+    assert_equal(false, record_from_db.cached_associated_records_loaded?)
     assert_equal(expected, record_from_db.fetch_associated_records)
   end
 
@@ -42,6 +43,7 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
 
     record_from_cache_hit = Item.fetch(@record.id)
     assert_equal(@record, record_from_cache_hit)
+    assert_equal(true, record_from_cache_hit.cached_associated_records_loaded?)
 
     result = assert_memcache_operations(0) do
       assert_no_queries do

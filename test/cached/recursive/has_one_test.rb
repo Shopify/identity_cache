@@ -22,6 +22,7 @@ module IdentityCache
           record = AssociatedRecord.new
 
           assert_operator(record, :respond_to?, :fetch_deeply_associated)
+          assert_operator(record, :respond_to?, :cached_deeply_associated_loaded?)
         end
 
         def test_clear
