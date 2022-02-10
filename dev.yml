@@ -2,7 +2,6 @@ name: identity-cache
 
 up:
   - homebrew:
-    - postgresql
     - mysql-client@5.7:
         or:        [mysql@5.7]
         conflicts: [mysql-connector-c, mysql, mysql-client]
@@ -13,7 +12,6 @@ up:
 env:
   RAILGUN_HOST: identity-cache.railgun
   MYSQL_HOST: identity-cache.railgun
-  POSTGRES_HOST: identity-cache.railgun
   MEMCACHED_HOST: identity-cache.railgun
 
 commands:
