@@ -12,5 +12,4 @@ volumes:
 
 services:
   - mysql
-  - postgresql
   - memcached
