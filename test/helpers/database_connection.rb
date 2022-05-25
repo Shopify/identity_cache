@@ -64,9 +64,9 @@ module DatabaseConnection
     related_items: [[:integer, :owner_id], [:string, :owner_type], [:integer, :item_id], [:timestamps, null: true]],
     keyed_records: [[:string, :value], primary_key: "hashed_key"],
     sti_records: [[:string, :type], [:string, :name]],
-    custom_master_records: [[:integer, :master_primary_key], id: false, primary_key: "master_primary_key"],
+    custom_parent_records: [[:integer, :parent_primary_key], id: false, primary_key: "parent_primary_key"],
     custom_child_records: [
-      [:integer, :child_primary_key], [:integer, :master_id], id: false, primary_key: "child_primary_key",
+      [:integer, :child_primary_key], [:integer, :parent_id], id: false, primary_key: "child_primary_key",
     ],
   }
 
