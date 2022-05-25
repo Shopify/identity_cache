@@ -1,12 +1,11 @@
 # frozen_string_literal: true
+
 source "https://rubygems.org"
 gemspec
 
-# Skip rubocop 1.16.1 until the next release which will include the fix:
-# https://github.com/rubocop/rubocop/pull/9862
-gem "rubocop", "~> 1.5", "!= 1.16.1"
+gem "rubocop", "~> 1.5"
 
-gem "rubocop-shopify", "~> 2.0.1", require: false
+gem "rubocop-shopify", "~> 2.6.0", require: false
 
 gem "mysql2", "~> 0.5.3", platform: :mri
 gem "pg", ">= 0.18", "< 2.0", platform: :mri

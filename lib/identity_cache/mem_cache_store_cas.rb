@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require "dalli/cas/client" unless Dalli::VERSION > "3"
 
 module IdentityCache
@@ -54,7 +55,7 @@ module IdentityCache
 
       private
 
-      def deserialize_entry(payload, raw: nil) # rubocop:disable Lint/UnusedMethodArgument
+      def deserialize_entry(payload, raw: nil)
         super(payload)
       end
     end

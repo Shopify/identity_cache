@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module IdentityCache
   module Cached
     module EmbeddedFetching
@@ -22,6 +23,7 @@ module IdentityCache
           cached_associations.each_value do |cached_association|
             records.each do |record|
               next unless (cached_record = cached_records_by_id[record.id])
+
               cached_value = cached_association.read(cached_record)
               cached_association.write(record, cached_value)
             end

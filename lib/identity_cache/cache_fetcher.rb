@@ -15,6 +15,7 @@ module IdentityCache
       class << self
         def from_cache(marker, client_id, data_version)
           raise ArgumentError unless marker == FILL_LOCKED
+
           new(client_id: client_id, data_version: data_version)
         end
 
@@ -69,13 +70,11 @@ module IdentityCache
       results
     end
 
-    def fetch(key, fill_lock_duration: nil, lock_wait_tries: 2)
+    def fetch(key, fill_lock_duration: nil, lock_wait_tries: 2, &block)
       if fill_lock_duration && IdentityCache.should_fill_cache?
-        fetch_with_fill_lock(key, fill_lock_duration, lock_wait_tries) do
-          yield
-        end
+        fetch_with_fill_lock(key, fill_lock_duration, lock_wait_tries, &block)
       else
-        fetch_without_fill_lock(key) { yield }
+        fetch_without_fill_lock(key, &block)
       end
     end
 
@@ -88,16 +87,19 @@ module IdentityCache
         unless value.nil?
           return value
         end
+
         data = yield
         break unless IdentityCache.should_fill_cache?
+
         data
       end
       data
     end
 
-    def fetch_with_fill_lock(key, fill_lock_duration, lock_wait_tries)
+    def fetch_with_fill_lock(key, fill_lock_duration, lock_wait_tries, &block)
       raise ArgumentError, "fill_lock_duration must be greater than 0.0" unless fill_lock_duration > 0.0
       raise ArgumentError, "lock_wait_tries must be greater than 0" unless lock_wait_tries > 0
+
       lock = nil
       using_fallback_key = false
       expiration_options = EMPTY_HASH
@@ -122,13 +124,14 @@ module IdentityCache
             return data
           else
             raise LockWaitTimeout if lock_wait_tries <= 0
+
             lock_wait_tries -= 1
 
             # If fill failed in the other client, then it might be failing fast
             # so avoid waiting the typical amount of time for a lock wait. The
             # semian gem can be used to handle failing fast when the database is slow.
             if lock.fill_failed?
-              return fetch_without_fill_lock(key) { yield }
+              return fetch_without_fill_lock(key, &block)
             end
 
             # lock wait
@@ -167,8 +170,10 @@ module IdentityCache
     def mark_fill_failure_on_lock(key, expiration_options)
       @cache_backend.cas(key, expiration_options) do |value|
         break unless FillLock.cache_value?(value)
+
         lock = FillLock.from_cache(*value)
         break if lock.client_id != client_id
+
         lock.mark_failed
         lock.cache_value
       end
@@ -229,10 +234,12 @@ module IdentityCache
       upserted = upsert(key, expiration_options) do |value|
         return false if value.nil? || value == IdentityCache::DELETED
         return true unless FillLock.cache_value?(value) # already filled
+
         current_lock = FillLock.from_cache(*value)
         if current_lock.data_version != my_lock.data_version
           return false # invalidated then relocked
         end
+
         data
       end
 
@@ -285,6 +292,7 @@ module IdentityCache
 
         break if updates.empty?
         break unless IdentityCache.should_fill_cache?
+
         updates
       end
       result
@@ -298,6 +306,7 @@ module IdentityCache
 
     def add(key, value, expiration_options = EMPTY_HASH)
       return false unless IdentityCache.should_fill_cache?
+
       @cache_backend.write(key, value, { unless_exist: true, **expiration_options })
     end
   end

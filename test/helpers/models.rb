@@ -85,14 +85,14 @@ end
 class StiRecordTypeA < StiRecord
 end
 
-class CustomMasterRecord < ActiveRecord::Base
+class CustomParentRecord < ActiveRecord::Base
   include IdentityCache
-  has_many :custom_child_record, foreign_key: :master_id
-  self.primary_key = "master_primary_key"
+  has_many :custom_child_record, foreign_key: :parent_id
+  self.primary_key = "parent_primary_key"
 end
 
 class CustomChildRecord < ActiveRecord::Base
   include IdentityCache
-  belongs_to :custom_master_record, foreign_key: :master_id
+  belongs_to :custom_parent_record, foreign_key: :parent_id
   self.primary_key = "child_primary_key"
 end

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module DatabaseConnection
   def self.db_name
     ENV.fetch("DB", "mysql2")
@@ -11,6 +12,7 @@ module DatabaseConnection
       ActiveRecord::Base.connection
     rescue
       raise unless db_config.is_a?(Hash)
+
       ActiveRecord::Base.establish_connection(db_config.merge("database" => nil))
       ActiveRecord::Base.connection.create_database(db_config["database"])
       ActiveRecord::Base.establish_connection(db_config)
@@ -51,7 +53,7 @@ module DatabaseConnection
   TABLES = {
     polymorphic_records: [[:string, :owner_type], [:integer, :owner_id], [:timestamps, null: true]],
     deeply_associated_records: [
-      [:string, :name], [:integer, :associated_record_id], [:integer, :item_id], [:timestamps, null: true]
+      [:string, :name], [:integer, :associated_record_id], [:integer, :item_id], [:timestamps, null: true],
     ],
     associated_records: [[:string, :name], [:integer, :item_id], [:integer, :item_two_id], [:timestamps, null: true]],
     normalized_associated_records: [[:string, :name], [:integer, :item_id], [:timestamps, null: true]],
@@ -62,9 +64,9 @@ module DatabaseConnection
     related_items: [[:integer, :owner_id], [:string, :owner_type], [:integer, :item_id], [:timestamps, null: true]],
     keyed_records: [[:string, :value], primary_key: "hashed_key"],
     sti_records: [[:string, :type], [:string, :name]],
-    custom_master_records: [[:integer, :master_primary_key], id: false, primary_key: "master_primary_key"],
+    custom_parent_records: [[:integer, :parent_primary_key], id: false, primary_key: "parent_primary_key"],
     custom_child_records: [
-      [:integer, :child_primary_key], [:integer, :master_id], id: false, primary_key: "child_primary_key"
+      [:integer, :child_primary_key], [:integer, :parent_id], id: false, primary_key: "child_primary_key",
     ],
   }
 

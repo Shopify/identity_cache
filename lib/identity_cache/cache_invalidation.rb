@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module IdentityCache
   module CacheInvalidation
     CACHE_KEY_NAMES = [:ids_variable_name, :id_variable_name, :records_variable_name]

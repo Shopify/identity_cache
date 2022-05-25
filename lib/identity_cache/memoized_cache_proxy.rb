@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require "monitor"
 require "benchmark"
 
@@ -30,7 +31,7 @@ module IdentityCache
           # no need for CAS support
         else
           warn("[IdentityCache] Missing CAS support in cache backend #{cache_adaptor.class} "\
-               "which is needed for cache consistency")
+            "which is needed for cache consistency")
         end
         @cache_fetcher = FallbackFetcher.new(cache_adaptor)
       end
@@ -69,7 +70,7 @@ module IdentityCache
       end
     end
 
-    def fetch(key, cache_fetcher_options = {})
+    def fetch(key, cache_fetcher_options = {}, &block)
       memo_misses = 0
       cache_misses = 0
 
@@ -80,9 +81,7 @@ module IdentityCache
           memo_misses = 1
           @cache_fetcher.fetch(key, **cache_fetcher_options) do
             cache_misses = 1
-            instrument_duration(payload, :resolve_miss_time) do
-              yield
-            end
+            instrument_duration(payload, :resolve_miss_time, &block)
           end
         end
         set_instrumentation_payload(payload, num_keys: 1, memo_misses: memo_misses, cache_misses: cache_misses)
@@ -155,6 +154,7 @@ module IdentityCache
       if memoized_key_values.key?(key)
         return memoized_key_values[key]
       end
+
       memoized_key_values[key] = yield
     end
 

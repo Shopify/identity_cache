@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module IdentityCache
   module WithoutPrimaryIndex
     extend ActiveSupport::Concern
@@ -14,6 +15,7 @@ module IdentityCache
 
     def self.append_features(base) # :nodoc:
       raise AlreadyIncludedError if base.include?(WithoutPrimaryIndex)
+
       super
     end
 

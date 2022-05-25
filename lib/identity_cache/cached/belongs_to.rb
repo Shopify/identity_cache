@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module IdentityCache
   module Cached
     class BelongsTo < Association # :nodoc:
@@ -42,6 +43,7 @@ module IdentityCache
           records.each do |owner_record|
             associated_id = owner_record.send(reflection.foreign_key)
             next unless associated_id && !owner_record.instance_variable_defined?(records_variable_name)
+
             foreign_type_fetcher = Object.const_get(
               owner_record.send(reflection.foreign_type)
             ).cached_model.cached_primary_index
@@ -55,6 +57,7 @@ module IdentityCache
             records.each do |owner_record|
               associated_id = owner_record.send(reflection.foreign_key)
               next unless associated_id && !owner_record.instance_variable_defined?(records_variable_name)
+
               foreign_type_fetcher = Object.const_get(
                 owner_record.send(reflection.foreign_type)
               ).cached_model.cached_primary_index
