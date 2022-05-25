@@ -254,7 +254,7 @@ Cache keys include a version number by default, specified in `IdentityCache::CAC
 
 ## Caveats
 
-A word of warning. Some versions of rails will silently rescue all exceptions in `after_commit` hooks. If an `after_commit` fails before the cache expiry `after_commit` the cache will not be expired and you will be left with stale data.
+A word of warning. If an `after_commit` fails before the cache expiry `after_commit` the cache will not be expired and you will be left with stale data.
 
 Since everything is being marshalled and unmarshalled from Memcached changing Ruby or Rails versions could mean your objects cannot be unmarshalled from Memcached. There are a number of ways to get around this such as namespacing keys when you upgrade or rescuing marshal load errors and treating it as a cache miss. Just something to be aware of if you are using IdentityCache and upgrade Ruby or Rails.
 
@@ -262,6 +262,5 @@ IdentityCache is also very much _opt-in_ by deliberate design. This means Identi
 
 ## Notes
 
-- JRuby will not work with this current version, as we are using the memcached gem internally to interface with memcache.
 - See CHANGELOG.md for a list of changes to the library over time.
 - The library is MIT licensed and we welcome contributions. See CONTRIBUTING.md for more information.
