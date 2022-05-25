@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require "test_helper"
 
 module IdentityCache
@@ -13,10 +14,10 @@ module IdentityCache
 
       def test_after_load
         callback = proc {}
-        callback.expects(:call).with(%i(the stuff)).returns(%i(other stuff))
+        callback.expects(:call).with([:the, :stuff]).returns([:other, :stuff])
 
         load_request = LoadRequest.new([], callback)
-        assert_equal(%i(other stuff), load_request.after_load(%i(the stuff)))
+        assert_equal([:other, :stuff], load_request.after_load([:the, :stuff]))
       end
     end
   end

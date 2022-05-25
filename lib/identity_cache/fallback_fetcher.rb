@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module IdentityCache
   class FallbackFetcher
     attr_accessor :cache_backend
@@ -36,6 +37,7 @@ module IdentityCache
       unless cache_fetcher_options.empty?
         raise ArgumentError, "unsupported cache_fetcher options: #{cache_fetcher_options.keys.join(", ")}"
       end
+
       result = @cache_backend.read(key)
       if result.nil?
         result = yield

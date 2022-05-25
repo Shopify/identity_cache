@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require "test_helper"
 
 class SaveTest < IdentityCache::TestCase
@@ -12,7 +13,7 @@ class SaveTest < IdentityCache::TestCase
 
     @record = Item.create(title: "bob", created_at: 1.second.ago, updated_at: 1.second.ago)
     @blob_key_prefix = [
-      NAMESPACE, "blob:", "Item:", "#{cache_hash(ATTR_STRING)}:"
+      NAMESPACE, "blob:", "Item:", "#{cache_hash(ATTR_STRING)}:",
     ].join
     @blob_key = "#{@blob_key_prefix}1"
   end

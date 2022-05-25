@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module IdentityCache
   module CacheKeyGeneration
     extend ActiveSupport::Concern

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module SerializationFormat
   def serialized_record
     AssociatedRecord.cache_has_many(:deeply_associated_records, embed: true)
@@ -23,7 +24,7 @@ module SerializationFormat
     Item.fetch(record.id)
 
     IdentityCache.fetch(record.primary_cache_index_key) do
-      STDERR.puts(
+      $stderr.puts(
         "\e[31m" \
           "The record could not be retrieved from the cache." \
           "Did you configure MEMCACHED_HOST?" \

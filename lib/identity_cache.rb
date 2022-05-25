@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require "active_record"
 require "active_support/core_ext/module/attribute_accessors"
 require "ar_transaction_changes"
@@ -84,6 +85,7 @@ module IdentityCache
 
     def append_features(base) # :nodoc:
       raise AlreadyIncludedError if base.include?(IdentityCache)
+
       super
     end
 
@@ -200,6 +202,7 @@ module IdentityCache
     def fetch_read_only_records
       v = Thread.current[:identity_cache_fetch_read_only_records]
       return v unless v.nil?
+
       @fetch_read_only_records
     end
 
@@ -209,9 +212,9 @@ module IdentityCache
 
     private
 
-    def fetch_in_batches(keys)
+    def fetch_in_batches(keys, &block)
       keys.each_slice(BATCH_SIZE).each_with_object({}) do |slice, result|
-        result.merge!(cache.fetch_multi(*slice) { |missed_keys| yield missed_keys })
+        result.merge!(cache.fetch_multi(*slice, &block))
       end
     end
   end

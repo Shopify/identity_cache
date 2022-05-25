@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 require "active_record"
 require "active_support/core_ext"
@@ -31,6 +32,7 @@ def create_database(count)
   helper.setup_models
 
   return if database_ready(count)
+
   puts "Database not ready for performance testing, generating records"
 
   DatabaseConnection.drop_tables
@@ -38,6 +40,7 @@ def create_database(count)
   existing = Item.all
   (1..count).to_a.each do |i|
     next if existing.any? { |e| e.id == i }
+
     a = Item.new
     a.id = i
     a.associated = AssociatedRecord.new(name: "Associated for #{i}")

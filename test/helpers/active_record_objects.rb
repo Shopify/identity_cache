@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module SwitchNamespace
   module ClassMethods
     def rails_cache_key_namespace

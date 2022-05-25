@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require "rubygems"
 require "benchmark"
 require "ruby-prof"
@@ -9,7 +10,7 @@ RUNS = 1000
 RubyProf.measure_mode = RubyProf::CPU_TIME
 
 EXTERNALS = { "Memcache" => ["MemCache#set", "MemCache#get"],
-              "Database" => ["Mysql2::Client#query"] }
+              "Database" => ["Mysql2::Client#query"], }
 
 def run(obj)
   obj.prepare

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require "logger"
 require "minitest/autorun"
 require "mocha/minitest"
@@ -138,6 +139,7 @@ class IgnoreSchemaQueryFilter
   def call(name, start, finish, message_id, values)
     return if values[:cached]
     return if values[:name] == "SCHEMA"
+
     @subscriber.call(name, start, finish, message_id, values)
   end
 end

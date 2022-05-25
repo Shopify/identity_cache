@@ -1,5 +1,6 @@
 #!/usr/bin/env rake
 # frozen_string_literal: true
+
 require "bundler/gem_tasks"
 
 require "rake/testtask"
@@ -23,7 +24,7 @@ end
 
 desc("Update serialization format test fixture.")
 task :update_serialization_format do
-  %w(mysql2 postgresql).each do |db|
+  ["mysql2", "postgresql"].each do |db|
     ENV["DB"] = db
     ruby "./test/helpers/update_serialization_format.rb"
   end

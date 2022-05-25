@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module IdentityCache
   module Cached
     module Recursive
@@ -77,6 +78,7 @@ module IdentityCache
 
         def set_inverse(record, association_target)
           return if association_target.nil?
+
           associated_class = reflection.klass
           inverse_cached_association = associated_class.cached_belongs_tos[inverse_name]
           return unless inverse_cached_association

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module IdentityCache
   module QueryAPI
     extend ActiveSupport::Concern
@@ -68,6 +69,7 @@ module IdentityCache
       def setup_embedded_associations_on_miss(records,
         readonly: IdentityCache.fetch_read_only_records && should_use_cache?)
         return if records.empty?
+
         records.each(&:readonly!) if readonly
         each_id_embedded_association do |cached_association|
           preload_id_embedded_association(records, cached_association)
@@ -86,6 +88,7 @@ module IdentityCache
             association.reset
             # reset inverse associations
             next unless target && association_reflection.has_inverse?
+
             inverse_name = association_reflection.inverse_of.name
             if target.is_a?(Array)
               target.each { |child_record| child_record.association(inverse_name).reset }
