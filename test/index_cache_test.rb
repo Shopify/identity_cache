@@ -35,7 +35,7 @@ class IndexCacheTest < IdentityCache::TestCase
     Item.cache_index(:title, :id, unique: true)
 
     Item.connection.expects(:exec_query)
-      .with(regexp_matches(/ LIMIT 1\Z/i), any_parameters)
+      .with(regexp_matches(/ LIMIT [1?]\Z/i), any_parameters)
       .returns(ActiveRecord::Result.new([], []))
 
     assert_nil(Item.fetch_by_title_and_id("title", "2"))
