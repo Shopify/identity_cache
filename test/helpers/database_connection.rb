@@ -1,49 +1,51 @@
 # frozen_string_literal: true
 
 module DatabaseConnection
-  def self.db_name
-    ENV.fetch("DB", "mysql2")
-  end
-
-  def self.setup
-    db_config = DEFAULT_CONFIG.fetch(db_name)
-    begin
-      ActiveRecord::Base.establish_connection(db_config)
-      ActiveRecord::Base.connection
-    rescue
-      raise unless db_config.is_a?(Hash)
-
-      ActiveRecord::Base.establish_connection(db_config.merge("database" => nil))
-      ActiveRecord::Base.connection.create_database(db_config["database"])
-      ActiveRecord::Base.establish_connection(db_config)
+  class << self
+    def db_name
+      ENV.fetch("DB", "mysql2")
     end
-  end
 
-  def self.drop_tables
-    TABLES.keys.each do |table|
-      ActiveRecord::Base.connection.drop_table(table) if table_exists?(table)
+    def setup
+      db_config = DEFAULT_CONFIG.fetch(db_name)
+      begin
+        ActiveRecord::Base.establish_connection(db_config)
+        ActiveRecord::Base.connection
+      rescue
+        raise unless db_config.is_a?(Hash)
+
+        ActiveRecord::Base.establish_connection(db_config.merge("database" => nil))
+        ActiveRecord::Base.connection.create_database(db_config["database"])
+        ActiveRecord::Base.establish_connection(db_config)
+      end
     end
-  end
 
-  def self.table_exists?(table)
-    if ActiveRecord::Base.connection.respond_to?(:data_source_exists?)
-      ActiveRecord::Base.connection.data_source_exists?(table)
-    else
-      ActiveRecord::Base.connection.table_exists?(table)
+    def drop_tables
+      TABLES.keys.each do |table|
+        ActiveRecord::Base.connection.drop_table(table) if table_exists?(table)
+      end
     end
-  end
 
-  def self.create_tables
-    TABLES.each do |table, fields|
-      fields = fields.dup
-      options = fields.last.is_a?(Hash) ? fields.pop : {}
-      ActiveRecord::Base.connection.create_table(table, **options) do |t|
-        fields.each do |column_type, *args|
-          if args.last.is_a?(Hash)
-            kwargs = args.pop
-            t.send(column_type, *args, **kwargs)
-          else
-            t.send(column_type, *args)
+    def table_exists?(table)
+      if ActiveRecord::Base.connection.respond_to?(:data_source_exists?)
+        ActiveRecord::Base.connection.data_source_exists?(table)
+      else
+        ActiveRecord::Base.connection.table_exists?(table)
+      end
+    end
+
+    def create_tables
+      TABLES.each do |table, fields|
+        fields = fields.dup
+        options = fields.last.is_a?(Hash) ? fields.pop : {}
+        ActiveRecord::Base.connection.create_table(table, **options) do |t|
+          fields.each do |column_type, *args|
+            if args.last.is_a?(Hash)
+              kwargs = args.pop
+              t.send(column_type, *args, **kwargs)
+            else
+              t.send(column_type, *args)
+            end
           end
         end
       end

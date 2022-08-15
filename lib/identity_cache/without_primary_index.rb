@@ -13,10 +13,12 @@ module IdentityCache
     include IdentityCache::ShouldUseCache
     include ParentModelExpiration
 
-    def self.append_features(base) # :nodoc:
-      raise AlreadyIncludedError if base.include?(WithoutPrimaryIndex)
+    class << self
+      def append_features(base) # :nodoc:
+        raise AlreadyIncludedError if base.include?(WithoutPrimaryIndex)
 
-      super
+        super
+      end
     end
 
     included do

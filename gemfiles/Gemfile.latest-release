@@ -2,7 +2,7 @@ source "https://rubygems.org"
 gemspec path: ".."
 
 gem "rubocop", "~> 1.5"
-gem "rubocop-shopify", "~> 2.6.0", require: false
+gem "rubocop-shopify", "~> 2.9.0", require: false
 
 gem "activerecord"
 gem "activesupport"
