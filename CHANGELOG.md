@@ -1,5 +1,15 @@
 # Identity Cache Changelog
 
+## 1.2.0
+
+### Fixes
+- Fix mem_cache_store adapter with pool_size (#489)
+- Fix dalli deprecation warning about requiring 'dalli/cas/client' (#511)
+- Make transitionary method IdentityCache.with_fetch_read_only_records thread-safe (#503)
+
+### Features
+- Add support for fill lock with lock wait to avoid thundering herd problem (#373)
+
 ## 1.1.0
 
 ### Fixes
