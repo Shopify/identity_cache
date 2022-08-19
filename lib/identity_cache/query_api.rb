@@ -187,7 +187,7 @@ module IdentityCache
 
     def expire_attribute_indexes # :nodoc:
       cache_indexes.each do |cached_attribute|
-        cached_attribute.expire(self)
+        cached_attribute.expire_for_save(self)
       end
     end
   end
