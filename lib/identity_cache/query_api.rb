@@ -171,10 +171,10 @@ module IdentityCache
       super
     end
 
-    # Invalidate the cache data associated with the record.
+    # Invalidate the cache data associated with the record. Returns `true` on success,
+    # `false` otherwise.
     def expire_cache
-      expire_attribute_indexes
-      true
+      expire_attribute_indexes.all?
     end
 
     # @api private
@@ -186,7 +186,7 @@ module IdentityCache
     private
 
     def expire_attribute_indexes # :nodoc:
-      cache_indexes.each do |cached_attribute|
+      cache_indexes.map do |cached_attribute|
         cached_attribute.expire(self)
       end
     end
