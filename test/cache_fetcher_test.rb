@@ -176,5 +176,4 @@ class CacheFetcherTest < IdentityCache::TestCase
   def other_cache_fetcher
     @other_cache_fetcher ||= IdentityCache::CacheFetcher.new(backend)
   end
-
 end
