@@ -166,7 +166,6 @@ module IdentityCache
     def _run_commit_callbacks
       if destroyed? || transaction_changed_attributes.present?
         expire_cache
-        expire_parent_caches
       end
       super
     end
@@ -174,7 +173,10 @@ module IdentityCache
     # Invalidate the cache data associated with the record. Returns `true` on success,
     # `false` otherwise.
     def expire_cache
-      expire_attribute_indexes.all?
+      expired_parent_caches = expire_parent_caches
+      expired_attribute_indexes = expire_attribute_indexes
+
+      expired_parent_caches && expired_attribute_indexes
     end
 
     # @api private
@@ -185,9 +187,11 @@ module IdentityCache
 
     private
 
+    # Even if we have problems with some attributes, carry over the results and expire
+    # all possible attributes without array allocation.
     def expire_attribute_indexes # :nodoc:
-      cache_indexes.map do |cached_attribute|
-        cached_attribute.expire(self)
+      cache_indexes.reduce(true) do |all_expired, cached_attribute|
+        cached_attribute.expire(self) && all_expired
       end
     end
   end
