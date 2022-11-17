@@ -39,6 +39,20 @@ module CacheConnection
     end
   end
 
+  def unconnected_cache_backend
+    build_backend(address: "127.0.0.1:#{find_open_port}").tap do |backend|
+      backend.extend(IdentityCache::MemCacheStoreCAS) if backend.is_a?(ActiveSupport::Cache::MemCacheStore)
+    end
+  end
+
+  def find_open_port
+    socket = Socket.new(:INET, :STREAM)
+    socket.bind(Addrinfo.tcp("127.0.0.1", 0))
+    socket.local_address.ip_port
+  ensure
+    socket&.close
+  end
+
   def setup
     IdentityCache.cache_backend = backend
   end

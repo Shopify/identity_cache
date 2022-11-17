@@ -138,7 +138,7 @@ class CacheFetcherTest < IdentityCache::TestCase
   end
 
   def test_fetch_with_memcached_down
-    cache_fetcher = IdentityCache::CacheFetcher.new(unconnected_cache_backend)
+    cache_fetcher = IdentityCache::CacheFetcher.new(CacheConnection.unconnected_cache_backend)
     cache_fetcher.expects(:sleep).never
     # 3 operations because the underlying cache store doesn't distinguish between
     # request failures and error responses (e.g. NOT_FOUND or NOT_STORED)
@@ -177,17 +177,4 @@ class CacheFetcherTest < IdentityCache::TestCase
     @other_cache_fetcher ||= IdentityCache::CacheFetcher.new(backend)
   end
 
-  def unconnected_cache_backend
-    CacheConnection.build_backend(address: "127.0.0.1:#{open_port}").tap do |backend|
-      backend.extend(IdentityCache::MemCacheStoreCAS) if backend.is_a?(ActiveSupport::Cache::MemCacheStore)
-    end
-  end
-
-  def open_port
-    socket = Socket.new(:INET, :STREAM)
-    socket.bind(Addrinfo.tcp("127.0.0.1", 0))
-    socket.local_address.ip_port
-  ensure
-    socket&.close
-  end
 end
