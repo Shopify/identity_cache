@@ -211,4 +211,109 @@ class CacheInvalidationTest < IdentityCache::TestCase
     assert_match(/^COMMIT\b/, sql_queries[2])
     assert_match(/^cache_write.active_support /, log.last.last)
   end
+
+  def test_expire_cache_with_primary_key_only
+    assert_equal(@record, Item.fetch(1))
+    refute_equal(IdentityCache::DELETED, read_entity)
+    assert(@record.expire_cache)
+    assert_equal(IdentityCache::DELETED, read_entity)
+  end
+
+  def test_expire_cache_with_primary_key_only_on_failure
+    assert_equal(@record, Item.fetch(1))
+    refute_equal(IdentityCache::DELETED, read_entity)
+
+    IdentityCache.cache_backend = CacheConnection.unconnected_cache_backend
+
+    refute(@record.expire_cache)
+    refute_equal(IdentityCache::DELETED, read_entity)
+  end
+
+  def test_expire_cache_with_extra_indexes
+    Item.cache_index(:id, :title, unique: true)
+    Item.cache_index(:title, unique: true)
+
+    assert_equal(@record, Item.fetch(@record.id))
+    assert_equal(@record, Item.fetch_by_title(@record.title))
+    assert_equal(@record, Item.fetch_by_id_and_title(@record.id, @record.title))
+    assert_equal(@record.id, read_by_title)
+    assert_equal(@record.id, read_by_id_and_title)
+
+    assert(@record.expire_cache)
+
+    assert_equal(IdentityCache::DELETED, read_entity)
+    assert_equal(IdentityCache::DELETED, read_by_title)
+    assert_equal(IdentityCache::DELETED, read_by_id_and_title)
+  end
+
+  def test_expire_cache_with_extra_indexes_on_failure
+    Item.cache_index(:id, :title, unique: true)
+    Item.cache_index(:title, unique: true)
+
+    assert_equal(@record, Item.fetch(@record.id))
+    assert_equal(@record, Item.fetch_by_title(@record.title))
+    assert_equal(@record, Item.fetch_by_id_and_title(@record.id, @record.title))
+    assert_equal(@record.id, read_by_title)
+    assert_equal(@record.id, read_by_id_and_title)
+
+    IdentityCache.cache_backend = CacheConnection.unconnected_cache_backend
+
+    refute(@record.expire_cache)
+
+    refute_equal(IdentityCache::DELETED, read_entity)
+    refute_equal(IdentityCache::DELETED, read_by_title)
+    refute_equal(IdentityCache::DELETED, read_by_id_and_title)
+  end
+
+  def test_expire_cache_through_association
+    Item.cache_has_many(:associated_records, embed: true)
+
+    # setup cache
+    Item.fetch(1)
+    [@baz, @bar].each { |ar| AssociatedRecord.fetch(ar.id) }
+
+    refute_equal(IdentityCache::DELETED, read_entity)
+    refute_equal(IdentityCache::DELETED, read_entity(@baz))
+    refute_equal(IdentityCache::DELETED, read_entity(@bar))
+
+    assert(@bar.expire_cache)
+
+    assert_equal(IdentityCache::DELETED, read_entity)
+    assert_equal(IdentityCache::DELETED, read_entity(@bar))
+    refute_equal(IdentityCache::DELETED, read_entity(@baz))
+  end
+
+  def test_expire_cache_through_association_on_failure
+    Item.cache_has_many(:associated_records, embed: true)
+
+    # setup cache
+    Item.fetch(1)
+    [@baz, @bar].each { |ar| AssociatedRecord.fetch(ar.id) }
+
+    refute_equal(IdentityCache::DELETED, read_entity)
+    refute_equal(IdentityCache::DELETED, read_entity(@baz))
+    refute_equal(IdentityCache::DELETED, read_entity(@bar))
+
+    IdentityCache.cache_backend = CacheConnection.unconnected_cache_backend
+
+    refute(@bar.expire_cache)
+
+    refute_equal(IdentityCache::DELETED, read_entity)
+    refute_equal(IdentityCache::DELETED, read_entity(@bar))
+    refute_equal(IdentityCache::DELETED, read_entity(@baz))
+  end
+
+  private
+
+  def read_entity(entity = @record)
+    backend.read(entity.primary_cache_index_key)
+  end
+
+  def read_by_id_and_title
+    backend.read(@record.cache_indexes.first.cache_key([@record.id, @record.title]))
+  end
+
+  def read_by_title
+    backend.read(@record.cache_indexes.last.cache_key(@record.title))
+  end
 end
