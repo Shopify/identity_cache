@@ -275,7 +275,7 @@ class CacheInvalidationTest < IdentityCache::TestCase
     Item.cache_index(:title, unique: true)
 
     mocked_backend = MockedCacheBackend.new(backend)
-    mocked_backend.stub_call("IDC:8:attr:Item:id:id/title:4041166013216111476", IdentityCache::DELETED)
+    mocked_backend.stub_call(":attr:Item:id:id/title:", IdentityCache::DELETED)
 
     with_cache_backend(mocked_backend) do
       assert_equal(@record, Item.fetch(@record.id))
@@ -334,7 +334,7 @@ class CacheInvalidationTest < IdentityCache::TestCase
     Item.cache_has_many(:associated_records, embed: true)
 
     mocked_backend = MockedCacheBackend.new(backend)
-    mocked_backend.stub_call("IDC:8:blob:Item:3231970521778960149:1", :idc_cached_deleted)
+    mocked_backend.stub_call(":blob:Item:", IdentityCache::DELETED)
 
     with_cache_backend(mocked_backend) do
       # setup cache
