@@ -212,22 +212,30 @@ class CacheInvalidationTest < IdentityCache::TestCase
     assert_match(/^cache_write.active_support /, log.last.last)
   end
 
+  # Following tests rely on this assertion to be true,
+  # do it once for all the tests
+  def test_sanity_check_on_deleted_key
+    assert(IdentityCache::DELETED.is_a?(Symbol))
+  end
+
   def test_expire_cache_with_primary_key_only
     assert_equal(@record, Item.fetch(1))
-    refute_equal(IdentityCache::DELETED, read_entity)
+    assert(read_entity.key?(:attributes))
     assert(@record.expire_cache)
     assert_equal(IdentityCache::DELETED, read_entity)
   end
 
   def test_expire_cache_with_primary_key_only_on_failure
     assert_equal(@record, Item.fetch(1))
-    refute_equal(IdentityCache::DELETED, read_entity)
 
-    with_cache_backend do
+    cached_entity = read_entity
+    assert(cached_entity.key?(:attributes))
+
+    with_cache_backend(CacheConnection.unconnected_cache_backend) do
       refute(@record.expire_cache)
     end
 
-    refute_equal(IdentityCache::DELETED, read_entity)
+    assert_equal(cached_entity, read_entity)
   end
 
   def test_expire_cache_with_extra_indexes
@@ -237,6 +245,8 @@ class CacheInvalidationTest < IdentityCache::TestCase
     assert_equal(@record, Item.fetch(@record.id))
     assert_equal(@record, Item.fetch_by_title(@record.title))
     assert_equal(@record, Item.fetch_by_id_and_title(@record.id, @record.title))
+
+    assert(read_entity.key?(:attributes))
     assert_equal(@record.id, read_by_title)
     assert_equal(@record.id, read_by_id_and_title)
 
@@ -254,16 +264,19 @@ class CacheInvalidationTest < IdentityCache::TestCase
     assert_equal(@record, Item.fetch(@record.id))
     assert_equal(@record, Item.fetch_by_title(@record.title))
     assert_equal(@record, Item.fetch_by_id_and_title(@record.id, @record.title))
+
+    cached_entity = read_entity
+    assert(cached_entity.key?(:attributes))
     assert_equal(@record.id, read_by_title)
     assert_equal(@record.id, read_by_id_and_title)
 
-    with_cache_backend do
+    with_cache_backend(CacheConnection.unconnected_cache_backend) do
       refute(@record.expire_cache)
     end
 
-    refute_equal(IdentityCache::DELETED, read_entity)
-    refute_equal(IdentityCache::DELETED, read_by_title)
-    refute_equal(IdentityCache::DELETED, read_by_id_and_title)
+    assert_equal(cached_entity, read_entity)
+    assert_equal(@record.id, read_by_title)
+    assert_equal(@record.id, read_by_id_and_title)
   end
 
   # simulate a single failure for expire_cache to see if everything
@@ -281,6 +294,8 @@ class CacheInvalidationTest < IdentityCache::TestCase
       assert_equal(@record, Item.fetch(@record.id))
       assert_equal(@record, Item.fetch_by_title(@record.title))
       assert_equal(@record, Item.fetch_by_id_and_title(@record.id, @record.title))
+
+      assert(read_entity.key?(:attributes))
       assert_equal(@record.id, read_by_title)
       assert_equal(@record.id, read_by_id_and_title)
 
@@ -288,7 +303,7 @@ class CacheInvalidationTest < IdentityCache::TestCase
 
       assert_equal(IdentityCache::DELETED, read_entity)
       assert_equal(IdentityCache::DELETED, read_by_title)
-      refute_equal(IdentityCache::DELETED, read_by_id_and_title)
+      assert_equal(@record.id, read_by_id_and_title)
     end
   end
 
@@ -299,15 +314,16 @@ class CacheInvalidationTest < IdentityCache::TestCase
     Item.fetch(1)
     [@baz, @bar].each { |ar| AssociatedRecord.fetch(ar.id) }
 
-    refute_equal(IdentityCache::DELETED, read_entity)
-    refute_equal(IdentityCache::DELETED, read_entity(@baz))
-    refute_equal(IdentityCache::DELETED, read_entity(@bar))
+    assert(read_entity.key?(:attributes))
+    assert(read_entity(@bar).key?(:attributes))
+    baz_cached_entity = read_entity(@baz)
+    assert(baz_cached_entity.key?(:attributes))
 
     assert(@bar.expire_cache)
 
     assert_equal(IdentityCache::DELETED, read_entity)
     assert_equal(IdentityCache::DELETED, read_entity(@bar))
-    refute_equal(IdentityCache::DELETED, read_entity(@baz))
+    assert_equal(baz_cached_entity, read_entity(@baz))
   end
 
   def test_expire_cache_through_association_on_failure
@@ -317,17 +333,21 @@ class CacheInvalidationTest < IdentityCache::TestCase
     Item.fetch(1)
     [@baz, @bar].each { |ar| AssociatedRecord.fetch(ar.id) }
 
-    refute_equal(IdentityCache::DELETED, read_entity)
-    refute_equal(IdentityCache::DELETED, read_entity(@baz))
-    refute_equal(IdentityCache::DELETED, read_entity(@bar))
+    cached_entity = read_entity
+    bar_cached_entity = read_entity(@bar)
+    baz_cached_entity = read_entity(@baz)
+    assert(cached_entity.key?(:attributes))
+    assert(bar_cached_entity.key?(:attributes))
+    assert(baz_cached_entity.key?(:attributes))
 
-    with_cache_backend do
+
+    with_cache_backend(CacheConnection.unconnected_cache_backend) do
       refute(@bar.expire_cache)
     end
 
-    refute_equal(IdentityCache::DELETED, read_entity)
-    refute_equal(IdentityCache::DELETED, read_entity(@bar))
-    refute_equal(IdentityCache::DELETED, read_entity(@baz))
+    assert_equal(cached_entity, read_entity)
+    assert_equal(bar_cached_entity, read_entity(@bar))
+    assert_equal(baz_cached_entity, read_entity(@baz))
   end
 
   def test_expire_cache_through_association_on_single_failure
@@ -341,15 +361,18 @@ class CacheInvalidationTest < IdentityCache::TestCase
       Item.fetch(1)
       [@baz, @bar].each { |ar| AssociatedRecord.fetch(ar.id) }
 
-      refute_equal(IdentityCache::DELETED, read_entity)
-      refute_equal(IdentityCache::DELETED, read_entity(@baz))
-      refute_equal(IdentityCache::DELETED, read_entity(@bar))
+      cached_entity = read_entity
+      bar_cached_entity = read_entity(@bar)
+      baz_cached_entity = read_entity(@baz)
+      assert(cached_entity.key?(:attributes))
+      assert(bar_cached_entity.key?(:attributes))
+      assert(baz_cached_entity.key?(:attributes))
 
       refute(@bar.expire_cache)
 
-      refute_equal(IdentityCache::DELETED, read_entity)
+      assert_equal(cached_entity, read_entity)
       assert_equal(IdentityCache::DELETED, read_entity(@bar))
-      refute_equal(IdentityCache::DELETED, read_entity(@baz))
+      assert_equal(baz_cached_entity, read_entity(@baz))
     end
   end
 
@@ -367,7 +390,7 @@ class CacheInvalidationTest < IdentityCache::TestCase
     backend.read(@record.cache_indexes.last.cache_key(@record.title))
   end
 
-  def with_cache_backend(tmp_backend = CacheConnection.unconnected_cache_backend)
+  def with_cache_backend(tmp_backend)
     IdentityCache.cache_backend = tmp_backend
     yield
   ensure
