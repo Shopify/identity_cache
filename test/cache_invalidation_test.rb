@@ -223,9 +223,10 @@ class CacheInvalidationTest < IdentityCache::TestCase
     assert_equal(@record, Item.fetch(1))
     refute_equal(IdentityCache::DELETED, read_entity)
 
-    IdentityCache.cache_backend = CacheConnection.unconnected_cache_backend
+    with_cache_backend do
+      refute(@record.expire_cache)
+    end
 
-    refute(@record.expire_cache)
     refute_equal(IdentityCache::DELETED, read_entity)
   end
 
@@ -256,13 +257,39 @@ class CacheInvalidationTest < IdentityCache::TestCase
     assert_equal(@record.id, read_by_title)
     assert_equal(@record.id, read_by_id_and_title)
 
-    IdentityCache.cache_backend = CacheConnection.unconnected_cache_backend
-
-    refute(@record.expire_cache)
+    with_cache_backend do
+      refute(@record.expire_cache)
+    end
 
     refute_equal(IdentityCache::DELETED, read_entity)
     refute_equal(IdentityCache::DELETED, read_by_title)
     refute_equal(IdentityCache::DELETED, read_by_id_and_title)
+  end
+
+  # simulate a single failure for expire_cache to see if everything
+  # behaves as expected regarding response of `expire_cache`, keep
+  # both tests: the integration with real connection issue and mocked
+  # one to be more thorough.
+  def test_expire_cache_with_extra_indexes_on_single_failure
+    Item.cache_index(:id, :title, unique: true)
+    Item.cache_index(:title, unique: true)
+
+    mocked_backend = MockedCacheBackend.new(backend)
+    mocked_backend.stub_call("IDC:8:attr:Item:id:id/title:4041166013216111476", IdentityCache::DELETED)
+
+    with_cache_backend(mocked_backend) do
+      assert_equal(@record, Item.fetch(@record.id))
+      assert_equal(@record, Item.fetch_by_title(@record.title))
+      assert_equal(@record, Item.fetch_by_id_and_title(@record.id, @record.title))
+      assert_equal(@record.id, read_by_title)
+      assert_equal(@record.id, read_by_id_and_title)
+
+      refute(@record.expire_cache)
+
+      assert_equal(IdentityCache::DELETED, read_entity)
+      assert_equal(IdentityCache::DELETED, read_by_title)
+      refute_equal(IdentityCache::DELETED, read_by_id_and_title)
+    end
   end
 
   def test_expire_cache_through_association
@@ -294,13 +321,36 @@ class CacheInvalidationTest < IdentityCache::TestCase
     refute_equal(IdentityCache::DELETED, read_entity(@baz))
     refute_equal(IdentityCache::DELETED, read_entity(@bar))
 
-    IdentityCache.cache_backend = CacheConnection.unconnected_cache_backend
-
-    refute(@bar.expire_cache)
+    with_cache_backend do
+      refute(@bar.expire_cache)
+    end
 
     refute_equal(IdentityCache::DELETED, read_entity)
     refute_equal(IdentityCache::DELETED, read_entity(@bar))
     refute_equal(IdentityCache::DELETED, read_entity(@baz))
+  end
+
+  def test_expire_cache_through_association_on_single_failure
+    Item.cache_has_many(:associated_records, embed: true)
+
+    mocked_backend = MockedCacheBackend.new(backend)
+    mocked_backend.stub_call("IDC:8:blob:Item:3231970521778960149:1", :idc_cached_deleted)
+
+    with_cache_backend(mocked_backend) do
+      # setup cache
+      Item.fetch(1)
+      [@baz, @bar].each { |ar| AssociatedRecord.fetch(ar.id) }
+
+      refute_equal(IdentityCache::DELETED, read_entity)
+      refute_equal(IdentityCache::DELETED, read_entity(@baz))
+      refute_equal(IdentityCache::DELETED, read_entity(@bar))
+
+      refute(@bar.expire_cache)
+
+      refute_equal(IdentityCache::DELETED, read_entity)
+      assert_equal(IdentityCache::DELETED, read_entity(@bar))
+      refute_equal(IdentityCache::DELETED, read_entity(@baz))
+    end
   end
 
   private
@@ -315,5 +365,12 @@ class CacheInvalidationTest < IdentityCache::TestCase
 
   def read_by_title
     backend.read(@record.cache_indexes.last.cache_key(@record.title))
+  end
+
+  def with_cache_backend(tmp_backend = CacheConnection.unconnected_cache_backend)
+    IdentityCache.cache_backend = tmp_backend
+    yield
+  ensure
+    IdentityCache.cache_backend = backend
   end
 end

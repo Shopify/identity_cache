@@ -40,7 +40,7 @@ module CacheConnection
   end
 
   def unconnected_cache_backend
-    build_backend(address: "127.0.0.1:#{find_open_port}").tap do |backend|
+    @unconnected_cache_backend ||= build_backend(address: "127.0.0.1:#{find_open_port}").tap do |backend|
       backend.extend(IdentityCache::MemCacheStoreCAS) if backend.is_a?(ActiveSupport::Cache::MemCacheStore)
     end
   end
