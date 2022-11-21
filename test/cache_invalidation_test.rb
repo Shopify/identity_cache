@@ -340,7 +340,6 @@ class CacheInvalidationTest < IdentityCache::TestCase
     assert(bar_cached_entity.key?(:attributes))
     assert(baz_cached_entity.key?(:attributes))
 
-
     with_cache_backend(CacheConnection.unconnected_cache_backend) do
       refute(@bar.expire_cache)
     end
