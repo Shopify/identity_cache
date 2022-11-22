@@ -35,16 +35,20 @@ module IdentityCache
       end
 
       def expire(record)
+        all_deleted = true
+
         unless record.send(:was_new_record?)
           old_key = old_cache_key(record)
-          IdentityCache.cache.delete(old_key)
+          all_deleted = IdentityCache.cache.delete(old_key)
         end
         unless record.destroyed?
           new_key = new_cache_key(record)
           if new_key != old_key
-            IdentityCache.cache.delete(new_key)
+            all_deleted = IdentityCache.cache.delete(new_key) && all_deleted
           end
         end
+
+        all_deleted
       end
 
       def cache_key(index_key)

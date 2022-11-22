@@ -7,6 +7,7 @@ require "active_record"
 require "helpers/database_connection"
 require "helpers/cache_connection"
 require "helpers/active_record_objects"
+require "helpers/mocked_cache_backend"
 require "spy/integration"
 
 require File.dirname(__FILE__) + "/../lib/identity_cache"

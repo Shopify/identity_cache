@@ -45,8 +45,9 @@ module IdentityCache
     def expire_parent_caches
       parents_to_expire = Set.new
       add_parents_to_cache_expiry_set(parents_to_expire)
-      parents_to_expire.each do |parent|
-        parent.expire_primary_index if parent.class.primary_cache_index_enabled
+      parents_to_expire.select! { |parent| parent.class.primary_cache_index_enabled }
+      parents_to_expire.reduce(true) do |all_expired, parent|
+        parent.expire_primary_index && all_expired
       end
     end
 

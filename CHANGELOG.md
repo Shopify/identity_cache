@@ -1,5 +1,13 @@
 # Identity Cache Changelog
 
+## unreleased
+
+### Features
+- Return meaningful value from `expire_cache` indicating whenever it succeeded or failed in the process. (#523)
+
+### Fixes
+- Expire parents cache when when calling `expire_cache`. (#523)
+
 ## 1.2.0
 
 ### Fixes

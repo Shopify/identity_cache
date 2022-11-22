@@ -211,4 +211,188 @@ class CacheInvalidationTest < IdentityCache::TestCase
     assert_match(/^COMMIT\b/, sql_queries[2])
     assert_match(/^cache_write.active_support /, log.last.last)
   end
+
+  # Following tests rely on this assertion to be true,
+  # do it once for all the tests
+  def test_sanity_check_on_deleted_key
+    assert(IdentityCache::DELETED.is_a?(Symbol))
+  end
+
+  def test_expire_cache_with_primary_key_only
+    assert_equal(@record, Item.fetch(1))
+    assert(read_entity.key?(:attributes))
+    assert(@record.expire_cache)
+    assert_equal(IdentityCache::DELETED, read_entity)
+  end
+
+  def test_expire_cache_with_primary_key_only_on_failure
+    assert_equal(@record, Item.fetch(1))
+
+    cached_entity = read_entity
+    assert(cached_entity.key?(:attributes))
+
+    with_cache_backend(CacheConnection.unconnected_cache_backend) do
+      refute(@record.expire_cache)
+    end
+
+    assert_equal(cached_entity, read_entity)
+  end
+
+  def test_expire_cache_with_extra_indexes
+    Item.cache_index(:id, :title, unique: true)
+    Item.cache_index(:title, unique: true)
+
+    assert_equal(@record, Item.fetch(@record.id))
+    assert_equal(@record, Item.fetch_by_title(@record.title))
+    assert_equal(@record, Item.fetch_by_id_and_title(@record.id, @record.title))
+
+    assert(read_entity.key?(:attributes))
+    assert_equal(@record.id, read_by_title)
+    assert_equal(@record.id, read_by_id_and_title)
+
+    assert(@record.expire_cache)
+
+    assert_equal(IdentityCache::DELETED, read_entity)
+    assert_equal(IdentityCache::DELETED, read_by_title)
+    assert_equal(IdentityCache::DELETED, read_by_id_and_title)
+  end
+
+  def test_expire_cache_with_extra_indexes_on_failure
+    Item.cache_index(:id, :title, unique: true)
+    Item.cache_index(:title, unique: true)
+
+    assert_equal(@record, Item.fetch(@record.id))
+    assert_equal(@record, Item.fetch_by_title(@record.title))
+    assert_equal(@record, Item.fetch_by_id_and_title(@record.id, @record.title))
+
+    cached_entity = read_entity
+    assert(cached_entity.key?(:attributes))
+    assert_equal(@record.id, read_by_title)
+    assert_equal(@record.id, read_by_id_and_title)
+
+    with_cache_backend(CacheConnection.unconnected_cache_backend) do
+      refute(@record.expire_cache)
+    end
+
+    assert_equal(cached_entity, read_entity)
+    assert_equal(@record.id, read_by_title)
+    assert_equal(@record.id, read_by_id_and_title)
+  end
+
+  # simulate a single failure for expire_cache to see if everything
+  # behaves as expected regarding response of `expire_cache`, keep
+  # both tests: the integration with real connection issue and mocked
+  # one to be more thorough.
+  def test_expire_cache_with_extra_indexes_on_single_failure
+    Item.cache_index(:id, :title, unique: true)
+    Item.cache_index(:title, unique: true)
+
+    mocked_backend = MockedCacheBackend.new(backend)
+    mocked_backend.stub_call(":attr:Item:id:id/title:", IdentityCache::DELETED)
+
+    with_cache_backend(mocked_backend) do
+      assert_equal(@record, Item.fetch(@record.id))
+      assert_equal(@record, Item.fetch_by_title(@record.title))
+      assert_equal(@record, Item.fetch_by_id_and_title(@record.id, @record.title))
+
+      assert(read_entity.key?(:attributes))
+      assert_equal(@record.id, read_by_title)
+      assert_equal(@record.id, read_by_id_and_title)
+
+      refute(@record.expire_cache)
+
+      assert_equal(IdentityCache::DELETED, read_entity)
+      assert_equal(IdentityCache::DELETED, read_by_title)
+      assert_equal(@record.id, read_by_id_and_title)
+    end
+  end
+
+  def test_expire_cache_through_association
+    Item.cache_has_many(:associated_records, embed: true)
+
+    # setup cache
+    Item.fetch(1)
+    [@baz, @bar].each { |ar| AssociatedRecord.fetch(ar.id) }
+
+    assert(read_entity.key?(:attributes))
+    assert(read_entity(@bar).key?(:attributes))
+    baz_cached_entity = read_entity(@baz)
+    assert(baz_cached_entity.key?(:attributes))
+
+    assert(@bar.expire_cache)
+
+    assert_equal(IdentityCache::DELETED, read_entity)
+    assert_equal(IdentityCache::DELETED, read_entity(@bar))
+    assert_equal(baz_cached_entity, read_entity(@baz))
+  end
+
+  def test_expire_cache_through_association_on_failure
+    Item.cache_has_many(:associated_records, embed: true)
+
+    # setup cache
+    Item.fetch(1)
+    [@baz, @bar].each { |ar| AssociatedRecord.fetch(ar.id) }
+
+    cached_entity = read_entity
+    bar_cached_entity = read_entity(@bar)
+    baz_cached_entity = read_entity(@baz)
+    assert(cached_entity.key?(:attributes))
+    assert(bar_cached_entity.key?(:attributes))
+    assert(baz_cached_entity.key?(:attributes))
+
+    with_cache_backend(CacheConnection.unconnected_cache_backend) do
+      refute(@bar.expire_cache)
+    end
+
+    assert_equal(cached_entity, read_entity)
+    assert_equal(bar_cached_entity, read_entity(@bar))
+    assert_equal(baz_cached_entity, read_entity(@baz))
+  end
+
+  def test_expire_cache_through_association_on_single_failure
+    Item.cache_has_many(:associated_records, embed: true)
+
+    mocked_backend = MockedCacheBackend.new(backend)
+    mocked_backend.stub_call(":blob:Item:", IdentityCache::DELETED)
+
+    with_cache_backend(mocked_backend) do
+      # setup cache
+      Item.fetch(1)
+      [@baz, @bar].each { |ar| AssociatedRecord.fetch(ar.id) }
+
+      cached_entity = read_entity
+      bar_cached_entity = read_entity(@bar)
+      baz_cached_entity = read_entity(@baz)
+      assert(cached_entity.key?(:attributes))
+      assert(bar_cached_entity.key?(:attributes))
+      assert(baz_cached_entity.key?(:attributes))
+
+      refute(@bar.expire_cache)
+
+      assert_equal(cached_entity, read_entity)
+      assert_equal(IdentityCache::DELETED, read_entity(@bar))
+      assert_equal(baz_cached_entity, read_entity(@baz))
+    end
+  end
+
+  private
+
+  def read_entity(entity = @record)
+    backend.read(entity.primary_cache_index_key)
+  end
+
+  def read_by_id_and_title
+    backend.read(@record.cache_indexes.first.cache_key([@record.id, @record.title]))
+  end
+
+  def read_by_title
+    backend.read(@record.cache_indexes.last.cache_key(@record.title))
+  end
+
+  def with_cache_backend(tmp_backend)
+    IdentityCache.cache_backend = tmp_backend
+    yield
+  ensure
+    IdentityCache.cache_backend = backend
+  end
 end

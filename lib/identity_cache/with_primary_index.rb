@@ -7,8 +7,9 @@ module IdentityCache
     include WithoutPrimaryIndex
 
     def expire_cache
-      expire_primary_index
-      super
+      expired_primary_index = expire_primary_index
+
+      super && expired_primary_index
     end
 
     # @api private
