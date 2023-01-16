@@ -169,7 +169,7 @@ class FetchTest < IdentityCache::TestCase
 
     assert_equal(@record, Item.fetch(1))
     assert(load_one_from_db.has_been_called_with?(1))
-    assert(write.has_been_called_with?(@blob_key, @cached_value, unless_exist: true))
+    assert(write.has_been_called_with?(@blob_key, @cached_value, { unless_exist: true }))
     assert_equal(IdentityCache::DELETED, backend.read(@record.primary_cache_index_key))
   end
 
@@ -185,7 +185,7 @@ class FetchTest < IdentityCache::TestCase
 
     assert_equal(@record, Item.fetch(1))
     assert(load_one_from_db.has_been_called_with?(1))
-    refute(write.calls.any? { |call| call.args.last.key?(unless_exist: true) })
+    refute(write.calls.any? { |call| call.kwargs[:unless_exist] || call.args[2]&.key?(unless_exist: true) })
     assert_equal(IdentityCache::DELETED, backend.read(@record.primary_cache_index_key))
   end
 
