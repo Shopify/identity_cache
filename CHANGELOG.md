@@ -2,11 +2,14 @@
 
 ## unreleased
 
+## 1.3.0
+
 ### Features
 - Return meaningful value from `expire_cache` indicating whenever it succeeded or failed in the process. (#523)
 
 ### Fixes
 - Expire parents cache when when calling `expire_cache`. (#523)
+- Avoid creating too many shapes on Ruby 3.2+. (#526)
 
 ## 1.2.0
 
