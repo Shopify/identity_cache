@@ -44,7 +44,7 @@ module IdentityCache
       # @param db_key [Array] Reference to what to load from the database.
       # @return [Hash] A hash mapping each database key to its corresponding value
       def load_multi(cache_fetcher, db_keys)
-        load_batch(cache_fetcher => db_keys).fetch(cache_fetcher)
+        load_batch({ cache_fetcher => db_keys }).fetch(cache_fetcher)
       end
 
       # Load multiple keys for multiple cache fetchers
