@@ -16,14 +16,14 @@ jobs:
       matrix:
         entry:
           - name: 'Minimum supported'
-            ruby: '2.5'
+            ruby: '2.7'
             gemfile: "Gemfile.min-supported"
           - name: 'Latest released & run rubocop'
-            ruby: '3.0'
+            ruby: '3.2'
             gemfile: "Gemfile.latest-release"
             rubocop: true
           - name: 'Rails edge'
-            ruby: '3.0'
+            ruby: '3.2'
             gemfile: "Gemfile.rails-edge"
             edge: true
 
