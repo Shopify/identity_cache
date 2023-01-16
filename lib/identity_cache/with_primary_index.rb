@@ -159,6 +159,15 @@ module IdentityCache
       def expire_primary_key_cache_index(id)
         cached_primary_index.expire(id)
       end
+
+      private
+
+      def inherited(subclass)
+        super
+        subclass.class_eval do
+          @cached_primary_index = nil
+        end
+      end
     end
   end
 end
