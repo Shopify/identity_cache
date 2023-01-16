@@ -31,8 +31,8 @@ module IdentityCache
       prefetch(Item, :item, items)
 
       assert_equal(
-        spy.calls.map(&:args).last,
-        [{ Item.cached_primary_index => [john.id, jim.id] }]
+        [{ Item.cached_primary_index => [john.id, jim.id] }],
+        spy.calls.map(&:args).last
       )
     end
 
@@ -176,8 +176,8 @@ module IdentityCache
       assert_equal(@bob, Item.fetch(@bob.id, includes: :item))
 
       assert_equal(
-        spy.calls.map(&:args).last,
-        [{ Item.cached_primary_index => [john.id] }]
+        [{ Item.cached_primary_index => [john.id] }],
+        spy.calls.map(&:args).last
       )
     end
 
@@ -193,8 +193,8 @@ module IdentityCache
       assert_equal([@bob, @joe, @fred], Item.fetch_multi(@bob.id, @joe.id, @fred.id, includes: :item))
 
       assert_equal(
-        spy.calls.map(&:args).last,
-        [{ Item.cached_primary_index => [john.id, jim.id] }]
+        [{ Item.cached_primary_index => [john.id, jim.id] }],
+        spy.calls.map(&:args).last
       )
     end
 
@@ -384,8 +384,8 @@ module IdentityCache
       assert_equal([@bob], Item.fetch_by_title("bob", includes: :item))
 
       assert_equal(
-        spy.calls.map(&:args).last,
-        [{ Item.cached_primary_index => [john.id] }]
+        [{ Item.cached_primary_index => [john.id] }],
+        spy.calls.map(&:args).last
       )
     end
 
@@ -400,8 +400,8 @@ module IdentityCache
       assert_equal(@bob, Item.fetch_by_title("bob", includes: :item))
 
       assert_equal(
-        spy.calls.map(&:args).last,
-        [{ Item.cached_primary_index => [john.id] }]
+        [{ Item.cached_primary_index => [john.id] }],
+        spy.calls.map(&:args).last
       )
     end
 
