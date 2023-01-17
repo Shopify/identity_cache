@@ -254,11 +254,26 @@ Cache keys include a version number by default, specified in `IdentityCache::CAC
 
 ## Caveats
 
-A word of warning. If an `after_commit` fails before the cache expiry `after_commit` the cache will not be expired and you will be left with stale data.
+IdentityCache is never going to be 100% consistent, since cache invalidations can be lost. As such, it was intentionally designed to be _opt-in_, so it is only used where cache inconsistency is tolerated. This means IdentityCache does not mess with the way normal Rails associations work, and including it in a model won't change any clients of that model until you switch them to use `fetch` instead of `find`. This means that you need to think carefully about when you use `fetch` and when you use `find`.
 
-Since everything is being marshalled and unmarshalled from Memcached changing Ruby or Rails versions could mean your objects cannot be unmarshalled from Memcached. There are a number of ways to get around this such as namespacing keys when you upgrade or rescuing marshal load errors and treating it as a cache miss. Just something to be aware of if you are using IdentityCache and upgrade Ruby or Rails.
+Expected sources of lost cache invalidations include:
+* database write performed that doesn't trigger an after_commit callback
+* process/system getting killed or crashing between the database commit and cache invalidation
+* network unavailability, including transient failures, preventing the delivery of the cache invalidation
+* memcached unavailability or failure preventing the processing of the cache invalidation request
+* memcached flush / restart could remove a cache invalidation that would normally interrupt a cache fill that started when the cache key was absent. E.g.
+  1. cache key absent (not just invalidated)
+  2. process 1 reads cache key
+  3. process 1 starts reading from the database
+  4. process 2 writes to the database
+  5. process 2 writes a cache invalidation marker to cache key
+  6. memcached flush
+  7. process 1 uses an ADD operation, which succeeds in filling the cache with the now stale data
+* rollout of cache namespace changes (e.g. from upgrading IdentityCache, adding columns, cached associations or from application changes to IdentityCache.cache_namespace) can result in cache fills to the new namespace that aren't invalidated by cache invalidations from a process still using the old namespace
 
-IdentityCache is also very much _opt-in_ by deliberate design. This means IdentityCache does not mess with the way normal Rails associations work, and including it in a model won't change any clients of that model until you switch them to use `fetch` instead of `find`. This is because there is no way IdentityCache is ever going to be 100% consistent. Processes die, exceptions happen, and network blips occur, which means there is a chance that some database transaction might commit but the corresponding memcached cache invalidation operation does not make it. This means that you need to think carefully about when you use `fetch` and when you use `find`. For example, at Shopify, we never use any `fetch`ers on the path which moves money around, because IdentityCache could simply be wrong, and we want to charge people the right amount of money. We do however use the fetchers on performance critical paths where absolute correctness isn't the most important thing, and this is what IdentityCache is intended for.
+Cache expiration is meant to be used to help the system recover, but that only works if the application avoids using the cache data as a transaction to write data. IdentityCache avoids loading cached data from its methods during an open transaction, but can't prevent cache data that was loaded before the transaction was opened from being used in a transaction. Besides, IdentityCache won't help with scaling write traffic, it was intended for scaling database queries from read-only requests.
+
+IdentityCache also caches the absence of database values (e.g. to avoid performance problems when it is destroyed), so lost cache invalidations can also result in that value continuing to remain absent. As such, avoid sending the id of an uncommitted database record to another process (e.g. queuing it to a background job), since that could result in an attempt to read the record by its id before it has been created. A cache invalidation will still be attempted when the record is created, but that could be lost.
 
 ## Notes
 
