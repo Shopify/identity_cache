@@ -342,47 +342,6 @@ class FetchTest < IdentityCache::TestCase
     end
   end
 
-  def test_with_should_use_cache_true_fetched_record_does_not_have_embedded_associations_preloaded_on_cache_miss
-    Item.cache_has_many(:associated_records, embed: true)
-    Item.cache_has_many(:normalized_associated_records)
-
-    @record.associated_records.build
-    @record.associated_records.build
-    @record.normalized_associated_records.build
-    @record.save
-
-    assert_memcache_operations(1) do
-      assert_queries(3) do
-        item = Item.fetch_by_id(@record.id)
-
-        refute(item.association(:associated_records).loaded?)
-        refute(item.association(:normalized_associated_records).loaded?)
-      end
-    end
-  end
-
-  def test_with_should_use_cache_true_fetched_record_does_not_have_embedded_associations_preloaded_on_cache_hit
-    Item.cache_has_many(:associated_records, embed: true)
-    Item.cache_has_many(:normalized_associated_records)
-
-    @record.associated_records.build
-    @record.associated_records.build
-    @record.normalized_associated_records.build
-    @record.save
-
-    # warm the cache
-    Item.fetch_by_id(@record.id)
-
-    assert_memcache_operations(1) do
-      assert_queries(0) do
-        item = Item.fetch_by_id(@record.id)
-
-        refute(item.association(:associated_records).loaded?)
-        refute(item.association(:normalized_associated_records).loaded?)
-      end
-    end
-  end
-
   def test_with_should_use_cache_false_fetched_record_has_embedded_associations_preloaded
     Item.cache_has_many(:associated_records, embed: true)
     Item.cache_has_many(:normalized_associated_records)
@@ -392,16 +351,16 @@ class FetchTest < IdentityCache::TestCase
     @record.normalized_associated_records.build
     @record.save
 
-    Item.stubs(:should_use_cache?).returns(false)
-
-    assert_memcache_operations(0) do
-      assert_queries(2) do
-        item = Item.fetch_by_id(@record.id)
-
-        assert(item.association(:associated_records).loaded?)
-        refute(item.association(:normalized_associated_records).loaded?)
+    item = Item.transaction do
+      assert_memcache_operations(0) do
+        assert_queries(3) do
+          Item.fetch_by_id(@record.id)
+        end
       end
     end
+
+    assert(item.association(:associated_records).loaded?)
+    refute(item.association(:normalized_associated_records).loaded?)
   end
 
   def test_fetch_supports_lock_wait_options
