@@ -351,11 +351,11 @@ class FetchTest < IdentityCache::TestCase
     @record.normalized_associated_records.build
     @record.save
 
-    item = Item.transaction do
-      assert_memcache_operations(0) do
-        assert_queries(3) do
-          Item.fetch_by_id(@record.id)
-        end
+    Item.stubs(:should_use_cache?).returns(false)
+
+    item = assert_memcache_operations(0) do
+      assert_queries(2) do
+        Item.fetch_by_id(@record.id)
       end
     end
 
