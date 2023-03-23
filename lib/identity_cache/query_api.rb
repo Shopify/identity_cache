@@ -70,6 +70,8 @@ module IdentityCache
         readonly: IdentityCache.fetch_read_only_records && should_use_cache?)
         return if records.empty?
 
+        return unless should_use_cache?
+
         records.each(&:readonly!) if readonly
         each_id_embedded_association do |cached_association|
           preload_id_embedded_association(records, cached_association)

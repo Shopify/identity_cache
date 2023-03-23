@@ -1,6 +1,9 @@
 # Identity Cache Changelog
 
-## unreleased
+## Unreleased
+
+### Fixes
+- Remove N+1 queries from embedded associations when using `fetch` while `should_use_cache` is false. (#531)
 
 ## 1.3.0
 

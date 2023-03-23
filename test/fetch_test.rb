@@ -342,6 +342,27 @@ class FetchTest < IdentityCache::TestCase
     end
   end
 
+  def test_with_should_use_cache_false_fetched_record_has_embedded_associations_preloaded
+    Item.cache_has_many(:associated_records, embed: true)
+    Item.cache_has_many(:normalized_associated_records)
+
+    @record.associated_records.build
+    @record.associated_records.build
+    @record.normalized_associated_records.build
+    @record.save
+
+    Item.stubs(:should_use_cache?).returns(false)
+
+    item = assert_memcache_operations(0) do
+      assert_queries(2) do
+        Item.fetch_by_id(@record.id)
+      end
+    end
+
+    assert(item.association(:associated_records).loaded?)
+    refute(item.association(:normalized_associated_records).loaded?)
+  end
+
   def test_fetch_supports_lock_wait_options
     @record.save
 
