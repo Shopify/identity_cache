@@ -86,4 +86,31 @@ class FetchMultiByTest < IdentityCache::TestCase
 
     assert_equal({ 1 => "bob", 999 => nil }, Item.fetch_multi_title_by_id([1, 999]))
   end
+
+  def test_fetch_multi_attribute_by_with_multiple_indexes
+    Item.cache_index(:id, :title, unique: false)
+
+    @bob.save!
+    @bertha.save!
+
+    assert_equal([@bob, @bertha], Item.fetch_multi_by_id_and_title([[1, "bob"], [2, "bertha"]]))
+  end
+
+  def test_fetch_multi_attribute_by_with_multiple_indexes_and_unknown_keys
+    Item.cache_index(:id, :title, unique: false)
+
+    @bob.save!
+    @bertha.save!
+
+    assert_equal([@bob], Item.fetch_multi_by_id_and_title([[1, "bob"], [999, "bertha"]]))
+  end
+
+  def test_fetch_multi_attribute_by_with_multiple_indexes_and_unique_cache_key
+    Item.cache_index(:id, :title, unique: true)
+
+    @bob.save!
+    @bertha.save!
+
+    assert_equal([@bob, @bertha], Item.fetch_multi_by_id_and_title([[1, "bob"], [2, "bertha"]]))
+  end
 end
