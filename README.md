@@ -104,7 +104,7 @@ products = Product.fetch_multi_by_handle(handles)
 # Fetch a single product by providing composite attributes.
 products = Product.fetch_by_vendor_and_product_type(vendor, product_type)
 
-# Fetch multiple product by providing an array of composite attributes.
+# Fetch multiple products by providing an array of composite attributes.
 products = Product.fetch_multi_by_vendor_and_product_type([
   [vendor_1, product_type_1],
   [vendor_2, product_type_2],

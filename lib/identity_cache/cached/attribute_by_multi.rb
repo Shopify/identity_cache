@@ -37,18 +37,18 @@ module IdentityCache
       end
 
       def load_multi_rows(keys)
-        query = generate_query(keys)
-        fields = key_fields.dup
-        fields.delete(attribute)
-        attribute_index = key_fields.index(attribute)
+        query = load_multi_rows_query(keys)
+        fields = key_fields
+        if (attribute_index = key_fields.index(attribute))
+          fields = fields.dup
+          fields.delete(attribute)
+        end
 
         query.pluck(attribute, *fields).map do |attribute, *key_values|
-          index = if attribute_index.nil?
-            key_values
-          else
+          if attribute_index
             key_values.insert(attribute_index, attribute)
           end
-          [index, attribute]
+          [key_values, attribute]
         end
       end
 
@@ -56,24 +56,41 @@ module IdentityCache
 
       # Helper methods
 
-      def generate_query(keys)
-        common_fields, unique_fields = extract_common_and_unique_fields(keys)
+      def load_multi_rows_query(keys)
+        # Find fields with a common value for the below common_query optimization
+        common_conditions = {}
+        other_field_indexes = []
+        key_fields.each_with_index do |field, i|
+          first_value = keys.first[i]
+          is_unique = keys.all? { |key_values| first_value == key_values[i] }
 
-        common_query = nil
-        common_fields.each do |field, value|
-          # Optimization for the case of fields in which the key being searched is
-          # always the same.
-          # This results in a single "WHERE field = value" statement being produced
-          # from a single query.
-          common_query ||= unsorted_model
-          common_query = common_query.where(field => value)
+          if is_unique
+            common_conditions[field] = first_value
+          else
+            other_field_indexes << i
+          end
         end
 
-        conditions = if unique_fields.one?
+        common_query = nil
+        unless common_conditions.empty?
+          # Optimization for the case of fields in which the key being searched is
+          # always the same.
+          # This results in simple equality conditions being produced for these fields
+          # (e.g."WHERE field = value").
+          common_query = unsorted_model.where(common_conditions)
+        end
+
+        case other_field_indexes.size
+        when 0
+          common_query
+        when 1
           # Micro-optimization for the case of a single unique field.
           # This results in a single "WHERE field IN (values)" statement being
           # produced from a single query.
-          [unique_fields]
+          field_idx = other_field_indexes.first
+          field_name = key_fields[i]
+          field_values = keys.map { |key| key[field_idx] }
+          (common_query || unsorted_model).where(field_name => field_values)
         else
           # More than one unique field, so we need to generate a query for each
           # set of values for each unique field.
@@ -82,50 +99,26 @@ module IdentityCache
           #   "WHERE field = value AND field_2 = value_2 OR ..."
           # statements being produced from an object like
           #   [{ field: value, field_2: value_2 }, ...]
-          unique_field_rows = unique_fields.keys
-          unique_fields.values.transpose.map do |keys|
-            keys.each_with_object({}).with_index do |(key, conds), i|
-              conds[unique_field_rows[i]] = key
+          query = keys.reduce(nil) do |query, key|
+            condition = {}
+            other_field_indexes.each do |field_idx|
+              field = key_fields[field_idx]
+              condition[field] = key[field_idx]
             end
-          end
-        end
+            subquery = unsorted_model.where(condition)
 
-        unique_query = conditions.reduce(nil) do |query, condition|
-          if query.nil?
-            unsorted_model.where(condition)
-          else
-            query.or(unsorted_model.where(condition))
+            query ? query.or(subquery) : subquery
           end
-        end
 
-        if common_query
-          common_query.merge(unique_query)
-        else
-          unique_query
+          if common_query
+            query = common_query.merge(query)
+          end
+          query
         end
       end
 
       def unsorted_model
         model.reorder(nil)
-      end
-
-      def extract_common_and_unique_fields(keys)
-        common_fields = {}
-        unique_fields = {}
-
-        key_fields.length.times do |i|
-          field = key_fields[i]
-          field_values = keys.map { |key_values| key_values[i] }
-          uniq_field_values = field_values.uniq
-
-          if uniq_field_values.one?
-            common_fields[field] = uniq_field_values.first
-          else
-            unique_fields[field] = field_values
-          end
-        end
-
-        [common_fields, unique_fields]
       end
     end
   end
