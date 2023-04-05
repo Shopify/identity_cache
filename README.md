@@ -101,7 +101,15 @@ product = Product.fetch_by_handle(handle)
 # Fetch multiple products by providing an array of index values.
 products = Product.fetch_multi_by_handle(handles)
 
+# Fetch a single product by providing composite attributes.
 products = Product.fetch_by_vendor_and_product_type(vendor, product_type)
+
+# Fetch multiple product by providing an array of composite attributes.
+products = Product.fetch_multi_by_vendor_and_product_type([
+  [vendor_1, product_type_1],
+  [vendor_2, product_type_2],
+  # ...
+])
 ```
 
 This gives you a lot of freedom to use your objects the way you want to, and doesn't get in your way. This does keep an independent cache copy in Memcached so you might want to watch the number of different caches that are being added.
