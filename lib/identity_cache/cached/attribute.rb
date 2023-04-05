@@ -63,6 +63,46 @@ module IdentityCache
         unique ? results.first : results
       end
 
+      def fetch_multi(keys)
+        keys = keys.map { |key| cast_db_key(key) }
+
+        unless model.should_use_cache?
+          return load_multi_from_db(keys)
+        end
+
+        unordered_hash = CacheKeyLoader.load_multi(self, keys)
+
+        # Calling `values` on the result is expected to return the values in the same order as their
+        # corresponding keys. The fetch_multi_by_#{field_list} generated methods depend on this.
+        keys.each_with_object({}) do |key, ordered_hash|
+          ordered_hash[key] = unordered_hash.fetch(key)
+        end
+      end
+
+      def load_multi_from_db(keys)
+        rows = load_multi_rows(keys)
+        result = {}
+        default = unique ? nil : []
+        keys.each do |index_value|
+          result[index_value] = default.try!(:dup)
+        end
+        if unique
+          rows.each do |index_value, attribute_value|
+            result[index_value] = attribute_value
+          end
+        else
+          rows.each do |index_value, attribute_value|
+            result[index_value] << attribute_value
+          end
+        end
+        result
+      end
+
+      def cache_encode(db_value)
+        db_value
+      end
+      alias_method :cache_decode, :cache_encode
+
       private
 
       # @abstract
@@ -77,6 +117,11 @@ module IdentityCache
 
       # @abstract
       def load_from_db_where_conditions(_index_key_or_keys)
+        raise NotImplementedError
+      end
+
+      # @abstract
+      def load_multi_rows(_index_keys)
         raise NotImplementedError
       end
 
