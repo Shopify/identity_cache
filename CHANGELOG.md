@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.4.0
+
+### Features
+- Add composite index support for `fetch_multi_by`. (#530)
+
 ## 1.3.1
 
 ### Fixes
