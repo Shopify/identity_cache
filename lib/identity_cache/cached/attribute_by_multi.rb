@@ -54,8 +54,17 @@ module IdentityCache
           end
         end
 
-        query.pluck(attribute, *key_fields).map do |attribute, *key_values|
-          [key_values, attribute]
+        fields = key_fields.dup
+        fields.delete(attribute)
+        attribute_index = key_fields.index(attribute)
+
+        query.pluck(attribute, *fields).map do |attribute, *key_values|
+          index = if attribute_index.nil?
+            key_values
+          else
+            key_values.insert(attribute_index, attribute)
+          end
+          [index, attribute]
         end
       end
 
