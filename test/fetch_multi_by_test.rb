@@ -9,10 +9,12 @@ class FetchMultiByTest < IdentityCache::TestCase
     super
     @bob = Item.new
     @bob.id = 1
+    @bob.item_id = 100
     @bob.title = "bob"
 
     @bertha = Item.new
     @bertha.id = 2
+    @bertha.item_id = 100
     @bertha.title = "bertha"
   end
 
@@ -112,5 +114,14 @@ class FetchMultiByTest < IdentityCache::TestCase
     @bertha.save!
 
     assert_equal([@bob, @bertha], Item.fetch_multi_by_id_and_title([[1, "bob"], [2, "bertha"]]))
+  end
+
+  def test_fetch_multi_attribute_by_with_mix_of_unique_and_common_attributes
+    Item.cache_index(:id, :item_id, :title, unique: true)
+
+    @bob.save!
+    @bertha.save!
+
+    assert_equal([@bob, @bertha], Item.fetch_multi_by_id_and_item_id_and_title([[1, 100, "bob"], [2, 100, "bertha"]]))
   end
 end
