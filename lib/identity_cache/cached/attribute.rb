@@ -80,8 +80,10 @@ module IdentityCache
       end
 
       def load_multi_from_db(keys)
-        rows = load_multi_rows(keys)
         result = {}
+        return result if keys.empty?
+
+        rows = load_multi_rows(keys)
         default = unique ? nil : []
         keys.each do |index_value|
           result[index_value] = default.try!(:dup)
