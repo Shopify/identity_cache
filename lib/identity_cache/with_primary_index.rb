@@ -35,8 +35,8 @@ module IdentityCache
       # Declares a new index in the cache for the class where IdentityCache was
       # included.
       #
-      # IdentityCache will add a fetch_by_field1_and_field2_and_...field for every
-      # index.
+      # IdentityCache will add a fetch_by_field1_and_field2_and_...field and
+      # fetch_multi_by_field1_and_field2_and_...field for every index.
       #
       # == Example:
       #
@@ -45,7 +45,10 @@ module IdentityCache
       #    cache_index :name, :vendor
       #  end
       #
-      # Will add Product.fetch_by_name_and_vendor
+      # Will add:
+      #
+      #   Product.fetch_by_name_and_vendor
+      #   Product.fetch_multi_by_name_and_vendor
       #
       # == Parameters
       #
