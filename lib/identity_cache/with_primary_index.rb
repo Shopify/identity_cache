@@ -35,8 +35,8 @@ module IdentityCache
       # Declares a new index in the cache for the class where IdentityCache was
       # included.
       #
-      # IdentityCache will add a fetch_by_field1_and_field2_and_...field for every
-      # index.
+      # IdentityCache will add a fetch_by_field1_and_field2_and_...field and
+      # fetch_multi_by_field1_and_field2_and_...field for every index.
       #
       # == Example:
       #
@@ -45,7 +45,10 @@ module IdentityCache
       #    cache_index :name, :vendor
       #  end
       #
-      # Will add Product.fetch_by_name_and_vendor
+      # Will add:
+      #
+      #   Product.fetch_by_name_and_vendor
+      #   Product.fetch_multi_by_name_and_vendor
       #
       # == Parameters
       #
@@ -82,15 +85,13 @@ module IdentityCache
           CODE
         end
 
-        if fields.length == 1
-          instance_eval(<<-CODE, __FILE__, __LINE__ + 1)
-            def fetch_multi_by_#{field_list}(index_values, includes: nil)
-              ids = fetch_multi_id_by_#{field_list}(index_values).values.flatten(1)
-              return ids if ids.empty?
-              fetch_multi(ids, includes: includes)
-            end
-          CODE
-        end
+        instance_eval(<<-CODE, __FILE__, __LINE__ + 1)
+          def fetch_multi_by_#{field_list}(index_values, includes: nil)
+            ids = fetch_multi_id_by_#{field_list}(index_values).values.flatten(1)
+            return ids if ids.empty?
+            fetch_multi(ids, includes: includes)
+          end
+        CODE
       end
 
       # Similar to ActiveRecord::Base#exists? will return true if the id can be

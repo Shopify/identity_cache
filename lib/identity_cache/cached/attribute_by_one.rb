@@ -24,46 +24,6 @@ module IdentityCache
         end
       end
 
-      def fetch_multi(keys)
-        keys = keys.map { |key| cast_db_key(key) }
-
-        unless model.should_use_cache?
-          return load_multi_from_db(keys)
-        end
-
-        unordered_hash = CacheKeyLoader.load_multi(self, keys)
-
-        # Calling `values` on the result is expected to return the values in the same order as their
-        # corresponding keys. The fetch_multi_by_#{field_list} generated methods depend on this.
-        ordered_hash = {}
-        keys.each { |key| ordered_hash[key] = unordered_hash.fetch(key) }
-        ordered_hash
-      end
-
-      def load_multi_from_db(keys)
-        rows = model.reorder(nil).where(load_from_db_where_conditions(keys)).pluck(key_field, attribute)
-        result = {}
-        default = unique ? nil : []
-        keys.each do |index_value|
-          result[index_value] = default.try!(:dup)
-        end
-        if unique
-          rows.each do |index_value, attribute_value|
-            result[index_value] = attribute_value
-          end
-        else
-          rows.each do |index_value, attribute_value|
-            result[index_value] << attribute_value
-          end
-        end
-        result
-      end
-
-      def cache_encode(db_value)
-        db_value
-      end
-      alias_method :cache_decode, :cache_encode
-
       private
 
       # Attribute method overrides
@@ -78,6 +38,10 @@ module IdentityCache
 
       def load_from_db_where_conditions(key_values)
         { key_field => key_values }
+      end
+
+      def load_multi_rows(keys)
+        model.reorder(nil).where(load_from_db_where_conditions(keys)).pluck(key_field, attribute)
       end
 
       def cache_key_from_key_values(key_values)
