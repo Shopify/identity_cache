@@ -125,6 +125,15 @@ class FetchMultiByTest < IdentityCache::TestCase
     assert_equal([@bob, @bertha], Item.fetch_multi_by_id_and_item_id_and_title([[1, 100, "bob"], [2, 100, "bertha"]]))
   end
 
+  def test_fetch_multi_attribute_by_with_implicit_in_query
+    Item.cache_index(:item_id, :title, unique: true)
+
+    @bob.save!
+    @bertha.save!
+
+    assert_equal([@bob, @bertha], Item.fetch_multi_by_item_id_and_title([[100, "bob"], [100, "bertha"]]))
+  end
+
   def test_fetch_multi_attribute_by_with_empty_keys_without_using_cache
     Item.cache_index(:id, :title, unique: false)
 

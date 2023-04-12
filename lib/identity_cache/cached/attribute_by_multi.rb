@@ -84,7 +84,7 @@ module IdentityCache
           # This results in a single "WHERE field IN (values)" statement being
           # produced from a single query.
           field_idx = other_field_indexes.first
-          field_name = key_fields[i]
+          field_name = key_fields[field_idx]
           field_values = keys.map { |key| key[field_idx] }
           (common_query || unsorted_model).where(field_name => field_values)
         else
