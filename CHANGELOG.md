@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.4.1
+
+### Fixes
+
+- Fix `fetch_multi_by` bug for queries having a single field with distinct values. (#536)
+
 ## 1.4.0
 
 ### Features
