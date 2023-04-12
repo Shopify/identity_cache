@@ -5,35 +5,42 @@
 ## 1.4.0
 
 ### Features
+
 - Add `fetch_multi_by` support for composite-key indexes. (#534)
 
 ## 1.3.1
 
 ### Fixes
+
 - Remove N+1 queries from embedded associations when using `fetch` while `should_use_cache` is false. (#531)
 
 ## 1.3.0
 
 ### Features
+
 - Return meaningful value from `expire_cache` indicating whenever it succeeded or failed in the process. (#523)
 
 ### Fixes
+
 - Expire parents cache when when calling `expire_cache`. (#523)
 - Avoid creating too many shapes on Ruby 3.2+. (#526)
 
 ## 1.2.0
 
 ### Fixes
+
 - Fix mem_cache_store adapter with pool_size (#489)
 - Fix dalli deprecation warning about requiring 'dalli/cas/client' (#511)
 - Make transitionary method IdentityCache.with_fetch_read_only_records thread-safe (#503)
 
 ### Features
+
 - Add support for fill lock with lock wait to avoid thundering herd problem (#373)
 
 ## 1.1.0
 
 ### Fixes
+
 - Fix double debug logging of cache hits and misses (#474)
 - Fix a Rails 6.1 deprecation warning for Rails 7.0 compatibility (#482)
 - Recursively install parent expiry hooks when expiring parent caches (#476)
@@ -45,10 +52,12 @@
 - Fix fetch `has_many` embedded association on record after adding to it (#449)
 
 ### Features
+
 - Support multiple databases and transactional tests in `IdentityCache.should_use_cache?` (#293)
 - Add support for the default `MemCacheStore` from `ActiveSupport` (#465)
 
 ### Breaking Changes
+
 - Drop ruby 2.4 support, since it is no longer supported upstream (#468)
 
 ## 1.0.1
@@ -120,7 +129,7 @@
 - Remove support for 3.2
 - Fix N+1 from fetching embedded ids on a cache miss
 - Raise when trying to cache a through association. Previously it wouldn't be invalidated properly.
-- Raise if a class method is called on a scope.  Previously the scope was ignored.
+- Raise if a class method is called on a scope. Previously the scope was ignored.
 - Raise if a class method is called on a subclass of one that included IdentityCache. This never worked properly.
 - Fix cache_belongs_to on polymorphic assocations.
 - Fetching a cache_belongs_to association no longer loads the belongs_to association
@@ -180,7 +189,6 @@
 - Perf: Rails 4 Only create `CollectionProxy` when using it
 
 ## 0.0.5
-
 
 ## 0.0.4
 
