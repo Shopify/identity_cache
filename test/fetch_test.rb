@@ -26,7 +26,10 @@ class FetchTest < IdentityCache::TestCase
   def test_fetch_cache_hit
     IdentityCache.cache.expects(:fetch).with(@blob_key, {}).returns(@cached_value)
 
-    assert_equal(@record, Item.fetch(1))
+    result = Item.fetch(1)
+
+    assert_instance_of(Item, result)
+    assert_equal(1, result.id)
   end
 
   def test_fetch_cache_hit_publishes_hydration_notification
@@ -86,7 +89,10 @@ class FetchTest < IdentityCache::TestCase
     new_blob_key = "items:#{@blob_key}"
     IdentityCache.cache.expects(:fetch).with(new_blob_key, {}).returns(@cached_value)
 
-    assert_equal(@record, Item.fetch(1))
+    result = Item.fetch(1)
+
+    assert_instance_of(Item, result)
+    assert_equal(1, result.id)
   ensure
     IdentityCache.cache_namespace = old_ns
   end
@@ -234,7 +240,9 @@ class FetchTest < IdentityCache::TestCase
     # Id not found, use sql, SELECT id FROM records WHERE title = '...' LIMIT 1"
     Item.connection.expects(:exec_query).returns(ActiveRecord::Result.new(["id"], [[1]]))
 
-    assert_equal(@record, Item.fetch_by_title("bob"))
+    result = Item.fetch_by_title("bob")
+    assert_instance_of(Item, result)
+    assert_equal(@record.id, result.id)
     assert_equal([1], values)
     assert(fetch.has_been_called_with?(@index_key, {}))
     assert(fetch.has_been_called_with?(@blob_key, {}))
@@ -245,7 +253,10 @@ class FetchTest < IdentityCache::TestCase
     IdentityCache.cache.expects(:fetch).with("ns:#{@index_key}", {}).returns(1)
     IdentityCache.cache.expects(:fetch).with("ns:#{@blob_key}", {}).returns(@cached_value)
 
-    assert_equal(@record, Item.fetch_by_title("bob"))
+    result = Item.fetch_by_title("bob")
+
+    assert_instance_of(Item, result)
+    assert_equal(@record.id, result.id)
   end
 
   def test_fetch_by_title_caches_nil
