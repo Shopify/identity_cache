@@ -186,14 +186,11 @@ class FetchMultiByTest < IdentityCache::TestCase
 
   private
 
-  def assert_query_from_fetch_multi_by(**options)
-    given_query = options[:given]
-    expected_query = options[:expect_query]
-    expected_entities = options[:returning]
+  def assert_query_from_fetch_multi_by(given:, expect_query:, returning:)
     result = assert_queries_sql(
-      [expected_query.to_sql, Item.where(id: expected_entities.map(&:id)).to_sql],
-      &given_query
+      [expect_query.to_sql, Item.where(id: returning.map(&:id)).to_sql],
+      &given
     )
-    assert_equal(expected_entities, result)
+    assert_equal(returning, result)
   end
 end
