@@ -107,9 +107,9 @@ class FetchMultiByTest < IdentityCache::TestCase
 
     assert_query_from_fetch_multi_by(
       given: -> { Item.fetch_multi_by_id_and_title([[1, "bob"], [2, "bertha"]]) },
-      expect_query: Item.select(:id, :title).where(id: 1, title: "bob").or(
-        Item.select(:id, :title).where(id: 2, title: "bertha")
-      ),
+      expect_query: Item.where(id: 1, title: "bob").or(
+        Item.where(id: 2, title: "bertha")
+      ).select(:id, :title),
       returning: [@bob, @bertha]
     )
   end
@@ -122,9 +122,9 @@ class FetchMultiByTest < IdentityCache::TestCase
 
     assert_query_from_fetch_multi_by(
       given: -> { Item.fetch_multi_by_id_and_title([[1, "bob"], [999, "bertha"]]) },
-      expect_query: Item.select(:id, :title).where(id: 1, title: "bob").or(
-        Item.select(:id, :title).where(id: 999, title: "bertha")
-      ),
+      expect_query: Item.where(id: 1, title: "bob").or(
+        Item.where(id: 999, title: "bertha")
+      ).select(:id, :title),
       returning: [@bob]
     )
   end
@@ -137,9 +137,9 @@ class FetchMultiByTest < IdentityCache::TestCase
 
     assert_query_from_fetch_multi_by(
       given: -> { Item.fetch_multi_by_id_and_title([[1, "bob"], [2, "bertha"]]) },
-      expect_query: Item.select(:id, :title).where(id: 1, title: "bob").or(
-        Item.select(:id, :title).where(id: 2, title: "bertha")
-      ),
+      expect_query: Item.where(id: 1, title: "bob").or(
+        Item.where(id: 2, title: "bertha")
+      ).select(:id, :title),
       returning: [@bob, @bertha]
     )
   end
@@ -177,11 +177,9 @@ class FetchMultiByTest < IdentityCache::TestCase
 
     assert_query_from_fetch_multi_by(
       given: -> { Item.fetch_multi_by_id_and_item_id_and_title([[1, 100, "bob"], [2, 100, "bertha"]]) },
-      expect_query: Item.select(:id, :item_id, :title).where(item_id: 100).merge(
-        Item.select(:id, :item_id, :title).where(id: 1, title: "bob").or(
-          Item.select(:id, :item_id, :title).where(id: 2, title: "bertha")
-        )
-      ),
+      expect_query: Item.where(item_id: 100).merge(
+        Item.where(id: 1, title: "bob").or(Item.where(id: 2, title: "bertha"))
+      ).select(:id, :item_id, :title),
       returning: [@bob, @bertha]
     )
   end
