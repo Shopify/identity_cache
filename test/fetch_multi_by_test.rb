@@ -95,7 +95,15 @@ class FetchMultiByTest < IdentityCache::TestCase
     @bob.save!
     @bertha.save!
 
-    assert_equal([@bob, @bertha], Item.fetch_multi_by_id_and_title([[1, "bob"], [2, "bertha"]]))
+    result = assert_queries_sql([
+      Item.select(:id, :title).where(id: 1, title: "bob").or(
+        Item.select(:id, :title).where(id: 2, title: "bertha")
+      ).to_sql,
+      Item.where(id: [@bob.id, @bertha.id]).to_sql,
+    ]) do
+      Item.fetch_multi_by_id_and_title([[1, "bob"], [2, "bertha"]])
+    end
+    assert_equal([@bob, @bertha], result)
   end
 
   def test_fetch_multi_attribute_by_with_composite_key_and_unknown_keys
@@ -104,7 +112,15 @@ class FetchMultiByTest < IdentityCache::TestCase
     @bob.save!
     @bertha.save!
 
-    assert_equal([@bob], Item.fetch_multi_by_id_and_title([[1, "bob"], [999, "bertha"]]))
+    result = assert_queries_sql([
+      Item.select(:id, :title).where(id: 1, title: "bob").or(
+        Item.select(:id, :title).where(id: 999, title: "bertha")
+      ).to_sql,
+      Item.where(id: [@bob.id]).to_sql,
+    ]) do
+      Item.fetch_multi_by_id_and_title([[1, "bob"], [999, "bertha"]])
+    end
+    assert_equal([@bob], result)
   end
 
   def test_fetch_multi_attribute_by_with_composite_key_and_unique_cache_key
@@ -113,29 +129,13 @@ class FetchMultiByTest < IdentityCache::TestCase
     @bob.save!
     @bertha.save!
 
-    assert_equal([@bob, @bertha], Item.fetch_multi_by_id_and_title([[1, "bob"], [2, "bertha"]]))
-  end
-
-  def test_fetch_multi_attribute_by_with_mix_of_unique_and_common_attributes
-    Item.cache_index(:id, :item_id, :title, unique: true)
-
-    @bob.save!
-    @bertha.save!
-
-    assert_equal([@bob, @bertha], Item.fetch_multi_by_id_and_item_id_and_title([[1, 100, "bob"], [2, 100, "bertha"]]))
-  end
-
-  def test_fetch_multi_attribute_by_with_implicit_in_query
-    Item.cache_index(:item_id, :title, unique: true)
-
-    @bob.save!
-    @bertha.save!
-
     result = assert_queries_sql([
-      Item.select(:id, :item_id, :title).where(item_id: 100, title: ["bob", "bertha"]).to_sql,
+      Item.select(:id, :title).where(id: 1, title: "bob").or(
+        Item.select(:id, :title).where(id: 2, title: "bertha")
+      ).to_sql,
       Item.where(id: [@bob.id, @bertha.id]).to_sql,
     ]) do
-      Item.fetch_multi_by_item_id_and_title([[100, "bob"], [100, "bertha"]])
+      Item.fetch_multi_by_id_and_title([[1, "bob"], [2, "bertha"]])
     end
     assert_equal([@bob, @bertha], result)
   end
@@ -155,7 +155,46 @@ class FetchMultiByTest < IdentityCache::TestCase
 
     @bob.save!
 
-    records = Item.fetch_multi_by_id_and_title([[1, "bob"]])
-    assert_equal([@bob], records)
+    result = assert_queries_sql([
+      Item.select(:id, :title).where(id: 1, title: "bob").to_sql,
+      Item.where(id: [@bob.id]).to_sql,
+    ]) do
+      Item.fetch_multi_by_id_and_title([[1, "bob"]])
+    end
+    assert_equal([@bob], result)
+  end
+
+  def test_fetch_multi_attribute_by_with_implicit_in_query
+    Item.cache_index(:item_id, :title, unique: true)
+
+    @bob.save!
+    @bertha.save!
+
+    result = assert_queries_sql([
+      Item.select(:id, :item_id, :title).where(item_id: 100, title: ["bob", "bertha"]).to_sql,
+      Item.where(id: [@bob.id, @bertha.id]).to_sql,
+    ]) do
+      Item.fetch_multi_by_item_id_and_title([[100, "bob"], [100, "bertha"]])
+    end
+    assert_equal([@bob, @bertha], result)
+  end
+
+  def test_fetch_multi_attribute_by_with_mix_of_unique_and_common_attributes
+    Item.cache_index(:id, :item_id, :title, unique: true)
+
+    @bob.save!
+    @bertha.save!
+
+    result = assert_queries_sql([
+      Item.select(:id, :item_id, :title).where(item_id: 100).merge(
+        Item.select(:id, :item_id, :title).where(id: 1, title: "bob").or(
+          Item.select(:id, :item_id, :title).where(id: 2, title: "bertha")
+        )
+      ).to_sql,
+      Item.where(id: [@bob.id, @bertha.id]).to_sql,
+    ]) do
+      Item.fetch_multi_by_id_and_item_id_and_title([[1, 100, "bob"], [2, 100, "bertha"]])
+    end
+    assert_equal([@bob, @bertha], result)
   end
 end
