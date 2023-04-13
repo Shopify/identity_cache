@@ -92,6 +92,13 @@ module IdentityCache
       ret
     end
 
+    def assert_queries_sql(sql_queries, &block)
+      log = []
+      ret = subscribe_to_sql_queries(->(sql) { log << sql }, &block)
+      assert_equal(sql_queries, log)
+      ret
+    end
+
     def subscribe_to_cache_operations(subscriber)
       formatting_subscriber = lambda do |name, _start, _finish, _message_id, values|
         operation = "#{name} #{values[:keys].try(:join, ", ") || values[:key]}"

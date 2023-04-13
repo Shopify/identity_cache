@@ -89,51 +89,6 @@ class FetchMultiByTest < IdentityCache::TestCase
     assert_equal({ 1 => "bob", 999 => nil }, Item.fetch_multi_title_by_id([1, 999]))
   end
 
-  def test_fetch_multi_attribute_by_with_composite_key
-    Item.cache_index(:id, :title, unique: false)
-
-    @bob.save!
-    @bertha.save!
-
-    assert_equal([@bob, @bertha], Item.fetch_multi_by_id_and_title([[1, "bob"], [2, "bertha"]]))
-  end
-
-  def test_fetch_multi_attribute_by_with_composite_key_and_unknown_keys
-    Item.cache_index(:id, :title, unique: false)
-
-    @bob.save!
-    @bertha.save!
-
-    assert_equal([@bob], Item.fetch_multi_by_id_and_title([[1, "bob"], [999, "bertha"]]))
-  end
-
-  def test_fetch_multi_attribute_by_with_composite_key_and_unique_cache_key
-    Item.cache_index(:id, :title, unique: true)
-
-    @bob.save!
-    @bertha.save!
-
-    assert_equal([@bob, @bertha], Item.fetch_multi_by_id_and_title([[1, "bob"], [2, "bertha"]]))
-  end
-
-  def test_fetch_multi_attribute_by_with_mix_of_unique_and_common_attributes
-    Item.cache_index(:id, :item_id, :title, unique: true)
-
-    @bob.save!
-    @bertha.save!
-
-    assert_equal([@bob, @bertha], Item.fetch_multi_by_id_and_item_id_and_title([[1, 100, "bob"], [2, 100, "bertha"]]))
-  end
-
-  def test_fetch_multi_attribute_by_with_implicit_in_query
-    Item.cache_index(:item_id, :title, unique: true)
-
-    @bob.save!
-    @bertha.save!
-
-    assert_equal([@bob, @bertha], Item.fetch_multi_by_item_id_and_title([[100, "bob"], [100, "bertha"]]))
-  end
-
   def test_fetch_multi_attribute_by_with_empty_keys_without_using_cache
     Item.cache_index(:id, :title, unique: false)
 
@@ -144,12 +99,98 @@ class FetchMultiByTest < IdentityCache::TestCase
     assert_equal([], records)
   end
 
+  def test_fetch_multi_attribute_by_with_composite_key
+    Item.cache_index(:id, :title, unique: false)
+
+    @bob.save!
+    @bertha.save!
+
+    assert_query_from_fetch_multi_by(
+      given: -> { Item.fetch_multi_by_id_and_title([[1, "bob"], [2, "bertha"]]) },
+      expect_query: Item.where(id: 1, title: "bob").or(
+        Item.where(id: 2, title: "bertha")
+      ).select(:id, :title),
+      returning: [@bob, @bertha]
+    )
+  end
+
+  def test_fetch_multi_attribute_by_with_composite_key_and_unknown_keys
+    Item.cache_index(:id, :title, unique: false)
+
+    @bob.save!
+    @bertha.save!
+
+    assert_query_from_fetch_multi_by(
+      given: -> { Item.fetch_multi_by_id_and_title([[1, "bob"], [999, "bertha"]]) },
+      expect_query: Item.where(id: 1, title: "bob").or(
+        Item.where(id: 999, title: "bertha")
+      ).select(:id, :title),
+      returning: [@bob]
+    )
+  end
+
+  def test_fetch_multi_attribute_by_with_composite_key_and_unique_cache_key
+    Item.cache_index(:id, :title, unique: true)
+
+    @bob.save!
+    @bertha.save!
+
+    assert_query_from_fetch_multi_by(
+      given: -> { Item.fetch_multi_by_id_and_title([[1, "bob"], [2, "bertha"]]) },
+      expect_query: Item.where(id: 1, title: "bob").or(
+        Item.where(id: 2, title: "bertha")
+      ).select(:id, :title),
+      returning: [@bob, @bertha]
+    )
+  end
+
   def test_fetch_multi_attribute_by_with_single_key
     Item.cache_index(:id, :title, unique: false)
 
     @bob.save!
 
-    records = Item.fetch_multi_by_id_and_title([[1, "bob"]])
-    assert_equal([@bob], records)
+    assert_query_from_fetch_multi_by(
+      given: -> { Item.fetch_multi_by_id_and_title([[1, "bob"]]) },
+      expect_query: Item.select(:id, :title).where(id: 1, title: "bob"),
+      returning: [@bob]
+    )
+  end
+
+  def test_fetch_multi_attribute_by_with_implicit_in_query
+    Item.cache_index(:item_id, :title, unique: true)
+
+    @bob.save!
+    @bertha.save!
+
+    assert_query_from_fetch_multi_by(
+      given: -> { Item.fetch_multi_by_item_id_and_title([[100, "bob"], [100, "bertha"]]) },
+      expect_query: Item.select(:id, :item_id, :title).where(item_id: 100, title: ["bob", "bertha"]),
+      returning: [@bob, @bertha]
+    )
+  end
+
+  def test_fetch_multi_attribute_by_with_mix_of_unique_and_common_attributes
+    Item.cache_index(:id, :item_id, :title, unique: true)
+
+    @bob.save!
+    @bertha.save!
+
+    assert_query_from_fetch_multi_by(
+      given: -> { Item.fetch_multi_by_id_and_item_id_and_title([[1, 100, "bob"], [2, 100, "bertha"]]) },
+      expect_query: Item.where(item_id: 100).merge(
+        Item.where(id: 1, title: "bob").or(Item.where(id: 2, title: "bertha"))
+      ).select(:id, :item_id, :title),
+      returning: [@bob, @bertha]
+    )
+  end
+
+  private
+
+  def assert_query_from_fetch_multi_by(given:, expect_query:, returning:)
+    result = assert_queries_sql(
+      [expect_query.to_sql, Item.where(id: returning.map(&:id)).to_sql],
+      &given
+    )
+    assert_equal(returning, result)
   end
 end
