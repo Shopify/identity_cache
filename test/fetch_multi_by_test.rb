@@ -105,7 +105,7 @@ class FetchMultiByTest < IdentityCache::TestCase
     @bob.save!
     @bertha.save!
 
-    assert_fetch_multi_with_composite_key(
+    assert_query_from_fetch_multi_by(
       given: -> { Item.fetch_multi_by_id_and_title([[1, "bob"], [2, "bertha"]]) },
       expect_query: Item.select(:id, :title).where(id: 1, title: "bob").or(
         Item.select(:id, :title).where(id: 2, title: "bertha")
@@ -120,7 +120,7 @@ class FetchMultiByTest < IdentityCache::TestCase
     @bob.save!
     @bertha.save!
 
-    assert_fetch_multi_with_composite_key(
+    assert_query_from_fetch_multi_by(
       given: -> { Item.fetch_multi_by_id_and_title([[1, "bob"], [999, "bertha"]]) },
       expect_query: Item.select(:id, :title).where(id: 1, title: "bob").or(
         Item.select(:id, :title).where(id: 999, title: "bertha")
@@ -135,7 +135,7 @@ class FetchMultiByTest < IdentityCache::TestCase
     @bob.save!
     @bertha.save!
 
-    assert_fetch_multi_with_composite_key(
+    assert_query_from_fetch_multi_by(
       given: -> { Item.fetch_multi_by_id_and_title([[1, "bob"], [2, "bertha"]]) },
       expect_query: Item.select(:id, :title).where(id: 1, title: "bob").or(
         Item.select(:id, :title).where(id: 2, title: "bertha")
@@ -149,7 +149,7 @@ class FetchMultiByTest < IdentityCache::TestCase
 
     @bob.save!
 
-    assert_fetch_multi_with_composite_key(
+    assert_query_from_fetch_multi_by(
       given: -> { Item.fetch_multi_by_id_and_title([[1, "bob"]]) },
       expect_query: Item.select(:id, :title).where(id: 1, title: "bob"),
       returning: [@bob]
@@ -162,7 +162,7 @@ class FetchMultiByTest < IdentityCache::TestCase
     @bob.save!
     @bertha.save!
 
-    assert_fetch_multi_with_composite_key(
+    assert_query_from_fetch_multi_by(
       given: -> { Item.fetch_multi_by_item_id_and_title([[100, "bob"], [100, "bertha"]]) },
       expect_query: Item.select(:id, :item_id, :title).where(item_id: 100, title: ["bob", "bertha"]),
       returning: [@bob, @bertha]
@@ -175,7 +175,7 @@ class FetchMultiByTest < IdentityCache::TestCase
     @bob.save!
     @bertha.save!
 
-    assert_fetch_multi_with_composite_key(
+    assert_query_from_fetch_multi_by(
       given: -> { Item.fetch_multi_by_id_and_item_id_and_title([[1, 100, "bob"], [2, 100, "bertha"]]) },
       expect_query: Item.select(:id, :item_id, :title).where(item_id: 100).merge(
         Item.select(:id, :item_id, :title).where(id: 1, title: "bob").or(
@@ -188,7 +188,7 @@ class FetchMultiByTest < IdentityCache::TestCase
 
   private
 
-  def assert_fetch_multi_with_composite_key(**options)
+  def assert_query_from_fetch_multi_by(**options)
     given_query = options[:given]
     expected_query = options[:expect_query]
     expected_entities = options[:returning]
