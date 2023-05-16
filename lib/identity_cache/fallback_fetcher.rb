@@ -26,7 +26,7 @@ module IdentityCache
       unless missed_keys.empty?
         replacement_results = yield missed_keys
         missed_keys.zip(replacement_results) do |key, replacement_result|
-          @cache_backend.write(key, replacement_result) if IdentityCache.should_fill_cache?
+          write_cache(key, replacement_result) if IdentityCache.should_fill_cache?
           results[key] = replacement_result
         end
       end
@@ -41,9 +41,17 @@ module IdentityCache
       result = @cache_backend.read(key)
       if result.nil?
         result = yield
-        @cache_backend.write(key, result) if IdentityCache.should_fill_cache?
+        write_cache(key, result) if IdentityCache.should_fill_cache?
       end
       result
+    end
+
+    def write_cache(key, result)
+      if (result.is_a? Hash) && result[:expire_time].present?
+        @cache_backend.write(key, result, expires_in: result[:expire_time])
+      else
+        @cache_backend.write(key, result)
+      end
     end
   end
 end
