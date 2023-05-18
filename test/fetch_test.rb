@@ -374,6 +374,33 @@ class FetchTest < IdentityCache::TestCase
     refute(item.association(:normalized_associated_records).loaded?)
   end
 
+  def test_too_many_embedded
+    Item.cache_has_many(:associated_records, embed: true)
+
+    50.times do
+      @record.associated_records.build
+    end
+    @record.save
+
+    # fill IDC
+    assert_memcache_operations(1) do
+      assert_queries(2) do
+        Item.fetch(@record.id)
+      end
+    end
+
+    item = nil
+    assert_queries(0) do
+      item = Item.fetch(@record.id)
+    end
+
+    # loads associated_records from DB because its too many
+    assert_queries(1) do
+      embedded_records = item.fetch_associated_records
+      assert_equal(50, embedded_records.size)
+    end
+  end
+
   def test_fetch_supports_lock_wait_options
     @record.save
 

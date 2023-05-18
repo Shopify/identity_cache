@@ -54,6 +54,9 @@ module IdentityCache
   DELETED = :idc_cached_deleted
   DELETED_TTL = 1000
 
+  MAX_EMBEDDED_SIZE = 25
+  CACHED_EMBEDDED_TOO_MANY = :idc_too_many
+
   class AlreadyIncludedError < StandardError; end
 
   class AssociationError < StandardError; end

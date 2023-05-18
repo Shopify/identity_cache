@@ -30,6 +30,9 @@ module IdentityCache
               record.instance_variable_get(records_variable_name)
             elsif record.instance_variable_defined?(dehydrated_variable_name)
               dehydrated_target = record.instance_variable_get(dehydrated_variable_name)
+              if dehydrated_target == IdentityCache::CACHED_EMBEDDED_TOO_MANY
+                return assoc.load_target
+              end
               association_target = hydrate_association_target(assoc.klass, dehydrated_target)
               record.remove_instance_variable(dehydrated_variable_name)
               set_with_inverse(record, association_target)

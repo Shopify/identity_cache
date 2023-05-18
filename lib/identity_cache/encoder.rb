@@ -59,8 +59,12 @@ module IdentityCache
         embedded_record_or_records = record.public_send(cached_association.cached_accessor_name)
 
         if embedded_record_or_records.respond_to?(:to_ary)
-          embedded_record_or_records.map do |embedded_record|
-            coder_from_record(embedded_record, embedded_record.class)
+          if embedded_record_or_records.size > IdentityCache::MAX_EMBEDDED_SIZE
+            IdentityCache::CACHED_EMBEDDED_TOO_MANY
+          else
+            embedded_record_or_records.map do |embedded_record|
+              coder_from_record(embedded_record, embedded_record.class)
+            end
           end
         else
           coder_from_record(embedded_record_or_records, embedded_record_or_records.class)
