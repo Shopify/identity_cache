@@ -7,8 +7,6 @@ on:
 
 jobs:
   build:
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.owner.login != 'Shopify'
-
     runs-on: ubuntu-latest
 
     strategy:
