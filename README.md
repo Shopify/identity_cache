@@ -1,4 +1,3 @@
-Trigger GA
 # IdentityCache
 [![Build Status](https://github.com/Shopify/identity_cache/workflows/CI/badge.svg?branch=main)](https://github.com/Shopify/identity_cache/actions?query=branch%3Amain)
 
