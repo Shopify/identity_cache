@@ -35,7 +35,7 @@ Gem::Specification.new do |gem|
 
   gem.metadata["allowed_push_host"] = "https://rubygems.org"
 
-  gem.add_dependency("activerecord", ">= 5.2")
+  gem.add_dependency("activerecord", ">= 5.1")
   gem.add_dependency("ar_transaction_changes", "~> 1.1")
 
   gem.add_development_dependency("minitest", "~> 5.14")
