@@ -282,11 +282,11 @@ class FetchTest < IdentityCache::TestCase
     @record.save!
     record = Item.fetch(@record.id)
 
-    ActiveRecord::Base.clear_active_connections!
+    ActiveRecord::Base.clear_active_connections!(ActiveRecord::Base.current_role)
 
     assert_equal(record, Item.fetch(@record.id))
 
-    assert_equal(false, ActiveRecord::Base.connection_handler.active_connections?)
+    assert_equal(false, ActiveRecord::Base.connection_handler.active_connections?(ActiveRecord::Base.current_role))
   end
 
   def test_fetch_raises_when_called_on_a_scope
