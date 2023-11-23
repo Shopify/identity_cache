@@ -39,7 +39,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency("ar_transaction_changes", "~> 1.1")
 
   gem.add_development_dependency("minitest", "~> 5.14")
-  gem.add_development_dependency("mocha", "~> 1.12")
+  gem.add_development_dependency("mocha", "~> 2.0")
   gem.add_development_dependency("rake", "~> 13.0")
   gem.add_development_dependency("spy", "~> 1.0")
 end

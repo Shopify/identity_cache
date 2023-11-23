@@ -15,7 +15,6 @@ require File.dirname(__FILE__) + "/../lib/identity_cache"
 DatabaseConnection.setup
 CacheConnection.setup
 
-MiniTest::Test = MiniTest::Unit::TestCase unless defined?(MiniTest::Test)
 module IdentityCache
   class TestCase < Minitest::Test
     include ActiveRecordObjects
