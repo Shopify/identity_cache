@@ -31,11 +31,11 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = IdentityCache::VERSION
 
-  gem.required_ruby_version = ">= 2.5.0"
+  gem.required_ruby_version = ">= 3.0.0"
 
   gem.metadata["allowed_push_host"] = "https://rubygems.org"
 
-  gem.add_dependency("activerecord", ">= 5.2")
+  gem.add_dependency("activerecord", ">= 7.0")
   gem.add_dependency("ar_transaction_changes", "~> 1.1")
 
   gem.add_development_dependency("minitest", "~> 5.14")

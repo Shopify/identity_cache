@@ -16,7 +16,7 @@ jobs:
       matrix:
         entry:
           - name: 'Minimum supported'
-            ruby: '2.7'
+            ruby: '3.0'
             gemfile: "Gemfile.min-supported"
           - name: 'Latest released & run rubocop'
             ruby: '3.2'
