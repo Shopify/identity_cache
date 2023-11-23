@@ -282,7 +282,7 @@ class FetchTest < IdentityCache::TestCase
     @record.save!
     record = Item.fetch(@record.id)
 
-    ActiveRecord::Base.clear_active_connections!(ActiveRecord::Base.current_role)
+    ActiveRecord::Base.connection_handler.clear_active_connections!(ActiveRecord::Base.current_role)
 
     assert_equal(record, Item.fetch(@record.id))
 
