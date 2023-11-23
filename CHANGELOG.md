@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.5.0
+
+- Require Active Record 7+
+- Require Ruby 3+
+- Improve compatibility with Active Record 7.1.
+
 ## 1.4.1
 
 ### Fixes
