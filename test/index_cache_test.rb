@@ -34,7 +34,7 @@ class IndexCacheTest < IdentityCache::TestCase
   def test_fetch_with_unique_adds_limit_clause
     Item.cache_index(:title, :id, unique: true)
 
-    Item.connection.expects(:exec_query)
+    Item.connection.expects(ar_query_method(Item.connection))
       .with(regexp_matches(/ LIMIT [1?]\Z/i), any_parameters)
       .returns(ActiveRecord::Result.new([], []))
 

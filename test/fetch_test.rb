@@ -238,7 +238,7 @@ class FetchTest < IdentityCache::TestCase
     end
 
     # Id not found, use sql, SELECT id FROM records WHERE title = '...' LIMIT 1"
-    Item.connection.expects(:exec_query).returns(ActiveRecord::Result.new(["id"], [[1]]))
+    Item.connection.expects(ar_query_method(Item.connection)).returns(ActiveRecord::Result.new(["id"], [[1]]))
 
     result = Item.fetch_by_title("bob")
     assert_instance_of(Item, result)
