@@ -15,7 +15,6 @@ require File.dirname(__FILE__) + "/../lib/identity_cache"
 DatabaseConnection.setup
 CacheConnection.setup
 
-MiniTest::Test = MiniTest::Unit::TestCase unless defined?(MiniTest::Test)
 module IdentityCache
   class TestCase < Minitest::Test
     include ActiveRecordObjects
@@ -42,6 +41,14 @@ module IdentityCache
     end
 
     private
+
+    def ar_query_method(connection)
+      if connection.respond_to?(:internal_exec_query, true)
+        :internal_exec_query
+      else
+        :exec_query
+      end
+    end
 
     def create(class_symbol)
       class_symbol.to_s.classify.constantize.create!

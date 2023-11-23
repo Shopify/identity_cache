@@ -20,7 +20,7 @@ module IdentityCache
           id     = n.next
           letter = ("a".."z").to_a[n].to_sym
           callback = proc {}
-          callback.expects(:call).with(id => letter)
+          callback.expects(:call).with({ id => letter })
           LoadRequest.new([id], callback)
         end
         multi_load_request = MultiLoadRequest.new(load_requests)
