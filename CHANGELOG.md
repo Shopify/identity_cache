@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fix parent cache invalidation for custom foreign key associations
+
 ## 1.5.0
 
 - Require Active Record 7+

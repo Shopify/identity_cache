@@ -66,7 +66,7 @@ module IdentityCache
 
     def parents_to_expire_on_changes(parents_to_expire, association_name, cached_associations)
       parent_association = self.class.reflect_on_association(association_name)
-      foreign_key = parent_association.association_foreign_key
+      foreign_key = parent_association.foreign_key
 
       new_parent = send(association_name)
 
