@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.5.1
+
 - Fix parent cache invalidation for custom foreign key associations
 
 ## 1.5.0
