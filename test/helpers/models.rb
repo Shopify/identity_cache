@@ -87,7 +87,7 @@ end
 
 class CustomParentRecord < ActiveRecord::Base
   include IdentityCache
-  has_many :custom_child_record, foreign_key: :parent_id
+  has_many :custom_child_records, foreign_key: :parent_id
   self.primary_key = "parent_primary_key"
 end
 
