@@ -21,7 +21,11 @@ module IdentityCache
     end
 
     def fetch_multi(keys)
-      results = @cache_backend.read_multi(*keys)
+      results = if IdentityCache.should_fill_cache?
+        @cache_backend.read_multi(*keys)
+      else
+        {}
+      end
       missed_keys = keys - results.keys
       unless missed_keys.empty?
         replacement_results = yield missed_keys
