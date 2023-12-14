@@ -54,7 +54,7 @@ class ReadonlyTest < IdentityCache::TestCase
 
   def test_fetch_multi_should_not_update_cache
     fetch_multi = Spy.on(IdentityCache.cache, :fetch_multi).and_call_through
-    IdentityCache.stubs(:should_fill_cache?).returns(true)
+    IdentityCache.stubs(:should_use_cache?).returns(true)
 
     assert_readonly_fetch_multi do
       assert_equal([@bob, @joe, @fred], Item.fetch_multi(@bob.id, @joe.id, @fred.id))
@@ -78,8 +78,10 @@ class ReadonlyTest < IdentityCache::TestCase
 
   def assert_readonly_fetch_multi
     cas_multi = Spy.on(backend, :cas_multi).and_call_through
+    write = Spy.on(backend, :write).and_call_through
     yield
     assert(cas_multi.has_been_called?)
+    refute(write.has_been_called?)
   end
 end
 
