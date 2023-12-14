@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.5.2
+
+- Fix the cache leaks in `fetch_multi` methods.
+
 ## 1.5.1
 
 - Fix parent cache invalidation for custom foreign key associations
