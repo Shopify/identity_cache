@@ -4,7 +4,7 @@
 
 ## 1.5.2
 
-- Fix the cache leaks in `fetch_multi` methods.
+- Add missing `should_use_cache?` to `fetch_multi` methods.
 
 ## 1.5.1
 
