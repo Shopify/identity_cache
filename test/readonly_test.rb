@@ -64,6 +64,21 @@ class ReadonlyTest < IdentityCache::TestCase
     assert(fetch_multi.has_been_called_with?(*keys))
   end
 
+  def test_fetch_multi_should_not_read_and_update_cache
+    fetch_multi = Spy.on(IdentityCache.cache, :fetch_multi).and_call_through
+    IdentityCache.stubs(:should_use_cache?).returns(false)
+
+    read_multi = Spy.on(backend, :read_multi).and_call_through
+    write = Spy.on(backend, :write).and_call_through
+    assert_equal([@bob, @joe, @fred], Item.fetch_multi(@bob.id, @joe.id, @fred.id))
+    refute(read_multi.has_been_called?)
+    refute(write.has_been_called?)
+
+    keys = [@bob, @joe, @fred].map(&:primary_cache_index_key)
+    assert_empty(backend.read_multi(*keys))
+    refute(fetch_multi.has_been_called_with?(*keys))
+  end
+
   protected
 
   def assert_key_deleted(key)
