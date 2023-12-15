@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.5.2
+
+- Add missing `should_use_cache?` to `fetch_multi` methods.
+
 ## 1.5.1
 
 - Fix parent cache invalidation for custom foreign key associations

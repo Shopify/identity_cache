@@ -65,9 +65,13 @@ module IdentityCache
     end
 
     def fetch_multi(keys, &block)
-      results = cas_multi(keys, &block)
-      results = add_multi(keys, &block) if results.nil?
-      results
+      if IdentityCache.should_use_cache?
+        results = cas_multi(keys, &block)
+        results = add_multi(keys, &block) if results.nil?
+        results
+      else
+        {}
+      end
     end
 
     def fetch(key, fill_lock_duration: nil, lock_wait_tries: 2, &block)
