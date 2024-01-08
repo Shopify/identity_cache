@@ -67,6 +67,33 @@ module IdentityCache
     def fetch_multi(keys, &block)
       results = cas_multi(keys, &block)
       results = add_multi(keys, &block) if results.nil?
+
+      # binding.pry
+
+      def do_division_by_zero; 5 / 0; end
+      # begin
+      #   do_division_by_zero
+      # rescue => exception
+      #   puts "catch_fetcher - caught the division_by_zero exception in fetch_multi method"
+      #   puts exception.backtrace
+      #   # raise # always reraise
+      # end
+
+      keys.each do |k|
+        puts "CacheFetcher - Found Product key: #{k}" if k.include?(":blob:Product:")
+
+        if k.include?(":blob:Product:")
+          binding.pry
+          # begin
+          #   do_division_by_zero
+          # rescue => exception
+          #   puts "CacheFetcher - caught the Product key :blob:Product: with exceptions in fetch_multi method"
+          #   puts exception.backtrace
+          #   # raise # always reraise
+          # end
+        end
+
+      end
       results
     end
 

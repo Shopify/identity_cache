@@ -22,6 +22,17 @@ module IdentityCache
 
     def fetch_multi(keys)
       results = @cache_backend.read_multi(*keys)
+
+      # binding.pry
+      def do_division_by_zero; 5 / 0; end
+      begin
+        do_division_by_zero
+      rescue => exception
+        puts "catch_fetcher - caught the division_by_zero exception in fetch_multi method"
+        puts exception.backtrace
+        # raise # always reraise
+      end
+
       missed_keys = keys - results.keys
       unless missed_keys.empty?
         replacement_results = yield missed_keys

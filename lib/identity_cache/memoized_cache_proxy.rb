@@ -106,6 +106,10 @@ module IdentityCache
       result = ActiveSupport::Notifications.instrument("cache_fetch_multi.identity_cache") do |payload|
         payload[:resolve_miss_time] = 0.0
 
+        keys.each do |k|
+          puts "MemoizedCacheProxy - Found Product key: #{k}" if k.include?(":blob:Product:")
+        end
+
         result = fetch_multi_memoized(keys) do |non_memoized_keys|
           memo_miss_keys = non_memoized_keys
           @cache_fetcher.fetch_multi(non_memoized_keys) do |missing_keys|

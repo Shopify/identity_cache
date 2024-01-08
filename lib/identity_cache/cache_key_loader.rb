@@ -28,6 +28,17 @@ module IdentityCache
       def load(cache_fetcher, db_key, cache_fetcher_options = {})
         cache_key = cache_fetcher.cache_key(db_key)
 
+        if k.include?(":blob:Product:")
+          binding.pry
+          # begin
+          #   do_division_by_zero
+          # rescue => exception
+          #   puts "CacheFetcher - caught the Product key :blob:Product: with exceptions in fetch_multi method"
+          #   puts exception.backtrace
+          #   # raise # always reraise
+          # end
+        end
+
         db_value = nil
 
         cache_value = IdentityCache.fetch(cache_key, cache_fetcher_options) do

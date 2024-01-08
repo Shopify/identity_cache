@@ -116,6 +116,7 @@ module IdentityCache
     end
 
     def should_use_cache? # :nodoc:
+      puts " ===> in identity_cache.rb should_use_cache? "
       ActiveRecord::Base.connection_handler.connection_pool_list(ActiveRecord::Base.current_role).none? do |pool|
         pool.active_connection? &&
           # Rails wraps each of your tests in a transaction, so that any changes
