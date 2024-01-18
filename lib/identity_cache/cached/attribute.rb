@@ -25,11 +25,7 @@ module IdentityCache
       def fetch(db_key)
         db_key = cast_db_key(db_key)
 
-        if model.should_use_cache?
-          IdentityCache.fetch(cache_key(db_key)) do
-            load_one_from_db(db_key)
-          end
-        else
+        IdentityCache.fetch(cache_key(db_key)) do
           load_one_from_db(db_key)
         end
       end

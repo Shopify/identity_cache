@@ -14,7 +14,7 @@ module IdentityCache
         return unless id
 
         record = if model.should_use_cache?
-          object = CacheKeyLoader.load(self, id, cache_fetcher_options)
+          object = CacheKeyLoader.load(self, id, cache_fetcher_options, force_cache: true)
           if object && object.id != id
             IdentityCache.logger.error(
               <<~MSG.squish
@@ -26,7 +26,7 @@ module IdentityCache
           end
           object
         else
-          load_one_from_db(id)
+          load_one_from_db(id, setup_embedded_associations_on_miss: false)
         end
         record
       end
@@ -52,10 +52,14 @@ module IdentityCache
         "#{model.rails_cache_key_namespace}#{cache_key_prefix}#{id}"
       end
 
-      def load_one_from_db(id)
+      def load_one_from_db(id, setup_embedded_associations_on_miss:)
         record = build_query(id).take
         if record
-          model.send(:setup_embedded_associations_on_miss, [record])
+          model.send(
+            :setup_embedded_associations_on_miss,
+            [record],
+            readonly: IdentityCache.fetch_read_only_records
+          ) if setup_embedded_associations_on_miss
           record.send(:mark_as_loaded_by_idc)
         end
         record

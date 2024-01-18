@@ -25,13 +25,13 @@ module IdentityCache
       # @param cache_fetcher [_CacheFetcher]
       # @param db_key Reference to what to load from the database.
       # @return The database value corresponding to the database key.
-      def load(cache_fetcher, db_key, cache_fetcher_options = {})
+      def load(cache_fetcher, db_key, cache_fetcher_options = {}, force_cache:)
         cache_key = cache_fetcher.cache_key(db_key)
 
         db_value = nil
 
-        cache_value = IdentityCache.fetch(cache_key, cache_fetcher_options) do
-          db_value = cache_fetcher.load_one_from_db(db_key)
+        cache_value = IdentityCache.fetch(cache_key, cache_fetcher_options, force_cache: force_cache) do
+          db_value = cache_fetcher.load_one_from_db(db_key, setup_embedded_associations_on_miss: true)
           cache_fetcher.cache_encode(db_value)
         end
 

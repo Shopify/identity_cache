@@ -147,8 +147,8 @@ module IdentityCache
     # +key+ A cache key string
     # +cache_fetcher_options+ A hash of options to pass to the cache backend
     #
-    def fetch(key, cache_fetcher_options = {})
-      if should_use_cache?
+    def fetch(key, cache_fetcher_options = {}, force_cache: false)
+      if force_cache || should_use_cache?
         unmap_cached_nil_for(cache.fetch(key, cache_fetcher_options) do
           map_cached_nil_for(yield)
         end)

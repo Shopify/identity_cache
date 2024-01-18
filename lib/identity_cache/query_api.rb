@@ -67,10 +67,8 @@ module IdentityCache
       end
 
       def setup_embedded_associations_on_miss(records,
-        readonly: IdentityCache.fetch_read_only_records && should_use_cache?)
+        readonly:)
         return if records.empty?
-
-        return unless should_use_cache?
 
         records.each(&:readonly!) if readonly
         each_id_embedded_association do |cached_association|

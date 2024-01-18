@@ -415,6 +415,13 @@ class FetchTest < IdentityCache::TestCase
     assert_predicate(item.fetch_related_item, :present?)
   end
 
+  def test_should_use_cache_called_once
+    bob = Item.create!(title: "bob")
+
+    IdentityCache.expects(:should_use_cache?).once
+    item = Item.fetch(bob.id)
+  end
+
   def test_respects_should_use_cache_on_record
     @record.save
     Item.stubs(:should_use_cache?).returns(false)
