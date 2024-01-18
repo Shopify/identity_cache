@@ -171,17 +171,6 @@ class DenormalizedHasManyTest < IdentityCache::TestCase
     end
   end
 
-  def test_respect_should_use_cache_from_embedded_records
-    Item.fetch(@record.id)
-    AssociatedRecord.stubs(:should_use_cache?).returns(false)
-
-    assert_memcache_operations(1) do
-      assert_queries(1) do
-        Item.fetch(@record.id).fetch_associated_records
-      end
-    end
-  end
-
   def test_fetch_association_after_adding_to_it
     item = Item.fetch(@record.id)
     item.associated_records.create!(name: "foo")

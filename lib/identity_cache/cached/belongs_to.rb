@@ -9,7 +9,7 @@ module IdentityCache
         reflection.active_record.class_eval(<<-RUBY, __FILE__, __LINE__ + 1)
           def #{cached_accessor_name}
             association_klass = association(:#{name}).klass
-            if association_klass.should_use_cache? && #{reflection.foreign_key}.present? && !association(:#{name}).loaded?
+            if (loaded_by_idc? || association_klass.should_use_cache?) && #{reflection.foreign_key}.present? && !association(:#{name}).loaded?
               if defined?(#{records_variable_name})
                 #{records_variable_name}
               else

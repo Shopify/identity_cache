@@ -69,6 +69,7 @@ module IdentityCache
 
       def record_from_coder(coder, klass) # :nodoc:
         record = klass.instantiate(coder[:attributes].dup)
+        record.send(:mark_as_loaded_by_idc)
 
         if coder.key?(:associations)
           coder[:associations].each do |name, value|

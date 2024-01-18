@@ -25,7 +25,7 @@ module IdentityCache
         def read(record)
           assoc = record.association(name)
 
-          if assoc.klass.should_use_cache? && !assoc.loaded? && assoc.target.blank?
+          if (record.send(:loaded_by_idc?) || assoc.klass.should_use_cache?) && !assoc.loaded? && assoc.target.blank?
             if record.instance_variable_defined?(records_variable_name)
               record.instance_variable_get(records_variable_name)
             elsif record.instance_variable_defined?(dehydrated_variable_name)
