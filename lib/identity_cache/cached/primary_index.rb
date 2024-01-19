@@ -54,7 +54,10 @@ module IdentityCache
 
       def load_one_from_db(id)
         record = build_query(id).take
-        model.send(:setup_embedded_associations_on_miss, [record]) if record
+        if record
+          model.send(:setup_embedded_associations_on_miss, [record])
+          record.send(:mark_as_loaded_by_idc)
+        end
         record
       end
 
@@ -63,6 +66,7 @@ module IdentityCache
 
         records = build_query(ids).to_a
         model.send(:setup_embedded_associations_on_miss, records)
+        records.each { |record| record.send(:mark_as_loaded_by_idc) }
         records.index_by(&:id)
       end
 

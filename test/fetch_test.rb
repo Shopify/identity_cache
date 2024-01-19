@@ -342,6 +342,79 @@ class FetchTest < IdentityCache::TestCase
     end
   end
 
+  def test_should_use_cache_not_called_on_prefetched
+    Item.send(:cache_belongs_to, :item)
+
+    bob = Item.create!(title: "bob")
+    john = Item.create!(title: "john")
+    bob.update_column(:item_id, john.id)
+
+    item = Item.fetch(bob.id, includes: [:item])
+    IdentityCache.expects(:should_use_cache?).never
+    item.fetch_item
+  end
+
+  def test_should_use_cache_not_called_on_prefetched_multi
+    Item.send(:cache_belongs_to, :item)
+
+    bob = Item.create!(title: "bob")
+    john = Item.create!(title: "john")
+    bob.update_column(:item_id, john.id)
+
+    items = Item.fetch_multi([bob.id], includes: [:item])
+    IdentityCache.expects(:should_use_cache?).never
+    items.first.fetch_item
+  end
+
+  def test_should_use_cache_not_called_on_embedded_has_many
+    Item.send(:cache_has_many, :associated_records, embed: true)
+
+    bob = Item.create!(title: "bob")
+
+    bob.associated_records.create!(name: "foo")
+    bob.associated_records.create!(name: "bar")
+
+    item = Item.fetch(bob.id)
+    IdentityCache.expects(:should_use_cache?).never
+    records = item.fetch_associated_records
+    assert_equal(2, records.size)
+  end
+
+  def test_should_use_cache_not_called_on_embedded_has_one
+    Item.send(:cache_has_one, :related_item, embed: true)
+
+    bob = Item.create!(title: "bob")
+    bob.build_related_item.save!
+
+    item = Item.fetch(bob.id)
+    IdentityCache.expects(:should_use_cache?).never
+    assert_predicate(item.fetch_related_item, :present?)
+  end
+
+  def test_should_use_cache_called_on_has_many_embed_ids
+    Item.send(:cache_has_many, :associated_records, embed: :ids)
+
+    bob = Item.create!(title: "bob")
+    bob.associated_records.create!(name: "foo")
+    bob.associated_records.create!(name: "bar")
+
+    item = Item.fetch(bob.id)
+    IdentityCache.expects(:should_use_cache?).at_least_once.returns(true)
+    records = item.fetch_associated_records
+    assert_equal(2, records.size)
+  end
+
+  def test_should_use_cache_called_on_has_one_embed_id
+    Item.send(:cache_has_one, :related_item, embed: :id)
+
+    bob = Item.create!(title: "bob")
+    bob.build_related_item.save!
+
+    item = Item.fetch(bob.id)
+    IdentityCache.expects(:should_use_cache?).at_least_once.returns(true)
+    assert_predicate(item.fetch_related_item, :present?)
+  end
+
   def test_respects_should_use_cache_on_record
     @record.save
     Item.stubs(:should_use_cache?).returns(false)
