@@ -66,6 +66,7 @@ module IdentityCache
 
         records = build_query(ids).to_a
         model.send(:setup_embedded_associations_on_miss, records)
+        records.each { |record| record.send(:mark_as_loaded_by_idc) }
         records.index_by(&:id)
       end
 
