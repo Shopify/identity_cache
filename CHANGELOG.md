@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.5.3
+
+- No longer call `should_use_cache?` on embedded/prefetched associations when reading values
+
 ## 1.5.2
 
 - Add missing `should_use_cache?` to `fetch_multi` methods.
