@@ -52,8 +52,8 @@ module IdentityCache
       @cache_backend = cache_backend
     end
 
-    def write(key, value)
-      @cache_backend.write(key, value) if IdentityCache.should_fill_cache?
+    def write(key, value, expiration_options = EMPTY_HASH)
+      @cache_backend.write(key, value, expiration_options) if IdentityCache.should_fill_cache?
     end
 
     def delete(key)
@@ -64,29 +64,29 @@ module IdentityCache
       @cache_backend.clear
     end
 
-    def fetch_multi(keys, &block)
+    def fetch_multi(keys, expiration_options = EMPTY_HASH, &block)
       if IdentityCache.should_use_cache?
-        results = cas_multi(keys, &block)
-        results = add_multi(keys, &block) if results.nil?
+        results = cas_multi(keys, expiration_options, &block)
+        results = add_multi(keys, expiration_options, &block) if results.nil?
         results
       else
         {}
       end
     end
 
-    def fetch(key, fill_lock_duration: nil, lock_wait_tries: 2, &block)
+    def fetch(key, fill_lock_duration: nil, lock_wait_tries: 2, expiration_options: EMPTY_HASH, &block)
       if fill_lock_duration && IdentityCache.should_fill_cache?
-        fetch_with_fill_lock(key, fill_lock_duration, lock_wait_tries, &block)
+        fetch_with_fill_lock(key, fill_lock_duration, lock_wait_tries, expiration_options, &block)
       else
-        fetch_without_fill_lock(key, &block)
+        fetch_without_fill_lock(key, expiration_options, &block)
       end
     end
 
     private
 
-    def fetch_without_fill_lock(key)
+    def fetch_without_fill_lock(key, expiration_options = EMPTY_HASH)
       data = nil
-      upsert(key) do |value|
+      upsert(key, expiration_options) do |value|
         value = nil if value == IdentityCache::DELETED || FillLock.cache_value?(value)
         unless value.nil?
           return value
@@ -100,13 +100,12 @@ module IdentityCache
       data
     end
 
-    def fetch_with_fill_lock(key, fill_lock_duration, lock_wait_tries, &block)
+    def fetch_with_fill_lock(key, fill_lock_duration, lock_wait_tries, expiration_options = EMPTY_HASH, &block)
       raise ArgumentError, "fill_lock_duration must be greater than 0.0" unless fill_lock_duration > 0.0
       raise ArgumentError, "lock_wait_tries must be greater than 0" unless lock_wait_tries > 0
 
       lock = nil
       using_fallback_key = false
-      expiration_options = EMPTY_HASH
       (lock_wait_tries + 2).times do # +2 is for first attempt and retry with fallback key
         result = fetch_or_take_lock(key, old_lock: lock, **expiration_options)
         case result
@@ -135,7 +134,7 @@ module IdentityCache
             # so avoid waiting the typical amount of time for a lock wait. The
             # semian gem can be used to handle failing fast when the database is slow.
             if lock.fill_failed?
-              return fetch_without_fill_lock(key, &block)
+              return fetch_without_fill_lock(key, expiration_options, &block)
             end
 
             # lock wait
@@ -273,7 +272,7 @@ module IdentityCache
       @client_id ||= SecureRandom.uuid
     end
 
-    def cas_multi(keys)
+    def cas_multi(keys, expiration_options = EMPTY_HASH)
       result = nil
       @cache_backend.cas_multi(*keys) do |results|
         deleted = results.select { |_, v| IdentityCache::DELETED == v }
@@ -289,7 +288,7 @@ module IdentityCache
             if deleted.include?(k)
               updates[k] = v
             else
-              add(k, v)
+              add(k, v, expiration_options)
             end
           end
         end
@@ -302,10 +301,10 @@ module IdentityCache
       result
     end
 
-    def add_multi(keys)
+    def add_multi(keys, expiration_options = EMPTY_HASH)
       values = yield keys
       result = Hash[keys.zip(values)]
-      result.each { |k, v| add(k, v) }
+      result.each { |k, v| add(k, v, expiration_options) }
     end
 
     def add(key, value, expiration_options = EMPTY_HASH)
