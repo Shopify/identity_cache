@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Exposed `expiration_options` on `CacheFetcher`
+
 ## 1.5.3
 
 - No longer call `should_use_cache?` on embedded/prefetched associations when reading values
