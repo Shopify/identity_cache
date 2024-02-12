@@ -143,7 +143,7 @@ module IdentityCache
 
       def check_association_for_caching(association)
         unless (association_reflection = reflect_on_association(association))
-          raise AssociationError, "Association named '#{association}' was not found on #{self.class}"
+          raise AssociationError, "Association named '#{association}' was not found on #{self}"
         end
         if association_reflection.options[:through]
           raise UnsupportedAssociationError, "caching through associations isn't supported"

@@ -14,7 +14,7 @@ module IdentityCache
         ensure_base_model
 
         unless (reflection = reflect_on_association(association))
-          raise AssociationError, "Association named '#{association}' was not found on #{self.class}"
+          raise AssociationError, "Association named '#{association}' was not found on #{self}"
         end
 
         if reflection.scope
