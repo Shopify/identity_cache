@@ -354,6 +354,30 @@ class FetchTest < IdentityCache::TestCase
     item.fetch_item
   end
 
+  def test_should_use_cache_not_called_on_prefetched_has_many
+    Item.send(:cache_has_many, :associated_records)
+
+    bob = Item.create!(title: "bob")
+    bob.associated_records.create!(name: "foo")
+    bob.associated_records.create!(name: "bar")
+
+    item = Item.fetch(bob.id, includes: [:associated_records])
+    IdentityCache.expects(:should_use_cache?).never
+    item.fetch_associated_records
+  end
+
+  def test_should_use_cache_not_called_on_prefetched_has_many_multi
+    Item.send(:cache_has_many, :associated_records)
+
+    bob = Item.create!(title: "bob")
+    bob.associated_records.create!(name: "foo")
+    bob.associated_records.create!(name: "bar")
+
+    item = Item.fetch_multi([bob.id], includes: [:associated_records])
+    IdentityCache.expects(:should_use_cache?).never
+    item.first.fetch_associated_records
+  end
+
   def test_should_use_cache_not_called_on_prefetched_multi
     Item.send(:cache_belongs_to, :item)
 
