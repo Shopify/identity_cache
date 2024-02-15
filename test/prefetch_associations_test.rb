@@ -270,6 +270,35 @@ module IdentityCache
       end
     end
 
+    def test_fetch_multi_batch_fetches_non_embedded_second_level_belongs_to_associations_in_repeating_prefetch
+      Item.send(:cache_belongs_to, :item)
+      Item.send(:cache_has_many, :associated_records, embed: :ids)
+
+      bob_item = @bob.create_item!(title: "bob's item")
+      @bob.save!
+      fred_item = @fred.create_item!(title: "fred's item")
+      @fred.save!
+
+      bob_associated_record = bob_item.associated_records.create!(name: "bob child")
+      fred_associated_record = fred_item.associated_records.create!(name: "fred child")
+
+      cached_bob, cached_fred = Item.fetch_multi(
+        [@bob.id, @fred.id], includes: [:item]
+      )
+
+      Item.prefetch_associations({ item: { associated_records: [] } }, [cached_bob, cached_fred])
+
+      assert_queries(0) do
+        assert_memcache_operations(0) do
+          assert_equal(bob_item,  cached_bob.fetch_item)
+          assert_equal(fred_item, cached_fred.fetch_item)
+
+          assert_equal([bob_associated_record], cached_bob.fetch_item.fetch_associated_records)
+          assert_equal([fred_associated_record], cached_fred.fetch_item.fetch_associated_records)
+        end
+      end
+    end
+
     def test_fetch_multi_batch_fetches_non_embedded_second_level_has_many_associations
       Item.send(:cache_has_many, :associated_records, embed: :ids)
       AssociatedRecord.send(:cache_has_many, :deeply_associated_records, embed: :ids)
