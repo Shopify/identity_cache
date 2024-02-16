@@ -77,16 +77,20 @@ module IdentityCache
             end
           end
 
-          load_strategy.load_multi(
-            reflection.klass.cached_primary_index,
-            ids_to_owner_record.keys
-          ) do |associated_records_by_id|
-            associated_records_by_id.each do |id, associated_record|
-              owner_record = ids_to_owner_record.fetch(id)
-              write(owner_record, associated_record)
-            end
+          if ids_to_owner_record.any?
+            load_strategy.load_multi(
+              reflection.klass.cached_primary_index,
+              ids_to_owner_record.keys
+            ) do |associated_records_by_id|
+              associated_records_by_id.each do |id, associated_record|
+                owner_record = ids_to_owner_record.fetch(id)
+                write(owner_record, associated_record)
+              end
 
-            yield associated_records_by_id.values.compact
+              yield associated_records_by_id.values.compact
+            end
+          else
+            yield records.filter_map { |record| record.instance_variable_get(records_variable_name) }
           end
         end
       end
