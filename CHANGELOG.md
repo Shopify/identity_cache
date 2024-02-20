@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.5.4
+
+- Make `prefetch_associations` work as expected on associations that have been partially prefetched
+
 ## 1.5.3
 
 - No longer call `should_use_cache?` on embedded/prefetched associations when reading values
