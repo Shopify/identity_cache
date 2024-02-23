@@ -19,7 +19,14 @@ module IdentityCache
       end
 
       def attribute
-        @attribute ||= @attribute_proc.call.to_sym
+        @attribute ||= begin
+          res = @attribute_proc.call
+          if res.is_a?(Array)
+            res.map(&:to_sym)
+          else
+            res.to_sym
+          end
+        end
       end
 
       def fetch(db_key)
@@ -59,7 +66,11 @@ module IdentityCache
       def load_one_from_db(key)
         query = model.reorder(nil).where(load_from_db_where_conditions(key))
         query = query.limit(1) if unique
-        results = query.pluck(attribute)
+        results = if attribute.is_a?(Array)
+          query.pluck(*attribute)
+        else
+          query.pluck(attribute)
+        end
         unique ? results.first : results
       end
 
@@ -138,10 +149,15 @@ module IdentityCache
 
       def cache_key_prefix
         @cache_key_prefix ||= begin
+          attribute_key_prefix = if attribute.is_a?(Array)
+            attribute.join("/")
+          else
+            attribute.to_s
+          end
           unique_indicator = unique ? "" : "s"
           "attr#{unique_indicator}" \
             ":#{model.base_class.name}" \
-            ":#{attribute}" \
+            ":#{attribute_key_prefix}" \
             ":#{key_fields.join("/")}:"
         end
       end
