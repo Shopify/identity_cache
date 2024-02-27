@@ -151,6 +151,8 @@ module IdentityCache
         ensure_base_model
         raise_if_scoped
         ids.flatten!(1)
+        return [] if ids.none?
+
         records = cached_primary_index.fetch_multi(ids)
         prefetch_associations(includes, records) if includes
         records

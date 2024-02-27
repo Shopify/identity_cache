@@ -21,6 +21,11 @@ class FetchMultiTest < IdentityCache::TestCase
     assert_equal([], Item.fetch_multi)
   end
 
+  def test_fetch_multi_with_no_records_does_not_call_should_use_cache?
+    IdentityCache.expects(:should_use_cache?).never
+    assert_equal([], Item.fetch_multi)
+  end
+
   def test_fetch_multi_namespace
     Item.send(:include, SwitchNamespace)
     bob_blob_key, joe_blob_key, fred_blob_key = [@bob_blob_key, @joe_blob_key, @fred_blob_key].map { |k| "ns:#{k}" }
