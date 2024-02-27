@@ -88,14 +88,11 @@ module IdentityCache
     def assert_queries(num = 1, **subscribe_opts, &block)
       log = []
       ret = subscribe_to_sql_queries(->(sql) { log << sql }, **subscribe_opts, &block)
-      assert_equal(
-        num,
-        log.size,
-        <<~MSG.squish
-          #{log.size} instead of #{num} queries were executed.
-          #{log.empty? ? "" : "\nQueries:\n#{log.join("\n")}"}
-        MSG
-      )
+
+      msg = "#{log.size} instead of #{num} queries were executed."
+      msg << "\nQueries:\n#{log.join("\n")}" unless log.empty?
+
+      assert_equal(num, log.size, msg)
       ret
     end
 
