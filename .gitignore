@@ -3,7 +3,6 @@
 .bundle
 .config
 .yardoc
-*.lock
 InstalledFiles
 _yardoc
 coverage
