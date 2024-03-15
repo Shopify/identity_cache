@@ -3,7 +3,7 @@
 source "https://rubygems.org"
 gemspec
 
-gem "rubocop", "~> 1.5"
+gem "rubocop", "~> 1.61.0"
 
 gem "rubocop-shopify", "~> 2.9.0", require: false
 
