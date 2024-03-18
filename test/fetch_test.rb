@@ -342,6 +342,18 @@ class FetchTest < IdentityCache::TestCase
     end
   end
 
+  def test_should_use_cache_not_called_on_preloaded
+    Item.send(:cache_belongs_to, :item)
+
+    bob = Item.create!(title: "bob")
+    john = Item.create!(title: "john")
+    bob.update_column(:item_id, john.id)
+
+    from_db = Item.includes(:item).find(bob.id)
+    IdentityCache.expects(:should_use_cache?).never
+    from_db.fetch_item
+  end
+
   def test_should_use_cache_not_called_on_prefetched
     Item.send(:cache_belongs_to, :item)
 
@@ -364,6 +376,22 @@ class FetchTest < IdentityCache::TestCase
     items = Item.fetch_multi([bob.id], includes: [:item])
     IdentityCache.expects(:should_use_cache?).never
     items.first.fetch_item
+  end
+
+  def test_should_use_cache_not_called_on_preloaded_has_many
+    Item.send(:cache_has_many, :associated_records, embed: true)
+
+    bob = Item.create!(title: "bob")
+
+    bob.associated_records.create!(name: "foo")
+    bob.associated_records.create!(name: "bar")
+
+    from_db = Item.includes(:associated_records).find(bob.id)
+
+    # item = Item.fetch(bob.id)
+    IdentityCache.expects(:should_use_cache?).never
+    records = from_db.fetch_associated_records
+    assert_equal(2, records.size)
   end
 
   def test_should_use_cache_not_called_on_embedded_has_many
