@@ -388,7 +388,6 @@ class FetchTest < IdentityCache::TestCase
 
     from_db = Item.includes(:associated_records).find(bob.id)
 
-    # item = Item.fetch(bob.id)
     IdentityCache.expects(:should_use_cache?).never
     records = from_db.fetch_associated_records
     assert_equal(2, records.size)
