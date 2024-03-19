@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 1.5.6
+
+- Minor performance improvements on association read
+
+## 1.5.5
+
+- Minor performance improvements on association read
+
+
 ## 1.5.4
 
 - Make `prefetch_associations` work as expected on associations that have been partially prefetched
