@@ -33,7 +33,7 @@ GEM
     cityhash (0.6.0)
     concurrent-ruby (1.2.3)
     connection_pool (2.4.1)
-    dalli (2.7.11)
+    dalli (3.2.3)
     drb (2.2.1)
     i18n (1.14.4)
       concurrent-ruby (~> 1.0)
@@ -89,7 +89,7 @@ PLATFORMS
 DEPENDENCIES
   byebug
   cityhash (~> 0.6.0)
-  dalli (~> 2.7.11)
+  dalli (~> 3.2.3)
   identity_cache!
   memcached (~> 1.8.0)
   memcached_store (~> 2.3.2)
