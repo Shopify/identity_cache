@@ -191,6 +191,17 @@ module IdentityCache
       result
     end
 
+    def with_deferred_parent_expiration
+      raise NestedDeferredParentBlockError if Thread.current[:deferred_parent_expiration]
+
+      Thread.current[:deferred_parent_expiration] = true
+      Thread.current[:parent_records_for_cache_expiry] = Set.new
+
+      yield
+
+      Thread.current[:parent_records_for_cache_expiry].each(&:expire_primary_index)
+    end
+
     def with_fetch_read_only_records(value = true)
       old_value = Thread.current[:identity_cache_fetch_read_only_records]
       Thread.current[:identity_cache_fetch_read_only_records] = value

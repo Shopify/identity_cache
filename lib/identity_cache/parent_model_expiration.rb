@@ -47,6 +47,10 @@ module IdentityCache
       add_parents_to_cache_expiry_set(parents_to_expire)
       parents_to_expire.select! { |parent| parent.class.primary_cache_index_enabled }
       parents_to_expire.reduce(true) do |all_expired, parent|
+        if Thread.current[:deferred_parent_expiration]
+          Thread.current[:parent_records_for_cache_expiry] << parent
+          next parent
+        end
         parent.expire_primary_index && all_expired
       end
     end
