@@ -191,6 +191,32 @@ class IndexCacheTest < IdentityCache::TestCase
     assert_operator(@memcached_spy.calls.count, :>, 0)
     assert_equal(expected_item_expiration_count, item_expiration_count)
     assert_equal(expected_associated_record_expiration_count, associated_record_expiration_count)
+  ensure
+    Thread.current[:deferred_parent_expiration] = nil
+  end
+
+  def test_double_nested_deferred_parent_expiration
+    Item.send(:cache_has_many, :associated_records, embed: true)
+
+    @parent = Item.create!(title: "bob")
+    @records = @parent.associated_records.create!([{ name: "foo" }, { name: "bar" }, { name: "baz" }])
+
+    @memcached_spy = Spy.on(backend, :write).and_call_through
+
+    assert_raises(IdentityCache::NestedDeferredParentBlockError) do
+      IdentityCache.with_deferred_parent_expiration do
+        IdentityCache.with_deferred_parent_expiration do
+          @parent.transaction do
+            @parent.associated_records.destroy_all
+          end
+          assert_equal(expected_associated_record_expiration_count, @memcached_spy.calls.count)
+        end
+      end
+    end
+
+    assert_equal(0, @memcached_spy.calls.count)
+  ensure
+    Thread.current[:deferred_parent_expiration] = nil
   end
 
   def test_deep_association_with_deferred_parent_expiration_expires_parent_once
@@ -228,6 +254,8 @@ class IndexCacheTest < IdentityCache::TestCase
     assert_equal(expected_item_expiration_count, item_expiration_count)
     assert_equal(expected_associated_record_expiration_count, associated_record_expiration_count)
     assert_equal(expected_deeply_associated_record_expiration_count, deeply_associated_record_expiration_count)
+  ensure
+    Thread.current[:deferred_parent_expiration] = nil
   end
 
   private

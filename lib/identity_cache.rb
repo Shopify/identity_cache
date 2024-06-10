@@ -60,6 +60,8 @@ module IdentityCache
 
   class InverseAssociationError < StandardError; end
 
+  class NestedDeferredParentBlockError < StandardError; end
+
   class UnsupportedScopeError < StandardError; end
 
   class UnsupportedAssociationError < StandardError; end
@@ -199,6 +201,7 @@ module IdentityCache
 
       yield
 
+      Thread.current[:deferred_parent_expiration] = nil
       Thread.current[:parent_records_for_cache_expiry].each(&:expire_primary_index)
     end
 
