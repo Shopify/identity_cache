@@ -199,10 +199,15 @@ module IdentityCache
       Thread.current[:deferred_parent_expiration] = true
       Thread.current[:parent_records_for_cache_expiry] = Set.new
 
-      yield
+      result = yield
 
       Thread.current[:deferred_parent_expiration] = nil
       Thread.current[:parent_records_for_cache_expiry].each(&:expire_primary_index)
+
+      result
+    ensure
+      Thread.current[:deferred_parent_expiration] = nil
+      Thread.current[:parent_records_for_cache_expiry].clear
     end
 
     def with_fetch_read_only_records(value = true)
