@@ -29,6 +29,7 @@ module IdentityCache
 
         coder = {}
         coder[:attributes] = record.attributes_before_type_cast.dup
+        coder[:expire_time] = record.class.name.constantize::EXPIRE_CACHE if defined?(record.class.name.constantize::EXPIRE_CACHE)
 
         recursively_embedded_associations = klass.send(:recursively_embedded_associations)
         id_embedded_has_manys = klass.cached_has_manys.select { |_, association| association.embedded_by_reference? }
