@@ -60,6 +60,8 @@ module IdentityCache
 
   class InverseAssociationError < StandardError; end
 
+  class NestedDeferredParentBlockError < StandardError; end
+
   class UnsupportedScopeError < StandardError; end
 
   class UnsupportedAssociationError < StandardError; end
@@ -189,6 +191,23 @@ module IdentityCache
       end
 
       result
+    end
+
+    def with_deferred_parent_expiration
+      raise NestedDeferredParentBlockError if Thread.current[:idc_deferred_parent_expiration]
+
+      Thread.current[:idc_deferred_parent_expiration] = true
+      Thread.current[:idc_parent_records_for_cache_expiry] = Set.new
+
+      result = yield
+
+      Thread.current[:idc_deferred_parent_expiration] = nil
+      Thread.current[:idc_parent_records_for_cache_expiry].each(&:expire_primary_index)
+
+      result
+    ensure
+      Thread.current[:idc_deferred_parent_expiration] = nil
+      Thread.current[:idc_parent_records_for_cache_expiry].clear
     end
 
     def with_fetch_read_only_records(value = true)
