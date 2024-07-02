@@ -193,6 +193,27 @@ module IdentityCache
       result
     end
 
+    # Executes a block with deferred parent expiration, ensuring that the parent
+    # records' cache expiration is deferred until the block completes. When the block
+    # completes, it triggers expiration of the primary index for the parent records.
+    # Raises a NestedDeferredParentBlockError if a deferred parent expiration block
+    # is already active on the current thread.
+    #
+    # == Parameters:
+    # No parameters.
+    #
+    # == Raises:
+    # NestedDeferredParentBlockError if a deferred parent expiration block is already active.
+    #
+    # == Yield:
+    # Runs the provided block with deferred parent expiration.
+    #
+    # == Returns:
+    # The result of executing the provided block.
+    #
+    # == Ensures:
+    # Cleans up thread-local variables related to deferred parent expiration regardless
+    # of whether the block raises an exception.
     def with_deferred_parent_expiration
       raise NestedDeferredParentBlockError if Thread.current[:idc_deferred_parent_expiration]
 
