@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.6.0
+
+- Introduce `.with_deferred_parent_expiration`, which takes a block and avoids duplicate parent cache expiry. (#569)
+
 ## 1.5.6
 
 - Minor performance improvements on association read

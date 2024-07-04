@@ -166,6 +166,95 @@ class IndexCacheTest < IdentityCache::TestCase
     assert_equal(123, KeyedRecord.fetch_by_value("a").id)
   end
 
+  def test_with_deferred_parent_expiration_expires_parent_index_once
+    Item.send(:cache_has_many, :associated_records, embed: true)
+
+    @parent = Item.create!(title: "bob")
+    @records = @parent.associated_records.create!([{ name: "foo" }, { name: "bar" }, { name: "baz" }])
+
+    @memcached_spy = Spy.on(backend, :write).and_call_through
+
+    expected_item_expiration_count = Array(@parent).count
+    expected_associated_record_expiration_count = @records.count
+
+    expected_return_value = "Some text that we expect to see returned from the block"
+
+    result = IdentityCache.with_deferred_parent_expiration do
+      @parent.transaction do
+        @parent.associated_records.destroy_all
+      end
+      assert_equal(expected_associated_record_expiration_count, @memcached_spy.calls.count)
+      expected_return_value
+    end
+
+    expired_cache_keys = @memcached_spy.calls.map(&:args).map(&:first)
+    item_expiration_count = expired_cache_keys.count { _1.include?("Item") }
+    associated_record_expiration_count = expired_cache_keys.count { _1.include?("AssociatedRecord") }
+
+    assert_operator(@memcached_spy.calls.count, :>, 0)
+    assert_equal(expected_item_expiration_count, item_expiration_count)
+    assert_equal(expected_associated_record_expiration_count, associated_record_expiration_count)
+    assert_equal(expected_return_value, result)
+  end
+
+  def test_double_nested_deferred_parent_expiration_will_raise_error
+    Item.send(:cache_has_many, :associated_records, embed: true)
+
+    @parent = Item.create!(title: "bob")
+    @records = @parent.associated_records.create!([{ name: "foo" }, { name: "bar" }, { name: "baz" }])
+
+    @memcached_spy = Spy.on(backend, :write).and_call_through
+
+    assert_raises(IdentityCache::NestedDeferredParentBlockError) do
+      IdentityCache.with_deferred_parent_expiration do
+        IdentityCache.with_deferred_parent_expiration do
+          @parent.transaction do
+            @parent.associated_records.destroy_all
+          end
+        end
+      end
+    end
+
+    assert_equal(0, @memcached_spy.calls.count)
+  end
+
+  def test_deep_association_with_deferred_parent_expiration_expires_parent_once
+    AssociatedRecord.send(:has_many, :deeply_associated_records, dependent: :destroy)
+    Item.send(:cache_has_many, :associated_records, embed: true)
+
+    @parent = Item.create!(title: "bob")
+    @records = @parent.associated_records.create!([{ name: "foo" }, { name: "bar" }, { name: "baz" }])
+    @records.each do
+      _1.deeply_associated_records.create!([
+        { name: "a", item: @parent },
+        { name: "b", item: @parent },
+        { name: "c", item: @parent },
+      ])
+    end
+
+    @memcached_spy = Spy.on(backend, :write).and_call_through
+
+    expected_item_expiration_count = Array(@parent).count
+    expected_associated_record_expiration_count = @records.count
+    expected_deeply_associated_record_expiration_count = @records.flat_map(&:deeply_associated_records).count
+
+    IdentityCache.with_deferred_parent_expiration do
+      @parent.transaction do
+        @parent.associated_records.destroy_all
+      end
+    end
+
+    expired_cache_keys = @memcached_spy.calls.map(&:args).map(&:first)
+    item_expiration_count = expired_cache_keys.count { _1.include?("Item") }
+    associated_record_expiration_count = expired_cache_keys.count { _1.include?(":AssociatedRecord:") }
+    deeply_associated_record_expiration_count = expired_cache_keys.count { _1.include?("DeeplyAssociatedRecord") }
+
+    assert_operator(@memcached_spy.calls.count, :>, 0)
+    assert_equal(expected_item_expiration_count, item_expiration_count)
+    assert_equal(expected_associated_record_expiration_count, associated_record_expiration_count)
+    assert_equal(expected_deeply_associated_record_expiration_count, deeply_associated_record_expiration_count)
+  end
+
   private
 
   def cache_key(unique: false)

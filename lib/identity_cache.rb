@@ -60,6 +60,8 @@ module IdentityCache
 
   class InverseAssociationError < StandardError; end
 
+  class NestedDeferredParentBlockError < StandardError; end
+
   class UnsupportedScopeError < StandardError; end
 
   class UnsupportedAssociationError < StandardError; end
@@ -189,6 +191,44 @@ module IdentityCache
       end
 
       result
+    end
+
+    # Executes a block with deferred parent expiration, ensuring that the parent
+    # records' cache expiration is deferred until the block completes. When the block
+    # completes, it triggers expiration of the primary index for the parent records.
+    # Raises a NestedDeferredParentBlockError if a deferred parent expiration block
+    # is already active on the current thread.
+    #
+    # == Parameters:
+    # No parameters.
+    #
+    # == Raises:
+    # NestedDeferredParentBlockError if a deferred parent expiration block is already active.
+    #
+    # == Yield:
+    # Runs the provided block with deferred parent expiration.
+    #
+    # == Returns:
+    # The result of executing the provided block.
+    #
+    # == Ensures:
+    # Cleans up thread-local variables related to deferred parent expiration regardless
+    # of whether the block raises an exception.
+    def with_deferred_parent_expiration
+      raise NestedDeferredParentBlockError if Thread.current[:idc_deferred_parent_expiration]
+
+      Thread.current[:idc_deferred_parent_expiration] = true
+      Thread.current[:idc_parent_records_for_cache_expiry] = Set.new
+
+      result = yield
+
+      Thread.current[:idc_deferred_parent_expiration] = nil
+      Thread.current[:idc_parent_records_for_cache_expiry].each(&:expire_primary_index)
+
+      result
+    ensure
+      Thread.current[:idc_deferred_parent_expiration] = nil
+      Thread.current[:idc_parent_records_for_cache_expiry].clear
     end
 
     def with_fetch_read_only_records(value = true)
