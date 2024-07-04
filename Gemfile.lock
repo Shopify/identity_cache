@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    identity_cache (1.5.6)
+    identity_cache (1.6.0)
       activerecord (>= 7.0)
       ar_transaction_changes (~> 1.1)
 
