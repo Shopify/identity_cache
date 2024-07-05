@@ -1,1 +1,4 @@
-# using the default shipit config
+dependencies:
+  bundler:
+    without:
+      - default
