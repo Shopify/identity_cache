@@ -137,7 +137,7 @@ module IdentityCache
           # When there are no open transactions, `current_transaction` returns a
           # special `NullTransaction` object that is unjoinable, meaning we will
           # use the cache.
-          pool.connection.current_transaction.joinable?
+          connection_for(pool).current_transaction.joinable?
       end
     end
 
@@ -255,6 +255,16 @@ module IdentityCache
     def fetch_in_batches(keys, &block)
       keys.each_slice(BATCH_SIZE).each_with_object({}) do |slice, result|
         result.merge!(cache.fetch_multi(*slice, &block))
+      end
+    end
+
+    if ActiveRecord.gem_version >= Gem::Version.new("7.2.0.beta1")
+      def connection_for(pool)
+        pool.lease_connection
+      end
+    else
+      def connection_for(pool)
+        pool.connection
       end
     end
   end
