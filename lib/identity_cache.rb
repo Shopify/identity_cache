@@ -117,27 +117,36 @@ module IdentityCache
       !readonly
     end
 
-    def should_use_cache? # :nodoc:
-      ActiveRecord::Base.connection_handler.connection_pool_list(ActiveRecord::Base.current_role).none? do |pool|
-        pool.active_connection? &&
-          # Rails wraps each of your tests in a transaction, so that any changes
-          # made to the database during the test can be rolled back afterwards.
-          # These transactions are flagged as "unjoinable", which tries to make
-          # your application behave as if they weren't there. In particular:
-          #
-          #  - Opening another transaction during the test creates a savepoint,
-          #    which can be rolled back independently of the main transaction.
-          #  - When those nested transactions complete, any `after_commit`
-          #    callbacks for records modified during the transaction will run,
-          #    even though the changes haven't actually been committed yet.
-          #
-          # By ignoring unjoinable transactions, IdentityCache's behaviour
-          # during your test suite will more closely match production.
-          #
-          # When there are no open transactions, `current_transaction` returns a
-          # special `NullTransaction` object that is unjoinable, meaning we will
-          # use the cache.
-          pool.connection.current_transaction.joinable?
+    # Rails wraps each of your tests in a transaction, so that any changes
+    # made to the database during the test can be rolled back afterwards.
+    # These transactions are flagged as "unjoinable", which tries to make
+    # your application behave as if they weren't there. In particular:
+    #
+    #  - Opening another transaction during the test creates a savepoint,
+    #    which can be rolled back independently of the main transaction.
+    #  - When those nested transactions complete, any `after_commit`
+    #    callbacks for records modified during the transaction will run,
+    #    even though the changes haven't actually been committed yet.
+    #
+    # By ignoring unjoinable transactions, IdentityCache's behaviour
+    # during your test suite will more closely match production.
+    #
+    # When there are no open transactions, `current_transaction` returns a
+    # special `NullTransaction` object that is unjoinable, meaning we will
+    # use the cache.
+    if ActiveRecord::ConnectionAdapters::ConnectionPool.method_defined?(:active_connection)
+      def should_use_cache? # :nodoc:
+        ActiveRecord::Base.connection_handler.connection_pool_list(ActiveRecord::Base.current_role).none? do |pool|
+          pool.active_connection? &&
+            pool.active_connection.current_transaction.joinable?
+        end
+      end
+    else
+      def should_use_cache? # :nodoc:
+        ActiveRecord::Base.connection_handler.connection_pool_list(ActiveRecord::Base.current_role).none? do |pool|
+          pool.active_connection? &&
+            pool.connection.current_transaction.joinable?
+        end
       end
     end
 
