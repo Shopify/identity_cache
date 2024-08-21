@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.6.1
+
+- Fix deprecation warnings on Active Record 7.2. (#575)
+
 ## 1.6.0
 
 - Introduce `.with_deferred_parent_expiration`, which takes a block and avoids duplicate parent cache expiry. (#569)
