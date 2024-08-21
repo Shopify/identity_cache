@@ -19,11 +19,11 @@ jobs:
             ruby: '3.0'
             gemfile: "Gemfile.min-supported"
           - name: 'Latest released & run rubocop'
-            ruby: '3.2'
+            ruby: '3.3'
             gemfile: "Gemfile.latest-release"
             rubocop: true
           - name: 'Rails edge'
-            ruby: '3.2'
+            ruby: '3.3'
             gemfile: "Gemfile.rails-edge"
             edge: true
 
@@ -69,25 +69,26 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get -y install libmemcached-dev libmysqlclient-dev libpq-dev libsasl2-dev
+
     - uses: actions/checkout@v2
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: ${{ matrix.entry.ruby }}
-    - name: Install bundler and gems
-      run: |
-        gem install bundler
-        bundle install --jobs 4 --retry 3
+        bundler-cache: true
+
     - name: Test with mysql
       env:
         DB: mysql2
       run: bundle exec rake test
+
     - name: Test with postgres and memcached_store
       env:
         DB: postgresql
         POSTGRES_PASSWORD: postgres
         ADAPTER: memcached
       run: bundle exec rake test
+
     - name: Run rubocop
       if: matrix.entry.rubocop
       run: bundle exec rubocop
