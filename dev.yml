@@ -1,18 +1,10 @@
 name: identity-cache
 
 up:
-  - homebrew:
-    - mysql-client@5.7:
-        or:        [mysql@5.7]
-        conflicts: [mysql-connector-c, mysql, mysql-client]
   - ruby
-  - isogun
   - bundler
-
-env:
-  RAILGUN_HOST: identity-cache.railgun
-  MYSQL_HOST: identity-cache.railgun
-  MEMCACHED_HOST: identity-cache.railgun
+  - memcached
+  - mysql
 
 commands:
   test:
