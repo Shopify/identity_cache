@@ -147,10 +147,6 @@ module IdentityCache
       end
     end
 
-    def exist?(key)
-      @cache_fetcher.exist?(key)
-    end
-
     private
 
     EMPTY_ARRAY = [].freeze

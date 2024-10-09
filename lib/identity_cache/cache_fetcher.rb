@@ -87,10 +87,6 @@ module IdentityCache
       end
     end
 
-    def exist?(key)
-      @cache_backend.exist?(key)
-    end
-
     private
 
     def fetch_without_fill_lock(key)
