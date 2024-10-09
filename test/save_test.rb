@@ -111,7 +111,7 @@ class SaveTest < IdentityCache::TestCase
     ])
     expect_cache_deletes([@record1.primary_cache_index_key, @record2.primary_cache_index_key])
 
-    IdentityCache.with_deferred_attribute_expiration do
+    IdentityCache.with_deferred_expiration do
       ActiveRecord::Base.transaction do
         @record1.touch
         @record2.touch
@@ -119,14 +119,4 @@ class SaveTest < IdentityCache::TestCase
     end
   end
 
-  private
-
-  def expect_cache_delete(key)
-    @backend.expects(:write).with(key, IdentityCache::DELETED, anything)
-  end
-
-  def expect_cache_deletes(keys)
-    key_values = keys.map { |key| [key, IdentityCache::DELETED] }
-    @backend.expects(:write_multi).with(key_values, anything)
-  end
 end

@@ -60,9 +60,7 @@ module IdentityCache
 
   class InverseAssociationError < StandardError; end
 
-  class NestedDeferredParentBlockError < StandardError; end
-
-  class NestedDeferredAttributeExpirationBlockError < StandardError; end
+  class NestedDeferredCacheExpirationBlockError < StandardError; end
 
   class UnsupportedScopeError < StandardError; end
 
@@ -204,59 +202,45 @@ module IdentityCache
       result
     end
 
-    # Executes a block with deferred parent expiration, ensuring that the parent
-    # records' cache expiration is deferred until the block completes. When the block
-    # completes, it triggers expiration of the primary index for the parent records.
-    # Raises a NestedDeferredParentBlockError if a deferred parent expiration block
-    # is already active on the current thread.
+    # Executes a block with deferred cache expiration, ensuring that the records' (parent,
+    # children and attributes) cache expiration is deferred until the block completes. When
+    # the block completes, it issues delete_multi calls for all the records and attributes
+    # that were marked for expiration.
     #
     # == Parameters:
     # No parameters.
     #
     # == Raises:
-    # NestedDeferredParentBlockError if a deferred parent expiration block is already active.
+    # NestedDeferredCacheExpirationBlockError if a deferred cache expiration block is already active.
     #
     # == Yield:
-    # Runs the provided block with deferred parent expiration.
+    # Runs the provided block with deferred cache expiration.
     #
     # == Returns:
     # The result of executing the provided block.
     #
     # == Ensures:
-    # Cleans up thread-local variables related to deferred parent expiration regardless
+    # Cleans up thread-local variables related to deferred cache expiration regardless
     # of whether the block raises an exception.
-    def with_deferred_parent_expiration
-      raise NestedDeferredParentBlockError if Thread.current[:idc_deferred_parent_expiration]
+    def with_deferred_expiration
+      raise NestedDeferredCacheExpirationBlockError if Thread.current[:idc_deferred_expiration]
 
-      Thread.current[:idc_deferred_parent_expiration] = true
-      Thread.current[:idc_parent_records_for_cache_expiry] = Set.new
-
-      result = yield
-
-      Thread.current[:idc_deferred_parent_expiration] = nil
-      Thread.current[:idc_parent_records_for_cache_expiry].each(&:expire_primary_index)
-
-      result
-    ensure
-      Thread.current[:idc_deferred_parent_expiration] = nil
-      Thread.current[:idc_parent_records_for_cache_expiry].clear
-    end
-
-    def with_deferred_attribute_expiration
-      raise NestedDeferredAttributeExpirationBlockError if Thread.current[:identity_cache_deferred_attribute_expiration]
-
-      Thread.current[:idc_deferred_attribute_expiration] = true
-      Thread.current[:idc_records_to_expire] = Set.new
+      Thread.current[:idc_deferred_expiration] = true
+      Thread.current[:idc_parent_records_to_expire] = Set.new
+      Thread.current[:idc_child_records_to_expire] = Set.new
       Thread.current[:idc_attributes_to_expire] = Set.new
 
       result = yield
 
-      Thread.current[:idc_deferred_attribute_expiration] = nil
-      IdentityCache.cache.delete_multi(Thread.current[:idc_records_to_expire])
-      IdentityCache.cache.delete_multi(Thread.current[:idc_attributes_to_expire])
+      Thread.current[:idc_deferred_expiration] = nil
+      IdentityCache.cache.delete_multi(Thread.current[:idc_parent_records_to_expire]) if Thread.current[:idc_parent_records_to_expire].any?
+      IdentityCache.cache.delete_multi(Thread.current[:idc_child_records_to_expire]) if Thread.current[:idc_child_records_to_expire].any?
+      IdentityCache.cache.delete_multi(Thread.current[:idc_attributes_to_expire]) if Thread.current[:idc_attributes_to_expire].any?
       result
     ensure
-      Thread.current[:idc_deferred_attribute_expiration] = nil
+      Thread.current[:idc_deferred_expiration] = nil
+      Thread.current[:idc_parent_records_to_expire].clear
+      Thread.current[:idc_child_records_to_expire].clear
       Thread.current[:idc_attributes_to_expire].clear
     end
 

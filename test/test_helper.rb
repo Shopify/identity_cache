@@ -9,6 +9,7 @@ require "helpers/cache_connection"
 require "helpers/active_record_objects"
 require "helpers/mocked_cache_backend"
 require "spy/integration"
+require "byebug"
 
 require File.dirname(__FILE__) + "/../lib/identity_cache"
 
@@ -126,6 +127,15 @@ module IdentityCache
         MSG
       )
       ret
+    end
+
+    def expect_cache_delete(key)
+      @backend.expects(:write).with(key, IdentityCache::DELETED, anything)
+    end
+
+    def expect_cache_deletes(keys)
+      key_values = keys.map { |key| [key, IdentityCache::DELETED] }.to_h
+      @backend.expects(:write_multi).with(key_values, anything)
     end
 
     def assert_no_queries(**subscribe_opts, &block)
