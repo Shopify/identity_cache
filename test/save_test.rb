@@ -118,5 +118,4 @@ class SaveTest < IdentityCache::TestCase
       end
     end
   end
-
 end
