@@ -39,12 +39,24 @@ module IdentityCache
 
         unless record.send(:was_new_record?)
           old_key = old_cache_key(record)
-          all_deleted = IdentityCache.cache.delete(old_key)
+
+          if Thread.current[:idc_deferred_attribute_expiration]
+            Thread.current[:idc_attributes_to_expire] << old_key
+            # defer the deletion, and don't block the following deletion
+            all_deleted = true
+          else
+            all_deleted = IdentityCache.cache.delete(old_key)
+          end
         end
         unless record.destroyed?
           new_key = new_cache_key(record)
           if new_key != old_key
-            all_deleted = IdentityCache.cache.delete(new_key) && all_deleted
+            if Thread.current[:idc_deferred_attribute_expiration]
+              Thread.current[:idc_attributes_to_expire] << new_key
+              all_deleted = true
+            else
+              all_deleted = IdentityCache.cache.delete(new_key) && all_deleted
+            end
           end
         end
 
@@ -152,9 +164,9 @@ module IdentityCache
       end
 
       def old_cache_key(record)
+        changes = record.transaction_changed_attributes
         old_key_values = key_fields.map do |field|
           field_string = field.to_s
-          changes = record.transaction_changed_attributes
           if record.destroyed? && changes.key?(field_string)
             changes[field_string]
           elsif record.persisted? && changes.key?(field_string)

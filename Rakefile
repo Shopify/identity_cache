@@ -47,3 +47,27 @@ namespace :profile do
     ruby "./performance/profile.rb"
   end
 end
+
+namespace :db do
+  desc "Create the identity_cache_test database"
+  task :create do
+    require "mysql2"
+
+    config = {
+      host: ENV.fetch("MYSQL_HOST") || "localhost",
+      port: ENV.fetch("MYSQL_PORT") || 1037,
+      username: ENV.fetch("MYSQL_USER") || "root",
+      password: ENV.fetch("MYSQL_PASSWORD") || "",
+    }
+
+    begin
+      client = Mysql2::Client.new(config)
+      client.query("CREATE DATABASE IF NOT EXISTS identity_cache_test")
+      puts "Database 'identity_cache_test' created successfully. host: #{config[:host]}, port: #{config[:port]}"
+    rescue Mysql2::Error => e
+      puts "Error creating database: #{e.message}"
+    ensure
+      client&.close
+    end
+  end
+end

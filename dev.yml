@@ -5,6 +5,10 @@ up:
   - bundler
   - memcached
   - mysql
+  - custom:
+      name: create database identity_cache_test
+      met?: mysql -u root -h 127.0.0.1 -P 1037 -e "SHOW DATABASES;" | grep identity_cache_test
+      meet: bundle exec rake db:create
 
 commands:
   test:
@@ -12,7 +16,7 @@ commands:
       optional:
         argument: file
         optional: args...
-    desc: 'Run tests'
+    desc: "Run tests"
     run: |
       if [[ $# -eq 0 ]]; then
         bundle exec rake test
@@ -21,21 +25,21 @@ commands:
       fi
 
   style:
-    desc: 'Run rubocop checks'
+    desc: "Run rubocop checks"
     run: bundle exec rubocop "$@"
 
   check:
-    desc: 'Run tests and style checks'
+    desc: "Run tests and style checks"
     run: bundle exec rake test && bundle exec rubocop
 
   benchmark-cpu:
-    desc: 'Run the identity cache CPU benchmark'
+    desc: "Run the identity cache CPU benchmark"
     run: bundle exec rake benchmark:cpu
 
   profile:
-    desc: 'Profile IDC code'
+    desc: "Profile IDC code"
     run: bundle exec rake profile:run
 
   update-serialization-format:
-    desc: 'Update serialization format test fixture'
+    desc: "Update serialization format test fixture"
     run: bundle exec rake update_serialization_format

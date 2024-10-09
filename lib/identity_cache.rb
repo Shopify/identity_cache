@@ -62,6 +62,8 @@ module IdentityCache
 
   class NestedDeferredParentBlockError < StandardError; end
 
+  class NestedDeferredAttributeExpirationBlockError < StandardError; end
+
   class UnsupportedScopeError < StandardError; end
 
   class UnsupportedAssociationError < StandardError; end
@@ -238,6 +240,24 @@ module IdentityCache
     ensure
       Thread.current[:idc_deferred_parent_expiration] = nil
       Thread.current[:idc_parent_records_for_cache_expiry].clear
+    end
+
+    def with_deferred_attribute_expiration
+      raise NestedDeferredAttributeExpirationBlockError if Thread.current[:identity_cache_deferred_attribute_expiration]
+
+      Thread.current[:idc_deferred_attribute_expiration] = true
+      Thread.current[:idc_records_to_expire] = Set.new
+      Thread.current[:idc_attributes_to_expire] = Set.new
+
+      result = yield
+
+      Thread.current[:idc_deferred_attribute_expiration] = nil
+      IdentityCache.cache.delete_multi(Thread.current[:idc_records_to_expire])
+      IdentityCache.cache.delete_multi(Thread.current[:idc_attributes_to_expire])
+      result
+    ensure
+      Thread.current[:idc_deferred_attribute_expiration] = nil
+      Thread.current[:idc_attributes_to_expire].clear
     end
 
     def with_fetch_read_only_records(value = true)

@@ -80,9 +80,53 @@ class SaveTest < IdentityCache::TestCase
     end
   end
 
+  def test_touch_with_separate_calls
+    @record1 = Item.create(title: "fooz", created_at: 1.second.ago, updated_at: 1.second.ago)
+    @record2 = Item.create(title: "barz", created_at: 1.second.ago, updated_at: 1.second.ago)
+    id_and_title_key1 = "\"#{@record1.id}\"/\"fooz\""
+    expect_cache_delete("#{NAMESPACE}attr:Item:id:id/title:#{cache_hash(id_and_title_key1)}")
+    expect_cache_delete("#{NAMESPACE}attr:Item:id:title:#{cache_hash('"fooz"')}")
+    id_and_title_key2 = "\"#{@record2.id}\"/\"barz\""
+    expect_cache_delete("#{NAMESPACE}attr:Item:id:id/title:#{cache_hash(id_and_title_key2)}")
+    expect_cache_delete("#{NAMESPACE}attr:Item:id:title:#{cache_hash('"barz"')}")
+    expect_cache_delete(@record1.primary_cache_index_key)
+    expect_cache_delete(@record2.primary_cache_index_key)
+
+    ActiveRecord::Base.transaction do
+      @record1.touch
+      @record2.touch
+    end
+  end
+
+  def test_touch_with_batched_calls
+    @record1 = Item.create(title: "fooz", created_at: 1.second.ago, updated_at: 1.second.ago)
+    @record2 = Item.create(title: "barz", created_at: 1.second.ago, updated_at: 1.second.ago)
+    id_and_title_key1 = "\"#{@record1.id}\"/\"fooz\""
+    id_and_title_key2 = "\"#{@record2.id}\"/\"barz\""
+    expect_cache_deletes([
+      "#{NAMESPACE}attr:Item:id:title:#{cache_hash('"fooz"')}",
+      "#{NAMESPACE}attr:Item:id:id/title:#{cache_hash(id_and_title_key1)}",
+      "#{NAMESPACE}attr:Item:id:title:#{cache_hash('"barz"')}",
+      "#{NAMESPACE}attr:Item:id:id/title:#{cache_hash(id_and_title_key2)}",
+    ])
+    expect_cache_deletes([@record1.primary_cache_index_key, @record2.primary_cache_index_key])
+
+    IdentityCache.with_deferred_attribute_expiration do
+      ActiveRecord::Base.transaction do
+        @record1.touch
+        @record2.touch
+      end
+    end
+  end
+
   private
 
   def expect_cache_delete(key)
     @backend.expects(:write).with(key, IdentityCache::DELETED, anything)
+  end
+
+  def expect_cache_deletes(keys)
+    key_values = keys.map { |key| [key, IdentityCache::DELETED] }
+    @backend.expects(:write_multi).with(key_values, anything)
   end
 end

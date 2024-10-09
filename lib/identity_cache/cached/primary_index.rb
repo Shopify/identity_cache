@@ -45,7 +45,11 @@ module IdentityCache
 
       def expire(id)
         id = cast_id(id)
-        IdentityCache.cache.delete(cache_key(id))
+        if Thread.current[:idc_deferred_attribute_expiration]
+          Thread.current[:idc_records_to_expire] << cache_key(id)
+        else
+          IdentityCache.cache.delete(cache_key(id))
+        end
       end
 
       def cache_key(id)
