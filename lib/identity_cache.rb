@@ -226,25 +226,17 @@ module IdentityCache
       raise NestedDeferredCacheExpirationBlockError if Thread.current[:idc_deferred_expiration]
 
       Thread.current[:idc_deferred_expiration] = true
-      Thread.current[:idc_parent_records_to_expire] = Set.new
-      Thread.current[:idc_child_records_to_expire] = Set.new
+      Thread.current[:idc_records_to_expire] = Set.new
       Thread.current[:idc_attributes_to_expire] = Set.new
 
       result = yield
 
       Thread.current[:idc_deferred_expiration] = nil
-      if Thread.current[:idc_parent_records_to_expire].any?
+      if Thread.current[:idc_records_to_expire].any?
         IdentityCache.cache.delete_multi(
-          Thread.current[:idc_parent_records_to_expire]
+          Thread.current[:idc_records_to_expire]
         )
       end
-
-      if Thread.current[:idc_child_records_to_expire].any?
-        IdentityCache.cache.delete_multi(
-          Thread.current[:idc_child_records_to_expire]
-        )
-      end
-
       if Thread.current[:idc_attributes_to_expire].any?
         IdentityCache.cache.delete_multi(
           Thread.current[:idc_attributes_to_expire]
@@ -253,8 +245,7 @@ module IdentityCache
       result
     ensure
       Thread.current[:idc_deferred_expiration] = nil
-      Thread.current[:idc_parent_records_to_expire].clear
-      Thread.current[:idc_child_records_to_expire].clear
+      Thread.current[:idc_records_to_expire].clear
       Thread.current[:idc_attributes_to_expire].clear
     end
 

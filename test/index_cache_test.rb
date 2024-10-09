@@ -186,10 +186,10 @@ class IndexCacheTest < IdentityCache::TestCase
     end
 
     all_keys = @memcached_spy_write_multi.calls.flat_map { |call| call.args.first.keys }
-    item_expiration_count = all_keys.count { _1.start_with?("items/") }
-    associated_record_expiration_count = all_keys.count { _1.include?(":AssociatedRecord:") }
+    item_expiration_count = all_keys.count { _1.include?(":blob:Item:") }
+    associated_record_expiration_count = all_keys.count { _1.include?(":blob:AssociatedRecord:") }
 
-    assert_operator(@memcached_spy_write_multi.calls.count, :>, 0)
+    assert_equal(1, @memcached_spy_write_multi.calls.count)
     assert_equal(expected_item_expiration_count, item_expiration_count)
     assert_equal(expected_associated_record_expiration_count, associated_record_expiration_count)
     assert_equal(expected_return_value, result)
@@ -202,6 +202,7 @@ class IndexCacheTest < IdentityCache::TestCase
     @records = @parent.associated_records.create!([{ name: "foo" }, { name: "bar" }, { name: "baz" }])
 
     @memcached_spy = Spy.on(backend, :write).and_call_through
+    @memcached_spy_write_multi = Spy.on(backend, :write_multi).and_call_through
 
     assert_raises(IdentityCache::NestedDeferredCacheExpirationBlockError) do
       IdentityCache.with_deferred_expiration do
@@ -214,6 +215,7 @@ class IndexCacheTest < IdentityCache::TestCase
     end
 
     assert_equal(0, @memcached_spy.calls.count)
+    assert_equal(0, @memcached_spy_write_multi.calls.count)
   end
 
   def test_deep_association_with_deferred_expiration_expires_parent_once
@@ -243,11 +245,11 @@ class IndexCacheTest < IdentityCache::TestCase
     end
 
     all_keys = @memcached_spy_write_multi.calls.flat_map { |call| call.args.first.keys }
-    item_expiration_count = all_keys.count { |key| key.start_with?("items/") }
-    associated_record_keys = all_keys.count { |key| key.include?(":AssociatedRecord:") }
-    deeply_associated_record_keys = all_keys.count { |key| key.include?(":DeeplyAssociatedRecord:") }
+    item_expiration_count = all_keys.count { |key| key.include?(":blob:Item:") }
+    associated_record_keys = all_keys.count { |key| key.include?(":blob:AssociatedRecord:") }
+    deeply_associated_record_keys = all_keys.count { |key| key.include?(":blob:DeeplyAssociatedRecord:") }
 
-    assert_operator(@memcached_spy_write_multi.calls.count, :>, 0)
+    assert_equal(1, @memcached_spy_write_multi.calls.count)
     assert_equal(expected_item_expiration_count, item_expiration_count)
     assert_equal(expected_associated_record_expiration_count, associated_record_keys)
     assert_equal(expected_deeply_associated_record_expiration_count, deeply_associated_record_keys)
