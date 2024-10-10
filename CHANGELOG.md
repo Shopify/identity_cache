@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.6.2
+
+- Support deferred expiry of associations and attributes. Add a rake task to create test database.
+
 ## 1.6.1
 
 - Fix deprecation warnings on Active Record 7.2. (#575)
