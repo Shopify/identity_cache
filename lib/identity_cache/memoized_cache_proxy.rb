@@ -70,6 +70,16 @@ module IdentityCache
       end
     end
 
+    def delete_multi(keys)
+      memoizing = memoizing?
+      ActiveSupport::Notifications.instrument("cache_delete_multi.identity_cache", memoizing: memoizing) do
+        if memoizing
+          keys.each { |key| memoized_key_values.delete(key) }
+        end
+        @cache_fetcher.delete_multi(keys)
+      end
+    end
+
     def fetch(key, cache_fetcher_options = {}, &block)
       memo_misses = 0
       cache_misses = 0

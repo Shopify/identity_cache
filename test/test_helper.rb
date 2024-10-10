@@ -128,6 +128,15 @@ module IdentityCache
       ret
     end
 
+    def expect_cache_delete(key)
+      @backend.expects(:write).with(key, IdentityCache::DELETED, anything)
+    end
+
+    def expect_cache_deletes(keys)
+      key_values = keys.map { |key| [key, IdentityCache::DELETED] }.to_h
+      @backend.expects(:write_multi).with(key_values, anything)
+    end
+
     def assert_no_queries(**subscribe_opts, &block)
       subscribe_to_sql_queries(->(sql) { raise "Unexpected SQL query: #{sql}" }, **subscribe_opts, &block)
     end

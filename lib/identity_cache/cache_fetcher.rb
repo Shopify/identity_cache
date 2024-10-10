@@ -60,6 +60,11 @@ module IdentityCache
       @cache_backend.write(key, IdentityCache::DELETED, expires_in: IdentityCache::DELETED_TTL.seconds)
     end
 
+    def delete_multi(keys)
+      key_values = keys.map { |key| [key, IdentityCache::DELETED] }.to_h
+      @cache_backend.write_multi(key_values, expires_in: IdentityCache::DELETED_TTL.seconds)
+    end
+
     def clear
       @cache_backend.clear
     end
