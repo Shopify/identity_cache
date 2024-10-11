@@ -60,6 +60,8 @@ module IdentityCache
 
   class InverseAssociationError < StandardError; end
 
+  class NestedDeferredParentBlockError < StandardError; end
+
   class NestedDeferredCacheExpirationBlockError < StandardError; end
 
   class UnsupportedScopeError < StandardError; end
@@ -202,6 +204,51 @@ module IdentityCache
       result
     end
 
+    # Executes a block with deferred parent expiration, ensuring that the parent
+    # records' cache expiration is deferred until the block completes. When the block
+    # completes, it triggers expiration of the primary index for the parent records.
+    # Raises a NestedDeferredParentBlockError if a deferred parent expiration block
+    # is already active on the current thread.
+    #
+    # == Parameters:
+    # No parameters.
+    #
+    # == Raises:
+    # NestedDeferredParentBlockError if a deferred parent expiration block is already active.
+    #
+    # == Yield:
+    # Runs the provided block with deferred parent expiration.
+    #
+    # == Returns:
+    # The result of executing the provided block.
+    #
+    # == Ensures:
+    # Cleans up thread-local variables related to deferred parent expiration regardless
+    # of whether the block raises an exception.
+    def with_deferred_parent_expiration
+      raise NestedDeferredParentBlockError if Thread.current[:idc_deferred_parent_expiration]
+
+      if Thread.current[:idc_deferred_expiration]
+        ActiveRecord.deprecator.warn(<<-WARNING.squish)
+        `with_deferred_parent_expiration` is deprecated and will be removed in 1.7.0.
+        Use `with_deferred_expiration` instead.
+        WARNING
+      end
+
+      Thread.current[:idc_deferred_parent_expiration] = true
+      Thread.current[:idc_parent_records_for_cache_expiry] = Set.new
+
+      result = yield
+
+      Thread.current[:idc_deferred_parent_expiration] = nil
+      Thread.current[:idc_parent_records_for_cache_expiry].each(&:expire_primary_index)
+
+      result
+    ensure
+      Thread.current[:idc_deferred_parent_expiration] = nil
+      Thread.current[:idc_parent_records_for_cache_expiry].clear
+    end
+
     # Executes a block with deferred cache expiration, ensuring that the records' (parent,
     # children and attributes) cache expiration is deferred until the block completes. When
     # the block completes, it issues delete_multi calls for all the records and attributes
@@ -224,6 +271,13 @@ module IdentityCache
     # of whether the block raises an exception.
     def with_deferred_expiration
       raise NestedDeferredCacheExpirationBlockError if Thread.current[:idc_deferred_expiration]
+
+      if Thread.current[:idc_deferred_parent_expiration]
+        ActiveRecord.deprecator.warn(<<-WARNING.squish)
+        `with_deferred_parent_expiration` is deprecated and will be removed in 1.7.0.
+        Use `with_deferred_expiration` instead.
+        WARNING
+      end
 
       Thread.current[:idc_deferred_expiration] = true
       Thread.current[:idc_records_to_expire] = Set.new
