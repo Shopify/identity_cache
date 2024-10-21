@@ -9,13 +9,78 @@ require "rdoc/task"
 desc("Default: run tests and style checks.")
 task(default: [:test, :rubocop])
 
-desc("Test the identity_cache plugin.")
-Rake::TestTask.new(:test) do |t|
-  t.libs << "lib"
-  t.libs << "test"
-  t.pattern = "test/**/*_test.rb"
-  t.verbose = true
+namespace :test do
+  desc "Test the identity_cache plugin with default Gemfile"
+  Rake::TestTask.new(:default) do |t|
+    t.libs << "lib"
+    t.libs << "test"
+    t.pattern = "test/**/*_test.rb"
+    t.verbose = true
+  end
+
+  desc "Test the identity_cache plugin with minimum supported dependencies"
+  task :min_supported do
+    gemfile = File.expand_path("gemfiles/Gemfile.min-supported", __dir__)
+
+    puts "Installing dependencies for #{gemfile}..."
+    Bundler.with_unbundled_env do
+      system("bundle install --gemfile #{gemfile}") || abort("Bundle install failed")
+    end
+
+    puts "Running tests with #{gemfile}..."
+    Rake::TestTask.new(:run_min_supported) do |t|
+      t.libs << "lib"
+      t.libs << "test"
+      t.pattern = "test/**/*_test.rb"
+      t.verbose = true
+    end
+    Rake::Task["run_min_supported"].invoke
+  end
+
+  desc "Test the identity_cache plugin with latest released dependencies"
+  task :latest_release do
+    gemfile = File.expand_path("gemfiles/Gemfile.latest-release", __dir__)
+
+    puts "Installing dependencies for #{gemfile}..."
+    Bundler.with_unbundled_env do
+      system("bundle install --gemfile #{gemfile}") || abort("Bundle install failed")
+    end
+
+    puts "Running tests with #{gemfile}..."
+    Rake::TestTask.new(:run_latest_release) do |t|
+      t.libs << "lib"
+      t.libs << "test"
+      t.pattern = "test/**/*_test.rb"
+      t.verbose = true
+    end
+    Rake::Task["run_latest_release"].invoke
+  end
+
+  desc "Test the identity_cache plugin with rails edge dependencies"
+  task :rails_edge do
+    gemfile = File.expand_path("gemfiles/Gemfile.rails-edge", __dir__)
+
+    puts "\nInstalling dependencies for #{gemfile}..."
+    Bundler.with_unbundled_env do
+      system("bundle install --gemfile #{gemfile}") || abort("Bundle install failed")
+    end
+
+    puts "Running tests with #{gemfile}..."
+    Rake::TestTask.new(:run_rails_edge) do |t|
+      t.libs << "lib"
+      t.libs << "test"
+      t.pattern = "test/**/*_test.rb"
+      t.verbose = true
+    end
+    Rake::Task["run_rails_edge"].invoke
+  end
 end
+
+desc "Run default tests"
+task test: ["test:default"]
+
+desc "Run all tests (default, min_supported, latest_release, rails_edge)"
+task test_all: ["test:default", "test:min_supported", "test:latest_release", "test:rails_edge"]
 
 task :rubocop do
   require "rubocop/rake_task"

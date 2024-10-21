@@ -229,10 +229,7 @@ module IdentityCache
       raise NestedDeferredParentBlockError if Thread.current[:idc_deferred_parent_expiration]
 
       if Thread.current[:idc_deferred_expiration]
-        ActiveRecord.deprecator.warn(<<-WARNING.squish)
-        `with_deferred_parent_expiration` is deprecated and will be removed in 1.7.0.
-        Use `with_deferred_expiration` instead.
-        WARNING
+        deprecator.deprecation_warning("`with_deferred_parent_expiration`")
       end
 
       Thread.current[:idc_deferred_parent_expiration] = true
@@ -246,7 +243,7 @@ module IdentityCache
       result
     ensure
       Thread.current[:idc_deferred_parent_expiration] = nil
-      Thread.current[:idc_parent_records_for_cache_expiry].clear
+      Thread.current[:idc_parent_records_for_cache_expiry]&.clear
     end
 
     # Executes a block with deferred cache expiration, ensuring that the records' (parent,
@@ -273,10 +270,7 @@ module IdentityCache
       raise NestedDeferredCacheExpirationBlockError if Thread.current[:idc_deferred_expiration]
 
       if Thread.current[:idc_deferred_parent_expiration]
-        ActiveRecord.deprecator.warn(<<-WARNING.squish)
-        `with_deferred_parent_expiration` is deprecated and will be removed in 1.7.0.
-        Use `with_deferred_expiration` instead.
-        WARNING
+        deprecator.deprecation_warning("`with_deferred_parent_expiration`")
       end
 
       Thread.current[:idc_deferred_expiration] = true
@@ -320,6 +314,10 @@ module IdentityCache
 
     def eager_load!
       ParentModelExpiration.install_all_pending_parent_expiry_hooks
+    end
+
+    def deprecator
+      @deprecator ||= ActiveSupport::Deprecation.new("1.7.0", "IdentityCache")
     end
 
     private
