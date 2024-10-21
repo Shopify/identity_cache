@@ -21,8 +21,9 @@ namespace :test do
   desc "Test the identity_cache plugin with minimum supported dependencies"
   task :min_supported do
     gemfile = File.expand_path("gemfiles/Gemfile.min-supported", __dir__)
+    ENV["BUNDLE_GEMFILE"] = gemfile
 
-    puts "Installing dependencies for #{gemfile}..."
+    puts "\nInstalling dependencies for #{gemfile}..."
     Bundler.with_unbundled_env do
       system("bundle install --gemfile #{gemfile}") || abort("Bundle install failed")
     end
@@ -40,8 +41,9 @@ namespace :test do
   desc "Test the identity_cache plugin with latest released dependencies"
   task :latest_release do
     gemfile = File.expand_path("gemfiles/Gemfile.latest-release", __dir__)
+    ENV["BUNDLE_GEMFILE"] = gemfile
 
-    puts "Installing dependencies for #{gemfile}..."
+    puts "\nInstalling dependencies for #{gemfile}..."
     Bundler.with_unbundled_env do
       system("bundle install --gemfile #{gemfile}") || abort("Bundle install failed")
     end
@@ -59,6 +61,7 @@ namespace :test do
   desc "Test the identity_cache plugin with rails edge dependencies"
   task :rails_edge do
     gemfile = File.expand_path("gemfiles/Gemfile.rails-edge", __dir__)
+    ENV["BUNDLE_GEMFILE"] = gemfile
 
     puts "\nInstalling dependencies for #{gemfile}..."
     Bundler.with_unbundled_env do
