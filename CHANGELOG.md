@@ -2,9 +2,13 @@
 
 ## Unreleased
 
+## 1.6.3
+
+- Split the `with_deferred_parent_expiration` and `with_deferred_parent_expiration`. (#578)
+
 ## 1.6.2
 
-- Support deferred expiry of associations and attributes. Add a rake task to create test database.
+- Support deferred expiry of associations and attributes. Add a rake task to create test database. (#577)
 
 ## 1.6.1
 

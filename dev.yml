@@ -24,6 +24,10 @@ commands:
         bundle exec ruby -I test "$@"
       fi
 
+  test-all:
+    desc: "Run tests for all gemfiles (default, min_supported, latest_release, rails_edge)"
+    run: bundle exec rake test_all
+
   style:
     desc: "Run rubocop checks"
     run: bundle exec rubocop "$@"

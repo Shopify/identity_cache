@@ -16,3 +16,4 @@ test/version_tmp
 tmp
 .rubocop-http*
 .byebug_history
+gemfiles/*.lock
