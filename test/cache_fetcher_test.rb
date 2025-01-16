@@ -179,7 +179,9 @@ class CacheFetcherTest < IdentityCache::TestCase
 end
 
 def test_fetch_without_fill_lock_with_stale_cached_data
-  stale_time = Time.now - (IdentityCache.cache_refresh_period + 1) * 60
+  identity_cache = IdentityCache
+  identity_cache.cache_refresh_period = 60
+  stale_time = Time.now - (identity_cache.cache_refresh_period + 1) * 60
   backend.write(key, { cached_at: stale_time, data: :old_data })
   assert_memcache_operations(2) do
     assert_equal(:new_data, cache_fetcher.fetch_without_fill_lock(key) { :new_data })
@@ -187,7 +189,9 @@ def test_fetch_without_fill_lock_with_stale_cached_data
 end
 
 def test_fetch_without_fill_lock_with_fresh_cached_data
-  fresh_time = Time.now - (IdentityCache.cache_refresh_period - 1) * 60
+  identity_cache = IdentityCache
+  identity_cache.cache_refresh_period = 60
+  fresh_time = Time.now - (identity_cache.cache_refresh_period - 1) * 60
   cached_data = { cached_at: fresh_time, data: :fresh_data }
   backend.write(key, cached_data)
   assert_memcache_operations(1) do
