@@ -280,7 +280,7 @@ module IdentityCache
 
     def cas_multi(keys)
       result = nil
-      @cache_backend.cas_multi(*keys) do |results|
+      @cache_backend.cas_multi(keys) do |results|
         deleted = results.select { |_, v| IdentityCache::DELETED == v }
         results.reject! { |_, v| IdentityCache::DELETED == v }
 
