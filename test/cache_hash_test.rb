@@ -9,7 +9,7 @@ class CacheHashTest < IdentityCache::TestCase
       hash_val = IdentityCache.memcache_hash(random_str)
       assert(hash_val)
       assert_kind_of(Numeric, hash_val)
-      assert_equal(0, (hash_val >> 64))
+      assert_equal(0, hash_val >> 64)
     end
   end
 end
