@@ -1,8 +1,12 @@
 # frozen_string_literal: true
 
+require "time"
 require "securerandom"
 
 module IdentityCache
+  mattr_accessor :cache_refresh_period
+  self.cache_refresh_period = 60
+
   class CacheFetcher
     attr_accessor :cache_backend
 
@@ -93,7 +97,10 @@ module IdentityCache
       data = nil
       upsert(key) do |value|
         value = nil if value == IdentityCache::DELETED || FillLock.cache_value?(value)
-        unless value.nil?
+        unless value.nil? ||
+            (value&.is_a?(Hash) &&
+              value[:cached_at] &&
+              ((Time.now - value[:cached_at]) / 60).round > IdentityCache.cache_refresh_period)
           return value
         end
 
@@ -315,6 +322,10 @@ module IdentityCache
 
     def add(key, value, expiration_options = EMPTY_HASH)
       return false unless IdentityCache.should_fill_cache?
+
+      if value&.is_a?(Hash)
+        value.merge(cached_at: Time.now.to_s)
+      end
 
       @cache_backend.write(key, value, { unless_exist: true, **expiration_options })
     end

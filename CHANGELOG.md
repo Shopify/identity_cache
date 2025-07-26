@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.6.4
+
+- Add `cache_refresh_period` to allow for cache refresh after a period of time. (#579)
+
 ## 1.6.3
 
 - Split the `with_deferred_parent_expiration` and `with_deferred_parent_expiration`. (#578)
