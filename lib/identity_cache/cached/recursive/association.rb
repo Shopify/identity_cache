@@ -7,6 +7,7 @@ module IdentityCache
         def initialize(name, reflection:)
           super
           @dehydrated_variable_name = :"@dehydrated_#{name}"
+           @hydration_mutex = Mutex.new
         end
 
         attr_reader :dehydrated_variable_name
@@ -29,10 +30,7 @@ module IdentityCache
             if record.instance_variable_defined?(records_variable_name)
               record.instance_variable_get(records_variable_name)
             elsif record.instance_variable_defined?(dehydrated_variable_name)
-              dehydrated_target = record.instance_variable_get(dehydrated_variable_name)
-              association_target = hydrate_association_target(assoc.klass, dehydrated_target)
-              record.remove_instance_variable(dehydrated_variable_name)
-              set_with_inverse(record, association_target)
+              hydrate_safely(record, assoc)
             else
               assoc.load_target
             end
@@ -75,6 +73,17 @@ module IdentityCache
         end
 
         private
+
+        def hydrate_safely(record, assoc)
+          @hydration_mutex.synchronize do
+            return record.instance_variable_get(records_variable_name) if record.instance_variable_defined?(records_variable_name)
+
+            dehydrated_target = record.instance_variable_get(dehydrated_variable_name)
+            association_target = hydrate_association_target(assoc.klass, dehydrated_target)
+            record.remove_instance_variable(dehydrated_variable_name) if record.instance_variable_defined?(dehydrated_variable_name)
+            set_with_inverse(record, association_target)
+          end
+        end
 
         def set_inverse(record, association_target)
           return if association_target.nil?

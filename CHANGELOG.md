@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Fix rare race condition causing `NameError` (missing `@dehydrated_*` ivar) when hydrating recursively
+  embedded associations by synchronizing hydration to be thread-safe.
+
 ## 1.6.3
 
 - Split the `with_deferred_parent_expiration` and `with_deferred_parent_expiration`. (#578)
