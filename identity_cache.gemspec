@@ -26,7 +26,6 @@ Gem::Specification.new do |gem|
   gem.files         = Dir.chdir(File.expand_path(__dir__)) do
     %x(git ls-files -z).split("\x0").reject { |f| f.match(%r{^test/}) }
   end
-  gem.executables   = gem.files.grep(%r{^bin/}).map { |f| File.basename(f) }
   gem.name          = "identity_cache"
   gem.require_paths = ["lib"]
   gem.version       = IdentityCache::VERSION
