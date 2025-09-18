@@ -17,20 +17,3 @@ tmp
 .rubocop-http*
 .byebug_history
 gemfiles/*.lock
-
-# Local bundle path and vendored gems
-vendor/
-vendor/bundle/
-
-# Editor/OS files
-.idea/
-.vscode/
-.DS_Store
-
-# Ruby version managers and env files
-.ruby-version
-.tool-versions
-.env
-
-# Logs
-log/
