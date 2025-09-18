@@ -7,7 +7,7 @@ module IdentityCache
         def initialize(name, reflection:)
           super
           @dehydrated_variable_name = :"@dehydrated_#{name}"
-           @hydration_mutex = Mutex.new
+          @hydration_mutex = Mutex.new
         end
 
         attr_reader :dehydrated_variable_name
@@ -74,13 +74,27 @@ module IdentityCache
 
         private
 
+        # Prevents races during hydration, where multiple threads could
+        # simultaneously try to remove the same dehydrated ivar.
+        #
+        # Race condition scenario:
+        # - Thread A and Thread B both call read() on the same record.
+        # - Both check record.instance_variable_defined?(dehydrated_variable_name) => true
+        # - Both proceed to hydrate and remove the ivar.
+        # - Thread A removes it first, Thread B gets NameError when trying to remove.
+        #
+        # The mutex ensures only one thread hydrates at a time, preventing the error.
         def hydrate_safely(record, assoc)
           @hydration_mutex.synchronize do
-            return record.instance_variable_get(records_variable_name) if record.instance_variable_defined?(records_variable_name)
+            if record.instance_variable_defined?(records_variable_name)
+              return record.instance_variable_get(records_variable_name)
+            end
 
             dehydrated_target = record.instance_variable_get(dehydrated_variable_name)
             association_target = hydrate_association_target(assoc.klass, dehydrated_target)
-            record.remove_instance_variable(dehydrated_variable_name) if record.instance_variable_defined?(dehydrated_variable_name)
+            if record.instance_variable_defined?(dehydrated_variable_name)
+              record.remove_instance_variable(dehydrated_variable_name)
+            end
             set_with_inverse(record, association_target)
           end
         end
