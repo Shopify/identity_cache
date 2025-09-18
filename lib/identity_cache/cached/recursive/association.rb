@@ -74,16 +74,6 @@ module IdentityCache
 
         private
 
-        # Prevents races during hydration, where multiple threads could
-        # simultaneously try to remove the same dehydrated ivar.
-        #
-        # Race condition scenario:
-        # - Thread A and Thread B both call read() on the same record.
-        # - Both check record.instance_variable_defined?(dehydrated_variable_name) => true
-        # - Both proceed to hydrate and remove the ivar.
-        # - Thread A removes it first, Thread B gets NameError when trying to remove.
-        #
-        # The mutex ensures only one thread hydrates at a time, preventing the error.
         def hydrate_safely(record, assoc)
           @hydration_mutex.synchronize do
             if record.instance_variable_defined?(records_variable_name)
