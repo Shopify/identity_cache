@@ -165,11 +165,20 @@ module IdentityCache
     # cache reads that happen from the ordering of callbacks. For example, if an after_commit
     # callback enqueues a background job, then we don't want it to be possible for the
     # background job to run and load data from the cache before it is invalidated.
-    def _run_commit_callbacks
-      if destroyed? || transaction_changed_attributes.present?
-        expire_cache
+    if ActiveRecord.version >= Gem::Version.new("7.1")
+      def run_callbacks(kind, type = nil)
+        if kind == :commit && (destroyed? || transaction_changed_attributes.present?)
+          expire_cache
+        end
+        super
       end
-      super
+    else
+      def run_callbacks(kind)
+        if kind == :commit && (destroyed? || transaction_changed_attributes.present?)
+          expire_cache
+        end
+        super
+      end
     end
 
     # Invalidate the cache data associated with the record. Returns `true` on success,

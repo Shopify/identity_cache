@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Patch `run_callbacks` instead of `_run_commit_callbacks` to expire cache prior to `after_commit` callbacks. (#602)
+
 ## 1.6.3
 
 - Split the `with_deferred_parent_expiration` and `with_deferred_parent_expiration`. (#578)
