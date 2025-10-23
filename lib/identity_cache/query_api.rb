@@ -166,11 +166,11 @@ module IdentityCache
     # callback enqueues a background job, then we don't want it to be possible for the
     # background job to run and load data from the cache before it is invalidated.
     if ActiveRecord.version >= Gem::Version.new("7.1")
-      def run_callbacks(kind, type = nil)
-        if kind == :commit && (destroyed? || transaction_changed_attributes.present?)
+      def run_callbacks(kind, type = nil, ignore_override: false)
+        if kind == :commit && (destroyed? || transaction_changed_attributes.present?) && !ignore_override
           expire_cache
         end
-        super
+        super(kind, type)
       end
     else
       def run_callbacks(kind)
