@@ -45,6 +45,33 @@ module IdentityCache
         def test_embedded_by_reference
           refute_predicate(has_many, :embedded_by_reference?)
         end
+
+        def test_thread_safety_hydration
+          # Simulate race condition by setting up a dehydrated record
+          record = AssociatedRecord.new
+          dehydrated_data = [{ "id" => 1, "name" => "Test" }] # Mock dehydrated data
+          record.instance_variable_set(has_many.dehydrated_variable_name, dehydrated_data)
+
+          # Simulate multiple threads trying to hydrate concurrently
+          threads = []
+          errors = []
+
+          10.times do
+            threads << Thread.new do
+              begin
+                # Call the cached accessor which triggers hydration
+                record.fetch_deeply_associated_records
+              rescue => e
+                errors << e
+              end
+            end
+          end
+
+          threads.each(&:join)
+
+          # Assert no NameError occurred (which would indicate the race condition)
+          assert_empty(errors, "Race condition detected: #{errors.map(&:message).join(', ')}")
+        end
       end
     end
   end
