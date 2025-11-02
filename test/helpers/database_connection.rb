@@ -79,6 +79,7 @@ module DatabaseConnection
       "host" => ENV["MYSQL_HOST"] || "127.0.0.1",
       "username" => "root",
       "port" => ENV["MYSQL_PORT"] ? Integer(ENV["MYSQL_PORT"]) : 3306,
+      "password" => ENV["MYSQL_PASSWORD"] || "my-secret-pw",
     },
     "postgresql" => {
       "adapter" => "postgresql",
