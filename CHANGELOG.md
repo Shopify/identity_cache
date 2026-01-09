@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.6.4
+
 - Patch `run_callbacks` instead of `_run_commit_callbacks` to expire cache prior to `after_commit` callbacks. (#602)
 
 ## 1.6.3
