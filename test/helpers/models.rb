@@ -96,3 +96,14 @@ class CustomChildRecord < ActiveRecord::Base
   belongs_to :custom_parent_record, foreign_key: :parent_id
   self.primary_key = "child_primary_key"
 end
+
+class CompositePrimaryKeyRecord < ActiveRecord::Base
+  include IdentityCache
+  has_many :cpk_references, foreign_key: [:key_part_one, :key_part_two]
+  self.primary_key = [:key_part_one, :key_part_two]
+end
+
+class CPKReference < ActiveRecord::Base
+  include IdentityCache
+  belongs_to :composite_primary_key_record, foreign_key: [:key_part_one, :key_part_two]
+end
