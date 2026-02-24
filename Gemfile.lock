@@ -11,6 +11,7 @@ PATH
     identity_cache (1.6.4)
       activerecord (>= 7.0)
       ar_transaction_changes (~> 1.1)
+      benchmark
 
 GEM
   remote: https://rubygems.org/
@@ -99,6 +100,7 @@ GEM
 PLATFORMS
   arm64-darwin-22
   arm64-darwin-23
+  arm64-darwin-24
   x86_64-linux
 
 DEPENDENCIES
