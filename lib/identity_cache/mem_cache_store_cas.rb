@@ -4,6 +4,8 @@ require "dalli/cas/client" unless Dalli::VERSION > "3"
 
 module IdentityCache
   module MemCacheStoreCAS
+    Entry = ActiveSupport::Cache::Entry
+
     def cas(name, options = nil)
       options = merged_options(options)
       key = normalize_key(name, options)
@@ -12,10 +14,10 @@ module IdentityCache
         instrument(:cas, key, options) do
           @data.with do |connection|
             connection.cas(key, options[:expires_in].to_i, options) do |raw_value|
-              entry = deserialize_entry(raw_value, raw: options[:raw])
+              entry = deserialize_entry(raw_value, **options)
               value = yield entry.value
-              entry = ActiveSupport::Cache::Entry.new(value, **options)
-              options[:raw] ? entry.value.to_s : entry
+              entry = Entry.new(value, **options, version: normalize_version(name, options))
+              serialize_entry(entry, **options)
             end
           end
         end
@@ -34,7 +36,7 @@ module IdentityCache
 
           values = {}
           raw_values.each do |key, raw_value|
-            entry = deserialize_entry(raw_value.first, raw: options[:raw])
+            entry = deserialize_entry(raw_value.first, **options)
             values[keys_to_names[key]] = entry.value unless entry.expired?
           end
 
@@ -43,20 +45,11 @@ module IdentityCache
           updates.each do |name, value|
             key = normalize_key(name, options)
             cas_id = raw_values[key].last
-            entry = ActiveSupport::Cache::Entry.new(value, **options)
-            payload = options[:raw] ? entry.value.to_s : entry
+            entry = Entry.new(value, **options)
+            payload = serialize_entry(entry, **options)
             @data.with { |c| c.replace_cas(key, payload, cas_id, options[:expires_in].to_i, options) }
           end
         end
-      end
-    end
-
-    if ActiveSupport::Cache::MemCacheStore.instance_method(:deserialize_entry).arity == 1
-
-      private
-
-      def deserialize_entry(payload, raw: nil)
-        super(payload)
       end
     end
   end

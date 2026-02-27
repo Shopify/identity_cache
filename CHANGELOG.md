@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Improve MemCacheStoreCAS patch to properly pass serialized entries to Dalli.
+
 ## 1.6.4
 
 - Patch `run_callbacks` instead of `_run_commit_callbacks` to expire cache prior to `after_commit` callbacks. (#602)
