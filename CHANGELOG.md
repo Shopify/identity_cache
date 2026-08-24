@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.6.5
+
 - Improve MemCacheStoreCAS patch to properly pass serialized entries to Dalli.
 
 ## 1.6.4
