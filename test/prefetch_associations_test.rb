@@ -397,8 +397,8 @@ module IdentityCache
         bob_child = @cached_bob.fetch_associated
         joe_child = @cached_joe.fetch_associated
 
-        assert_equal(grandchildren[0..2].sort,   bob_child.fetch_deeply_associated_records.sort)
-        assert_equal(grandchildren[3..5].sort,   joe_child.fetch_deeply_associated_records.sort)
+        assert_equal(grandchildren[0..2].sort, bob_child.fetch_deeply_associated_records.sort)
+        assert_equal(grandchildren[3..5].sort, joe_child.fetch_deeply_associated_records.sort)
       end
     end
 
