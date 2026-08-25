@@ -50,6 +50,8 @@ module ActiveRecordObjects
     Object.send(:remove_const, "Deeply")
     Object.send(:remove_const, "CustomParentRecord")
     Object.send(:remove_const, "CustomChildRecord")
+    Object.send(:remove_const, "CompositePrimaryKeyRecord")
+    Object.send(:remove_const, "CPKReference")
     IdentityCache.const_get(:ParentModelExpiration).send(:lazy_hooks).clear
   end
 end
