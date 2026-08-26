@@ -248,7 +248,7 @@ Cache reads and writes can be memoized for a block of code to serve duplicate id
 
 ``` ruby
 class ApplicationController < ActionController::Base
-  around_filter :identity_cache_memoization
+  around_action :identity_cache_memoization
 
   def identity_cache_memoization(&block)
     IdentityCache.cache.with_memoization(&block)
