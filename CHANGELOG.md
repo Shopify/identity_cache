@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fix `cache_belongs_to` prefetch assigning the record to only one of several owners that share a foreign key.
+
 ## 1.6.5
 
 - Improve MemCacheStoreCAS patch to properly pass serialized entries to Dalli.

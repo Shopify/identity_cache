@@ -100,6 +100,24 @@ module IdentityCache
       end
     end
 
+    def test_prefetch_associations_cached_belongs_to_with_shared_foreign_key
+      Item.send(:cache_belongs_to, :item)
+      @bob.update!(item_id: @fred.id)
+      @joe.update!(item_id: @fred.id)
+      @bob.fetch_item
+      @joe.fetch_item
+      items = [@bob, @joe].map(&:reload)
+
+      assert_no_queries do
+        assert_memcache_operations(1) do
+          prefetch(Item, :item, items)
+        end
+        assert_memcache_operations(0) do
+          assert_equal([@fred, @fred], items.map(&:fetch_item))
+        end
+      end
+    end
+
     def test_prefetch_associations_notifies_about_hydration
       Item.send(:cache_belongs_to, :item)
       @bob.update!(item_id: @joe.id)
@@ -343,6 +361,29 @@ module IdentityCache
         @cached_fred_parent = @cached_fred_child.fetch_item
         assert_equal(@bob,  @cached_bob_parent.fetch_item)
         assert_equal(@fred, @cached_fred_parent.fetch_item)
+      end
+    end
+
+    def test_fetch_multi_batch_fetches_non_embedded_second_level_belongs_to_associations_with_shared_foreign_key
+      Item.send(:cache_has_many, :associated_records, embed: :ids)
+      AssociatedRecord.send(:cache_belongs_to, :item_two)
+
+      shared_item_two = ItemTwo.create!(title: "shared")
+      child_records = [@bob, @bob, @joe].map do |parent|
+        parent.associated_records.create!(item_two: shared_item_two)
+      end
+
+      # populate the cache entries and associated children ID variables
+      ItemTwo.fetch(shared_item_two.id)
+      AssociatedRecord.fetch_multi(child_records.map(&:id))
+      Item.fetch_multi(@bob.id, @joe.id)
+
+      assert_memcache_operations(3) do
+        cached_bob, cached_joe = Item.fetch_multi(
+          @bob.id, @joe.id, includes: { associated_records: :item_two }
+        )
+        cached_child_records = cached_bob.fetch_associated_records + cached_joe.fetch_associated_records
+        assert_equal([shared_item_two] * 3, cached_child_records.map(&:fetch_item_two))
       end
     end
 
