@@ -70,21 +70,22 @@ module IdentityCache
             yield batch_records
           end
         else
-          ids_to_owner_record = records.each_with_object({}) do |owner_record, hash|
+          ids_to_owner_records = records.each_with_object(Hash.new { |h, k| h[k] = [] }) do |owner_record, hash|
             associated_id = owner_record.send(reflection.foreign_key)
             if associated_id && !owner_record.instance_variable_defined?(records_variable_name)
-              hash[associated_id] = owner_record
+              hash[associated_id] << owner_record
             end
           end
 
-          if ids_to_owner_record.any?
+          if ids_to_owner_records.any?
             load_strategy.load_multi(
               reflection.klass.cached_primary_index,
-              ids_to_owner_record.keys
+              ids_to_owner_records.keys
             ) do |associated_records_by_id|
               associated_records_by_id.each do |id, associated_record|
-                owner_record = ids_to_owner_record.fetch(id)
-                write(owner_record, associated_record)
+                ids_to_owner_records.fetch(id).each do |owner_record|
+                  write(owner_record, associated_record)
+                end
               end
 
               yield associated_records_by_id.values.compact
